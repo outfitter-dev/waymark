@@ -1,0 +1,28 @@
+# Lefthook configuration for Waymark project
+# https://lefthook.dev/configuration/
+
+pre-commit:
+  parallel: false
+  commands:
+    format:
+      run: bun run format
+
+    waymarks:
+      glob: "*.{ts,tsx,js,jsx,md,mdx}"
+      run: |
+        # Check for temp waymarks that shouldn't be committed
+        if grep -E "(temp|tmp) :::" {staged_files} 2>/dev/null; then
+          echo "❌ Found temp/tmp waymarks in staged files. Remove them before committing."
+          exit 1
+        fi
+        # Check for active work signals that shouldn't go to main
+        if grep -E "^\s*//\s*\*" {staged_files} 2>/dev/null; then
+          echo "⚠️  Found active work signals (*) in staged files. These should not be committed to protected branches."
+          exit 1
+        fi
+
+pre-push:
+  parallel: false
+  commands:
+    check-all:
+      run: bun run check:all

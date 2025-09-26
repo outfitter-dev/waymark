@@ -1,0 +1,24 @@
+[install]
+peer-dependencies = "error"
+engine = "bun"
+# Enable aggressive caching for faster installs
+cache = "aggressive"
+# Auto-install exact versions for reproducible builds
+exact = true
+
+[build]
+# Enable Bun's native bundling optimizations
+minify = true
+splitting = true
+# Target modern environments
+target = "bun"
+
+[test]
+# Test configuration
+root = "./"
+preload = "./test/setup.ts"
+coverage = true
+
+[cache]
+# Configure cache directory
+dir = ".bun"
