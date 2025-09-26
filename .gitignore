@@ -1,0 +1,48 @@
+# Migration directory (reference only)
+.migrate/
+
+# Dependencies
+node_modules/
+.bun/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Waymark tooling caches
+.waymark/cache/
+.waymark/index/
+
+# Turbo cache
+.turbo/

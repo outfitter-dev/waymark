@@ -1,0 +1,14 @@
+# Generated / cache directories
+node_modules
+.bun
+.cache
+coverage
+dist
+build
+
+# Project-specific ignores
+.waymark/cache
+.waymark/index
+
+# Repo metadata
+.git
