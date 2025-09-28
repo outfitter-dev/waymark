@@ -22,7 +22,7 @@ Examples:
 
 - `// tldr ::: Stripe webhook handler verifying signatures and queuing retries #payments`
 - `// tldr ::: React hooks exposing BetterAuth session state #auth/frontend`
-- `<!-- tldr ::: Bun-based CLI PRD defining v1.0 scope and requirements #docs/prd -->`
+- `<!-- tldr ::: Bun-based CLI PRD defining v1.0 scope and requirements ref:#docs/prd -->`
 
 ## Tagging & Anchors
 
@@ -59,11 +59,11 @@ Examples:
 
 Before committing a TLDR:
 
-- [ ] Sentence in active voice with clear subject and verb.
-- [ ] If a tag is used, it matches existing conventions (checked via `rg`).
-- [ ] Adds `ref:#token` when this TLDR should be the canonical anchor.
-- [ ] Matches the file’s current responsibility.
-- [ ] Positioned as the first waymark in the file.
-- [ ] Passes `rg "tldr :::"` sanity check (no duplicates, no stale wording).
+- ✅ Sentence in active voice with clear subject and verb.
+- ✅ If a tag is used, it matches existing conventions (checked via `rg`).
+- ✅ Adds `ref:#token` when this TLDR should be the canonical anchor.
+- ✅ Matches the file’s current responsibility.
+- ✅ Positioned as the first waymark in the file.
+- ✅ Passes `rg "tldr :::"` sanity check (no duplicates, no stale wording).
 
 Great TLDRs make agents faster and humans happier. Treat them as the single most valuable breadcrumb in every file.

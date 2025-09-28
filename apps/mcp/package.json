@@ -2,14 +2,18 @@
   "name": "@waymarks/mcp",
   "version": "0.0.0",
   "type": "module",
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
   "bin": {
-    "waymark-mcp": "dist/server.js"
+    "waymark-mcp": "dist/index.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "bun run build:types && bun build src/index.ts --outdir dist --target bun",
+    "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly",
     "dev": "bun build src/index.ts --outdir dist --target bun --watch",
     "test": "bun test || echo 'No tests yet'",
     "typecheck": "tsc --noEmit",
@@ -17,7 +21,9 @@
     "check:waymarks": "echo 'Waymarks check will be implemented in v1.0'"
   },
   "dependencies": {
-    "@waymarks/cli": "workspace:*"
+    "@modelcontextprotocol/sdk": "^1.18.2",
+    "@waymarks/core": "workspace:*",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bun": "1.2.22"

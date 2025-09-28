@@ -11,6 +11,8 @@ This file provides guidance to agents working in this repository.
 
 **This project is currently being rebuilt from the bottom up.** We're starting fresh with documentation and simple grep-based usage before reintroducing any complex tooling.
 
+For now we will be working exclusively from the `gt/v1.0/rewrite` branch.
+
 ### Old Project References
 
 - **Local**: `~/Developer/outfitter/waymark-old`
@@ -28,6 +30,7 @@ The rebuild focuses on clarity, simplicity, and progressive enhancement of the w
 - @./.agents/rules/CORE.md
 - @./.agents/rules/IMPORTANT.md
 - @./.waymark/rules/WAYMARKS.md
+- @.waymark/map.md
 
 ## Project Overview
 
@@ -61,6 +64,13 @@ When working on this project:
 7. Update @SCRATCHPAD.md with a dated bullet log of anything you touch.
 8. Update @./PLAN.md and note material changes in the Decisions Log when making project-level adjustments
 
+### MCP Server Expectations
+
+- Use `waymark-mcp` when an agent needs to interact with waymarks programmatically. The server exposes `waymark.scan`, `waymark.map`, `waymark.graph`, and `waymark.insert`, plus TLDR/TODO drafting prompts and map/todo resources.
+- Commands accept `configPath` and `scope` options; always pass repository-specific settings so behavior matches the CLI.
+- `waymark.insert` formats the target file automatically—run the server tool instead of writing raw strings when adding waymarks.
+- Treat MCP responses as the source of truth for agent-visible state; avoid duplicating parsing logic outside of `@waymarks/core`.
+
 ### Pre-Push Quality Checks
 
 **CRITICAL**: Before pushing any code:
@@ -68,9 +78,13 @@ When working on this project:
 1. **Run CI locally**: `bun ci:local` - This simulates the full CI pipeline
 2. **Comprehensive check**: `bun check:all` - Includes temporary context detection
 3. **Quick validation**: `bun ci:validate` - Tests, types, and build only
-4. **Check for temp code**: `bun check:waymarks` - Ensures no `temp :::` or `tmp :::` waymarks
+4. **Check for temp code**: `bun check:waymarks` - Ensures no temporary `temp`/`tmp` waymarks slip into the tree
 
 The pre-push hook will automatically run these checks, but running them manually first saves time.
+
+### Waymark Map Routine
+
+- Refresh the map with `bun run check:waymarks` (alias for `bun scripts/waymark-map.ts`) at the end of each substantial work chunk so @.waymark/map.md stays accurate; the script applies `.waymark/ignore.jsonc`, so review that file before adjusting scope.
 
 ### Documentation Standards
 

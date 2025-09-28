@@ -64,7 +64,7 @@ This preserves the "one grep finds all" feel (searching `#token` surfaces refere
 ```ts
 // todo ::: add rate limiting
 // !fix ::: validate email format
-// *wip ::: implementing JWT generation
+/* *wip ::: implementing JWT generation */
 // note ::: assumes UTC timezone
 ```
 
@@ -560,6 +560,12 @@ Config discovery order: CLI flag → nearest `.waymarkrc.yaml` up the tree → r
 
 - `find` filters; `map` of `tldr`/`this`; `graph` JSON & mermaid.
 - CI: schema tests, performance budget on large repos.
+
+**M4 — MCP Server (post-v1.0 hardening)**
+
+- Ship an MCP-compatible stdio server that proxies `waymark` CLI commands for agents.
+- Reuse shared config discovery and JSON schemas to guarantee consistent responses.
+- Document invocation from Claude/Cursor agents and include sample tool definitions.
 
 **Definition of Done**
 

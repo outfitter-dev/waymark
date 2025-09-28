@@ -64,3 +64,10 @@ We maintain a preferred list of hashtags below. Tags are optional; when you do a
 - Place before major sections/classes to describe local responsibility.
 - Keep the sentence short and aligned with the current implementation; update whenever behavior changes.
 - Use the same tag namespaces as the TLDR when relevant so searches group related content.
+
+### `todo :::` Waymarks
+
+- Annotate known follow-up work liberally so humans and agents can spot outstanding tasks without reading full sections.
+- Phrase the description as an action with enough context that someone else could pick it up; include tags and mentions when ownership matters.
+- Sweep the codebase regularly with `rg "todo :::"` (optionally `rg -n "todo :::"`) to review the current backlog before shipping or planning.
+- Remove `todo :::` entries as soon as the work lands—either delete the waymark or replace it with `*done :::` as a short-lived handoff signal, and make sure both are cleared before merging to `main`.

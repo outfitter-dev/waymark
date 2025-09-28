@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://outfitter.dev/schemas/waymark-config.schema.json",
+  "title": "WaymarkConfig",
+  "description": "Configuration for waymark parsing, formatting, and linting",
+  "type": "object",
+  "properties": {
+    "markerCase": {
+      "type": "string",
+      "enum": ["lowercase", "uppercase"],
+      "default": "lowercase",
+      "description": "Case normalization for markers"
+    },
+    "idScope": {
+      "type": "string",
+      "enum": ["repo", "file"],
+      "default": "repo",
+      "description": "Scope for canonical uniqueness"
+    },
+    "protectedBranches": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": ["main", "release/*"],
+      "description": "Branch patterns considered protected"
+    },
+    "signalsOnProtected": {
+      "type": "string",
+      "enum": ["strip", "fail", "allow"],
+      "default": "strip",
+      "description": "How to handle * signals on protected branches"
+    },
+    "allowMarkers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Allowed waymark markers"
+    },
+    "skipPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": ["**/dist/**", "**/.git/**", "**/node_modules/**"],
+      "description": "Path patterns to skip when scanning"
+    },
+    "format": {
+      "type": "object",
+      "properties": {
+        "spaceAroundSigil": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to add spaces around :::"
+        },
+        "normalizeCase": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to normalize marker case"
+        }
+      },
+      "additionalProperties": false
+    },
+    "lint": {
+      "type": "object",
+      "properties": {
+        "duplicateProperty": {
+          "type": "string",
+          "enum": ["warn", "error", "ignore"],
+          "default": "warn",
+          "description": "How to handle duplicate properties"
+        },
+        "unknownMarker": {
+          "type": "string",
+          "enum": ["warn", "error", "ignore"],
+          "default": "warn",
+          "description": "How to handle unknown markers"
+        },
+        "danglingRelation": {
+          "type": "string",
+          "enum": ["warn", "error", "ignore"],
+          "default": "error",
+          "description": "How to handle relations to unknown canonicals"
+        },
+        "duplicateCanonical": {
+          "type": "string",
+          "enum": ["warn", "error", "ignore"],
+          "default": "error",
+          "description": "How to handle duplicate canonical declarations"
+        }
+      },
+      "additionalProperties": false
+    },
+    "groups": {
+      "type": "object",
+      "description": "Actor group definitions for search expansion",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^@[A-Za-z0-9._-]+$"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -47,7 +47,7 @@ func sanitize(event Event) Event { /* ... */ }
 <!--
 This guide explains how to authenticate against the waymark CLI.
 -->
-<!-- tldr ::: CLI authentication guide using BetterAuth #docs/guide/auth -->
+<!-- tldr ::: CLI authentication guide using BetterAuth ref:#docs/guide/auth -->
 ```
 
 ## Checklist

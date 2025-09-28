@@ -36,7 +36,7 @@ export function sanitize(event: StripeEvent): SanitizedEvent { ... }
 ```py
 def login(request: Request) -> Response:
     """Handle BetterAuth login flow."""
-    # this ::: authenticates user credentials and creates session tokens #auth/login
+    # this ::: authenticates user credentials and creates session tokens ref:#auth/login
     ...
 ```
 
@@ -46,10 +46,10 @@ def login(request: Request) -> Response:
 
 ## Review Checklist
 
-- [ ] Comment sits immediately above the code it describes.
-- [ ] Sentence is concise, active, and section-specific.
-- [ ] Tags (if present) follow established namespaces.
-- [ ] Marker was revisited after recent changes to the section.
-- [ ] No duplication of the TLDR’s content.
+- ✅ Comment sits immediately above the code it describes.
+- ✅ Sentence is concise, active, and section-specific.
+- ✅ Tags (if present) follow established namespaces.
+- ✅ Marker was revisited after recent changes to the section.
+- ✅ No duplication of the TLDR’s content.
 
 Thoughtful `this :::` markers make deep dives faster by turning large files into well-marked wayfinding points for both humans and agents.

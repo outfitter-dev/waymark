@@ -10,14 +10,14 @@
 - Record major decisions in the Decisions Log with enough context for future agents.
 - Follow the v1 signal grammar: only `*` and a single `!`; never use `!!` or other signal variants.
 
-## Phase 1 — Specification & Project Hygiene (In Progress)
+## Phase 1 — Specification & Project Hygiene (Complete)
 
 - [x] Archive superseded specs into `.agents/.archive/20250926-*`.
 - [x] Refresh `SCRATCHPAD.md` for current-cycle notes.
 - [x] Consolidate the authoritative spec in `PRD.md`.
-- [ ] Keep `PRD.md` and `PLAN.md` synchronized with new discoveries.
+- [x] Keep `PRD.md` and `PLAN.md` synchronized with new discoveries.
 
-## Phase 2 — `@waymarks/grammar` & `@waymarks/core` Foundations (In Progress)
+## Phase 2 — `@waymarks/grammar` & `@waymarks/core` Foundations (Complete)
 
 - [x] Scaffold the `@waymarks/grammar` package for minimal, stable parser (Bun/TypeScript setup).
 - [x] Scaffold the `@waymarks/core` workspace package with dependency on grammar.
@@ -25,28 +25,39 @@
 - [x] Implement basic parser skeleton in grammar package.
 - [x] Keep utility types (`WaymarkConfig`, `ScanOptions`) in `@waymarks/core`.
 - [x] Implement SQLite cache module using `bun:sqlite` for parsed records and dependency graphs.
-- [ ] Complete parser implementation with full waymark grammar support.
-- [ ] Implement normalizer exports (`format`, `search`, `graph`, `map`, `config`) in core.
-- [ ] Add cache invalidation based on file mtime/size tracking.
-- [ ] Implement transaction-based batch inserts for cache performance.
-- [ ] Add search indices for markers, content, and dependency relations.
-- [ ] Establish shared JSON Schemas under `schemas/`.
-- [ ] Add unit tests covering grammar edge cases and record normalization.
-- [ ] Add unit tests for cache operations and invalidation logic.
+- [x] Complete parser implementation with full waymark grammar support.
+- [x] Implement normalizer exports (`format`, `search`, `graph`, `map`, `config`) in core.
+- [x] Add cache invalidation based on file mtime/size tracking.
+- [x] Implement transaction-based batch inserts for cache performance.
+- [x] Add search indices for markers, content, and dependency relations.
+- [x] Establish shared JSON Schemas under `schemas/`.
+- [x] Add unit tests covering grammar edge cases.
+- [x] Add unit tests for record normalization (normalize.test.ts).
+- [x] Add unit tests for cache operations and invalidation logic.
 
-## Phase 3 — `@waymarks/cli` Implementation (Pending)
+## Phase 3 — `@waymarks/cli` Implementation (Near Complete)
 
-- [ ] Scaffold CLI package with Bun entrypoint and command registry.
-- [ ] Wire commands (`scan`, `find`, `map`, `fmt`, `lint`, `graph`, `migrate`, `tui`) to `@waymarks/core`.
-- [ ] Implement `--scope` configuration handling and XDG path resolution.
-- [ ] Provide human-readable, JSONL, and machine-output formats with snapshot tests.
+- [x] Scaffold CLI package with Bun entrypoint and command registry.
+- [x] Wire commands (`scan`, `find`, `map`, `fmt`, `lint`, `graph`, `migrate`) to `@waymarks/core`.
+- [ ] Wire `tui` command (deferred to Phase 5).
+- [x] Implement `--scope` configuration handling and XDG path resolution.
+- [x] Provide human-readable, JSONL, and machine-output formats with snapshot tests.
 
-## Phase 4 — Agent Toolkit & MCP Integrations (Pending)
+## Phase 3a — Quality Cleanup & Hardening (Complete)
+
+- [x] Restore production normalization module under `@waymarks/core` and ensure tests exercise real exports.
+- [x] Persist and hydrate full record metadata in `WaymarkCache` (language, comment leader, indent, raw, etc.).
+- [x] Parameterize cache search queries to avoid raw string `LIKE` interpolation and escape wildcards.
+- [x] Reconcile JSON schema defaults with runtime `DEFAULT_CONFIG`, updating code or schema plus docs/tests accordingly.
+
+## Phase 4 — Agent Toolkit & MCP Integrations (In Progress)
 
 - [ ] Publish rule packs under `@waymarks/agents/rules` and document installation flow.
 - [ ] Generate command/instruction assets for Claude, Cursor, Gemini, etc.
 - [ ] Implement `waymark agents install` to sync `.waymark/rules/` and update `AGENTS.md`/`CLAUDE.md` when approved.
-- [ ] Prototype the thin `@waymarks/mcp` server that shells out to the CLI and respects repo config.
+- [ ] Scaffold `@waymarks/mcp` package exposing an MCP server that wraps the CLI over stdio.
+- [ ] Support core MCP methods (`list_tools`, `call_tool`) by delegating to CLI commands with shared config loading.
+- [ ] Add integration/utility tests for MCP server helpers and document server usage for agents.
 
 ## Phase 5 — Documentation, QA, and Release Prep (Pending)
 
@@ -63,3 +74,10 @@
 - 2025-09-26: Adopt Bun's native SQLite (`bun:sqlite`) for caching layer (zero dependencies, excellent performance, XDG-compliant storage).
 - 2025-09-26: Design SQLite schema with WAL mode for concurrent access and prepared statements for sub-millisecond lookups.
 - 2025-09-26: Separate `@waymarks/grammar` from `@waymarks/core` for architectural isolation (grammar remains minimal and stable while core can evolve with opinions and utilities).
+- 2025-09-26: Landed full v1 parser implementation with multi-line handling, property extraction, and token categorization.
+- 2025-09-26: CLI cache handling stays implicit inside `waymark scan`; no standalone cache command planned.
+- 2025-09-27: CLI resolves scoped configs via XDG paths with tests covering project/global/default discovery.
+- 2025-09-27: Break `@waymarks/cli` entrypoint into per-command modules with shared utilities to keep handlers focused and testable.
+- 2025-09-27: Enhanced SQLite cache with batch inserts, search indices on all columns, and optimized search methods.
+- 2025-09-27: Created JSON Schemas for waymark-record, waymark-config, and waymark-scan-result in schemas/ directory.
+- 2025-09-27: Deferred TUI implementation to Phase 5 to focus on core functionality first.
