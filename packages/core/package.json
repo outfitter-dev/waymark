@@ -20,7 +20,10 @@
   "dependencies": {
     "@waymarks/grammar": "workspace:*",
     "pino": "^9.11.0",
-    "type-fest": "^5.0.1"
+    "strip-json-comments": "5.0.3",
+    "toml": "3.0.0",
+    "type-fest": "^5.0.1",
+    "yaml": "2.8.1"
   },
   "devDependencies": {
     "@types/bun": "1.2.22"

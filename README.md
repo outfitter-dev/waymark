@@ -24,7 +24,7 @@ export async function authenticate(request: AuthRequest) {
   const user = await fetchUser(request.email)
   // question ::: should we allow social login here? @product
 
-  // *todo ::: @agent implement refresh token rotation once backend ships
+  /* *todo ::: @agent implement refresh token rotation once backend ships */
   return issueSession(user, request) // note ::: returns JWT signed with HS256
 }
 
@@ -57,6 +57,51 @@ src/
 ```
 
 This tree view instantly tells you what every file does - perfect for onboarding developers or giving AI agents context about your codebase architecture.
+
+### CLI Usage
+
+```bash
+waymark fmt src/example.ts        # format a file (stdout)
+waymark fmt src/example.ts --write
+waymark scan src/example.ts --json   # compact JSON array
+waymark scan src/example.ts --jsonl  # newline-delimited JSON records
+waymark scan src/example.ts --pretty # pretty-printed JSON array
+waymark map docs/PRD.md src/core.ts   # accepts files or directories (recurses by default)
+waymark find src/example.ts --marker todo
+```
+
+The CLI relies on the core formatter, parser, and map helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
+
+### MCP Server
+
+Waymark also ships a Model Context Protocol server so agents can consume the same tooling over stdio:
+
+```bash
+waymark-mcp
+```
+
+The server advertises a compact surface area:
+
+- **Tools**
+  - `waymark.scan` – parse files/directories and return waymark records in `text`, `json`, `jsonl`, or `pretty` formats.
+  - `waymark.map` – produce the TLDR/marker summary JSON that powers the CLI map.
+  - `waymark.graph` – emit relation edges (ref/depends/needs/etc.).
+  - `waymark.insert` – insert any waymark (including `tldr`, `this`, `todo`, or custom markers) into a file, normalize it with the formatter, and return the inserted record metadata.
+- **Resources**
+  - `waymark://map` – repository-wide summary of TLDRs and marker counts.
+  - `waymark://todos` – filtered list of every `todo` waymark detected.
+- **Prompts**
+  - `waymark.tldr` – drafts a TLDR sentence for a file given an optional snippet window.
+  - `waymark.todo` – drafts actionable TODO content based on a summary/context payload.
+
+Tools accept the same configuration options as the CLI (`configPath`, `scope`) so agents respect local project settings. The server streams JSON over stdout/stdin; see `apps/mcp/src/index.ts` for the exact schemas.
+
+### Code Structure
+
+- `packages/cli/src/index.ts` is a thin dispatcher that parses global flags and routes commands.
+- Each command lives in `packages/cli/src/commands/<name>.ts` with its own argument parser and executor.
+- Shared utilities reside in `packages/cli/src/utils/` (filesystem expansion, record rendering) and shared CLI types in `packages/cli/src/types.ts`.
+- Tests primarily target the modules directly, while `packages/cli/src/index.test.ts` keeps a lightweight smoke suite.
 
 ## Current Focus
 
