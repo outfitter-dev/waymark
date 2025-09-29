@@ -1,7 +1,7 @@
 <!-- tldr ::: generated map of repo waymarks #docs/rules -->
 # Waymark Map
 
-Generated on 2025-09-28T12:18:46.074Z.
+Generated on 2025-09-30T02:36:52.712Z.
 
 ## TLDR Waymarks
 
@@ -10,6 +10,7 @@ Generated on 2025-09-28T12:18:46.074Z.
 - apps/mcp/src/index.ts:2 — // tldr ::: stdio MCP server bridging waymark CLI capabilities
 - docs/about/priors.md:1 — <!-- tldr ::: Historical precedents and inspiration for waymark anchor patterns -->
 - docs/waymark/SPEC.md:1 — <!-- tldr ::: canonical specification for the Waymark v1 grammar -->
+- docs/waymark/tui-ab-plan.md:1 — <!-- tldr ::: comparative plan for opentui vs React Ink waymark TUIs #docs/plan -->
 - packages/agents/src/index.ts:1 — // tldr ::: waymark agent toolkit exports
 - packages/cli/src/commands/find.ts:1 — // tldr ::: find command helpers for waymark CLI
 - packages/cli/src/commands/fmt.ts:1 — // tldr ::: format command helpers for waymark CLI
@@ -23,6 +24,13 @@ Generated on 2025-09-28T12:18:46.074Z.
 - packages/cli/src/index.test.ts:1 — // tldr ::: smoke and snapshot tests for waymark CLI handlers
 - packages/cli/src/index.ts:2 — // tldr ::: waymark CLI entry point wiring formatter, lint, map, and utility commands
 - packages/cli/src/types.ts:1 — // tldr ::: shared CLI types
+- packages/cli/src/utils/flags/iterator.ts:1 — // tldr ::: shared iterator utilities for CLI flag parsing
+- packages/cli/src/utils/flags/json.ts:1 — // tldr ::: helper to handle --json flag parsing
+- packages/cli/src/utils/flags/marker.ts:1 — // tldr ::: helper for --marker flag parsing
+- packages/cli/src/utils/flags/mention.ts:1 — // tldr ::: helper for --mention flag parsing
+- packages/cli/src/utils/flags/string-list.ts:1 — // tldr ::: helpers for list-style flags with string values
+- packages/cli/src/utils/flags/summary.ts:1 — // tldr ::: helper to handle --summary flag parsing
+- packages/cli/src/utils/flags/tag.ts:1 — // tldr ::: helper for --tag flag parsing
 - packages/cli/src/utils/fs.ts:1 — // tldr ::: filesystem helpers for expanding waymark CLI inputs
 - packages/cli/src/utils/output.ts:1 — // tldr ::: rendering helpers for CLI record output
 - packages/core/src/cache/index.test.ts:1 — // tldr ::: tests for waymark cache invalidation and metadata tracking
@@ -58,27 +66,31 @@ Generated on 2025-09-28T12:18:46.074Z.
 ## TODO Waymarks
 
 - docs/waymark/SPEC.md:26 — // todo ::: rewrite parser for streaming
-- docs/waymark/SPEC.md:174 — // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
+- docs/waymark/SPEC.md:180 — // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
+- docs/waymark/tui-ab-plan.md:86 — <!-- todo ::: summarize findings and mark chosen TUI path once evaluation wraps -->
 - packages/agents/src/index.ts:8 — // todo ::: implement agent toolkit
 - packages/grammar/src/parser.ts:8 — // todo ::: @codex externalize comment leader detection into shared language metadata #lib/parser
-- packages/grammar/src/parser.ts:449 — // todo ::: @codex allow configurable overrides for file category inference #lib/parser
+- packages/grammar/src/parser.ts:511 — // todo ::: @codex allow configurable overrides for file category inference #lib/parser
 - test/setup.ts:6 — // todo ::: add global test setup when needed
 - test/setup.ts:10 — // todo ::: add global test cleanup when needed
 
 ## THIS Waymarks
 
-- docs/waymark/SPEC.md:173 — // this ::: Stripe webhook verification handler #perf:hotpath
-- docs/waymark/SPEC.md:183 — <!-- this ::: workflow overview for installing the CLI -->
-- docs/waymark/SPEC.md:189 — # this ::: orchestrates outbound email delivery #comm/email
+- docs/waymark/SPEC.md:179 — // this ::: Stripe webhook verification handler #perf:hotpath
+- docs/waymark/SPEC.md:189 — <!-- this ::: workflow overview for installing the CLI -->
+- docs/waymark/SPEC.md:195 — # this ::: orchestrates outbound email delivery #comm/email
 
 ## Other Waymarks
 
-- docs/waymark/SPEC.md:175 — // !review ::: @alice confirm retry strategy #sec:boundary
-- docs/waymark/SPEC.md:176 — // note ::: logs PII-hardened metadata only #docs/logging
+- docs/waymark/SPEC.md:27 — // ::: preserve backwards-compatible signature
+- docs/waymark/SPEC.md:28 — // ::: coordinate rollout with @devops
+- docs/waymark/SPEC.md:181 — // review ::: @alice confirm retry strategy #sec:boundary
+- docs/waymark/SPEC.md:182 — // note ::: logs PII-hardened metadata only #docs/logging
+- docs/waymark/tui-ab-plan.md:111 — <!-- note ::: revisit this doc after A/B cycle to archive losing approach and formalize follow-ups -->
 
 ### Other Marker Counts
 
-- note: 1
+- note: 2
 - review: 1
 
 ## Ignored

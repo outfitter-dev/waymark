@@ -1,0 +1,43 @@
+{
+  // tldr ::: consolidated #waymark #config with repo-specific ignore patterns
+  // ref  ::: #waymark/config
+  "options": {
+    "markerCase": "lowercase", // note ::: @agent this replaces `markerCase` at the top level
+    "normalizeCase": true,
+    "spaceBeforeSigil": true, // note ::: @agent let's eliminate this as an option. We should be consistent with this. In our tooling, sigils should consistently have leading and trailing spaces.
+    "customMarkers": ["custom1"]
+    // todo ::: @agent this above replaces the `unknownMarker` lint option. It can have a `true/false` value for linting purposes, or an array of strings can be provided to automatically allow those specified markers.
+  },
+  "stars": {
+    "starsOnProtected": "strip",
+    "protectedBranches": ["main", "release/*"]
+  },
+  "canonicalRefs": {
+    "scope": "repo"
+  },
+  "gitignore": true, // note ::: could be a boolean or string like `**/.gitignore`
+  "patterns": [
+    {
+      "name": "default", // note ::: the `name` key should be optional, and can be used in other patterns to inherit settings
+      "markers": {
+        "include": ["tldr"]
+      },
+      "globs": [
+        "AGENTS.md",
+        "PLAN.md",
+        "README.md",
+        "SCRATCHPAD.md",
+        "PRD.md",
+        ".waymark/rules/**",
+        "docs/waymark/**/*.md"
+      ]
+    },
+    {
+      "extends": "default",
+      "markers": {
+        "include": ["todo", "fixme", "bug"]
+      },
+      "globs": ["SCRATCHPAD.md", "PLAN.md"]
+    }
+  ]
+}

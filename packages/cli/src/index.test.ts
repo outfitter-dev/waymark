@@ -9,9 +9,10 @@ import { findRecords } from "./commands/find";
 import { formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
-import { mapFiles } from "./commands/map";
+import { mapFiles, parseMapArgs } from "./commands/map";
 import { migrateFile, migrateLegacyWaymarks } from "./commands/migrate";
 import { parseScanArgs, scanRecords } from "./commands/scan";
+import { formatMapOutput, serializeMap } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
 
@@ -124,6 +125,86 @@ describe("CLI handlers", () => {
       Array.from(summary.markers.values()).flatMap((marker) => marker.entries)
     );
     expect(entries.some((record) => record.marker === "todo")).toBe(true);
+    await cleanup();
+  });
+
+  test("parseMapArgs supports marker filters and summary flag", () => {
+    const parsed = parseMapArgs([
+      "--marker",
+      "todo",
+      "-m",
+      "fix",
+      "--summary",
+      "docs/file.ts",
+    ]);
+    expect(parsed.filePaths).toEqual(["docs/file.ts"]);
+    expect(parsed.markers).toEqual(["todo", "fix"]);
+    expect(parsed.summary).toBe(true);
+  });
+
+  test("parseMapArgs throws when marker flag lacks value", () => {
+    expect(() => parseMapArgs(["--marker"])).toThrow(
+      "--marker requires a value"
+    );
+  });
+
+  test("serializeMap filters markers and adds summary when requested", async () => {
+    const source = [
+      "// tldr ::: summary",
+      "// todo ::: first",
+      "// fix ::: patch",
+    ].join("\n");
+    const { file, cleanup } = await withTempFile(source);
+    const map = await mapFiles([file]);
+
+    const serialized = serializeMap(map, {
+      markers: ["todo"],
+      includeSummary: true,
+    });
+
+    const fileEntry = serialized[file] as {
+      tldr?: string;
+      markers: Record<string, number>;
+    };
+    expect(fileEntry.tldr).toBeUndefined();
+    expect(fileEntry.markers).toEqual({ todo: 1 });
+
+    const summary = serialized._summary as { markers: Record<string, number> };
+    expect(summary.markers).toEqual({ todo: 1 });
+
+    await cleanup();
+  });
+
+  test("formatMapOutput renders summary footer when requested", async () => {
+    const source = [
+      "// tldr ::: overview",
+      "// todo ::: remaining work",
+      "// note ::: context",
+    ].join("\n");
+    const { file, cleanup } = await withTempFile(source);
+    const map = await mapFiles([file]);
+
+    const output = formatMapOutput(map, { includeSummary: true });
+    const lines = output.split("\n");
+
+    expect(lines).toContain("Summary:");
+    expect(lines.some((line) => line.trim() === "todo: 1")).toBe(true);
+    expect(lines.some((line) => line.trim() === "note: 1")).toBe(true);
+
+    await cleanup();
+  });
+
+  test("formatMapOutput reports when no markers match filters", async () => {
+    const source = ["// tldr ::: overview", "// todo ::: remaining work"].join(
+      "\n"
+    );
+    const { file, cleanup } = await withTempFile(source);
+    const map = await mapFiles([file]);
+
+    const output = formatMapOutput(map, { markers: ["fix"] });
+
+    expect(output).toBe("No matching waymarks.");
+
     await cleanup();
   });
 

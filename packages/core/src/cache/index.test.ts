@@ -17,6 +17,19 @@ const baseRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => {
   const marker = overrides.marker ?? "todo";
   const contentText = overrides.contentText ?? "content";
   const commentLeader = overrides.commentLeader ?? "//";
+  const overrideSignals = overrides.signals;
+  let normalizedSignals = { raised: false, current: false, important: false };
+  if (overrideSignals) {
+    const raisedValue =
+      overrideSignals.raised ?? overrideSignals.current ?? false;
+    const currentValue =
+      overrideSignals.current ?? overrideSignals.raised ?? false;
+    normalizedSignals = {
+      raised: raisedValue,
+      current: currentValue,
+      important: overrideSignals.important ?? false,
+    };
+  }
 
   return {
     file: overrides.file ?? "src/example.ts",
@@ -26,7 +39,7 @@ const baseRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => {
     endLine: overrides.endLine ?? 1,
     indent: overrides.indent ?? 0,
     commentLeader,
-    signals: overrides.signals ?? { current: false, important: false },
+    signals: normalizedSignals,
     marker,
     contentText,
     properties: overrides.properties ?? {},

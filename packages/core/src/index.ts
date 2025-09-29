@@ -24,8 +24,8 @@ export type { FormatEdit, FormatOptions, FormatResult } from "./format";
 export { formatText } from "./format";
 export type { GraphEdge, WaymarkGraph } from "./graph";
 export { buildRelationGraph } from "./graph";
-export type { WaymarkMap } from "./map";
-export { buildWaymarkMap } from "./map";
+export type { FileSummary, WaymarkMap } from "./map";
+export { buildWaymarkMap, summarizeMarkerTotals } from "./map";
 export type {
   NormalizeMarkerOptions,
   NormalizeRecordOptions,

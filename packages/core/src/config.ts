@@ -9,17 +9,20 @@ import stripJsonComments from "strip-json-comments";
 import { parse as parseToml } from "toml";
 import { parse as parseYaml } from "yaml";
 
-import type { WaymarkConfig } from "./types";
+import type {
+  PartialWaymarkConfig,
+  WaymarkConfig,
+  WaymarkFormatConfig,
+  WaymarkLintConfig,
+} from "./types";
 
-type FormatConfig = WaymarkConfig["format"];
-type LintConfig = WaymarkConfig["lint"];
-
-const DEFAULT_FORMAT: WaymarkConfig["format"] = {
+const DEFAULT_FORMAT: WaymarkFormatConfig = {
   spaceAroundSigil: true,
   normalizeCase: true,
+  alignContinuations: true,
 };
 
-const DEFAULT_LINT: WaymarkConfig["lint"] = {
+const DEFAULT_LINT: WaymarkLintConfig = {
   duplicateProperty: "warn",
   unknownMarker: "warn",
   danglingRelation: "error",
@@ -38,7 +41,7 @@ export const DEFAULT_CONFIG: WaymarkConfig = {
 };
 
 export type ResolveConfigOptions = {
-  overrides?: Partial<WaymarkConfig>;
+  overrides?: PartialWaymarkConfig;
 };
 
 export type ConfigScope = "default" | "project" | "global";
@@ -66,9 +69,43 @@ const RC_FILENAMES = [
   ".waymarkrc.toml",
 ];
 
-export function resolveConfig(
-  overrides?: Partial<WaymarkConfig>
-): WaymarkConfig {
+function resolveFormatConfig(
+  overrides?: PartialWaymarkConfig
+): WaymarkConfig["format"] {
+  const alignContinuations =
+    overrides?.format?.alignContinuations ??
+    DEFAULT_CONFIG.format.alignContinuations;
+  const alignContinuationsField =
+    alignContinuations !== undefined ? { alignContinuations } : {};
+
+  return {
+    spaceAroundSigil:
+      overrides?.format?.spaceAroundSigil ??
+      DEFAULT_CONFIG.format.spaceAroundSigil,
+    normalizeCase:
+      overrides?.format?.normalizeCase ?? DEFAULT_CONFIG.format.normalizeCase,
+    ...alignContinuationsField,
+  };
+}
+
+function resolveLintConfig(
+  overrides?: PartialWaymarkConfig
+): WaymarkConfig["lint"] {
+  return {
+    duplicateProperty:
+      overrides?.lint?.duplicateProperty ??
+      DEFAULT_CONFIG.lint.duplicateProperty,
+    unknownMarker:
+      overrides?.lint?.unknownMarker ?? DEFAULT_CONFIG.lint.unknownMarker,
+    danglingRelation:
+      overrides?.lint?.danglingRelation ?? DEFAULT_CONFIG.lint.danglingRelation,
+    duplicateCanonical:
+      overrides?.lint?.duplicateCanonical ??
+      DEFAULT_CONFIG.lint.duplicateCanonical,
+  };
+}
+
+export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
   if (!overrides) {
     return cloneConfig(DEFAULT_CONFIG);
   }
@@ -84,26 +121,8 @@ export function resolveConfig(
     allowMarkers:
       overrides.allowMarkers?.slice() ?? DEFAULT_CONFIG.allowMarkers.slice(),
     skipPaths: overrides.skipPaths?.slice() ?? DEFAULT_CONFIG.skipPaths.slice(),
-    format: {
-      spaceAroundSigil:
-        overrides.format?.spaceAroundSigil ??
-        DEFAULT_CONFIG.format.spaceAroundSigil,
-      normalizeCase:
-        overrides.format?.normalizeCase ?? DEFAULT_CONFIG.format.normalizeCase,
-    },
-    lint: {
-      duplicateProperty:
-        overrides.lint?.duplicateProperty ??
-        DEFAULT_CONFIG.lint.duplicateProperty,
-      unknownMarker:
-        overrides.lint?.unknownMarker ?? DEFAULT_CONFIG.lint.unknownMarker,
-      danglingRelation:
-        overrides.lint?.danglingRelation ??
-        DEFAULT_CONFIG.lint.danglingRelation,
-      duplicateCanonical:
-        overrides.lint?.duplicateCanonical ??
-        DEFAULT_CONFIG.lint.duplicateCanonical,
-    },
+    format: resolveFormatConfig(overrides),
+    lint: resolveLintConfig(overrides),
   };
 }
 
@@ -118,6 +137,9 @@ export function cloneConfig(config: WaymarkConfig): WaymarkConfig {
     format: {
       spaceAroundSigil: config.format.spaceAroundSigil,
       normalizeCase: config.format.normalizeCase,
+      ...(config.format.alignContinuations !== undefined
+        ? { alignContinuations: config.format.alignContinuations }
+        : {}),
     },
     lint: {
       duplicateProperty: config.lint.duplicateProperty,
@@ -336,7 +358,7 @@ function assignFormatOptions(
     return;
   }
 
-  const format: Partial<FormatConfig> = {};
+  const format: Partial<WaymarkFormatConfig> = {};
   const spaceAroundSigil = readBoolean(formatRaw, [
     "spaceAroundSigil",
     "space_around_sigil",
@@ -351,8 +373,15 @@ function assignFormatOptions(
   if (typeof normalizeCase === "boolean") {
     format.normalizeCase = normalizeCase;
   }
+  const alignContinuations = readBoolean(formatRaw, [
+    "alignContinuations",
+    "align_continuations",
+  ]);
+  if (typeof alignContinuations === "boolean") {
+    format.alignContinuations = alignContinuations;
+  }
   if (Object.keys(format).length > 0) {
-    result.format = format as FormatConfig;
+    result.format = format as WaymarkFormatConfig;
   }
 }
 
@@ -365,13 +394,13 @@ function assignLintOptions(
     return;
   }
 
-  const lint: Partial<LintConfig> = {};
+  const lint: Partial<WaymarkLintConfig> = {};
   setLintLevel(lintRaw, lint, "duplicateProperty", "duplicate_property");
   setLintLevel(lintRaw, lint, "unknownMarker", "unknown_marker");
   setLintLevel(lintRaw, lint, "danglingRelation", "dangling_relation");
   setLintLevel(lintRaw, lint, "duplicateCanonical", "duplicate_canonical");
   if (Object.keys(lint).length > 0) {
-    result.lint = lint as LintConfig;
+    result.lint = lint as WaymarkLintConfig;
   }
 }
 
@@ -430,8 +459,8 @@ function readObject(
 
 function setLintLevel(
   source: Record<string, unknown>,
-  target: Partial<LintConfig>,
-  camel: keyof LintConfig,
+  target: Partial<WaymarkLintConfig>,
+  camel: keyof WaymarkLintConfig,
   snake: string
 ): void {
   const value = readString(source, [camel as string, snake]);

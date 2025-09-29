@@ -35,16 +35,16 @@ Examples:
 
 ### Priority TLDRs
 
-- Prefixing with `!` (`!tldr ::: ...`) tells the tooling to surface that summary first in generated maps, dashboards, and agent prompts.
-- Reserve `!tldr` for truly critical files or documents—entry points, compliance-sensitive modules, runbooks that must be read before others.
-- Use `rg ":::\s*!tldr"` occasionally to audit that only the most important files carry the priority signal.
+- Prefixing with `*` (`*tldr ::: ...`) tells the tooling to surface that summary first in generated maps, dashboards, and agent prompts.
+- Reserve `*tldr` for truly critical files or documents—entry points, compliance-sensitive modules, runbooks that must be read before others.
+- Use `rg '\*tldr\s*:::'` occasionally to audit that only the most important files carry the priority signal.
 
 ## Common Patterns
 
 | File Type       | Pattern                                                                   |
 | --------------- | ------------------------------------------------------------------------- |
 | Service / class | `// tldr ::: <service> <verb> <domain> #area`                             |
-| Entry point     | `// !tldr ::: main entry wiring <framework> + <middleware> #arch/...`     |
+| Entry point     | `// *tldr ::: main entry wiring <framework> + <middleware> #arch/...`     |
 | Utility library | `// tldr ::: utilities for <concept> using <tech> #lib/...`               |
 | Tests           | `// tldr ::: integration tests for <feature> covering <edge cases> #test` |
 | Docs/PRDs       | `<!-- tldr ::: <doc> summary focusing on <scope> #docs/<type> -->`        |
@@ -64,6 +64,6 @@ Before committing a TLDR:
 - ✅ Adds `ref:#token` when this TLDR should be the canonical anchor.
 - ✅ Matches the file’s current responsibility.
 - ✅ Positioned as the first waymark in the file.
-- ✅ Passes `rg "tldr :::"` sanity check (no duplicates, no stale wording).
+- ✅ Passes `rg 'tldr\\s*:::'` sanity check (no duplicates, no stale wording).
 
 Great TLDRs make agents faster and humans happier. Treat them as the single most valuable breadcrumb in every file.

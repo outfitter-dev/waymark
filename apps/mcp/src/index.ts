@@ -72,7 +72,7 @@ const insertWaymarkInputSchema = configOptionsSchema.extend({
   line: z.number().int().positive().optional(),
   signals: z
     .object({
-      current: z.boolean().optional(),
+      raised: z.boolean().optional(),
       important: z.boolean().optional(),
     })
     .optional(),
@@ -563,7 +563,7 @@ function mimeForFormat(format: RenderFormat): string {
 }
 
 type SignalFlags = {
-  current?: boolean | undefined;
+  raised?: boolean | undefined;
   important?: boolean | undefined;
 };
 
@@ -708,11 +708,11 @@ function buildSignalPrefix(signals?: SignalFlags): string {
     return "";
   }
   let prefix = "";
-  if (signals.current) {
-    prefix += "*";
+  if (signals.raised) {
+    prefix += "^";
   }
   if (signals.important) {
-    prefix += "!";
+    prefix += "*";
   }
   return prefix;
 }

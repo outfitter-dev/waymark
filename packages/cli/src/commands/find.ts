@@ -2,6 +2,11 @@
 
 import type { WaymarkRecord } from "@waymarks/core";
 import { searchRecords } from "@waymarks/core";
+import { createArgIterator } from "../utils/flags/iterator";
+import { handleJsonFlag } from "../utils/flags/json";
+import { handleMarkerFlag } from "../utils/flags/marker";
+import { handleMentionFlag } from "../utils/flags/mention";
+import { handleTagFlag } from "../utils/flags/tag";
 import { scanRecords } from "./scan";
 
 export type FindCommandOptions = {
@@ -12,6 +17,9 @@ export type FindCommandOptions = {
   json?: boolean;
 };
 
+/**
+ * Scan the provided file and run structured searches across the resulting records.
+ */
 export async function findRecords(
   options: FindCommandOptions
 ): Promise<WaymarkRecord[]> {
@@ -32,47 +40,30 @@ export async function findRecords(
   return searchRecords(records, query);
 }
 
+/**
+ * Parse CLI arguments for the find command into structured options.
+ */
 export function parseFindArgs(argv: string[]): FindCommandOptions {
   const [filePath, ...rest] = argv;
   if (!filePath) {
     throw new Error("find requires a file path");
   }
 
+  const iterator = createArgIterator(rest);
   const markers: string[] = [];
   const tags: string[] = [];
   const mentions: string[] = [];
-  let json = false;
+  const jsonState = { json: false };
 
-  const consumers: Record<string, (value: string) => void> = {
-    "--marker": (value) => markers.push(value),
-    "--tag": (value) => tags.push(value),
-    "--mention": (value) => mentions.push(value),
-  };
-
-  const iterator = rest[Symbol.iterator]();
-  for (
-    let current = iterator.next();
-    !current.done;
-    current = iterator.next()
-  ) {
-    const flag = current.value;
-    if (flag === "--json") {
-      json = true;
-      continue;
-    }
-
-    const consume = consumers[flag];
-    if (!consume) {
-      continue;
-    }
-
-    const nextValue = iterator.next();
-    if (!nextValue.done && nextValue.value) {
-      consume(nextValue.value);
-    }
+  while (iterator.hasNext()) {
+    const token = iterator.next();
+    handleJsonFlag(token, jsonState);
+    handleMarkerFlag(token, iterator, markers);
+    handleTagFlag(token, iterator, tags);
+    handleMentionFlag(token, iterator, mentions);
   }
 
-  const options: FindCommandOptions = { filePath, json };
+  const options: FindCommandOptions = { filePath, json: jsonState.json };
   if (markers.length > 0) {
     options.markers = markers;
   }

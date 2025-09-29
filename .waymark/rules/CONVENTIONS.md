@@ -11,8 +11,8 @@
 ## General Rules
 
 - ALWAYS include only one `tldr :::` waymark in each file, near the top (accounting for language-specific preambles, shebangs, front matter, etc.).
-- ONLY use the v1 signals: `*` (branch-scoped) and a single `!` (high priority). No `!!`, `?`, or other legacy signals anywhere in the repo.
-- CLEAR all `*` waymarks before merging to protected branches (`rg '^\\s*//\\s*\\*'`).
+- ONLY use the v1 signals: `^` (raised/in-progress) and a single `*` (important/high priority). No `!`, `!!`, `?`, or other legacy signals anywhere in the repo.
+- CLEAR all `^` waymarks before merging to protected branches (`rg '\\^\\w+\\s*:::'`).
 - When adding a new waymark, search for precedent first (e.g., `rg ":::\s.*#<fragment>"`) to avoid proliferating one-off patterns.
 
 ## Project Hashtags
@@ -57,7 +57,7 @@ We maintain a preferred list of hashtags below. Tags are optional; when you do a
 - One sentence (8–14 words) in active voice capturing the file’s capability. Follow `.agents/rules/waymarks/tldrs.md`.
 - Include `#docs/...` on documentation TLDRs; otherwise prefer tags from the list above.
 - Add `ref:#token` when the TLDR declares the canonical anchor for the file.
-- Use `!tldr` only for files/documents that must be read first; audit periodically with `rg ":::\s*!tldr"`.
+- Use `*tldr` only for files/documents that must be read first; audit periodically with `rg '\\*tldr\\s*:::'`.
 
 ### `this :::` Waymarks
 
@@ -69,5 +69,5 @@ We maintain a preferred list of hashtags below. Tags are optional; when you do a
 
 - Annotate known follow-up work liberally so humans and agents can spot outstanding tasks without reading full sections.
 - Phrase the description as an action with enough context that someone else could pick it up; include tags and mentions when ownership matters.
-- Sweep the codebase regularly with `rg "todo :::"` (optionally `rg -n "todo :::"`) to review the current backlog before shipping or planning.
-- Remove `todo :::` entries as soon as the work lands—either delete the waymark or replace it with `*done :::` as a short-lived handoff signal, and make sure both are cleared before merging to `main`.
+- Sweep the codebase regularly with `rg 'todo\s*:::'` (optionally `rg -n 'todo\s*:::'`) to review the current backlog before shipping or planning.
+- Remove `todo :::` entries as soon as the work lands—either delete the waymark or replace it with `done :::` as a short-lived handoff signal, and make sure raised (`^`) waymarks are cleared before merging to `main`.
