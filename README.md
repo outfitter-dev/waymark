@@ -18,17 +18,17 @@ Read the full background in [Historical Priors for Waymark-Style Anchors](docs/a
 // tldr ::: managing customer authentication flow
 
 export async function authenticate(request: AuthRequest) {
-  // !fix ::: validate OTP length before verifying
+  // *fix ::: validate OTP length before verifying
   // context ::: callers must pass a sanitized email #security
 
   const user = await fetchUser(request.email)
   // question ::: should we allow social login here? @product
 
-  /* *todo ::: @agent implement refresh token rotation once backend ships */
+  /* ^todo ::: @agent implement refresh token rotation once backend ships */
   return issueSession(user, request) // note ::: returns JWT signed with HS256
 }
 
-Signals follow the v1 grammar: only `*` and a single `!` prefix are valid (`*!todo` is fine, `!!fix` is not).
+Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) prefix are valid. Raised waymarks (`^todo`) mark branch-scoped work that must clear before merging; stars elevate priority. Combining them (`^*todo`) is fine, while doubling (`**fix`) is not.
 ```
 
 ## Start Here
@@ -67,7 +67,9 @@ waymark scan src/example.ts --json   # compact JSON array
 waymark scan src/example.ts --jsonl  # newline-delimited JSON records
 waymark scan src/example.ts --pretty # pretty-printed JSON array
 waymark map docs/PRD.md src/core.ts   # accepts files or directories (recurses by default)
-waymark find src/example.ts --marker todo
+waymark map docs --marker todo --summary   # focus on markers and add summary footer
+waymark find src/example.ts --marker todo --tag '#perf:hotpath'
+waymark find src/example.ts --mention @agent --json
 ```
 
 The CLI relies on the core formatter, parser, and map helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.

@@ -5,9 +5,10 @@ import { spawn } from "bun";
 
 const audits = {
   all: "rg ':::'",
-  tldr: "rg ':::\\s*!?tldr'",
+  tldr: "rg '\\b[\\^\\*]?tldr\\s+:::'",
   agents: "rg ':::\\s*@agent'",
   hotpath: "rg '#perf:hotpath|#hotpath'",
+  postmarker: "rg ':::\\s*[\\^\\*][A-Za-z]+'",
 } as const;
 
 type AuditName = keyof typeof audits;

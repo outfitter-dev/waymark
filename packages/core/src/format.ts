@@ -4,10 +4,10 @@ import type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";
 import { parse, SIGIL } from "@waymarks/grammar";
 
 import { resolveConfig } from "./config";
-import type { WaymarkConfig } from "./types";
+import type { PartialWaymarkConfig, WaymarkConfig } from "./types";
 
 export type FormatOptions = ParseOptions & {
-  config?: Partial<WaymarkConfig>;
+  config?: PartialWaymarkConfig;
 };
 
 export type FormatEdit = {
@@ -27,6 +27,22 @@ const HTML_COMMENT_LEADER = "<!--";
 const SINGLE_SPACE = " ";
 const NEWLINE = "\n";
 const LINE_SPLIT_REGEX = /\r?\n/;
+
+// Known property keys that can act as pseudo-markers in continuation context
+const PROPERTY_KEYS = new Set([
+  "ref",
+  "rel",
+  "depends",
+  "needs",
+  "blocks",
+  "dupeof",
+  "owner",
+  "since",
+  "fixes",
+  "affects",
+  "priority",
+  "status",
+]);
 
 export function formatText(
   source: string,
@@ -154,6 +170,18 @@ function formatMultiLine(
 
   const [firstSegment = "", ...continuations] = segments;
 
+  // Calculate alignment position for continuations
+  const alignContinuations = config.format.alignContinuations ?? true;
+  const sigilPosition = alignContinuations
+    ? calculateSigilPosition({
+        indent,
+        commentLeader,
+        leaderSeparator,
+        markerToken,
+        config,
+      })
+    : 0;
+
   const blockLines: string[] = [
     renderFirstLine({
       commentLeader,
@@ -166,6 +194,7 @@ function formatMultiLine(
     }),
   ];
 
+  // Add text continuations
   blockLines.push(
     ...renderContinuationLines({
       commentLeader,
@@ -173,6 +202,19 @@ function formatMultiLine(
       indent,
       continuations,
       config,
+      sigilPosition,
+    })
+  );
+
+  // Add property continuations from record.properties
+  blockLines.push(
+    ...renderPropertyContinuations({
+      commentLeader,
+      leaderSeparator,
+      indent,
+      properties: record.properties,
+      config,
+      sigilPosition,
     })
   );
 
@@ -195,11 +237,11 @@ function normalizeMarker(record: WaymarkRecord, config: WaymarkConfig): string {
 
 function buildSignalPrefix(record: WaymarkRecord): string {
   let prefix = "";
-  if (record.signals.current) {
-    prefix += "*";
+  if (record.signals.raised) {
+    prefix += "^";
   }
   if (record.signals.important) {
-    prefix += "!";
+    prefix += "*";
   }
   return prefix;
 }
@@ -257,28 +299,133 @@ type ContinuationRenderParams = {
   indent: string;
   continuations: string[];
   config: WaymarkConfig;
+  sigilPosition: number;
 };
 
 function renderContinuationLines(params: ContinuationRenderParams): string[] {
-  const { commentLeader, leaderSeparator, indent, continuations, config } =
-    params;
+  const {
+    commentLeader,
+    leaderSeparator,
+    indent,
+    continuations,
+    config,
+    sigilPosition,
+  } = params;
   const lastIndex = continuations.length - 1;
+  const alignContinuations = config.format.alignContinuations ?? true;
 
   return continuations.map((segment, index) => {
-    let line = `${indent}${commentLeader}${leaderSeparator}...`;
-    if (segment.length > 0) {
-      line += ` ${segment}`;
+    // Build the base line with comment leader
+    const base = `${indent}${commentLeader}${leaderSeparator}`;
+
+    // Calculate alignment padding
+    let alignment = "";
+    if (alignContinuations && sigilPosition > base.length) {
+      alignment = " ".repeat(sigilPosition - base.length);
     }
 
-    if (index === lastIndex) {
-      line += config.format.spaceAroundSigil ? ` ${SIGIL}` : SIGIL;
-      if (commentLeader === HTML_COMMENT_LEADER) {
-        line = appendHtmlClosure(line, segment.length > 0);
-      }
+    // Build the continuation line with markerless :::
+    let line = `${base}${alignment}${SIGIL}`;
+
+    if (segment.length > 0) {
+      line += config.format.spaceAroundSigil ? ` ${segment}` : segment;
+    }
+
+    // Handle explicit closing on last line
+    const isLast = index === lastIndex;
+    if (
+      isLast &&
+      segment.endsWith(` ${SIGIL}`) &&
+      commentLeader === HTML_COMMENT_LEADER &&
+      !line.includes("-->")
+    ) {
+      // Already has closing, don't add another
+      line = appendHtmlClosure(line, segment.length > 0);
     }
 
     return line.trimEnd();
   });
+}
+
+type PropertyContinuationParams = {
+  commentLeader: string;
+  leaderSeparator: string;
+  indent: string;
+  properties: Record<string, string>;
+  config: WaymarkConfig;
+  sigilPosition: number;
+};
+
+function renderPropertyContinuations(
+  params: PropertyContinuationParams
+): string[] {
+  const {
+    commentLeader,
+    leaderSeparator,
+    indent,
+    properties,
+    config,
+    sigilPosition,
+  } = params;
+  const lines: string[] = [];
+  const alignContinuations = config.format.alignContinuations ?? true;
+
+  for (const [key, value] of Object.entries(properties)) {
+    // Only render known properties as continuation lines
+    if (!PROPERTY_KEYS.has(key)) {
+      continue;
+    }
+
+    // Build the base line with comment leader and property key
+    const base = `${indent}${commentLeader}${leaderSeparator}`;
+
+    // For property continuations, the property key comes before :::
+    // But we need to align the ::: position
+    let line = "";
+    if (alignContinuations && sigilPosition > 0) {
+      // Calculate padding needed before the property key
+      const keyLength = key.length;
+      const targetPosition = sigilPosition - keyLength - 1; // -1 for space before :::
+      if (targetPosition > base.length) {
+        const padding = " ".repeat(targetPosition - base.length);
+        line = `${base}${padding}${key} ${SIGIL}`;
+      } else {
+        // Can't align properly, just place normally
+        line = `${base}${key} ${SIGIL}`;
+      }
+    } else {
+      line = `${base}${key} ${SIGIL}`;
+    }
+
+    if (value.length > 0) {
+      line += config.format.spaceAroundSigil ? ` ${value}` : value;
+    }
+
+    lines.push(line.trimEnd());
+  }
+
+  return lines;
+}
+
+type SigilPositionParams = {
+  indent: string;
+  commentLeader: string;
+  leaderSeparator: string;
+  markerToken: string;
+  config: WaymarkConfig;
+};
+
+function calculateSigilPosition(params: SigilPositionParams): number {
+  const { indent, commentLeader, leaderSeparator, markerToken, config } =
+    params;
+
+  // Calculate where the ::: starts in the first line
+  const baseLength =
+    indent.length + commentLeader.length + leaderSeparator.length;
+  const markerLength = markerToken.length;
+  const spaceBeforeSigil = config.format.spaceAroundSigil ? 1 : 0;
+
+  return baseLength + markerLength + spaceBeforeSigil;
 }
 
 type EnsureHtmlClosureParams = {
@@ -288,21 +435,20 @@ type EnsureHtmlClosureParams = {
 };
 
 function ensureHtmlClosure(params: EnsureHtmlClosureParams): void {
-  const { blockLines, continuations, firstSegment } = params;
-  const lastIndex = blockLines.length - 1;
-  const lastLine = blockLines[lastIndex] ?? "";
-  const needsClosure = continuations.length === 0 || !lastLine.includes("-->");
+  const { blockLines } = params;
 
-  if (!needsClosure) {
-    return;
+  // For HTML comments, each line needs to be properly closed with -->
+  for (let i = 0; i < blockLines.length; i++) {
+    const line = blockLines[i] ?? "";
+
+    // Skip if line already has closure
+    if (line.includes("-->")) {
+      continue;
+    }
+
+    // Add closure to lines that need it
+    const hasContent = line.includes(":::");
+    const closed = appendHtmlClosure(line, hasContent);
+    blockLines[i] = closed.trimEnd();
   }
-
-  const lastContinuationIndex = continuations.length - 1;
-  const hasContent =
-    continuations.length > 0
-      ? (continuations[lastContinuationIndex] ?? "").length > 0
-      : firstSegment.length > 0;
-
-  const closed = appendHtmlClosure(lastLine, hasContent);
-  blockLines[lastIndex] = closed.trimEnd();
 }

@@ -10,7 +10,13 @@ Keep this log current while working. Each session should append entries under th
 <!-- ::: the intent is to capture thoughts, concerns, etc. so other agents can see them -->
 <!-- ::: keep this space tidy though, and prune it periodically when things may no longer be relevant -->
 
-- ...
+- Matt's notes:
+  - The `:::` sigil is placed after the marker intentionally
+    - While I did try a format like `::: <marker>` it didn't maintain backwards compatibility with various tooling that already worked with `TODO` type comments. Moving it to after the marker meant that those tools would still see `todo :::` waymarks.
+  - The `:::` sigil was chosen because:
+    - It's visually distinct, easy to type
+    - It's not something that occurs often naturally in code or text.
+    - When converted to AI tokens, it's just a single token.
 
 ## 2025-09-26
 
@@ -120,6 +126,13 @@ Keep this log current while working. Each session should append entries under th
   - Updated `package.json` `format:md` script to ignore the Bun cache so `bun run format` no longer trips over vendored markdown.
   - Tweaked `AGENTS.md` pre-push checklist wording so the temp-marker guard no longer blocks commits on inline examples.
   - Swapped inline `// *` examples in PRD/README to block comments so the active-signal hook passes without losing signal guidance.
+- Map Enhancements
+  - Added marker filters and optional summary output to `waymark map` (text + JSON) with deterministic ordering.
+  - Introduced `summarizeMarkerTotals` helper in core and new CLI formatting helpers to share marker-count logic.
+  - Expanded CLI tests (`parseMapArgs`, `serializeMap`) and core map tests to cover the new behaviour.
+- Flag Utilities
+  - Created shared flag iterator/handlers (`packages/cli/src/utils/flags/…`) and refactored map/find commands to reuse them.
+  - Updated find command parsing to iterate via helpers (json/marker/tag/mention) without bespoke loops.
 
 - MCP QA & Docs
   - Added targeted MCP tests covering TLDR/THIS/custom markers plus utility coverage for `truncateSource`.
@@ -174,3 +187,94 @@ Keep this log current while working. Each session should append entries under th
   - All 36 core tests passing, full `check:all` pipeline green.
   - Phase 2 (Grammar & Core) now complete with all checklist items done.
   - Phase 3 (CLI) near-complete except TUI (deferred to Phase 5).
+
+## 2025-09-29
+
+- **HTML Comment Closure Fix**
+  - Fixed issue where HTML comment multi-line waymarks weren't properly closed
+  - Updated `ensureHtmlClosure()` to close each line that needs `-->`
+  - All 48 tests now passing (was 47/48)
+
+## 2025-09-29 (Previous)
+
+- Config Stub
+  - Added `.waymark/config.jsonc` with skip path patterns so we can migrate ignore rules away from `.waymark/ignore.jsonc`.
+
+- **Multi-line Waymark Grammar Change Decision**
+  // this ::: multi-line waymark grammar overhaul replacing dots with markerless sigils ref:#wip/multiline-update
+  - Changing from `...` continuation prefix to using markerless `:::` lines as continuations
+  - Key rationale:
+    - Maintains greppability - all waymarks still findable with `rg ":::"`
+    - Waymarks are about context, and markers are critical context - so markerless waymarks naturally imply continuation
+    - Cleaner visual appearance and consistency
+  - New rules:
+    - Any line starting with `:::` (with optional preceding spaces/comment leader) without a marker is a continuation
+    - Properties can act as pseudo-markers ONLY in continuation context (when following another waymark)
+    - Parser logic changes needed:
+      1. Track whether we're in a "waymark context" (previous line was a waymark)
+      2. If in context and line matches `// <property> ::: <value>`, treat as continuation with property
+      3. These property-as-marker lines get folded into the parent waymark's properties
+      4. Search/indexing must aggregate these into the parent record
+    - Example with aligned formatting:
+
+      ```ts
+      // tldr  ::: this is a tldr about the authentication service
+      //       ::: that continues on this line with more detail
+      // ref   ::: #auth/service
+      // owner ::: @alice
+      // since ::: 2025-01-01
+      ```
+
+      This would parse as a single waymark with:
+      - marker: `tldr`
+      - contentText: `this is a tldr about the authentication service\nthat continues on this line with more detail`
+      - properties: `{ ref: "#auth/service", owner: "@alice", since: "2025-01-01" }`
+
+    - **Formatting alignment**:
+      - Formatter should align continuation `:::` with the parent waymark's `:::` position
+      - This means padding spaces to match: `// marker ::: text` → `//        ::: continuation`
+      - Config option: `format.alignContinuations` (default: `true`)
+      - This improves readability and makes the continuation relationship visually clear
+
+  - This replaces the previous `...` continuation syntax entirely
+  - **Critical distinction**:
+    - Standalone `// ::: some note` (not following a waymark) = Invalid/ignored
+    - `//     ::: continuation text` (following a waymark) = Valid text continuation
+    - `// property ::: value` (following a waymark) = Valid property continuation
+    - Bare `:::` without a recognizable property = Always treated as text continuation
+    - This context-sensitive parsing ensures backward compatibility and prevents false positives
+  - **Continuation detection logic**:
+    1. If line has `:::` but no valid marker before it
+    2. AND previous line was a waymark (or another continuation)
+    3. Check if text before `:::` matches a known property pattern
+    4. If yes → fold as property into parent waymark
+    5. If no → append as content text to parent waymark
+  - **Implementation Status**: COMPLETE (2025-09-29)
+    - Parser handles markerless `:::` as continuations correctly
+    - Context-sensitive parsing ensures continuations only work after waymarks
+    - Property-as-marker pattern implemented for known properties
+    - Formatter supports alignment configuration (format.alignContinuations)
+    - All parser and formatter tests passing (except 1 unrelated HTML comment test)
+    - Documentation fully updated in PRD.md, SPEC.md, and WAYMARKS.md
+
+- **Marker Constants Refactoring**
+  - Refactored `packages/grammar/src/constants.ts` to include rich metadata
+  - Added structured `MarkerDefinition` type with:
+    - `name`: Canonical marker name
+    - `category`: Type-safe category (work, info, caution, workflow, inquiry)
+    - `aliases`: Alternative names (e.g., fixme→fix, why→context)
+    - `description`: Human-readable description
+  - Created helper functions:
+    - `getCanonicalMarker()`: Convert any alias to canonical form
+    - `getMarkerCategory()`: Get category for any marker
+  - Added `comment` as new blessed marker in info category
+  - Maintains backward compatibility via `BLESSED_MARKERS` array
+- Tooling Follow-Up
+  - Plan to surface marker categories in the CLI (e.g., `waymark find --category work`) and normalize aliases via grammar helpers.
+
+## 2025-09-29 (Today)
+
+- Bang priority signal migration
+  - Replaced `!` with `*` in signal parsing/rendering (grammar, core formatter, MCP insert helper, audit/map scripts) and updated schema metadata.
+  - Refreshed docs (PRD, SPEC, README) plus plan guidance to describe `^`/`*` signals and removed all migration waymarks tied to the bang-to-star swap.
+  - Ran `bun ci:validate` to cover typecheck, tests, and builds across packages; all green.

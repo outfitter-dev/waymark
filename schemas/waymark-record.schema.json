@@ -42,13 +42,13 @@
       "type": "object",
       "description": "Signal flags for the waymark",
       "properties": {
-        "current": {
+        "raised": {
           "type": "boolean",
-          "description": "Whether marked with * (current/active work)"
+          "description": "Whether marked with ^ (raised work in progress)"
         },
         "important": {
           "type": "boolean",
-          "description": "Whether marked with ! (high priority)"
+          "description": "Whether marked with * (high priority)"
         }
       },
       "additionalProperties": false

@@ -1,7 +1,7 @@
 {
-  "$comment": "tldr ::: default map ignore configuration and marker keep list #docs/rules",
+  // tldr ::: default map ignore configuration and marker keep list #docs/rules
   "keepMarkers": ["tldr"],
-  "$comment_ignore": "note ::: Paths to ignore (gitignore-style globs, relative to repo root)",
+  // note ::: Paths to ignore (gitignore-style globs, relative to repo root)
   "ignore": [
     "AGENTS.md",
     "PLAN.md",

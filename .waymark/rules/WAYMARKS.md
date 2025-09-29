@@ -20,12 +20,12 @@ A waymark is a single comment line (or continuation block) built from the follow
 ```
 
 - **Comment leader**: Whatever the host language uses (`//`, `#`, `<!--`, etc.). Waymarks never live inside string literals or rendered docstrings.
-- **Signals** (optional): `*` for branch-scoped work, `!` for importance. When combined, `*` precedes `!` (`*!todo`). No other signals are allowed.
+- **Signals** (optional): the caret (`^`) marks raised/in-progress work, the star (`*`) marks importance. When combined, the caret precedes the star (`^*todo`). No other signals are allowed.
 - **Marker** (required): One of the blessed keywords below. Lowercase, no spaces.
 - **`:::` sigil**: Exactly three ASCII colons with one space before and after when a marker is present.
 - **Content**: Free text plus optional properties, hashtags, actors, and tags following the grammar defined here.
 
-Multi-line waymarks use continuation lines that start with `...` and end with a closing line that ends in `:::`.
+Multi-line waymarks use markerless `:::` continuation lines, with optional alignment to the parent waymark's `:::` position for improved readability.
 
 ## 2. Blessed Markers
 
@@ -49,6 +49,7 @@ Only the following markers are considered first-class by the toolchain. Custom m
 - `this`
 - `example`
 - `idea`
+- `comment`
 
 ### Caution / Quality
 
@@ -139,20 +140,20 @@ rg ':::\s*@agent'
 rg ':::\s*@claude'
 
 # Priority
-rg '^\s*//\s*!+\w+\s+:::'
+rg '\*\w+\s*:::'
 
 # Performance hotspots
 rg '#perf:hotpath|#hotpath'
 
 # Documentation TLDRs
-git ls-files '*.md' '*.mdx' | xargs rg '<!-- tldr :::.*#docs'
+git ls-files '*.md' '*.mdx' | xargs rg 'tldr\s*:::.*#docs'
 ```
 
 CLI equivalents:
 
 ```bash
 waymark find --actor @agent
-waymark find --signal !!
+waymark find --signal *
 waymark find #perf:hotpath
 waymark find --file-category docs --marker tldr
 ```
@@ -187,13 +188,21 @@ waymark find --file-category docs --marker tldr
 // tldr ::: payment processor entry point ref:#payments/stripe-webhook #payments
 // this ::: Stripe webhook verification handler #perf:hotpath
 // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
-// !review ::: @alice confirm new retry strategy #sec:boundary
+// *review ::: @alice confirm new retry strategy #sec:boundary
 // note ::: logs PII-hardened metadata only #docs/logging
 
-/* Multi-line example */
+/* Multi-line examples */
+
+// Text continuation with alignment
 // todo ::: refactor this parser for streaming
-// ... preserve backward-compatible API surface
-// ... coordinate deployment with @devops :::
+//      ::: preserve backward-compatible API surface
+//      ::: coordinate deployment with @devops
+
+// Property continuations (parsed as properties of the parent waymark)
+// tldr  ::: payment processor service
+// ref   ::: #payments/core
+// owner ::: @alice
+// since ::: 2025-01-01
 ```
 
 ```md

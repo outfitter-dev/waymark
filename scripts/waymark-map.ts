@@ -13,7 +13,7 @@ const OUTPUT_PATH = join(WAYMARK_DIR, "map.md");
 const DEFAULT_KEEP_MARKER = "tldr";
 
 const COMMENT_PATTERN =
-  /^(\/\*+|<!--|\/\/|#|--|\*)(?:\s*)([*!]?)([A-Za-z0-9_-]*)(?:\s*:::\s*)(.*)$/u;
+  /^(\/\*+|<!--|\/\/|#|--|\*)(?:\s*)([\^*]?)([A-Za-z0-9_-]*)(?:\s*:::\s*)(.*)$/u;
 const TLDR_MAX_LINE_DEFAULT = 40;
 const TLDR_MAX_LINE_MARKDOWN = 80;
 const KIBIBYTE = 1024;
@@ -23,7 +23,7 @@ const MAX_WORKERS = 16;
 const CPU_FALLBACK_COUNT = 4;
 
 const LINE_BREAK_PATTERN = /\r?\n/u;
-const MARKER_PREFIX_PATTERN = /^[*!]+/u;
+const MARKER_PREFIX_PATTERN = /^[\^*]+/u;
 const LIST_PREFIX_PATTERN = /^\s*(?:[-*+>]+\s+|\d+\.\s+)?/u;
 const TRAILING_WHITESPACE_PATTERN = /\s+$/u;
 const HTML_COMMENT_END_PATTERN = /\s*-->$/u;

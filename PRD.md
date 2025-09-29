@@ -38,7 +38,7 @@ This preserves the "one grep finds all" feel (searching `#token` surfaces refere
 ## Definitions & Terminology
 
 - **Waymark:** A structured comment in source files following `signal? + marker + ' ::: ' + content`.
-- **Signal:** Optional prefix indicating state/priority: `*` (current/active), `!` (important). When combined, `*` precedes `!`.
+- **Signal:** Optional prefix indicating state/priority: `^` (raised/in-progress), `*` (important). When combined, `^` precedes `*`.
 - **Marker:** Single word describing intent/purpose (e.g., `todo`, `fix`, `note`). Case normalized by formatter.
 - **Sigil:** The literal `:::` separating marker from content.
 - **Content:** Free text after the sigil; may contain properties, hashtags, mentions.
@@ -63,21 +63,21 @@ This preserves the "one grep finds all" feel (searching `#token` surfaces refere
 
 ```ts
 // todo ::: add rate limiting
-// !fix ::: validate email format
-/* *wip ::: implementing JWT generation */
+// *fix ::: validate email format
+/* ^wip ::: implementing JWT generation */
 // note ::: assumes UTC timezone
 ```
 
 ### Signals
 
-- `*` — current/active work (should not land on protected branches by policy)
-- `!` — important/high priority
-- Order when combined: `*!` (e.g., `*!todo`). Double intensity marks (e.g., `!!`) are not part of the v1 grammar; use a single `!` only.
+- `^` (caret) — marks raised/in-progress work and produces a raised waymark that should not land on protected branches
+- `*` (star) — important/high priority
+- Order when combined: caret precedes star (`^*`, e.g., `^*todo`). Double intensity marks (e.g., `**`) are not part of the v1 grammar; use a single `*` only.
 
 ### Markers (Blessed)
 
 **Work/Action:** `todo`, `fix` (alt: `fixme`), `wip`, `done`, `review`, `test`, `check`
-**Information:** `note`, `context` (alt: `why`), `tldr`, `this`, `example`, `idea`
+**Information:** `note`, `context` (alt: `why`), `tldr`, `this`, `example`, `idea`, `comment`
 **Caution/Quality:** `warn`, `alert`, `deprecated`, `temp` (alt: `tmp`), `hack` (alt: `stub`)
 **Workflow:** `blocked`, `needs`
 **Inquiry:** `question` (alt: `ask`)
@@ -127,12 +127,12 @@ Use `@agent` as the **first token after `:::`** when the task is meant for a gen
 
 ```ts
 // todo ::: @agent implement user authentication #sec:boundary #hotpath
-// !todo ::: @agent harden JWT verification #sec:auth #perf
+// *todo ::: @agent harden JWT verification #sec:auth #perf
 // review ::: @agent check for SQL injection vulnerabilities #gateway/api
 // test ::: @agent add regression coverage for negative balances
 ```
 
-- Leading `@agent` assigns ownership to an AI helper; signals (`!`, `*`) still convey urgency or scope.
+- Leading `@agent` assigns ownership to an AI helper; signals (`^`, `*`) still convey urgency or scope.
 - Additional actors can appear later in the prose for coordination (`// todo ::: @agent ship retry logic with review from @alice`).
 - If `@agent` appears later in the sentence, treat it as a mention only; ownership stays with the first actor token.
 
@@ -158,23 +158,33 @@ The canonical declares the authoritative anchor via `ref:#token`; downstream rel
 
 - **Baseline discovery:** `rg ":::"` surfaces all waymarks; `waymark list <paths>` mirrors this in the CLI with structured output.
 - **Actor delegation:** `rg ":::\\s*@agent"` for generic work, `waymark find --actor @claude` for named agents, `waymark find --actor @agents` to query configured groups.
-- **Priority & signals:** `rg "^\\s*//\\s*!\\w+\s+:::"` finds work flagged with `!`. Use `waymark find --signal !` to pull high-priority waymarks; double bangs (`!!`) are not part of the v1 grammar.
+- **Priority & signals:** `rg "^\\s*//\\s*\\*\\w+\s+:::"` finds work flagged with `*`. Use `waymark find --signal *` to pull high-priority waymarks; double stars (`**`) are not part of the v1 grammar.
 - **Performance hotspots:** prefer the pattern `rg "#perf:hotpath|#hotpath"` (case-insensitive) or `waymark find #perf:hotpath` which expands to both forms.
 - **Documentation summaries:** `rg "<!-- tldr :::.*#docs" docs/` filters doc TLDRs; the CLI equivalent is `waymark find --file-category docs --marker tldr`.
 
 ### Multi‑line Waymarks
 
-For long content:
+For long content, use markerless `:::` continuations:
 
 ```ts
 // todo ::: implement authentication flow
-// ... with OAuth 2.0 and PKCE
-// ... coordinate with security team :::
+//      ::: with OAuth 2.0 and PKCE
+//      ::: coordinate with security team
 ```
 
-- Continuations start with `...` on subsequent comment lines.
-- A continuation block **should** end with a line that ends in `:::` to explicitly close.
-- **Fail‑soft rule:** If no explicit close is found, the block ends at the first non‑continuation comment line or EOF; linter emits an error.
+- Continuation lines use markerless `:::` (no marker before the sigil)
+- Only valid when following a waymark line (context-sensitive parsing)
+- Formatter aligns continuation `:::` with parent waymark's `:::` by default
+- Properties can act as pseudo-markers in continuation context:
+
+```ts
+// tldr  ::: payment processor entry point
+// ref   ::: #payments/stripe
+// owner ::: @alice
+// since ::: 2025-01-01
+```
+
+In this example, `ref`, `owner`, and `since` are parsed as properties of the parent `tldr` waymark.
 
 ### Where Not to Use
 
@@ -194,7 +204,7 @@ For long content:
 ```ebnf
 WAYMARK_LINE     = HWS, COMMENT_LEADER, HWS, [SIGNALS], [MARKER, HWS], ":::", HWS, CONTENT ;
 HWS              = { " " | "\t" } ;
-SIGNALS          = ["*"], ["!"] ;
+SIGNALS          = ["^"] , ["*"] ;
 MARKER           = ALPHA, { ALPHA | DIGIT | "_" | "-" } ;
 CONTENT          = { TOKEN | HWS } ;
 TOKEN            = RELATION | PROPERTY | MENTION | HASHTAG | TEXT ;
@@ -243,7 +253,7 @@ Each parsed waymark emits a normalized record. This is the stable interchange fo
   "endLine": 15,
   "indent": 0,
   "commentLeader": "//",
-  "signals": { "current": false, "important": true },
+  "signals": { "raised": false, "important": true },
   "marker": "fix",
   "contentText": "handle partial refunds depends:#payments/charge",
   "properties": { "since": "3.0.0" },
@@ -251,7 +261,7 @@ Each parsed waymark emits a normalized record. This is the stable interchange fo
   "canonicals": ["#auth/service"],
   "mentions": ["@alice"],
   "tags": ["#refunds"],
-  "raw": "// !fix ::: handle partial refunds depends:#payments/charge"
+  "raw": "// *fix ::: handle partial refunds depends:#payments/charge"
 }
 ```
 
@@ -274,7 +284,7 @@ Each parsed waymark emits a normalized record. This is the stable interchange fo
     "signals": {
       "type": "object",
       "properties": {
-        "current": { "type": "boolean" },
+        "raised": { "type": "boolean" },
         "important": { "type": "boolean" }
       },
       "additionalProperties": false
@@ -589,11 +599,11 @@ Notes:
 ## Appendix B — Grep Recipes
 
 - All waymarks: `rg ":::"`
-- By marker: `rg "\\btodo \\\:\:\:\b"`, `rg "\\*todo \\\:\:\:\b"`
-- Properties: `rg "\\bowner:@alice\\b"`
+- By marker: `rg "\\btodo\\s*:::"`, `rg "\\*todo\\s*:::"`
+- Properties: `rg "owner:@alice"`
 - Canonicals for a token: `rg "ref:#payments/core"`
 - All refs of a token: `rg "#payments/core"`
-- Multi‑line blocks: `rg -U ":::.*\n.*\\.\\.\\..*:::"`
+- Multi‑line blocks: `rg -U ":::.*\n.*:::"` (finds waymarks with continuations)
 
 ## Example Snippets
 
@@ -607,7 +617,7 @@ class AuthService {
   // note ::: SSO edge cases #auth/service
 
   login(user) {
-    // !fix ::: validate credentials needs:#infra/db
+    // *fix ::: validate credentials needs:#infra/db
     return issueJWT(user)
   }
 }

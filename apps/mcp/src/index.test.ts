@@ -80,7 +80,7 @@ describe("handleInsertWaymark", () => {
       "utf8"
     );
 
-    const signals: SignalFlags = { current: true };
+    const signals: SignalFlags = { raised: true };
     const server = new TestServer();
     const response = await handleInsertWaymark({
       server,
@@ -103,7 +103,7 @@ describe("handleInsertWaymark", () => {
     const updated = await readFile(file, "utf8");
     const lines = updated.split("\n");
     expect(lines[THIS_INSERT_LINE - 1]).toBe(
-      "  // *this ::: documents the feature body"
+      "  // ^this ::: documents the feature body"
     );
 
     await rm(dir, { recursive: true, force: true });

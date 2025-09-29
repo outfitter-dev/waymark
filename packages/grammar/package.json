@@ -4,7 +4,7 @@
   "type": "module",
   "main": "dist/index.js",
   "module": "src/index.ts",
-  "types": "dist/index.d.ts",
+  "types": "src/index.ts",
   "description": "Minimal, stable grammar parser for waymark syntax",
   "files": [
     "dist",

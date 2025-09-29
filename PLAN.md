@@ -8,7 +8,7 @@
 - Work from the shared branch (`gt-v1.0/rewrite`) unless the plan explicitly calls for a feature branch.
 - Update checkboxes as work progresses; include brief notes or links next to checked items.
 - Record major decisions in the Decisions Log with enough context for future agents.
-- Follow the v1 signal grammar: only `*` and a single `!`; never use `!!` or other signal variants.
+- Follow the v1 signal grammar: only `^` and a single `*`; never use `^^`, `**`, or other signal variants.
 
 ## Phase 1 — Specification & Project Hygiene (Complete)
 
@@ -65,6 +65,28 @@
 - [ ] Configure CI (lint/test workflows, publish dry runs) and release automation.
 - [ ] Draft migration notes and announce availability of the new CLI and agent toolkit.
 - [ ] Tag an initial prerelease once acceptance criteria are met.
+- [ ] Evaluate terminal UI prototypes (see docs/waymark/tui-ab-plan.md) and select approach.
+- [ ] Expose marker categories/aliases in CLI tooling (e.g., `waymark find --category work`, alias normalization).
+
+## Phase 3a — Multi-line Grammar Update (Complete)
+
+- [x] Update multi-line waymark syntax from `...` to markerless `:::`
+  - [x] Update PRD.md multi-line section
+  - [x] Update docs/waymark/SPEC.md examples
+  - [x] Update .waymark/rules/WAYMARKS.md documentation
+  - [x] Refactor parser.ts to recognize markerless `:::` as continuation
+  - [x] Update parser tests for new continuation syntax
+  - [x] Update formatter to handle aligned `:::` continuations
+  - [x] Update formatter tests
+  - [x] Document decision in PLAN.md log
+- [x] Implement property-as-marker in continuation context
+  - [x] Parser tracks waymark context (previous line state)
+  - [x] Recognize `// property ::: value` pattern in continuations
+  - [x] Fold property continuations into parent waymark
+  - [x] Update search/indexing to aggregate continuations
+- [x] Add formatting configuration
+  - [x] Add `format.alignContinuations` config option (default: true)
+  - [x] Implement alignment logic in formatter
 
 ## Decisions Log
 
@@ -81,3 +103,14 @@
 - 2025-09-27: Enhanced SQLite cache with batch inserts, search indices on all columns, and optimized search methods.
 - 2025-09-27: Created JSON Schemas for waymark-record, waymark-config, and waymark-scan-result in schemas/ directory.
 - 2025-09-27: Deferred TUI implementation to Phase 5 to focus on core functionality first.
+- 2025-09-29: Multi-line waymark grammar change: Replace `...` continuation prefix with markerless `:::` lines
+  - Maintains greppability (all waymarks still findable with `rg ":::"`)
+  - Context-sensitive parsing: markerless `:::` only valid after a waymark
+  - Properties can act as pseudo-markers in continuation context (`// ref ::: #token`)
+  - Formatter aligns continuation `:::` with parent waymark for visual clarity
+  - See SCRATCHPAD.md section with `ref:#wip/multiline-update` for full details
+- 2025-09-29: Refactored marker constants to include metadata and categories
+  - Added `MarkerDefinition` type with name, category, aliases, and descriptions
+  - Categories: work, info (shortened from information), caution, workflow, inquiry
+  - Added helper functions for canonical marker resolution and category lookup
+  - Added `comment` as new blessed marker in info category

@@ -1,4 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
-  "extends": ["ultracite"]
+  "extends": ["ultracite"],
+  "json": {
+    "parser": {
+      "allowComments": true,
+      "allowTrailingCommas": true
+    }
+  }
 }

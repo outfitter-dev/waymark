@@ -9,7 +9,9 @@ export type WaymarkRecord = {
   indent: number;
   commentLeader: string | null;
   signals: {
-    current: boolean;
+    /** @deprecated use `raised` */
+    current?: boolean;
+    raised: boolean;
     important: boolean;
   };
   marker: string;

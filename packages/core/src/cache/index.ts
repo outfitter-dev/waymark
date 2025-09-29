@@ -453,8 +453,18 @@ function parseSignals(
   source: string | null | undefined
 ): WaymarkRecord["signals"] {
   const parsed = safeParse<Partial<WaymarkRecord["signals"]>>(source, {});
+  let raisedValue = false;
+  if (parsed.raised !== undefined) {
+    raisedValue = Boolean(parsed.raised);
+  } else if (parsed.current !== undefined) {
+    raisedValue = Boolean(parsed.current);
+  }
+
+  const currentValue =
+    parsed.current !== undefined ? Boolean(parsed.current) : raisedValue;
   return {
-    current: parsed.current === undefined ? false : Boolean(parsed.current),
+    raised: raisedValue,
+    current: currentValue,
     important:
       parsed.important === undefined ? false : Boolean(parsed.important),
   };

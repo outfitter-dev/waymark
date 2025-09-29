@@ -3,7 +3,12 @@
 
 import { existsSync } from "node:fs";
 
-import { loadConfigFromDisk, type WaymarkMap } from "@waymarks/core";
+import {
+  type FileSummary,
+  loadConfigFromDisk,
+  summarizeMarkerTotals,
+  type WaymarkMap,
+} from "@waymarks/core";
 import { findRecords, parseFindArgs } from "./commands/find";
 import { formatFile, parseFormatArgs } from "./commands/fmt";
 import { graphRecords, parseGraphArgs } from "./commands/graph";
@@ -24,7 +29,8 @@ const usage = `waymark <command> [options]
 Commands:
   fmt <file> [--write|-w] [--config <path>]    Format a file (stdout by default)
   scan <file> [--json|--jsonl|--pretty]       Parse waymarks in a file
-  map [--json] <file...>                      Summarize TLDRs and markers
+  map [--json] [--marker <m>] [--summary] <file...>
+                                                Summarize TLDRs and markers
   graph [--json] <file...>                    Emit relation edges as JSON
   find <file> [--marker <m>] [--tag <t>]      Filter waymarks by markers/tags/mentions
        [--mention <handle>]
@@ -79,12 +85,14 @@ const commandHandlers: Record<string, CommandHandler> = {
     return 0;
   },
   map: async (args, _context) => {
-    const { filePaths, json } = parseMapArgs(args);
+    const { filePaths, json, markers, summary } = parseMapArgs(args);
     const map = await mapFiles(filePaths);
     if (json) {
-      writeStdout(JSON.stringify(serializeMap(map)));
+      writeStdout(
+        JSON.stringify(serializeMap(map, { markers, includeSummary: summary }))
+      );
     } else {
-      printMap(map);
+      printMap(map, { markers, includeSummary: summary });
     }
     return 0;
   },
@@ -274,37 +282,195 @@ function normalizeScope(value: string): CliScopeOption {
   );
 }
 
-function printMap(map: WaymarkMap): void {
-  const lines: string[] = [];
-  for (const [file, summary] of map.files.entries()) {
-    lines.push(file);
-    if (summary.tldr) {
-      lines.push(`  tldr: ${summary.tldr.contentText}`);
-    }
-    for (const [marker, details] of summary.markers.entries()) {
-      lines.push(`  ${marker}: ${details.entries.length}`);
-    }
-    lines.push("");
-  }
-  if (lines.length > 0) {
-    writeStdout(lines.join("\n"));
-  }
+type MapRenderOptions = {
+  markers?: string[];
+  includeSummary?: boolean;
+};
+
+/**
+ * Print a formatted representation of the provided map to stdout.
+ */
+function printMap(map: WaymarkMap, options: MapRenderOptions = {}): void {
+  writeStdout(formatMapOutput(map, options));
 }
 
-export function serializeMap(map: WaymarkMap): Record<string, unknown> {
+/**
+ * Format a waymark map for human-friendly CLI output.
+ */
+export function formatMapOutput(
+  map: WaymarkMap,
+  options: MapRenderOptions = {}
+): string {
+  const markerFilter = toMarkerFilter(options.markers);
+  const fileLines = buildFileBlocks(map, markerFilter);
+  const outputLines = fileLines.flat();
+
+  if (options.includeSummary) {
+    const summaryLines = buildSummaryLines(map, markerFilter);
+    if (summaryLines.length > 0) {
+      if (outputLines.length > 0 && outputLines.at(-1) !== "") {
+        outputLines.push("");
+      }
+      outputLines.push(...summaryLines);
+    }
+  }
+
+  if (outputLines.length === 0) {
+    outputLines.push(
+      markerFilter && markerFilter.size > 0
+        ? "No matching waymarks."
+        : "No waymarks found."
+    );
+  }
+
+  return outputLines.join("\n");
+}
+
+/**
+ * Serialize a waymark map into JSON-friendly data for CLI output.
+ */
+export function serializeMap(
+  map: WaymarkMap,
+  options: MapRenderOptions = {}
+): Record<string, unknown> {
+  const markerFilter = toMarkerFilter(options.markers);
   const result: Record<string, unknown> = {};
-  for (const [file, summary] of map.files.entries()) {
+
+  const entries = Array.from(map.files.entries()).sort((a, b) =>
+    a[0].localeCompare(b[0])
+  );
+
+  for (const [file, summary] of entries) {
+    const includeTldr = shouldIncludeTldr(summary, markerFilter);
+    const markerCounts = collectMarkerCounts(summary, markerFilter);
+
+    if (!includeTldr && markerCounts.length === 0 && markerFilter) {
+      continue;
+    }
+
     result[file] = {
-      tldr: summary.tldr?.contentText,
+      ...(includeTldr ? { tldr: summary.tldr?.contentText } : {}),
       markers: Object.fromEntries(
-        Array.from(summary.markers.entries()).map(([marker, details]) => [
-          marker,
-          details.entries.length,
-        ])
+        markerCounts.map(({ marker, count }) => [marker, count])
       ),
     };
   }
+
+  if (options.includeSummary) {
+    const totals = summarizeMarkerTotals(map).filter(
+      ({ marker }) => !markerFilter || markerFilter.has(marker)
+    );
+
+    result._summary = {
+      markers: Object.fromEntries(
+        totals.map(({ marker, count }) => [marker, count])
+      ),
+    };
+  }
+
   return result;
+}
+
+/**
+ * Normalize a marker filter into a Set when requested.
+ */
+function toMarkerFilter(markers?: string[]): Set<string> | undefined {
+  if (!markers || markers.length === 0) {
+    return;
+  }
+  return new Set(markers.map((marker) => marker.toLowerCase()));
+}
+
+/**
+ * Build the set of formatted lines for each file in the map.
+ */
+function buildFileBlocks(
+  map: WaymarkMap,
+  markerFilter?: Set<string>
+): string[][] {
+  const summaries = Array.from(map.files.values()).sort((a, b) =>
+    a.file.localeCompare(b.file)
+  );
+  return summaries
+    .map((summary) => buildFileLines(summary, markerFilter))
+    .filter((lines) => lines.length > 0);
+}
+
+/**
+ * Format a single file summary into printable lines.
+ */
+function buildFileLines(
+  summary: FileSummary,
+  markerFilter?: Set<string>
+): string[] {
+  const includeTldr = shouldIncludeTldr(summary, markerFilter);
+  const markerCounts = collectMarkerCounts(summary, markerFilter);
+
+  if (!includeTldr && markerCounts.length === 0 && markerFilter) {
+    return [];
+  }
+
+  const lines = [summary.file];
+  if (includeTldr && summary.tldr) {
+    lines.push(`  tldr: ${summary.tldr.contentText}`);
+  }
+  for (const { marker, count } of markerCounts) {
+    lines.push(`  ${marker}: ${count}`);
+  }
+  lines.push("");
+  return lines;
+}
+
+/**
+ * Collect marker counts for a file summary, honouring any filter provided.
+ */
+function collectMarkerCounts(
+  summary: FileSummary,
+  markerFilter?: Set<string>
+): Array<{ marker: string; count: number }> {
+  const entries = Array.from(summary.markers.entries());
+  const filtered = markerFilter
+    ? entries.filter(([marker]) => markerFilter.has(marker))
+    : entries;
+  return filtered
+    .map(([marker, details]) => ({ marker, count: details.entries.length }))
+    .sort((a, b) => a.marker.localeCompare(b.marker));
+}
+
+/**
+ * Decide whether a TLDR should be included for a given file summary.
+ */
+function shouldIncludeTldr(
+  summary: FileSummary,
+  markerFilter?: Set<string>
+): boolean {
+  if (!summary.tldr) {
+    return false;
+  }
+  if (markerFilter && !markerFilter.has("tldr")) {
+    return false;
+  }
+  return summary.tldr.contentText.trim().length > 0;
+}
+
+/**
+ * Build the global summary footer lines for the provided map.
+ */
+function buildSummaryLines(
+  map: WaymarkMap,
+  markerFilter?: Set<string>
+): string[] {
+  const totals = summarizeMarkerTotals(map).filter(
+    ({ marker }) => !markerFilter || markerFilter.has(marker)
+  );
+  if (totals.length === 0) {
+    return [];
+  }
+  const lines = ["Summary:"];
+  for (const { marker, count } of totals) {
+    lines.push(`  ${marker}: ${count}`);
+  }
+  return lines;
 }
 
 function ensureFileExists(path: string): void {
