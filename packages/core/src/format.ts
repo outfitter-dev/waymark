@@ -118,10 +118,10 @@ function formatSingleLine(
 
   const indent = " ".repeat(record.indent);
   const signals = buildSignalPrefix(record);
-  const marker = config.format.normalizeCase
-    ? record.marker.toLowerCase()
-    : record.marker;
-  const markerToken = `${signals}${marker}`;
+  const type = config.format.normalizeCase
+    ? record.type.toLowerCase()
+    : record.type;
+  const markerToken = `${signals}${type}`;
 
   if (!markerToken.trim()) {
     return null;
@@ -160,8 +160,7 @@ function formatMultiLine(
   const leaderSeparator = needsSpaceAfterLeader(commentLeader)
     ? SINGLE_SPACE
     : "";
-  const markerToken =
-    buildSignalPrefix(record) + normalizeMarker(record, config);
+  const markerToken = buildSignalPrefix(record) + normalizeType(record, config);
   const sigil = config.format.spaceAroundSigil ? ` ${SIGIL} ` : SIGIL;
 
   const segments = record.contentText.length
@@ -229,10 +228,8 @@ function formatMultiLine(
   return blockLines;
 }
 
-function normalizeMarker(record: WaymarkRecord, config: WaymarkConfig): string {
-  return config.format.normalizeCase
-    ? record.marker.toLowerCase()
-    : record.marker;
+function normalizeType(record: WaymarkRecord, config: WaymarkConfig): string {
+  return config.format.normalizeCase ? record.type.toLowerCase() : record.type;
 }
 
 function buildSignalPrefix(record: WaymarkRecord): string {

@@ -147,14 +147,45 @@ for (const def of MARKER_DEFINITIONS) {
   }
 }
 
-// Helper to get canonical marker name from any alias
-export function getCanonicalMarker(marker: string): string {
-  const def = MARKER_MAP.get(marker.toLowerCase());
-  return def?.name || marker.toLowerCase();
+// Helper to get canonical type name from any alias
+export function getCanonicalType(type: string): string {
+  const def = MARKER_MAP.get(type.toLowerCase());
+  return def?.name || type.toLowerCase();
 }
 
-// Helper to get marker category
-export function getMarkerCategory(marker: string): MarkerCategory | undefined {
-  const def = MARKER_MAP.get(marker.toLowerCase());
+// Helper to get type category
+export function getTypeCategory(type: string): MarkerCategory | undefined {
+  const def = MARKER_MAP.get(type.toLowerCase());
   return def?.category;
 }
+
+// Common marker names as string constants for runtime usage
+export const MARKERS = {
+  todo: "todo",
+  fix: "fix",
+  fixme: "fixme",
+  wip: "wip",
+  done: "done",
+  review: "review",
+  test: "test",
+  check: "check",
+  note: "note",
+  context: "context",
+  why: "why",
+  tldr: "tldr",
+  this: "this",
+  example: "example",
+  idea: "idea",
+  comment: "comment",
+  warn: "warn",
+  alert: "alert",
+  deprecated: "deprecated",
+  temp: "temp",
+  tmp: "tmp",
+  hack: "hack",
+  stub: "stub",
+  blocked: "blocked",
+  needs: "needs",
+  question: "question",
+  ask: "ask",
+} as const;

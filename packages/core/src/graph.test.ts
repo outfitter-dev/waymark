@@ -15,7 +15,7 @@ const record = (overrides: Partial<WaymarkRecord>): WaymarkRecord => ({
   indent: 0,
   commentLeader: "//",
   signals: { raised: false, important: false },
-  marker: "todo",
+  type: "todo",
   contentText: "content",
   properties: {},
   relations: [],
@@ -28,9 +28,9 @@ const record = (overrides: Partial<WaymarkRecord>): WaymarkRecord => ({
 
 test("collects canonicals and edges", () => {
   const records = [
-    record({ marker: "tldr", canonicals: ["#docs/prd"] }),
+    record({ type: "tldr", canonicals: ["#docs/prd"] }),
     record({
-      marker: "todo",
+      type: "todo",
       relations: [
         { kind: "depends", token: "#docs/prd" },
         { kind: "rel", token: "#perf/hotpath" },

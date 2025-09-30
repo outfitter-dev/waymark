@@ -15,7 +15,7 @@ const sampleRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => ({
   indent: 0,
   commentLeader: "//",
   signals: { raised: false, important: false },
-  marker: "todo",
+  type: "todo",
   contentText: "example content",
   properties: {},
   relations: [],
@@ -26,26 +26,26 @@ const sampleRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => ({
   ...overrides,
 });
 
-test("filters by marker and tag", () => {
+test("filters by type and tag", () => {
   const records = [
-    sampleRecord({ marker: "todo", tags: ["#docs"] }),
-    sampleRecord({ marker: "note", tags: ["#arch"] }),
+    sampleRecord({ type: "todo", tags: ["#docs"] }),
+    sampleRecord({ type: "note", tags: ["#arch"] }),
   ];
 
   const result = searchRecords(records, { markers: ["todo"], tags: ["#docs"] });
   expect(result).toHaveLength(1);
-  expect(result[0]?.marker).toBe("todo");
+  expect(result[0]?.type).toBe("todo");
 });
 
 test("filters by mentions and text", () => {
   const records = [
     sampleRecord({
-      marker: "todo",
+      type: "todo",
       contentText: "add more tests",
       mentions: ["@agent"],
     }),
     sampleRecord({
-      marker: "todo",
+      type: "todo",
       contentText: "refactor parser",
       mentions: ["@codex"],
     }),

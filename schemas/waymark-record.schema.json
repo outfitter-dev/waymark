@@ -4,7 +4,7 @@
   "title": "WaymarkRecord",
   "description": "A parsed waymark record from source code",
   "type": "object",
-  "required": ["file", "startLine", "endLine", "marker", "contentText"],
+  "required": ["file", "startLine", "endLine", "type", "contentText"],
   "properties": {
     "file": {
       "type": "string",
@@ -53,7 +53,7 @@
       },
       "additionalProperties": false
     },
-    "marker": {
+    "type": {
       "type": "string",
       "description": "The waymark marker (e.g., 'todo', 'fix', 'note')"
     },

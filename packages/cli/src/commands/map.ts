@@ -4,14 +4,14 @@ import { buildWaymarkMap, type WaymarkMap } from "@waymarks/core";
 
 import { createArgIterator, isFlag } from "../utils/flags/iterator";
 import { handleJsonFlag } from "../utils/flags/json";
-import { handleMarkerFlag } from "../utils/flags/marker";
 import { handleSummaryFlag } from "../utils/flags/summary";
+import { handleTypeFlag } from "../utils/flags/type";
 import { scanRecords } from "./scan";
 
 export type ParsedMapArgs = {
   filePaths: string[];
   json: boolean;
-  markers: string[];
+  types: string[];
   summary: boolean;
 };
 
@@ -29,7 +29,7 @@ export async function mapFiles(filePaths: string[]): Promise<WaymarkMap> {
 export function parseMapArgs(argv: string[]): ParsedMapArgs {
   const iterator = createArgIterator(argv);
   const filePaths: string[] = [];
-  const markers: string[] = [];
+  const types: string[] = [];
   const jsonState = { json: false };
   const summaryState = { summary: false };
 
@@ -41,7 +41,7 @@ export function parseMapArgs(argv: string[]): ParsedMapArgs {
     if (handleSummaryFlag(token, summaryState)) {
       continue;
     }
-    if (handleMarkerFlag(token, iterator, markers)) {
+    if (handleTypeFlag(token, iterator, types)) {
       continue;
     }
     if (isFlag(token)) {
@@ -55,7 +55,7 @@ export function parseMapArgs(argv: string[]): ParsedMapArgs {
   return {
     filePaths: filePaths.length > 0 ? filePaths : [process.cwd()],
     json: jsonState.json,
-    markers: markers.length > 0 ? Array.from(new Set(markers)) : [],
+    types: types.length > 0 ? Array.from(new Set(types)) : [],
     summary: summaryState.summary,
   };
 }

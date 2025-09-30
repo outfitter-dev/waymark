@@ -1,10 +1,10 @@
 {
   // tldr ::: consolidated waymark configuration with repo-specific ignore patterns
-  "markerCase": "lowercase",
+  "typeCase": "lowercase",
   "idScope": "repo",
   "protectedBranches": ["main", "release/*"],
   "signalsOnProtected": "strip",
-  "allowMarkers": ["idea", "example"],
+  "allowTypes": ["idea", "example"],
   "skipPaths": [
     "**/.git/**",
     "**/node_modules/**",

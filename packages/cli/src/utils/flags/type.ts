@@ -1,20 +1,20 @@
-// tldr ::: helper for --marker flag parsing
+// tldr ::: helper for --type flag parsing
 
 import type { ArgIterator } from "./iterator";
 import { handleStringListFlag } from "./string-list";
 
 /**
- * Collect marker flag values (case-normalized) into the provided accumulator.
+ * Collect waymark type flag values (case-normalized) into the provided accumulator.
  */
-export function handleMarkerFlag(
+export function handleTypeFlag(
   token: string | undefined,
   iterator: ArgIterator,
-  markers: string[]
+  types: string[]
 ): boolean {
   return handleStringListFlag(token, iterator, {
-    names: ["--marker", "-m"],
-    target: markers,
+    names: ["--type", "-t"],
+    target: types,
     normalize: (value) => value.toLowerCase(),
-    description: "--marker",
+    description: "--type",
   });
 }

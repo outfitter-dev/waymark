@@ -31,7 +31,7 @@ test("loadConfigFromDisk parses explicit JSONC config", async () => {
     const filePath = join(dir, "custom.jsonc");
     await writeFile(
       filePath,
-      `// comment line\n{"marker_case": "uppercase"}\n`,
+      `// comment line\n{"type_case": "uppercase"}\n`,
       "utf8"
     );
 
@@ -39,7 +39,7 @@ test("loadConfigFromDisk parses explicit JSONC config", async () => {
       cwd: dir,
       explicitPath: filePath,
     });
-    expect(config.markerCase).toBe("uppercase");
+    expect(config.typeCase).toBe("uppercase");
   });
 });
 
@@ -51,7 +51,7 @@ test("project scope reads .waymark/config.* up the tree", async () => {
     await mkdir(join(projectRoot, ".waymark"), { recursive: true });
     await writeFile(
       join(projectRoot, ".waymark", "config.yaml"),
-      "allow_markers:\n  - idea\nformat:\n  normalize_case: false\n",
+      "allow_types:\n  - idea\nformat:\n  normalize_case: false\n",
       "utf8"
     );
 
@@ -60,7 +60,7 @@ test("project scope reads .waymark/config.* up the tree", async () => {
       scope: "project",
     });
 
-    expect(config.allowMarkers).toContain("idea");
+    expect(config.allowTypes).toContain("idea");
     expect(config.format.normalizeCase).toBe(false);
   });
 });
@@ -72,12 +72,12 @@ test("default scope discovers nearest .waymarkrc file", async () => {
     await mkdir(nestedDir, { recursive: true });
     await writeFile(
       join(repoRoot, ".waymarkrc.toml"),
-      'marker_case = "uppercase"\n',
+      'type_case = "uppercase"\n',
       "utf8"
     );
 
     const config = await loadConfigFromDisk({ cwd: nestedDir });
-    expect(config.markerCase).toBe("uppercase");
+    expect(config.typeCase).toBe("uppercase");
   });
 });
 

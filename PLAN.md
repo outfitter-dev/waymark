@@ -9,6 +9,7 @@
 - Update checkboxes as work progresses; include brief notes or links next to checked items.
 - Record major decisions in the Decisions Log with enough context for future agents.
 - Follow the v1 signal grammar: only `^` and a single `*`; never use `^^`, `**`, or other signal variants.
+- See @IMPROVEMENTS.md for detailed CLI ergonomics refactoring checklist (short-term working document).
 
 ## Phase 1 — Specification & Project Hygiene (Complete)
 
@@ -63,6 +64,10 @@
 
 - [ ] Create or update guides in `docs/agents/` and broader docs to reflect new tooling.
 - [ ] Configure CI (lint/test workflows, publish dry runs) and release automation.
+- [ ] Update CLI installation scripts for production use:
+  - [ ] Change `install:bin` from symlink to copy for stable installation
+  - [ ] Add `install:dev` script with symlink (or use `wmtest` for dev binary name)
+  - [ ] Document installation methods in README
 - [ ] Draft migration notes and announce availability of the new CLI and agent toolkit.
 - [ ] Tag an initial prerelease once acceptance criteria are met.
 - [ ] Evaluate terminal UI prototypes (see docs/waymark/tui-ab-plan.md) and select approach.

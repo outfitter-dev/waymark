@@ -6,7 +6,7 @@ export type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";
 // biome-ignore lint/performance/noBarrelFile: Intentional re-export of grammar for convenience
 export {
   BLESSED_MARKERS,
-  isValidMarker,
+  isValidType,
   parse,
   parseLine,
   SIGIL,
@@ -24,20 +24,20 @@ export type { FormatEdit, FormatOptions, FormatResult } from "./format";
 export { formatText } from "./format";
 export type { GraphEdge, WaymarkGraph } from "./graph";
 export { buildRelationGraph } from "./graph";
-export type { FileSummary, WaymarkMap } from "./map";
+export type { FileSummary, MarkerSummary, WaymarkMap } from "./map";
 export { buildWaymarkMap, summarizeMarkerTotals } from "./map";
 export type {
-  NormalizeMarkerOptions,
   NormalizeRecordOptions,
+  NormalizeTypeOptions,
 } from "./normalize";
 export {
   normalizeCanonicals,
-  normalizeMarker,
   normalizeMentions,
   normalizeProperties,
   normalizeRecord,
   normalizeRelations,
   normalizeTags,
+  normalizeType,
 } from "./normalize";
 export type { SearchQuery } from "./search";
 export { searchRecords } from "./search";

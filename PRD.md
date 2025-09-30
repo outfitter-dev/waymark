@@ -160,7 +160,7 @@ The canonical declares the authoritative anchor via `ref:#token`; downstream rel
 - **Actor delegation:** `rg ":::\\s*@agent"` for generic work, `waymark find --actor @claude` for named agents, `waymark find --actor @agents` to query configured groups.
 - **Priority & signals:** `rg "^\\s*//\\s*\\*\\w+\s+:::"` finds work flagged with `*`. Use `waymark find --signal *` to pull high-priority waymarks; double stars (`**`) are not part of the v1 grammar.
 - **Performance hotspots:** prefer the pattern `rg "#perf:hotpath|#hotpath"` (case-insensitive) or `waymark find #perf:hotpath` which expands to both forms.
-- **Documentation summaries:** `rg "<!-- tldr :::.*#docs" docs/` filters doc TLDRs; the CLI equivalent is `waymark find --file-category docs --marker tldr`.
+- **Documentation summaries:** `rg "<!-- tldr :::.*#docs" docs/` filters doc TLDRs; the CLI equivalent is `waymark find --file-category docs --type tldr`.
 
 ### Multi‑line Waymarks
 
@@ -388,9 +388,9 @@ The CLI is a thin wrapper over a reusable TypeScript package (`@waymarks/core`) 
 
 - `waymark scan [path ...]` — Stream JSONL of all parsed waymarks.
 
-  - Flags: `--jsonl` (default), `--pretty`, `--marker <m>`, `--since <semver|date>`, `--tag <#token>`, `--rel <kind:#token>`
+  - Flags: `--jsonl` (default), `--pretty`, `--type <m>`, `--since <semver|date>`, `--tag <#token>`, `--rel <kind:#token>`
 
-- `waymark find [query]` — Filtered view; supports markers, tags, relations, canonicals.
+- `waymark find [query]` — Filtered view; supports types, tags, relations, canonicals.
 
   - Examples: `waymark find todo`, `waymark find --ref #payments/core`, `waymark find --depends #auth/jwt`, `waymark find --json`
 
@@ -417,11 +417,11 @@ The CLI is a thin wrapper over a reusable TypeScript package (`@waymarks/core`) 
 > Other supported formats: `.waymark/config.jsonc`, `.waymark/config.yml`, `.waymark/config.toml`.
 
 ```yaml
-marker_case: lowercase # lowercase | uppercase
+type_case: lowercase # lowercase | uppercase
 id_scope: repo # repo | file
 protected_branches: [main, release/*]
 signals_on_protected: strip # strip | fail | allow
-allow_markers:
+allow_types:
   [
     todo,
     fix,

@@ -17,22 +17,22 @@ export type WaymarkLintConfig = {
 };
 
 export type PartialWaymarkConfig = {
-  markerCase?: WaymarkConfig["markerCase"];
+  typeCase?: WaymarkConfig["typeCase"];
   idScope?: WaymarkConfig["idScope"];
   protectedBranches?: string[];
   signalsOnProtected?: WaymarkConfig["signalsOnProtected"];
-  allowMarkers?: string[];
+  allowTypes?: string[];
   skipPaths?: string[];
   format?: Partial<WaymarkFormatConfig>;
   lint?: Partial<WaymarkLintConfig>;
 };
 
 export type WaymarkConfig = {
-  markerCase: "lowercase" | "uppercase";
+  typeCase: "lowercase" | "uppercase";
   idScope: "repo" | "file";
   protectedBranches: string[];
   signalsOnProtected: "strip" | "fail" | "allow";
-  allowMarkers: string[];
+  allowTypes: string[];
   skipPaths: string[];
   format: WaymarkFormatConfig;
   lint: WaymarkLintConfig;
