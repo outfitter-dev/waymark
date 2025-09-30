@@ -14,7 +14,7 @@ export type WaymarkRecord = {
     raised: boolean;
     important: boolean;
   };
-  marker: string;
+  type: string;
   contentText: string;
   properties: Record<string, string>;
   relations: Array<{

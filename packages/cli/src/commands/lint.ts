@@ -2,7 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 
-import { isValidMarker, parse } from "@waymarks/core";
+import { isValidType, parse } from "@waymarks/core";
 
 import { expandInputPaths } from "../utils/fs";
 
@@ -14,7 +14,7 @@ export type LintCommandOptions = {
 export type LintIssue = {
   file: string;
   line: number;
-  marker: string;
+  type: string;
 };
 
 export type LintReport = {
@@ -32,10 +32,10 @@ export function parseLintArgs(argv: string[]): LintCommandOptions {
 
 export async function lintFiles(
   filePaths: string[],
-  allowMarkers: string[]
+  allowTypes: string[]
 ): Promise<LintReport> {
   const issues: LintIssue[] = [];
-  const allowList = new Set(allowMarkers.map((marker) => marker.toLowerCase()));
+  const allowList = new Set(allowTypes.map((marker) => marker.toLowerCase()));
 
   const files = await expandInputPaths(filePaths);
   for (const path of files) {
@@ -45,14 +45,14 @@ export async function lintFiles(
     }
     const records = parse(source, { file: path });
     for (const record of records) {
-      const marker = record.marker.toLowerCase();
-      if (isValidMarker(marker) || allowList.has(marker)) {
+      const type = record.type.toLowerCase();
+      if (isValidType(type) || allowList.has(type)) {
         continue;
       }
       issues.push({
         file: path,
         line: record.startLine,
-        marker: record.marker,
+        type: record.type,
       });
     }
   }

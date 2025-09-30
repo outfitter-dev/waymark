@@ -5,12 +5,12 @@ import type { WaymarkRecord } from "@waymarks/grammar";
 
 import {
   normalizeCanonicals,
-  normalizeMarker,
   normalizeMentions,
   normalizeProperties,
   normalizeRecord,
   normalizeRelations,
   normalizeTags,
+  normalizeType,
 } from "./normalize";
 
 // Helper to create a base record for testing
@@ -21,7 +21,7 @@ function createTestRecord(
     file: "test.ts",
     startLine: 1,
     endLine: 1,
-    marker: "todo",
+    type: "todo",
     contentText: "test content",
     signals: { raised: false, important: false },
     properties: {},
@@ -38,22 +38,22 @@ function createTestRecord(
   };
 }
 
-describe("normalizeMarker", () => {
+describe("normalizeType", () => {
   test("lowercases markers when config.normalizeCase is true", () => {
-    const record = createTestRecord({ marker: "TODO" });
-    const normalized = normalizeMarker(record.marker, { normalizeCase: true });
+    const record = createTestRecord({ type: "TODO" });
+    const normalized = normalizeType(record.type, { normalizeCase: true });
     expect(normalized).toBe("todo");
   });
 
   test("preserves case when config.normalizeCase is false", () => {
-    const record = createTestRecord({ marker: "TODO" });
-    const normalized = normalizeMarker(record.marker, { normalizeCase: false });
+    const record = createTestRecord({ type: "TODO" });
+    const normalized = normalizeType(record.type, { normalizeCase: false });
     expect(normalized).toBe("TODO");
   });
 
   test("handles mixed case markers", () => {
-    const record = createTestRecord({ marker: "FiXmE" });
-    const normalized = normalizeMarker(record.marker, { normalizeCase: true });
+    const record = createTestRecord({ type: "FiXmE" });
+    const normalized = normalizeType(record.type, { normalizeCase: true });
     expect(normalized).toBe("fixme");
   });
 });
@@ -163,7 +163,7 @@ describe("normalizeMentions", () => {
 describe("normalizeRecord", () => {
   test("normalizes all aspects of a record", () => {
     const record = createTestRecord({
-      marker: "TODO",
+      type: "TODO",
       properties: { z: "last", a: "first" },
       relations: [
         { kind: "needs", token: "#BETA" },
@@ -175,10 +175,10 @@ describe("normalizeRecord", () => {
     });
 
     const normalized = normalizeRecord(record, {
-      marker: { normalizeCase: true },
+      type: { normalizeCase: true },
     });
 
-    expect(normalized.marker).toBe("todo");
+    expect(normalized.type).toBe("todo");
     expect(Object.keys(normalized.properties)).toEqual(["a", "z"]);
     expect(normalized.relations[0]?.kind).toBe("depends");
     expect(normalized.relations[0]?.token).toBe("#alpha");

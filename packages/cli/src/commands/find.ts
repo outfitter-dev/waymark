@@ -4,14 +4,14 @@ import type { WaymarkRecord } from "@waymarks/core";
 import { searchRecords } from "@waymarks/core";
 import { createArgIterator } from "../utils/flags/iterator";
 import { handleJsonFlag } from "../utils/flags/json";
-import { handleMarkerFlag } from "../utils/flags/marker";
 import { handleMentionFlag } from "../utils/flags/mention";
 import { handleTagFlag } from "../utils/flags/tag";
+import { handleTypeFlag } from "../utils/flags/type";
 import { scanRecords } from "./scan";
 
 export type FindCommandOptions = {
   filePath: string;
-  markers?: string[];
+  types?: string[];
   tags?: string[];
   mentions?: string[];
   json?: boolean;
@@ -23,12 +23,12 @@ export type FindCommandOptions = {
 export async function findRecords(
   options: FindCommandOptions
 ): Promise<WaymarkRecord[]> {
-  const { filePath, markers, tags, mentions } = options;
+  const { filePath, types, tags, mentions } = options;
   const records = await scanRecords([filePath]);
 
   const query: Parameters<typeof searchRecords>[1] = {};
-  if (markers && markers.length > 0) {
-    query.markers = markers;
+  if (types && types.length > 0) {
+    query.markers = types;
   }
   if (tags && tags.length > 0) {
     query.tags = tags;
@@ -50,7 +50,7 @@ export function parseFindArgs(argv: string[]): FindCommandOptions {
   }
 
   const iterator = createArgIterator(rest);
-  const markers: string[] = [];
+  const types: string[] = [];
   const tags: string[] = [];
   const mentions: string[] = [];
   const jsonState = { json: false };
@@ -58,14 +58,14 @@ export function parseFindArgs(argv: string[]): FindCommandOptions {
   while (iterator.hasNext()) {
     const token = iterator.next();
     handleJsonFlag(token, jsonState);
-    handleMarkerFlag(token, iterator, markers);
+    handleTypeFlag(token, iterator, types);
     handleTagFlag(token, iterator, tags);
     handleMentionFlag(token, iterator, mentions);
   }
 
   const options: FindCommandOptions = { filePath, json: jsonState.json };
-  if (markers.length > 0) {
-    options.markers = markers;
+  if (types.length > 0) {
+    options.types = types;
   }
   if (tags.length > 0) {
     options.tags = tags;

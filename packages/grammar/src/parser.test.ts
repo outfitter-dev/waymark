@@ -18,7 +18,7 @@ describe("parseLine", () => {
     );
 
     expect(record).not.toBeNull();
-    expect(record?.marker).toBe("todo");
+    expect(record?.type).toBe("todo");
     expect(record?.signals).toEqual({
       raised: false,
       current: false,
@@ -78,7 +78,7 @@ describe("parseLine", () => {
     );
 
     expect(record).not.toBeNull();
-    expect(record?.marker).toBe("tldr");
+    expect(record?.type).toBe("tldr");
     expect(record?.tags).toEqual(["#docs/guide"]);
     expect(record?.commentLeader).toBe("<!--");
   });
@@ -142,7 +142,7 @@ describe("parse", () => {
       throw new Error("expected waymark record");
     }
 
-    expect(record.marker).toBe("tldr");
+    expect(record.type).toBe("tldr");
     expect(record.startLine).toBe(1);
     expect(record.endLine).toBe(2);
     expect(record.contentText).toBe(
@@ -170,7 +170,7 @@ describe("parse", () => {
       throw new Error("expected waymark record");
     }
 
-    expect(record.marker).toBe("tldr");
+    expect(record.type).toBe("tldr");
     expect(record.contentText).toBe("payment processor entry point");
     expect(record.properties).toEqual({
       ref: "#payments/stripe",
@@ -201,7 +201,7 @@ describe("parse", () => {
       throw new Error("expected waymark record");
     }
 
-    expect(record.marker).toBe("todo");
+    expect(record.type).toBe("todo");
     expect(record.contentText).toBe("actual waymark");
     expect(record.startLine).toBe(ExpectedStartLine);
     expect(record.endLine).toBe(ExpectedEndLine);
@@ -228,7 +228,7 @@ describe("parse", () => {
       throw new Error("expected waymark record");
     }
 
-    expect(record.marker).toBe("todo");
+    expect(record.type).toBe("todo");
     expect(record.contentText).toBe(
       "implement user authentication\nwith OAuth 2.0 and PKCE\nsupport social logins"
     );
@@ -262,12 +262,12 @@ describe("parse", () => {
 
     const [first, second] = records;
 
-    expect(first?.marker).toBe("todo");
+    expect(first?.type).toBe("todo");
     expect(first?.contentText).toBe("first waymark\ncontinuation of first");
     expect(first?.startLine).toBe(FirstStartLine);
     expect(first?.endLine).toBe(FirstEndLine);
 
-    expect(second?.marker).toBe("note");
+    expect(second?.type).toBe("note");
     expect(second?.contentText).toBe("second waymark\ncontinuation of second");
     expect(second?.startLine).toBe(SecondStartLine);
     expect(second?.endLine).toBe(SecondEndLine);
@@ -313,7 +313,7 @@ describe("parse", () => {
       throw new Error("expected waymark record");
     }
 
-    expect(record.marker).toBe("tldr");
+    expect(record.type).toBe("tldr");
     expect(record.contentText).toBe(
       "comprehensive guide for waymarks\ncovering all syntax features"
     );
@@ -331,10 +331,10 @@ describe("parse", () => {
     expect(records).toHaveLength(2);
 
     const [first, second] = records;
-    expect(first?.marker).toBe("todo");
+    expect(first?.type).toBe("todo");
     expect(first?.contentText).toBe("main task");
 
-    expect(second?.marker).toBe("unknownprop");
+    expect(second?.type).toBe("unknownprop");
     expect(second?.contentText).toBe(
       "should be treated as regular waymark, not continuation"
     );

@@ -15,7 +15,7 @@ const record = (overrides: Partial<WaymarkRecord>): WaymarkRecord => ({
   indent: 0,
   commentLeader: "//",
   signals: { raised: false, important: false },
-  marker: "todo",
+  type: "todo",
   contentText: "content",
   properties: {},
   relations: [],
@@ -28,31 +28,31 @@ const record = (overrides: Partial<WaymarkRecord>): WaymarkRecord => ({
 
 test("groups records by file and marker", () => {
   const records = [
-    record({ marker: "tldr", file: "src/a.ts" }),
-    record({ marker: "todo", file: "src/a.ts" }),
-    record({ marker: "todo", file: "src/b.ts" }),
+    record({ type: "tldr", file: "src/a.ts" }),
+    record({ type: "todo", file: "src/a.ts" }),
+    record({ type: "todo", file: "src/b.ts" }),
   ];
 
   const map = buildWaymarkMap(records);
   expect(map.files.size).toBe(2);
   const summary = map.files.get("src/a.ts");
-  expect(summary?.tldr?.marker).toBe("tldr");
-  expect(summary?.markers.get("todo")?.entries.length).toBe(1);
+  expect(summary?.tldr?.type).toBe("tldr");
+  expect(summary?.types.get("todo")?.entries.length).toBe(1);
 });
 
 test("summarizeMarkerTotals aggregates counts across files", () => {
   const records = [
-    record({ marker: "todo", file: "src/a.ts" }),
-    record({ marker: "Todo", file: "src/b.ts" }),
-    record({ marker: "tldr", file: "src/a.ts" }),
-    record({ marker: "fix", file: "src/c.ts" }),
+    record({ type: "todo", file: "src/a.ts" }),
+    record({ type: "Todo", file: "src/b.ts" }),
+    record({ type: "tldr", file: "src/a.ts" }),
+    record({ type: "fix", file: "src/c.ts" }),
   ];
 
   const map = buildWaymarkMap(records);
   const totals = summarizeMarkerTotals(map);
   expect(totals).toEqual([
-    { marker: "todo", count: 2 },
-    { marker: "fix", count: 1 },
-    { marker: "tldr", count: 1 },
+    { type: "todo", count: 2 },
+    { type: "fix", count: 1 },
+    { type: "tldr", count: 1 },
   ]);
 });

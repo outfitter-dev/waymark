@@ -30,11 +30,11 @@ const DEFAULT_LINT: WaymarkLintConfig = {
 };
 
 export const DEFAULT_CONFIG: WaymarkConfig = {
-  markerCase: "lowercase",
+  typeCase: "lowercase",
   idScope: "repo",
   protectedBranches: ["main", "release/*"],
   signalsOnProtected: "strip",
-  allowMarkers: [],
+  allowTypes: [],
   skipPaths: ["**/.git/**", "**/node_modules/**", "**/dist/**"],
   format: DEFAULT_FORMAT,
   lint: DEFAULT_LINT,
@@ -111,15 +111,15 @@ export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
   }
 
   return {
-    markerCase: overrides.markerCase ?? DEFAULT_CONFIG.markerCase,
+    typeCase: overrides.typeCase ?? DEFAULT_CONFIG.typeCase,
     idScope: overrides.idScope ?? DEFAULT_CONFIG.idScope,
     protectedBranches:
       overrides.protectedBranches?.slice() ??
       DEFAULT_CONFIG.protectedBranches.slice(),
     signalsOnProtected:
       overrides.signalsOnProtected ?? DEFAULT_CONFIG.signalsOnProtected,
-    allowMarkers:
-      overrides.allowMarkers?.slice() ?? DEFAULT_CONFIG.allowMarkers.slice(),
+    allowTypes:
+      overrides.allowTypes?.slice() ?? DEFAULT_CONFIG.allowTypes.slice(),
     skipPaths: overrides.skipPaths?.slice() ?? DEFAULT_CONFIG.skipPaths.slice(),
     format: resolveFormatConfig(overrides),
     lint: resolveLintConfig(overrides),
@@ -128,11 +128,11 @@ export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
 
 export function cloneConfig(config: WaymarkConfig): WaymarkConfig {
   return {
-    markerCase: config.markerCase,
+    typeCase: config.typeCase,
     idScope: config.idScope,
     protectedBranches: config.protectedBranches.slice(),
     signalsOnProtected: config.signalsOnProtected,
-    allowMarkers: config.allowMarkers.slice(),
+    allowTypes: config.allowTypes.slice(),
     skipPaths: config.skipPaths.slice(),
     format: {
       spaceAroundSigil: config.format.spaceAroundSigil,
@@ -308,9 +308,9 @@ function assignScalarOptions(
   result: Partial<WaymarkConfig>,
   raw: Record<string, unknown>
 ): void {
-  const markerCase = readString(raw, ["markerCase", "marker_case"]);
-  if (markerCase === "lowercase" || markerCase === "uppercase") {
-    result.markerCase = markerCase;
+  const typeCase = readString(raw, ["typeCase", "type_case"]);
+  if (typeCase === "lowercase" || typeCase === "uppercase") {
+    result.typeCase = typeCase;
   }
 
   const idScope = readString(raw, ["idScope", "id_scope"]);
@@ -338,9 +338,9 @@ function assignScalarOptions(
     result.signalsOnProtected = signalsOnProtected;
   }
 
-  const allowMarkers = readStringArray(raw, ["allowMarkers", "allow_markers"]);
-  if (allowMarkers) {
-    result.allowMarkers = allowMarkers.map((marker) => marker.toLowerCase());
+  const allowTypes = readStringArray(raw, ["allowTypes", "allow_types"]);
+  if (allowTypes) {
+    result.allowTypes = allowTypes.map((type) => type.toLowerCase());
   }
 
   const skipPaths = readStringArray(raw, ["skipPaths", "skip_paths"]);

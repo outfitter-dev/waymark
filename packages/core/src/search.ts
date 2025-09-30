@@ -56,8 +56,8 @@ export function searchRecords(
 }
 
 function matchesMarkers(record: WaymarkRecord, markers: string[]): boolean {
-  const marker = record.marker.toLowerCase();
-  return markers.some((candidate) => candidate === marker);
+  const type = record.type.toLowerCase();
+  return markers.some((candidate) => candidate === type);
 }
 
 function matchesAny(values: string[], targets: string[]): boolean {

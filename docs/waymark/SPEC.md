@@ -145,7 +145,7 @@ CLI equivalents:
 waymark find --actor @agent
 waymark find --signal *
 waymark find #perf:hotpath
-waymark find --file-category docs --marker tldr
+waymark find --file-category docs --type tldr
 ```
 
 ## 7. Grammar Reference

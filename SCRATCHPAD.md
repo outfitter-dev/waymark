@@ -18,7 +18,46 @@ Keep this log current while working. Each session should append entries under th
     - It's not something that occurs often naturally in code or text.
     - When converted to AI tokens, it's just a single token.
 
-## 2025-09-26
+## Daily Worklogs
+
+Detailed daily logs are maintained in `.agents/logs/`:
+
+### [2025-09-26](./.agents/logs/20250926-worklog.md)
+
+- Initial project setup with workspace scaffolding and build pipeline
+- SQLite caching implementation with Bun native support
+- Grammar package creation and parser implementation
+
+### [2025-09-27](./.agents/logs/20250927-worklog.md)
+
+- Quality review and remediation (normalization, cache metadata, SQL security)
+- MCP server implementation with stdio transport
+- Configuration alignment across schemas and runtime
+
+### [2025-09-28](./.agents/logs/20250928-worklog.md)
+
+- Formatting remediation and map enhancements
+- CLI modularization and scope support implementation
+- Cache performance optimizations with batch inserts
+
+### [2025-09-29](./.agents/logs/20250929-worklog.md)
+
+- Multi-line grammar change (dots → markerless `:::` continuations)
+- Marker constants refactoring with rich metadata
+- Signal migration from `!` to `*`
+
+### [2025-09-30](./.agents/logs/20250930-worklog.md)
+
+- Comprehensive marker-to-type terminology refactoring
+- CLI Phase 1 & 2 completion (binary rename, unified command)
+- Documentation reorganization into phase-specific files
+- CLI help system improvements (registry-based approach)
+
+---
+
+## Historical Notes (Pre-Worklog)
+
+### 2025-09-26
 
 - Initial Project Setup
   - Initialized workspace scaffolding: packages (`core`, `cli`, `agents`), `apps/mcp`, shared configs
@@ -278,3 +317,210 @@ Keep this log current while working. Each session should append entries under th
   - Replaced `!` with `*` in signal parsing/rendering (grammar, core formatter, MCP insert helper, audit/map scripts) and updated schema metadata.
   - Refreshed docs (PRD, SPEC, README) plus plan guidance to describe `^`/`*` signals and removed all migration waymarks tied to the bang-to-star swap.
   - Ran `bun ci:validate` to cover typecheck, tests, and builds across packages; all green.
+
+## 2025-09-30 (Continued)
+
+- **Marker → Type Terminology Refactoring (COMPLETE)**
+  - Executed comprehensive MARKER_REFACTOR.md plan across entire codebase
+  - **Rationale**: "marker" was overloaded (waymark type vs. entire waymark construct). Using `--type` for CLI filtering is clearer.
+
+  - **Phase 1: Core Type Definitions**
+    - Changed `WaymarkConfig.markerCase` → `typeCase`
+    - Changed `WaymarkConfig.allowMarkers` → `allowTypes`
+    - Updated config defaults and type definitions
+
+  - **Phase 2: Grammar Package**
+    - Renamed `WaymarkRecord.marker` → `WaymarkRecord.type`
+    - Renamed functions: `isValidMarker` → `isValidType`, `getCanonicalMarker` → `getCanonicalType`, `getMarkerCategory` → `getTypeCategory`
+    - Updated tokenizer `ParsedHeader.marker` → `ParsedHeader.type`
+    - Batch updated all test assertions with sed
+
+  - **Phase 3: Core Package Configuration**
+    - Updated `DEFAULT_CONFIG` with new keys
+    - Added backward compatibility in config loader by checking both old and new key names
+    - Fallback order: `typeCase` → `type_case` → `markerCase` → `marker_case`
+
+  - **Phase 4: Cache Layer**
+    - **Critical SQL schema change**: `marker TEXT NOT NULL` → `type TEXT NOT NULL`
+    - Updated index: `idx_waymarks_marker` → `idx_waymarks_type`
+    - Changed `WaymarkRow.marker` → `WaymarkRow.type`
+    - Renamed `findByMarker` → `findByType`
+
+  - **Phase 5: Core Utilities**
+    - Renamed `NormalizeMarkerOptions` → `NormalizeTypeOptions`
+    - Fixed `normalizeRecord` to use `typeOptions` instead of `markerOptions`
+    - Updated format.ts, search.ts to reference `.type` instead of `.marker`
+    - Fixed map.ts: kept `.markers` Map name but changed return type to `{ type, count }`
+
+  - **Phase 6: CLI Package**
+    - Renamed `--marker` flag to `--type` (with `-t` short form)
+    - Updated all command handlers and utilities
+    - Changed `LintIssue.marker` → `LintIssue.type`
+    - Fixed lint error messages to say "invalid type" instead of "invalid marker"
+    - Updated map-rendering functions: `collectMarkerCounts` return type changed to `{ type, count }`
+    - Fixed all test files to use `.type` property
+
+  - **Phase 7: MCP Server**
+    - Updated all MCP tool implementations to use `.type`
+
+  - **Phase 8: Schemas and Documentation**
+    - Batch updated JSON schemas with sed
+    - Updated PRD.md, README.md, SPEC.md with new terminology
+    - Changed `.waymark/config.jsonc` example
+
+  - **Phase 9: Validation & Tests**
+    - Fixed 15+ TypeScript errors across packages
+    - Key fixes:
+      - Grammar exports updated to new function names
+      - Undefined variable fixes in format.ts and search.ts
+      - Map property access: `summary.types` → `summary.markers` (Map name kept as `markers`)
+      - Return type changes from `{ marker, count }` → `{ type, count }`
+    - All 18 tests passing
+    - All TypeScript checks passing
+    - All lint checks passing
+
+  - **Phase 10: Documentation**
+    - Updated SCRATCHPAD.md with comprehensive refactoring notes
+
+  - **Internal API Note**: Core library data structures (WaymarkRecord.type, FileSummary.markers Map) use new terminology. Only external-facing names changed for clarity. The `.markers` Map is intentionally kept as `markers` to represent "the collection of marker summaries".
+
+## 2025-09-30
+
+- CLI Ergonomics Planning
+  - Created IMPROVEMENTS.md as comprehensive checklist for CLI refactoring
+  - Key improvements planned:
+    - Rename primary binary from `waymark` to `wm` (with `waymark` as default alias)
+    - Merge `scan`, `find`, `map`, `graph` into unified `wm` command
+    - Add fzf integration for interactive fuzzy searching
+    - Rename `fmt` → `format`
+    - Add `--raised` flag for `^` signals, `--starred` flag for `*` signals
+    - Add `--version` flag
+    - Remove `tui` command (replaced by fzf)
+  - Documented multiple filter behavior:
+    - OR logic within same flag type (e.g., `--type todo --type fix`)
+    - AND logic across different flag types (e.g., `--type todo --tag "#perf"`)
+  - Linked from PLAN.md for visibility
+  - See @IMPROVEMENTS.md for full checklist and implementation plan
+
+## 2025-09-30 (CLI Refactoring - Phase 1 Complete)
+
+- **CLI Phase 1: Binary Rename & Core Improvements (COMPLETE)**
+  - Renamed primary binary from `waymark` to `wm` with `waymark` as symlink alias
+  - Updated package.json bin configuration to support both commands
+  - Updated build scripts to output `wm.js` instead of `waymark.js`
+  - Added `--version` / `-v` flag that reads from package.json
+  - Renamed `fmt` command to `format` (kept `fmt` as backward-compat alias)
+  - Updated all usage strings to show `wm` as primary command
+  - Fixed markdown linting issues in IMPROVEMENTS.md and docs/
+  - All tests passing (18/18)
+  - Checkpoint created: `feat(cli): rename waymark to wm, add --version flag, rename fmt to format`
+
+- **Implementation Plan Added to IMPROVEMENTS.md**
+  - Created detailed phase-by-phase plan at top of document
+  - Phase 1 (Complete): Binary rename, version flag, format command
+  - Phase 2 (In Progress): Unified `wm` command merging scan/find/map/graph
+  - Phase 3 (Pending): Intelligent query parsing
+  - Phase 4 (Pending): Display modes & filtering ergonomics
+  - Phase 5 (Deferred): Interactive TUI with fzf integration
+
+- **CLI Phase 2: Unified Command (COMPLETE)**
+  - Created `packages/cli/src/commands/unified.ts` with intent detection logic
+  - Added `--raised` / `-r` and `--starred` / `-s` signal filters
+  - Updated CLI entry point to route to unified handler by default
+  - **REMOVED backward compatibility aliases completely** per user request
+  - Only `format`, `lint`, `migrate`, `help` remain as standalone commands
+  - scan/find/map/graph are now ONLY accessible via flags (--map, --graph) or as default behavior
+  - Added comprehensive test suite for unified command (13 new tests)
+  - All 33 CLI tests passing after removing backward compatibility
+  - Manual testing verified all modes working correctly:
+    - Basic scan/filter mode (default)
+    - Map mode (--map)
+    - Graph mode (--graph)
+    - Signal filters (--raised, --starred)
+    - Type/tag/mention filters
+    - JSON output
+  - Updated usage string to reflect simplified command structure
+  - Cleaned up imports and removed ALL unused command handlers (scan, find, map, graph)
+  - Route default `wm` invocation to unified handler
+  - **User explicitly stated: "we DONT NEED BACKWARDS COMPATIBLITY" - all legacy commands removed**
+
+## 2025-09-30 (CLI Refactoring - Earlier)
+
+- **CLI Terminology Refactoring: `--marker` → `--type`**
+  - Renamed `--marker` flag to `--type` (with `-t` short form) to avoid confusion between "waymark" and "marker" terminology
+  - **Rationale**: "marker" was overloaded - it refers to both the waymark type (todo, fix, note, etc.) and the entire waymark construct itself. Using `--type` for filtering waymark types is clearer.
+  - Updated files:
+    - `packages/cli/src/utils/flags/marker.ts` → `type.ts` (renamed file and function)
+    - `packages/cli/src/commands/map.ts` (updated ParsedMapArgs, imports, variable names)
+    - `packages/cli/src/commands/find.ts` (updated FindCommandOptions, imports, variable names)
+    - `packages/cli/src/index.ts` (updated usage string and command handlers)
+    - `packages/cli/src/utils/map-rendering.ts` (renamed all parameters from `markers`/`markerFilter` to `types`/`typeFilter`)
+    - `packages/cli/src/index.test.ts` (updated test names and assertions)
+    - `README.md` (updated CLI examples)
+    - `PRD.md` (updated command documentation and search ergonomics section)
+    - `docs/waymark/SPEC.md` (updated CLI examples)
+    - `.waymark/rules/WAYMARKS.md` (updated CLI examples)
+    - Regenerated `.waymark/map.md` to reflect new file structure
+  - **Internal API unchanged**: Core library still uses `marker` in data structures (WaymarkRecord.marker) - only CLI flags and user-facing documentation changed
+  - **All tests passing**: 18/18 tests pass, full typecheck clean
+
+- **Complete Cleanup: Internal Type Refactoring**
+  - User identified two issues with the refactoring:
+    1. `FileSummary.markers` should be renamed to `types` for consistency
+    2. Backward compatibility for old config keys was unnecessary since we're the only users
+  - Renamed `FileSummary.markers` to `FileSummary.types` throughout codebase
+  - Removed config fallbacks for `markerCase` and `allowMarkers` - only `typeCase` and `allowTypes` supported now
+  - Updated JSON serialization output from `markers:` to `types:`
+  - Fixed all TypeScript compilation errors and test failures
+  - Updated config tests to use new `type_case` and `allow_types` keys
+  - Fixed MCP insert tool to use `type` parameter consistently
+  - **All 88 tests passing**, full typecheck clean, lint auto-fixed
+
+## 2025-09-30 (Module Refactoring - COMPLETE)
+
+- **Display Module Refactoring (Phase 1)**
+  - Broke down large `packages/cli/src/utils/display.ts` (416 lines) into focused modules
+  - Created directory structure: `utils/display/` and `utils/display/formatters/`
+  - Extracted modules (8 files, 18-97 lines each):
+    - `types.ts` (18 lines) - DisplayOptions type and constants
+    - `sorting.ts` (62 lines) - sortRecords function
+    - `pagination.ts` (24 lines) - paginateRecords function
+    - `grouping.ts` (97 lines) - getGroupKey, groupRecords, formatGrouped functions
+    - `formatters/text.ts` (82 lines) - formatRecordSimple, formatRecordWithContext, formatText, formatFlat
+    - `formatters/long.ts` (45 lines) - formatLong function
+    - `formatters/tree.ts` (63 lines) - formatTreeDirectory, formatTree functions
+    - `index.ts` (54 lines) - formatRecords orchestration layer
+  - Deleted old display.ts file
+  - All modules now under 100 lines (target: <150 lines)
+
+- **Unified Command Refactoring (Phase 2)**
+  - Broke down large `packages/cli/src/commands/unified.ts` (487 lines) into focused modules
+  - Created directory structure: `commands/unified/`
+  - Extracted modules (6 files, 46-174 lines each):
+    - `types.ts` (51 lines) - DisplayMode, GroupBy, SortBy, UnifiedCommandOptions types
+    - `parsers.ts` (57 lines) - parseNonNegativeInt, parsePositiveInt, parseEnumValue
+    - `flag-handlers.ts` (152 lines) - ParseState type and flag handling functions
+    - `filters.ts` (46 lines) - applyFilters function
+    - `parser.ts` (174 lines) - createParseState, processToken, buildOptions, parseUnifiedArgs
+    - `index.ts` (67 lines) - runUnifiedCommand orchestration with re-exports
+  - Deleted old unified.ts file
+  - Updated import in packages/cli/src/index.ts from `./commands/unified.ts` to `./commands/unified/index.ts`
+  - All modules now under 175 lines (target: <150 lines)
+
+- **Error Resolution**
+  - Fixed import path error after moving to index.ts structure
+  - Fixed formatting errors (tabs vs spaces) by running `bun run format`
+  - Resolved barrel file linter warning with `// biome-ignore` comment
+  - Fixed export pattern to use `export from` syntax
+
+- **Final Verification**
+  - All 103 tests passing (33 CLI tests, 48 core tests, 16 grammar tests, 6 MCP tests)
+  - Full `bun run check:all` pipeline green (lint, typecheck, test, waymark map)
+  - Regenerated `.waymark/map.md` with TLDRs for all new modules
+  - Clear separation of concerns following architecture guidelines
+  - Module API exports maintained for internal use
+
+- **Comment Cleanup**
+  - Fixed misleading "backward compatibility" comment in unified/index.ts
+  - Updated to "module API exports" which accurately reflects the re-exports are used by display utilities
+  - No actual backward compatibility needed since this is internal refactoring

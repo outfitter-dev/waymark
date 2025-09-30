@@ -5,7 +5,9 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { handleInsertWaymark, type SignalFlags, truncateSource } from "./index";
+import { handleInsertWaymark } from "./tools/insert";
+import type { SignalFlags } from "./types";
+import { truncateSource } from "./utils/config";
 
 class TestServer {
   changes = 0;
@@ -43,17 +45,17 @@ describe("handleInsertWaymark", () => {
     const response = await handleInsertWaymark({
       server,
       filePath: file,
-      marker: "tldr",
+      type: "tldr",
       content: "Summarizes example module export",
     });
 
     expect(server.changes).toBe(1);
     const payload = JSON.parse(String(response.content?.[0]?.text ?? "")) as {
-      marker: string;
+      type: string;
       startLine: number;
       content: string;
     };
-    expect(payload.marker).toBe("tldr");
+    expect(payload.type).toBe("tldr");
     expect(payload.startLine).toBe(1);
     expect(payload.content).toBe("Summarizes example module export");
 
@@ -64,7 +66,7 @@ describe("handleInsertWaymark", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("inserts THIS marker at specified line with signal", async () => {
+  test("inserts THIS type at specified line with signal", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-this-"));
     const file = join(dir, "feature.ts");
     await writeFile(
@@ -85,18 +87,18 @@ describe("handleInsertWaymark", () => {
     const response = await handleInsertWaymark({
       server,
       filePath: file,
-      marker: "this",
+      type: "this",
       content: "documents the feature body",
       line: THIS_INSERT_LINE,
       signals,
     });
 
     const payload = JSON.parse(String(response.content?.[0]?.text ?? "")) as {
-      marker: string;
+      type: string;
       startLine: number;
       content: string;
     };
-    expect(payload.marker).toBe("this");
+    expect(payload.type).toBe("this");
     expect(payload.startLine).toBe(THIS_INSERT_LINE);
     expect(payload.content).toBe("documents the feature body");
 
@@ -123,7 +125,7 @@ describe("handleInsertWaymark", () => {
       handleInsertWaymark({
         server,
         filePath: file,
-        marker: "tldr",
+        type: "tldr",
         content: "another summary",
       })
     ).rejects.toThrow(TLDR_EXISTS_REGEX);
@@ -135,7 +137,7 @@ describe("handleInsertWaymark", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("supports custom marker in markdown using HTML comments", async () => {
+  test("supports custom type in markdown using HTML comments", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-custom-"));
     const file = join(dir, "notes.md");
     await writeFile(
@@ -148,16 +150,16 @@ describe("handleInsertWaymark", () => {
     const response = await handleInsertWaymark({
       server,
       filePath: file,
-      marker: "idea",
+      type: "idea",
       content: "capture ideas for follow-up",
       line: 1,
     });
 
     const payload = JSON.parse(String(response.content?.[0]?.text ?? "")) as {
-      marker: string;
+      type: string;
       startLine: number;
     };
-    expect(payload.marker).toBe("idea");
+    expect(payload.type).toBe("idea");
     expect(payload.startLine).toBe(1);
 
     const updated = await readFile(file, "utf8");

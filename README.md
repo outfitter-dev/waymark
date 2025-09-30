@@ -60,16 +60,33 @@ This tree view instantly tells you what every file does - perfect for onboarding
 
 ### CLI Usage
 
+The `wm` command provides a unified interface for all waymark operations:
+
 ```bash
-waymark fmt src/example.ts        # format a file (stdout)
-waymark fmt src/example.ts --write
-waymark scan src/example.ts --json   # compact JSON array
-waymark scan src/example.ts --jsonl  # newline-delimited JSON records
-waymark scan src/example.ts --pretty # pretty-printed JSON array
-waymark map docs/PRD.md src/core.ts   # accepts files or directories (recurses by default)
-waymark map docs --marker todo --summary   # focus on markers and add summary footer
-waymark find src/example.ts --marker todo --tag '#perf:hotpath'
-waymark find src/example.ts --mention @agent --json
+# Basic scanning and filtering (default mode)
+wm src/                              # scan and display all waymarks
+wm src/ --type todo                  # filter by waymark type
+wm src/ --raised                     # show only raised (^) waymarks
+wm src/ --starred                    # show only important (*) waymarks
+wm src/ --type todo --mention @agent # combine filters
+
+# Map mode: file tree with TLDRs
+wm src/ --map                        # show file tree with TLDR summaries
+wm docs/ --map --type todo --summary # focus on types with summary footer
+
+# Graph mode: relation edges
+wm src/ --graph                      # extract dependency relations
+wm src/ --graph --json               # JSON output for tooling
+
+# Output formats
+wm src/ --json                       # compact JSON array
+wm src/ --jsonl                      # newline-delimited JSON
+wm src/ --pretty                     # pretty-printed JSON
+
+# Standalone commands
+wm format src/example.ts --write     # format a file
+wm lint src/ --json                  # validate waymark types
+wm migrate legacy.ts --write         # convert legacy comments
 ```
 
 The CLI relies on the core formatter, parser, and map helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.

@@ -2,19 +2,19 @@
 
 import type { WaymarkRecord } from "@waymarks/grammar";
 
-export type NormalizeMarkerOptions = {
+export type NormalizeTypeOptions = {
   normalizeCase?: boolean;
 };
 
 export type NormalizeRecordOptions = {
-  marker?: NormalizeMarkerOptions;
+  type?: NormalizeTypeOptions;
 };
 
-export function normalizeMarker(
-  marker: string,
-  options: NormalizeMarkerOptions = {}
+export function normalizeType(
+  type: string,
+  options: NormalizeTypeOptions = {}
 ): string {
-  const trimmed = marker.trim();
+  const trimmed = type.trim();
   if (trimmed.length === 0) {
     return trimmed;
   }
@@ -99,11 +99,11 @@ export function normalizeRecord(
   record: WaymarkRecord,
   options: NormalizeRecordOptions = {}
 ): WaymarkRecord {
-  const { marker: markerOptions } = options;
+  const { type: typeOptions } = options;
 
   return {
     ...record,
-    marker: normalizeMarker(record.marker, markerOptions),
+    type: normalizeType(record.type, typeOptions),
     properties: normalizeProperties(record.properties),
     relations: normalizeRelations(record.relations),
     tags: normalizeTags(record.tags),

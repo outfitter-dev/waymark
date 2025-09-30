@@ -14,7 +14,7 @@ const DEFAULT_MTIME = 100;
 const DEFAULT_SIZE = 10;
 
 const baseRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => {
-  const marker = overrides.marker ?? "todo";
+  const marker = overrides.type ?? "todo";
   const contentText = overrides.contentText ?? "content";
   const commentLeader = overrides.commentLeader ?? "//";
   const overrideSignals = overrides.signals;
@@ -40,7 +40,7 @@ const baseRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => {
     indent: overrides.indent ?? 0,
     commentLeader,
     signals: normalizedSignals,
-    marker,
+    type: marker,
     contentText,
     properties: overrides.properties ?? {},
     relations: overrides.relations ?? [],
@@ -59,7 +59,7 @@ describe("WaymarkCache", () => {
       filePath: "src/example.ts",
       mtime: INITIAL_MTIME,
       size: INITIAL_SIZE,
-      records: [baseRecord({ marker: "todo", startLine: 1 })],
+      records: [baseRecord({ type: "todo", startLine: 1 })],
     });
 
     expect(
@@ -71,13 +71,13 @@ describe("WaymarkCache", () => {
       mtime: UPDATED_MTIME,
       size: UPDATED_SIZE,
       records: [
-        baseRecord({ marker: "note", startLine: 2, contentText: "updated" }),
+        baseRecord({ type: "note", startLine: 2, contentText: "updated" }),
       ],
     });
 
     const records = cache.findByFile("src/example.ts");
     expect(records).toHaveLength(1);
-    expect(records[0]?.marker).toBe("note");
+    expect(records[0]?.type).toBe("note");
     expect(records[0]?.startLine).toBe(2);
     expect(records[0]?.language).toBe("typescript");
     expect(records[0]?.commentLeader).toBe("//");
@@ -106,11 +106,11 @@ describe("WaymarkCache", () => {
       [
         "file1.ts",
         [
-          baseRecord({ file: "file1.ts", marker: "todo" }),
-          baseRecord({ file: "file1.ts", marker: "fix", startLine: 2 }),
+          baseRecord({ file: "file1.ts", type: "todo" }),
+          baseRecord({ file: "file1.ts", type: "fix", startLine: 2 }),
         ],
       ],
-      ["file2.ts", [baseRecord({ file: "file2.ts", marker: "note" })]],
+      ["file2.ts", [baseRecord({ file: "file2.ts", type: "note" })]],
     ]);
 
     cache.insertWaymarksBatch(recordsByFile);
@@ -127,7 +127,7 @@ describe("WaymarkCache", () => {
     cache.close();
   });
 
-  test("findByMarker returns all records with matching marker", () => {
+  test("findByType returns all records with matching marker", () => {
     const cache = new WaymarkCache({ dbPath: ":memory:" });
 
     // Insert file metadata first
@@ -136,12 +136,12 @@ describe("WaymarkCache", () => {
     cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE);
 
     cache.insertWaymarks([
-      baseRecord({ file: "a.ts", marker: "todo" }),
-      baseRecord({ file: "b.ts", marker: "fix" }),
-      baseRecord({ file: "c.ts", marker: "todo" }),
+      baseRecord({ file: "a.ts", type: "todo" }),
+      baseRecord({ file: "b.ts", type: "fix" }),
+      baseRecord({ file: "c.ts", type: "todo" }),
     ]);
 
-    const todos = cache.findByMarker("todo");
+    const todos = cache.findByType("todo");
     expect(todos).toHaveLength(2);
     expect(todos[0]?.file).toBe("a.ts");
     expect(todos[1]?.file).toBe("c.ts");

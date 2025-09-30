@@ -23,7 +23,7 @@ export function renderRecords(
       return records
         .map(
           (record) =>
-            `${record.file}:${record.startLine} ${record.marker} ::: ${record.contentText}`
+            `${record.file}:${record.startLine} ${record.type} ::: ${record.contentText}`
         )
         .join("\n");
   }

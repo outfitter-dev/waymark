@@ -1,6 +1,5 @@
-// tldr ::: help command helper for waymark CLI
+// tldr ::: help command helper for waymark CLI (legacy - migrating to help/ directory)
 
-export function displayHelp(usage: string): number {
-  process.stdout.write(`${usage.trim()}\n`);
-  return 0;
-}
+// Re-export from new help system
+// biome-ignore lint/performance/noBarrelFile: legacy export during migration
+export { displayHelp } from "./help/index.ts";

@@ -13,7 +13,7 @@ const MULTILINE_SAMPLE = [
 const CONTINUATION_LINE_PATTERN = /^\/\/\s+::: with OAuth 2\.0 and PKCE$/;
 
 describe("formatText", () => {
-  test("normalizes marker casing and spacing", () => {
+  test("normalizes type casing and spacing", () => {
     const { formattedText, edits } = formatText(SAMPLE, {
       file: "src/example.ts",
     });
