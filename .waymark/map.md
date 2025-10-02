@@ -1,7 +1,7 @@
 <!-- tldr ::: generated map of repo waymarks #docs/rules -->
 # Waymark Map
 
-Generated on 2025-10-02T10:25:34.849Z.
+Generated on 2025-10-02T10:28:19.095Z.
 
 ## TLDR Waymarks
 - AGENTS.md:1 — <!-- tldr ::: agents configuration and development guidelines -->
@@ -146,9 +146,9 @@ Generated on 2025-10-02T10:25:34.849Z.
 - packages/cli/src/commands/migrate.help.ts:47 — // todo ::: implement authentication
 - packages/cli/src/commands/migrate.prompt.ts:93 — // todo ::: implement OAuth
 - packages/cli/src/commands/unified/index.prompt.ts:12 — // todo ::: implement auth #sec
-- packages/cli/src/index.test.ts:926 — // todo ::: @alice task two
-- packages/cli/src/index.test.ts:950 — // todo ::: @alice different task #perf
-- packages/cli/src/index.test.ts:964 — // todo ::: @alice task two
+- packages/cli/src/index.test.ts:927 — // todo ::: @alice task two
+- packages/cli/src/index.test.ts:951 — // todo ::: @alice different task #perf
+- packages/cli/src/index.test.ts:965 — // todo ::: @alice task two
 - packages/grammar/src/metadata.ts:6 — // todo ::: @codex externalize comment leader detection into shared language metadata #lib/parser
 - packages/grammar/src/metadata.ts:107 — // todo ::: @codex allow configurable overrides for file category inference #lib/parser
 - test/setup.ts:6 — // todo ::: add global test setup when needed
@@ -186,17 +186,17 @@ Generated on 2025-10-02T10:25:34.849Z.
 - packages/cli/src/commands/migrate.prompt.ts:99 — /* hack ::: this is a hack */
 - packages/cli/src/commands/unified/index.prompt.ts:13 — // *fix ::: validate input @alice
 - packages/cli/src/commands/unified/index.prompt.ts:15 — // ^wip ::: refactoring in progress
-- packages/cli/src/index.test.ts:914 — // fix ::: handle error
-- packages/cli/src/index.test.ts:915 — // note ::: this is a note`;
-- packages/cli/src/index.test.ts:927 — // fix ::: @agent bug fix`;
-- packages/cli/src/index.test.ts:938 — // fix ::: bug fix #sec
-- packages/cli/src/index.test.ts:939 — // note ::: note text #perf`;
-- packages/cli/src/index.test.ts:951 — // fix ::: @agent bug #sec`;
-- packages/cli/src/index.test.ts:965 — // fix ::: @agent bug fix`;
-- packages/cli/src/index.test.ts:976 — // fix ::: handle cache miss
-- packages/cli/src/index.test.ts:977 — // note ::: other content`;
-- packages/cli/src/index.test.ts:989 — // fix ::: bug fix
-- packages/cli/src/index.test.ts:990 — // note ::: note text`;
+- packages/cli/src/index.test.ts:915 — // fix ::: handle error
+- packages/cli/src/index.test.ts:916 — // note ::: this is a note`;
+- packages/cli/src/index.test.ts:928 — // fix ::: @agent bug fix`;
+- packages/cli/src/index.test.ts:939 — // fix ::: bug fix #sec
+- packages/cli/src/index.test.ts:940 — // note ::: note text #perf`;
+- packages/cli/src/index.test.ts:952 — // fix ::: @agent bug #sec`;
+- packages/cli/src/index.test.ts:966 — // fix ::: @agent bug fix`;
+- packages/cli/src/index.test.ts:977 — // fix ::: handle cache miss
+- packages/cli/src/index.test.ts:978 — // note ::: other content`;
+- packages/cli/src/index.test.ts:990 — // fix ::: bug fix
+- packages/cli/src/index.test.ts:991 — // note ::: note text`;
 
 ### Other Marker Counts
 - deprecated: 1
