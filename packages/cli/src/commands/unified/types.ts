@@ -52,4 +52,7 @@ export type UnifiedCommandOptions = {
   // Output
   json?: boolean;
   summary?: boolean;
+  // Formatting
+  keepCommentMarkers?: boolean;
+  compact?: boolean;
 };

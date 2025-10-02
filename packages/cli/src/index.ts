@@ -467,6 +467,8 @@ async function createProgram(): Promise<Command> {
     .option("--long", "show detailed record information")
     .option("--tree", "group output by directory structure")
     .option("--flat", "show flat list (default)")
+    .option("--keep-comment-markers", "keep comment syntax in output")
+    .option("--compact", "compact output format")
     .option("--group <by>", "group by: file, dir, type")
     .option("--sort <by>", "sort by: file, line, type, modified")
     .option("-C, --context <n>", "show N lines of context", Number.parseInt)

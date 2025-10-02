@@ -854,9 +854,13 @@ describe("Unified command", () => {
       sortBy: "file",
     });
 
-    const lines = output.split("\n").filter((l) => l.includes(":::"));
-    expect(lines[0]).toContain("a.ts");
-    expect(lines[1]).toContain("b.ts");
+    // With enhanced formatter, file headers are separate lines
+    const lines = output.split("\n");
+    const fileHeaders = lines.filter(
+      (l) => l.endsWith(".ts") && !l.includes(":::")
+    );
+    expect(fileHeaders[0]).toContain("a.ts");
+    expect(fileHeaders[1]).toContain("b.ts");
     await rm(dir, { recursive: true, force: true });
   });
 

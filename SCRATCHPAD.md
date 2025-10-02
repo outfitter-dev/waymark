@@ -7,8 +7,8 @@ Keep this log current while working. Each session should append entries under th
 ## Notes
 
 <!-- context ::: this space is for any general notes that come up while working -->
-<!-- ::: the intent is to capture thoughts, concerns, etc. so other agents can see them -->
-<!-- ::: keep this space tidy though, and prune it periodically when things may no longer be relevant -->
+<!--         ::: the intent is to capture thoughts, concerns, etc. so other agents can see them -->
+<!--         ::: keep this space tidy though, and prune it periodically when things may no longer be relevant -->
 
 - Matt's notes:
   - The `:::` sigil is placed after the marker intentionally
@@ -506,6 +506,35 @@ Detailed daily logs are maintained in `.agents/logs/`:
   - Deleted old unified.ts file
   - Updated import in packages/cli/src/index.ts from `./commands/unified.ts` to `./commands/unified/index.ts`
   - All modules now under 175 lines (target: <150 lines)
+
+## 2025-10-02
+
+- **Pino Logger Integration**
+  - Fixed debug logging pollution from IgnoreFilter
+  - Integrated pino logger with structured logging
+  - Added CLI flags: --verbose, --debug, --quiet for log level control
+  - Created comprehensive tests (9 unit + 3 integration)
+  - All 155 tests passing
+
+- **Enhanced CLI Output Formatter (ripgrep-style)**
+  - Implemented CLI_READOUT.md requirements for improved output
+  - Created chalk-based styling system for waymark elements:
+    - Type-specific colors (work: yellow, info: blue, tldr: greenBright, etc.)
+    - Mention styling (@user: bold yellow, @scope/pkg: bold cyan)
+    - Tag styling (#tag: bold cyan)
+    - Property styling (dim)
+    - Signal styling (bold + underline for signaled types)
+  - Implemented comment marker stripping utilities
+  - Created enhanced formatter with:
+    - Automatic file grouping (ripgrep-style output)
+    - Aligned line numbers based on max line width
+    - Multi-line waymark support with aligned :::
+    - Stripped comment markers by default (// # <!-- etc.)
+  - Added CLI flags:
+    - --keep-comment-markers: preserve comment syntax in output
+    - --compact: compact output format
+  - Updated test expectations for new output format
+  - All 85 tests passing
 
 - **Error Resolution**
   - Fixed import path error after moving to index.ts structure
