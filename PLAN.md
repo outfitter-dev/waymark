@@ -103,7 +103,7 @@
 - 2025-09-26: Separate `@waymarks/grammar` from `@waymarks/core` for architectural isolation (grammar remains minimal and stable while core can evolve with opinions and utilities).
 - 2025-09-26: Landed full v1 parser implementation with multi-line handling, property extraction, and token categorization.
 - 2025-09-26: CLI cache handling stays implicit inside `waymark scan`; no standalone cache command planned.
-- 2025-09-27: CLI resolves scoped configs via XDG paths with tests covering project/global/default discovery.
+- 2025-09-27: CLI resolves scoped configs via XDG paths with tests covering project/user/default discovery.
 - 2025-09-27: Break `@waymarks/cli` entrypoint into per-command modules with shared utilities to keep handlers focused and testable.
 - 2025-09-27: Enhanced SQLite cache with batch inserts, search indices on all columns, and optimized search methods.
 - 2025-09-27: Created JSON Schemas for waymark-record, waymark-config, and waymark-scan-result in schemas/ directory.
@@ -119,3 +119,12 @@
   - Categories: work, info (shortened from information), caution, workflow, inquiry
   - Added helper functions for canonical marker resolution and category lookup
   - Added `comment` as new blessed marker in info category
+- 2025-10-02: Renamed `global` scope to `user` throughout codebase for clarity
+  - `user` scope applies to current user across all repos via `~/.config/waymark/config.*`
+  - `project` scope (default) applies to specific repo via `.waymark/config.*`
+  - Updated all core, CLI, and MCP packages to use consistent terminology
+- 2025-10-02: Implemented `wm init` command for bootstrapping waymark configurations
+  - Interactive mode: prompts for format (toml/jsonc/yaml/yml), preset (full/minimal), and scope (project/user)
+  - Non-interactive mode: accepts flags `--format`, `--preset`, `--scope`, `--force`
+  - Auto-updates `.gitignore` with `.waymark/cache/` and `.waymark/index/` entries for project scope
+  - Integrated Pino logger with pretty-print formatting for clean CLI output
