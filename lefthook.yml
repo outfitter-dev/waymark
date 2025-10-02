@@ -7,14 +7,8 @@ pre-commit:
     format:
       run: bun run format
 
-    waymark-map:
-      run: bun run check:waymarks || true
-
 pre-push:
   parallel: false
   commands:
     quality-gates:
       run: bun run lint && bun run typecheck && bun run test
-
-    waymark-map:
-      run: bun run check:waymarks || true

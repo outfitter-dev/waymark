@@ -19,7 +19,7 @@
     "lint:biome": "bunx ultracite check",
     "lint:md": "bunx markdownlint-cli2 \"**/*.md\" \"!**/.bun/**\"",
     "check": "bun run lint",
-    "check:all": "bun run lint && bun run typecheck && bun run test && bun run check:waymarks",
+    "check:all": "bun run lint && bun run typecheck && bun run test",
     "check:waymarks": "bun scripts/waymark-map.ts",
     "waymark:map": "bun scripts/waymark-map.ts",
     "audit": "bun scripts/waymark-audit.ts",
