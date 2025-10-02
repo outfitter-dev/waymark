@@ -565,3 +565,22 @@ Detailed daily logs are maintained in `.agents/logs/`:
   - Verified JSON.stringify() already handles proper escaping (quotes, backslashes, special chars)
   - All 155 tests passing
   - Committed as `f89aa53`: "feat(cli): clean JSON output by removing empty fields"
+
+- **Config Standardization**
+  - Standardized on TOML as preferred config format
+  - Removed `.json` support (only `.toml`, `.jsonc`, `.yaml`, `.yml` supported)
+  - Kept `.waymark/` directory for project config (removed `.waymarkrc.*` pattern)
+  - Config precedence: `.toml` → `.jsonc` → `.yaml` → `.yml`
+  - Discovery order: explicit path → env var → project (`.waymark/config.*`) → global (`~/.config/waymark/config.*`)
+  - Migrated repo config from `.waymark/config.jsonc` to `.waymark/config.toml`
+  - Updated all tests to use TOML format
+  - All 155 tests passing
+  - Committed as `fb649f3`: "feat(config): standardize on TOML format and .waymark/ directory"
+
+- **Removed Generated Map File**
+  - Deleted `.waymark/map.md` (users can run `wm --map` for fresh results)
+  - Removed `waymark-map` from lefthook pre-commit and pre-push hooks
+  - Removed `check:waymarks` from `check:all` script (kept script available via `bun run waymark:map`)
+  - Updated AGENTS.md to remove map.md references and waymark map routine section
+  - Updated PRD.md to reflect TOML precedence and remove map.md references
+  - Committed as `50057e1`: "chore: remove generated map.md file and related hooks"
