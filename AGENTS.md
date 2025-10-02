@@ -30,7 +30,6 @@ The rebuild focuses on clarity, simplicity, and progressive enhancement of the w
 - @./.agents/rules/CORE.md
 - @./.agents/rules/IMPORTANT.md
 - @./.waymark/rules/WAYMARKS.md
-- @.waymark/map.md
 
 ## Project Overview
 
@@ -76,15 +75,10 @@ When working on this project:
 **CRITICAL**: Before pushing any code:
 
 1. **Run CI locally**: `bun ci:local` - This simulates the full CI pipeline
-2. **Comprehensive check**: `bun check:all` - Includes temporary context detection
+2. **Comprehensive check**: `bun check:all` - Runs lint, typecheck, and tests
 3. **Quick validation**: `bun ci:validate` - Tests, types, and build only
-4. **Check for temp code**: `bun check:waymarks` - Ensures no temporary `temp`/`tmp` waymarks slip into the tree
 
 The pre-push hook will automatically run these checks, but running them manually first saves time.
-
-### Waymark Map Routine
-
-- Refresh the map with `bun run check:waymarks` (alias for `bun scripts/waymark-map.ts`) at the end of each substantial work chunk so @.waymark/map.md stays accurate; the script applies `.waymark/ignore.jsonc`, so review that file before adjusting scope.
 
 ### Documentation Standards
 
