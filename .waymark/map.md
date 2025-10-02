@@ -1,7 +1,7 @@
 <!-- tldr ::: generated map of repo waymarks #docs/rules -->
 # Waymark Map
 
-Generated on 2025-10-02T15:44:31.048Z.
+Generated on 2025-10-02T16:00:28.981Z.
 
 ## TLDR Waymarks
 - AGENTS.md:1 — <!-- tldr ::: agents configuration and development guidelines -->
@@ -140,10 +140,10 @@ Generated on 2025-10-02T15:44:31.048Z.
 - docs/waymark/SPEC.md:180 — // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
 - docs/waymark/tui-ab-plan.md:86 — <!-- todo ::: summarize findings and mark chosen TUI path once evaluation wraps -->
 - packages/agents/src/index.ts:8 — // todo ::: implement agent toolkit
-- packages/cli/dist/wm.js:41051 — // todo ::: implement OAuth
-- packages/cli/dist/wm.js:41052 — // todo ::: implement OAuth
-- packages/cli/dist/wm.js:41364 — // todo ::: implement OAuth
-- packages/cli/dist/wm.js:41461 — // todo ::: implement auth #sec
+- packages/cli/dist/wm.js:41074 — // todo ::: implement OAuth
+- packages/cli/dist/wm.js:41075 — // todo ::: implement OAuth
+- packages/cli/dist/wm.js:41387 — // todo ::: implement OAuth
+- packages/cli/dist/wm.js:41484 — // todo ::: implement auth #sec
 - packages/cli/src/commands/format.help.ts:36 — // todo ::: implement auth
 - packages/cli/src/commands/format.help.ts:42 — // todo ::: implement auth
 - packages/cli/src/commands/format.prompt.ts:64 — // todo ::: implement OAuth
@@ -171,13 +171,13 @@ Generated on 2025-10-02T15:44:31.048Z.
 - docs/waymark/SPEC.md:181 — // review ::: @alice confirm retry strategy #sec:boundary
 - docs/waymark/SPEC.md:182 — // note ::: logs PII-hardened metadata only #docs/logging
 - docs/waymark/tui-ab-plan.md:111 — <!-- note ::: revisit this doc after A/B cycle to archive losing approach and formalize follow-ups -->
-- packages/cli/dist/wm.js:41020 — // ::: handles webhooks
-- packages/cli/dist/wm.js:41023 — // ::: handles webhooks
-- packages/cli/dist/wm.js:41055 — // *fix ::: validate input
-- packages/cli/dist/wm.js:41367 — // fix ::: validate email format
-- packages/cli/dist/wm.js:41370 — /* hack ::: this is a hack */
-- packages/cli/dist/wm.js:41462 — // *fix ::: validate input @alice
-- packages/cli/dist/wm.js:41464 — // ^wip ::: refactoring in progress
+- packages/cli/dist/wm.js:41043 — // ::: handles webhooks
+- packages/cli/dist/wm.js:41046 — // ::: handles webhooks
+- packages/cli/dist/wm.js:41078 — // *fix ::: validate input
+- packages/cli/dist/wm.js:41390 — // fix ::: validate email format
+- packages/cli/dist/wm.js:41393 — /* hack ::: this is a hack */
+- packages/cli/dist/wm.js:41485 — // *fix ::: validate input @alice
+- packages/cli/dist/wm.js:41487 — // ^wip ::: refactoring in progress
 - packages/cli/src/commands/format.help.ts:39 — // ::: handles Stripe webhooks
 - packages/cli/src/commands/format.help.ts:43 — // *fix ::: validate input
 - packages/cli/src/commands/format.help.ts:45 — // ::: handles Stripe webhooks
