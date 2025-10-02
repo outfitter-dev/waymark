@@ -1,7 +1,7 @@
 <!-- tldr ::: generated map of repo waymarks #docs/rules -->
 # Waymark Map
 
-Generated on 2025-10-02T10:28:36.908Z.
+Generated on 2025-10-02T10:28:50.083Z.
 
 ## TLDR Waymarks
 - AGENTS.md:1 — <!-- tldr ::: agents configuration and development guidelines -->
