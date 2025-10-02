@@ -553,3 +553,15 @@ Detailed daily logs are maintained in `.agents/logs/`:
   - Fixed misleading "backward compatibility" comment in unified/index.ts
   - Updated to "module API exports" which accurately reflects the re-exports are used by display utilities
   - No actual backward compatibility needed since this is internal refactoring
+
+- **JSON Output Optimization**
+  - Implemented `cleanRecord()` function in `packages/cli/src/utils/output.ts`
+  - Removes empty fields from JSON output:
+    - Empty arrays: `relations`, `canonicals`, `mentions`, `tags`
+    - Empty objects: `properties`
+    - All-false signals object (when `raised`, `important`, and `current` are all false)
+  - Reduces JSON output size by ~42% for typical waymarks (19 lines → 11 lines)
+  - Improves readability of JSON/JSONL/pretty output
+  - Verified JSON.stringify() already handles proper escaping (quotes, backslashes, special chars)
+  - All 155 tests passing
+  - Committed as `f89aa53`: "feat(cli): clean JSON output by removing empty fields"
