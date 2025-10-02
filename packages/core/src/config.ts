@@ -58,19 +58,10 @@ export type LoadConfigOptions = {
 };
 
 const CONFIG_FILENAMES = [
+  "config.toml", // Preferred format
   "config.jsonc",
-  "config.json",
   "config.yaml",
   "config.yml",
-  "config.toml",
-];
-
-const RC_FILENAMES = [
-  ".waymarkrc.jsonc",
-  ".waymarkrc.json",
-  ".waymarkrc.yaml",
-  ".waymarkrc.yml",
-  ".waymarkrc.toml",
 ];
 
 // Deep merge utility for config resolution
@@ -167,9 +158,7 @@ export async function loadConfigFromDisk(
     overrides = await loadGlobalOverrides(env);
   } else {
     overrides =
-      (await findNearestRcOverrides(cwd)) ??
-      (await loadProjectOverrides(cwd)) ??
-      (await loadGlobalOverrides(env));
+      (await loadProjectOverrides(cwd)) ?? (await loadGlobalOverrides(env));
   }
 
   return resolveConfig(overrides);
@@ -194,8 +183,14 @@ async function readConfigOverrides(
       return normalizeConfigShape(parseToml(raw));
     }
 
-    const text = ext === ".jsonc" ? stripJsonComments(raw) : raw;
-    return normalizeConfigShape(JSON.parse(text));
+    if (ext === ".jsonc") {
+      const text = stripJsonComments(raw);
+      return normalizeConfigShape(JSON.parse(text));
+    }
+
+    throw new Error(
+      `Unsupported config format: ${ext}. Use .toml, .jsonc, .yaml, or .yml`
+    );
   } catch (error) {
     throw new Error(
       `Unable to parse config at ${filePath}: ${
@@ -203,21 +198,6 @@ async function readConfigOverrides(
       }`
     );
   }
-}
-
-async function findNearestRcOverrides(
-  start: string
-): Promise<Partial<WaymarkConfig> | undefined> {
-  for (const directory of walkDirectories(start)) {
-    for (const candidate of RC_FILENAMES) {
-      const filePath = join(directory, candidate);
-      const overrides = await readConfigOverrides(filePath);
-      if (overrides) {
-        return overrides;
-      }
-    }
-  }
-  return;
 }
 
 async function loadProjectOverrides(
