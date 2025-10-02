@@ -14,6 +14,7 @@ import {
 // Regex patterns for continuation detection
 const CONTINUATION_CONTENT_PATTERN = /^.*?:::\s*/;
 const SIGIL_SPLIT_PATTERN = / ::: /;
+const PROPERTY_AS_MARKER_PATTERN = /^(\S+)\s+:::\s+(.*)$/;
 
 /**
  * Group records by file path
@@ -32,10 +33,11 @@ function groupByFile(records: WaymarkRecord[]): Map<string, WaymarkRecord[]> {
 
 /**
  * Get the maximum line number width for a set of records
+ * Minimum width of 2 to ensure single-digit line numbers have a leading space
  */
 function getMaxLineWidth(records: WaymarkRecord[]): number {
   const maxLine = Math.max(...records.map((r) => r.endLine));
-  return String(maxLine).length;
+  return Math.max(2, String(maxLine).length);
 }
 
 /**
@@ -101,7 +103,7 @@ function formatWaymarkLine(
 
   // Format line number with padding
   const lineNum = String(record.startLine).padStart(lineWidth, " ");
-  const lineNumStr = styleLineNumber(Number.parseInt(lineNum, 10));
+  const lineNumStr = styleLineNumber(lineNum);
 
   if (compact) {
     return `${lineNumStr} ${typeStr}${sigilStr}${styledContent}`;
@@ -159,7 +161,7 @@ function formatFirstLine(
 }
 
 /**
- * Format a property or other continuation line
+ * Format a property-as-marker continuation line (e.g., "ref ::: #token")
  */
 function formatPropertyLine(
   content: string,
@@ -167,9 +169,28 @@ function formatPropertyLine(
   lineWidth: number,
   longestTypeLength: number
 ): string {
-  const styledContent = styleContent(content);
+  // Check if this line has a prefix before ::: (property-as-marker pattern)
+  const sigilMatch = content.match(PROPERTY_AS_MARKER_PATTERN);
 
-  // Use same padding as continuation lines to maintain alignment
+  if (sigilMatch) {
+    const [, prefix, afterSigil] = sigilMatch;
+
+    // Style the prefix like a type (colored based on category, but not bold/underlined like a real type)
+    // For property continuations, we just color the prefix, no bold/underline
+    const styledPrefix = styleContent(prefix || "");
+    const styledContent = styleContent(afterSigil || "");
+
+    // Calculate padding to align the ::: with other waymarks
+    const baseIndent = 2;
+    const prefixLength = prefix?.length ?? 0;
+    const paddingSpaces = baseIndent + (longestTypeLength - prefixLength);
+    const spacing = " ".repeat(Math.max(0, paddingSpaces));
+
+    return `${lineNumStr}${spacing}${styledPrefix}${styleSigil(" ::: ")}${styledContent}`;
+  }
+
+  // If no prefix, just style the entire content
+  const styledContent = styleContent(content);
   const sigilColumn = lineWidth + 1 + 2 + longestTypeLength + 1;
   const paddingSpaces = sigilColumn - lineWidth - 1;
   const spacing = " ".repeat(paddingSpaces);
@@ -206,7 +227,7 @@ function formatMultiLineWaymark(
   for (let i = 0; i < rawLines.length; i++) {
     const rawLine = rawLines[i] || "";
     const lineNum = String(currentLine).padStart(lineWidth, " ");
-    const lineNumStr = styleLineNumber(Number.parseInt(lineNum, 10));
+    const lineNumStr = styleLineNumber(lineNum);
 
     const content = keepMarkers
       ? rawLine
@@ -239,12 +260,41 @@ function formatMultiLineWaymark(
 }
 
 /**
+ * Format a single record in compact mode (file:line  type ::: content)
+ */
+function formatCompactRecord(
+  record: WaymarkRecord,
+  _options: DisplayOptions
+): string {
+  // In compact mode, use parsed contentText and collapse to single line
+  const content = record.contentText.replace(/\n/g, " ");
+
+  // Format: file:line  type ::: content
+  const typeStr = styleType(record.type, record.signals);
+  const sigilStr = styleSigil(" ::: ");
+  const styledContent = styleContent(content);
+
+  // In compact mode, don't underline file path and don't dim line number
+  return `${record.file}:${record.startLine}  ${typeStr}${sigilStr}${styledContent}`;
+}
+
+/**
  * Format records in enhanced ripgrep-style output
  */
 export function formatEnhanced(
   records: WaymarkRecord[],
   options: DisplayOptions
 ): string {
+  const compact = options.compact ?? false;
+
+  // Compact mode: one line per waymark, file:line prefix
+  if (compact) {
+    return records
+      .map((record) => formatCompactRecord(record, options))
+      .join("\n");
+  }
+
+  // Regular mode: grouped by file with headers
   const groups = groupByFile(records);
   const output: string[] = [];
 

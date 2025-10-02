@@ -75,47 +75,32 @@ example/file.md
 
 After seeing the implementation I have a few suggestions:
 
-1. We should consider signals (`*`,`^`) that precede a waymark type should outdent by one character, so that the `:::` sigils within a file's group of waymarks maintain alignment.
-2. Since the number of characters in a line number containing a waymark may increment throughout a file, we should always use the greatest line number to determine the indentation level for the entire file's waymarks
-3. Waymark types have varying character counts in them, which would cause the `:::` sigils to be misaligned. Therefore we should always try to maintain the beginning of the `:::` sigil to the same indentation level. This would mean that the character start would be something like: `<line_number>` + `:` + `  ` (-1 if `signal`) + `<waymark_type_character_length>`
+1. In the below example, the `72:  *todo :::` waymark didn't have the `*` styled with the same color as the type it's adjacent to, which should be the case.
+2. The examples of `owner:@...` did not have the `owner:` color applied as expected.
+3. Where we see `depends:#infra/ratelimit`, the color was applied correctly, but the `depends:` should not have been bolded.
 
 Original output:
 
 ```text
 .agents/.archive/20250926-SPEC_NEXT.md
-49:  todo ::: implement authentication
-50:       ::: this is a pure note (no marker)
-58:  todo ::: add validation
-72:  *todo ::: finish before merging this PR
-88:  todo ::: implement OAuth owner:@alice
-99:  todo ::: refactor this [[symbol:AuthHandler::validate]]
-114:  todo ::: @alice please review
-124:  todo ::: add caching #performance #backend
-158:  todo ::: refactor auth flow #auth/core
-170:  todo ::: implement authentication flow
-323:  todo ::: add input validation
-399:  todo ::: @agent add input validation for email format
-466:  todo ::: add rate limiting depends:#infra/ratelimit
-498:  todo ::: @agent implement PCI compliance checks depends:#compliance/pci
-```
+ 49:   todo ::: implement authentication
+ 50:        ::: this is a pure note (no marker)
+ 58:   todo ::: add validation
+ 72:  *todo ::: finish before merging this PR
+ 88:   todo ::: implement OAuth owner:@alice
+ 99:   todo ::: refactor this [[symbol:AuthHandler::validate]]
+114:   todo ::: @alice please review
+124:   todo ::: add caching #performance #backend
+158:   todo ::: refactor auth flow #auth/core
+170:   todo ::: implement authentication flow
+323:   todo ::: add input validation
+399:   todo ::: @agent add input validation for email format
+466:   todo ::: add rate limiting depends:#infra/ratelimit
+498:   todo ::: @agent implement PCI compliance checks depends:#compliance/pci
 
-Correct output:
-
-```text
-.agents/.archive/20250926-SPEC_NEXT.md
-49:   todo ::: implement authentication
-50:        ::: this is a pure note (no marker)
-58:   todo ::: add validation
-72:  *todo ::: finish before merging this PR
-88:   todo ::: implement OAuth owner:@alice
-99:   todo ::: refactor this [[symbol:AuthHandler::validate]]
-114:  todo ::: @alice please review
-124:  todo ::: add caching #performance #backend
-158:  todo ::: refactor auth flow #auth/core
-170:  todo ::: implement authentication flow
-323:  todo ::: add input validation
-399:  todo ::: @agent add input validation for email format
-466:  todo ::: add rate limiting depends:#infra/ratelimit
-498:  todo ::: @agent implement PCI compliance checks depends:#compliance/pci
-
+.agents/.archive/20250926-PROPOSED_SPEC.md
+ 77:   todo ::: implement authentication
+107:  *todo ::: implement OAuth flow before merge
+121:   todo ::: add retry logic priority:high owner:@alice
+228:   todo ::: implement OAuth integration owner:@alice priority:p1
 ```

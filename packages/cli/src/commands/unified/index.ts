@@ -1,6 +1,7 @@
 // tldr ::: unified wm command orchestration and execution
 
 import type { WaymarkRecord } from "@waymarks/grammar";
+import chalk from "chalk";
 import type { CommandContext } from "../../types";
 import { formatRecords } from "../../utils/display";
 import { printMap, serializeMap } from "../../utils/map-rendering";
@@ -24,7 +25,12 @@ export async function runUnifiedCommand(
   options: UnifiedCommandOptions,
   context: CommandContext
 ): Promise<UnifiedCommandResult> {
-  const { filePaths, isMapMode, isGraphMode, json, summary } = options;
+  const { filePaths, isMapMode, isGraphMode, json, summary, noColor } = options;
+
+  // Disable chalk colors if --no-color flag is set
+  if (noColor) {
+    chalk.level = 0;
+  }
 
   // Map mode: aggregate TLDRs and marker counts
   if (isMapMode) {

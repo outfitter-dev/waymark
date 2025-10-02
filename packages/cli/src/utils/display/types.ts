@@ -15,6 +15,7 @@ export type DisplayOptions = Pick<
   | "page"
   | "keepCommentMarkers"
   | "compact"
+  | "noColor"
 >;
 
 export const DEFAULT_PAGE_SIZE = 50;

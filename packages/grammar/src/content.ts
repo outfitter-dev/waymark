@@ -1,6 +1,6 @@
 // tldr ::: content segment processing and continuation handling for waymark grammar
 
-import { SIGIL } from "./constants";
+import { BLESSED_MARKERS, SIGIL } from "./constants";
 import {
   extractMentions,
   extractPropertiesAndRelations,
@@ -104,8 +104,17 @@ export function parseContinuation(
 
   // Check if this is a property-as-marker pattern
   if (beforeSigil.length > 0 && !beforeSigil.includes(" ")) {
-    // Check if it's a known property key
     const lowerKey = beforeSigil.toLowerCase();
+
+    // CRITICAL: Check if it's a blessed marker first - if so, it's NOT a continuation
+    // This prevents markers like 'needs' and 'blocks' from being treated as property continuations
+    if (
+      BLESSED_MARKERS.includes(lowerKey as (typeof BLESSED_MARKERS)[number])
+    ) {
+      return null;
+    }
+
+    // Check if it's a known property key
     if (PROPERTY_KEYS.has(lowerKey)) {
       // This is a property continuation
       return {
