@@ -31,6 +31,8 @@ export type ParseState = {
   reverse: boolean;
   limit: number | undefined;
   page: number | undefined;
+  keepCommentMarkers: boolean;
+  compact: boolean;
 };
 
 /**
@@ -155,6 +157,16 @@ export function handleModeDisplayFlags(
   }
   if (token === "--starred" || token === "-s") {
     state.starred = true;
+    return true;
+  }
+
+  // Formatting flags
+  if (token === "--keep-comment-markers") {
+    state.keepCommentMarkers = true;
+    return true;
+  }
+  if (token === "--compact") {
+    state.compact = true;
     return true;
   }
 

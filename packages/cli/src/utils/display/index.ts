@@ -1,6 +1,7 @@
 // tldr ::: display formatting orchestration for waymark records
 
 import type { WaymarkRecord } from "@waymarks/core";
+import { formatEnhanced } from "./formatters/enhanced";
 import { formatLong } from "./formatters/long";
 import { formatFlat, formatText } from "./formatters/text";
 import { formatTree } from "./formatters/tree";
@@ -49,6 +50,14 @@ export function formatRecords(
       // Graph mode should be handled separately in unified.ts
       return formatFlat(processed);
     default:
-      return formatText(processed, options);
+      // Use enhanced formatter with context support
+      if (
+        options.contextAround ||
+        options.contextBefore ||
+        options.contextAfter
+      ) {
+        return formatText(processed, options);
+      }
+      return formatEnhanced(processed, options);
   }
 }

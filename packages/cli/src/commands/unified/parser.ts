@@ -48,6 +48,9 @@ export function createParseState(): ParseState {
     // Pagination
     limit: undefined as number | undefined,
     page: undefined as number | undefined,
+    // Formatting
+    keepCommentMarkers: false,
+    compact: false,
   };
 }
 
@@ -211,6 +214,14 @@ export function buildOptions(state: ParseState): UnifiedCommandOptions {
   }
   if (state.page !== undefined) {
     options.page = state.page;
+  }
+
+  // Formatting
+  if (state.keepCommentMarkers) {
+    options.keepCommentMarkers = state.keepCommentMarkers;
+  }
+  if (state.compact) {
+    options.compact = state.compact;
   }
 
   return options;
