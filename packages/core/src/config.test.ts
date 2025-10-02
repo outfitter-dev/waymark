@@ -82,8 +82,8 @@ test("default scope discovers .waymark/config.* file", async () => {
   });
 });
 
-test("global scope reads from XDG_CONFIG_HOME", async () => {
-  await withTempDir("waymark-config-global-", async (dir) => {
+test("user scope reads from XDG_CONFIG_HOME", async () => {
+  await withTempDir("waymark-config-user-", async (dir) => {
     const configDir = join(dir, "waymark");
     await mkdir(configDir, { recursive: true });
     await writeFile(
@@ -93,7 +93,7 @@ test("global scope reads from XDG_CONFIG_HOME", async () => {
     );
 
     const config = await loadConfigFromDisk({
-      scope: "global",
+      scope: "user",
       // biome-ignore lint/style/useNamingConvention: environment variables are uppercase by convention
       env: { XDG_CONFIG_HOME: dir },
     });

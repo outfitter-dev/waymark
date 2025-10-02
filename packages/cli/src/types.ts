@@ -3,7 +3,7 @@
 import type { WaymarkConfig } from "@waymarks/core";
 import type { LogLevel } from "./utils/logger.ts";
 
-export type CliScopeOption = "default" | "project" | "global";
+export type CliScopeOption = "default" | "project" | "user";
 
 export type GlobalOptions = {
   configPath?: string;
