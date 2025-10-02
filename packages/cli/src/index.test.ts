@@ -12,8 +12,12 @@ import { lintFiles } from "./commands/lint";
 import { mapFiles, parseMapArgs } from "./commands/map";
 import { migrateFile, migrateLegacyWaymarks } from "./commands/migrate";
 import { parseScanArgs, scanRecords } from "./commands/scan";
-import { runUnifiedCommand } from "./commands/unified/index";
+import {
+  runUnifiedCommand,
+  type UnifiedCommandResult,
+} from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
+import type { UnifiedCommandOptions } from "./commands/unified/types";
 import { formatMapOutput, serializeMap } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
@@ -22,6 +26,19 @@ const defaultContext: CommandContext = {
   config: resolveConfig(),
   globalOptions: {},
 };
+
+async function runUnified(
+  options: UnifiedCommandOptions
+): Promise<UnifiedCommandResult> {
+  return await runUnifiedCommand(options, defaultContext);
+}
+
+async function runUnifiedOutput(
+  options: UnifiedCommandOptions
+): Promise<string> {
+  const result = await runUnified(options);
+  return result.output;
+}
 
 async function withTempFile(
   content: string,
@@ -45,7 +62,10 @@ describe("CLI handlers", () => {
   test("format command normalizes types", async () => {
     const { file, cleanup } = await withTempFile("// TODO ::: needs cleanup\n");
     const { formattedText, edits } = await formatFile(
-      { filePath: file, write: false },
+      {
+        filePath: file,
+        write: false,
+      },
       defaultContext
     );
     expect(formattedText).toBe("// todo ::: needs cleanup\n");
@@ -58,7 +78,7 @@ describe("CLI handlers", () => {
       "\n"
     );
     const { file, cleanup } = await withTempFile(source);
-    const records = await scanRecords([file]);
+    const records = await scanRecords([file], defaultContext.config);
     expect(records).toHaveLength(2);
     expect(records[0]?.type).toBe("todo");
     await cleanup();
@@ -70,10 +90,253 @@ describe("CLI handlers", () => {
     await mkdir(nested);
     await writeFile(join(nested, "child.ts"), "// note ::: child", "utf8");
 
-    const records = await scanRecords([dir]);
+    const records = await scanRecords([dir], defaultContext.config);
 
     expect(records.map((record) => record.type)).toEqual(["todo", "note"]);
     await cleanup();
+  });
+
+  test("scan command respects .gitignore patterns", async () => {
+    // Create temp directory structure with .gitignore
+    const dir = await mkdtemp(join(tmpdir(), "waymark-gitignore-"));
+
+    // Create .gitignore
+    await writeFile(
+      join(dir, ".gitignore"),
+      ["dist/", "*.log", ".cache/", "ignored-dir/"].join("\n"),
+      "utf8"
+    );
+
+    // Create files that should be scanned
+    await writeFile(join(dir, "src.ts"), "// todo ::: should appear", "utf8");
+    await writeFile(join(dir, "README.md"), "<!-- tldr ::: docs -->", "utf8");
+
+    // Create files/dirs that should be ignored
+    const distDir = join(dir, "dist");
+    await mkdir(distDir);
+    await writeFile(
+      join(distDir, "bundle.ts"),
+      "// todo ::: should NOT appear",
+      "utf8"
+    );
+
+    await writeFile(
+      join(dir, "debug.log"),
+      "// note ::: should NOT appear",
+      "utf8"
+    );
+
+    const cacheDir = join(dir, ".cache");
+    await mkdir(cacheDir);
+    await writeFile(
+      join(cacheDir, "data.ts"),
+      "// fix ::: should NOT appear",
+      "utf8"
+    );
+
+    const ignoredDir = join(dir, "ignored-dir");
+    await mkdir(ignoredDir);
+    await writeFile(
+      join(ignoredDir, "file.ts"),
+      "// wip ::: should NOT appear",
+      "utf8"
+    );
+
+    // Scan the directory
+    const records = await scanRecords([dir], defaultContext.config);
+
+    // Should only find waymarks from non-ignored files
+    expect(records).toHaveLength(2);
+    expect(records.map((r) => r.type).sort()).toEqual(["tldr", "todo"]);
+    expect(records.every((r) => !r.file.includes("dist"))).toBe(true);
+    expect(records.every((r) => !r.file.includes(".log"))).toBe(true);
+    expect(records.every((r) => !r.file.includes(".cache"))).toBe(true);
+    expect(records.every((r) => !r.file.includes("ignored-dir"))).toBe(true);
+
+    // Cleanup
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("skipPaths from config excludes files without gitignore", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-skip-"));
+
+    // No .gitignore file - relying on config only
+    await writeFile(join(dir, "src.ts"), "// todo ::: should appear", "utf8");
+
+    const tempDir = join(dir, "temp");
+    await mkdir(tempDir);
+    await writeFile(
+      join(tempDir, "data.ts"),
+      "// fix ::: should NOT appear",
+      "utf8"
+    );
+
+    const buildDir = join(dir, "build");
+    await mkdir(buildDir);
+    await writeFile(
+      join(buildDir, "output.ts"),
+      "// note ::: should NOT appear",
+      "utf8"
+    );
+
+    // Custom config with skipPaths
+    const config = resolveConfig({
+      skipPaths: ["**/temp/**", "**/build/**"],
+    });
+
+    const records = await scanRecords([dir], config);
+
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("todo");
+    expect(records[0]?.contentText).toBe("should appear");
+    expect(records.every((r) => !r.file.includes("temp"))).toBe(true);
+    expect(records.every((r) => !r.file.includes("build"))).toBe(true);
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("includePaths override gitignore and skipPaths", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-include-"));
+
+    // Create .gitignore excluding dist/
+    await writeFile(join(dir, ".gitignore"), "dist/\n", "utf8");
+
+    // Create dist/ with an important file
+    const distDir = join(dir, "dist");
+    await mkdir(distDir);
+    await writeFile(
+      join(distDir, "important.ts"),
+      "// tldr ::: should appear despite gitignore",
+      "utf8"
+    );
+    await writeFile(
+      join(distDir, "other.ts"),
+      "// fix ::: should NOT appear",
+      "utf8"
+    );
+
+    // Create build/ that will be in skipPaths
+    const buildDir = join(dir, "build");
+    await mkdir(buildDir);
+    await writeFile(
+      join(buildDir, "critical.ts"),
+      "// note ::: should appear despite skipPaths",
+      "utf8"
+    );
+    await writeFile(
+      join(buildDir, "other.ts"),
+      "// todo ::: should NOT appear",
+      "utf8"
+    );
+
+    // Config with skipPaths and includePaths
+    const config = resolveConfig({
+      skipPaths: ["**/build/**"],
+      includePaths: ["**/important.ts", "**/critical.ts"],
+    });
+
+    const records = await scanRecords([dir], config);
+
+    expect(records).toHaveLength(2);
+    expect(records.map((r) => r.type).sort()).toEqual(["note", "tldr"]);
+    expect(records.some((r) => r.file.includes("important.ts"))).toBe(true);
+    expect(records.some((r) => r.file.includes("critical.ts"))).toBe(true);
+    expect(records.every((r) => !r.file.includes("other.ts"))).toBe(true);
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("respectGitignore: false ignores .gitignore patterns", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-no-gitignore-"));
+
+    // Create .gitignore
+    await writeFile(join(dir, ".gitignore"), "temp/\n", "utf8");
+
+    // Create temp/ directory
+    const tempDir = join(dir, "temp");
+    await mkdir(tempDir);
+    await writeFile(
+      join(tempDir, "data.ts"),
+      "// todo ::: should appear when respectGitignore is false",
+      "utf8"
+    );
+    await writeFile(join(dir, "src.ts"), "// note ::: always appears", "utf8");
+
+    // Config disabling gitignore
+    const config = resolveConfig({
+      respectGitignore: false,
+    });
+
+    const records = await scanRecords([dir], config);
+
+    expect(records).toHaveLength(2);
+    expect(records.map((r) => r.type).sort()).toEqual(["note", "todo"]);
+    expect(records.some((r) => r.file.includes("temp"))).toBe(true);
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("priority system: includePaths > skipPaths > gitignore", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-priority-"));
+
+    // .gitignore excludes logs/
+    await writeFile(join(dir, ".gitignore"), "logs/\n", "utf8");
+
+    // Regular file (no ignore rules)
+    await writeFile(
+      join(dir, "src.ts"),
+      "// note ::: level 0: no rules",
+      "utf8"
+    );
+
+    // logs/ excluded by gitignore
+    const logsDir = join(dir, "logs");
+    await mkdir(logsDir);
+    await writeFile(
+      join(logsDir, "debug.ts"),
+      "// fix ::: level 1: gitignore blocks",
+      "utf8"
+    );
+    await writeFile(
+      join(logsDir, "important.ts"),
+      "// tldr ::: level 3: includePaths overrides gitignore",
+      "utf8"
+    );
+
+    // temp/ excluded by skipPaths
+    const tempDir = join(dir, "temp");
+    await mkdir(tempDir);
+    await writeFile(
+      join(tempDir, "cache.ts"),
+      "// wip ::: level 2: skipPaths blocks",
+      "utf8"
+    );
+    await writeFile(
+      join(tempDir, "critical.ts"),
+      "// todo ::: level 3: includePaths overrides skipPaths",
+      "utf8"
+    );
+
+    // Config with all three ignore mechanisms
+    const config = resolveConfig({
+      skipPaths: ["**/temp/**"],
+      includePaths: ["**/important.ts", "**/critical.ts"],
+      respectGitignore: true,
+    });
+
+    const records = await scanRecords([dir], config);
+
+    // Should get: src.ts (no rules), important.ts (includePaths), critical.ts (includePaths)
+    const EXPECTED_RECORD_COUNT = 3;
+    expect(records).toHaveLength(EXPECTED_RECORD_COUNT);
+    expect(records.map((r) => r.type).sort()).toEqual(["note", "tldr", "todo"]);
+    expect(records.some((r) => r.file.includes("src.ts"))).toBe(true);
+    expect(records.some((r) => r.file.includes("important.ts"))).toBe(true);
+    expect(records.some((r) => r.file.includes("critical.ts"))).toBe(true);
+    expect(records.every((r) => !r.file.includes("debug.ts"))).toBe(true);
+    expect(records.every((r) => !r.file.includes("cache.ts"))).toBe(true);
+
+    await rm(dir, { recursive: true, force: true });
   });
 
   test("parseScanArgs detects jsonl format", () => {
@@ -85,7 +348,7 @@ describe("CLI handlers", () => {
   test("renderRecords formats jsonl output", async () => {
     const source = ["// tldr ::: summary", "// todo ::: follow up"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const records = await scanRecords([file]);
+    const records = await scanRecords([file], defaultContext.config);
     const jsonl = renderRecords(records, "jsonl");
     const lines = jsonl.split("\n").filter(Boolean);
     expect(lines).toHaveLength(2);
@@ -98,7 +361,7 @@ describe("CLI handlers", () => {
   test("renderRecords pretty prints json", async () => {
     const source = "// todo ::: detailed task";
     const { file, cleanup } = await withTempFile(source);
-    const records = await scanRecords([file]);
+    const records = await scanRecords([file], defaultContext.config);
     const pretty = renderRecords(records, "pretty");
     expect(pretty).toContain("\n  {");
     expect(() => JSON.parse(pretty)).not.toThrow();
@@ -108,7 +371,7 @@ describe("CLI handlers", () => {
   test("map command summarizes files", async () => {
     const source = ["// tldr ::: summary", "// todo ::: work"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file]);
+    const map = await mapFiles([file], defaultContext.config);
     const [summary] = Array.from(map.files.values());
     expect(summary?.tldr?.contentText).toBe("summary");
     expect(summary?.types.get("todo")?.entries).toHaveLength(1);
@@ -121,7 +384,7 @@ describe("CLI handlers", () => {
     await mkdir(nested);
     await writeFile(join(nested, "note.ts"), "// todo ::: nested", "utf8");
 
-    const map = await mapFiles([dir]);
+    const map = await mapFiles([dir], defaultContext.config);
     expect(map.files.size).toBeGreaterThan(0);
     const entries = Array.from(map.files.values()).flatMap((summary) =>
       Array.from(summary.types.values()).flatMap(
@@ -157,7 +420,7 @@ describe("CLI handlers", () => {
       "// fix ::: patch",
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file]);
+    const map = await mapFiles([file], defaultContext.config);
 
     const serialized = serializeMap(map, {
       types: ["todo"],
@@ -184,7 +447,7 @@ describe("CLI handlers", () => {
       "// note ::: context",
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file]);
+    const map = await mapFiles([file], defaultContext.config);
 
     const output = formatMapOutput(map, { includeSummary: true });
     const lines = output.split("\n");
@@ -201,7 +464,7 @@ describe("CLI handlers", () => {
       "\n"
     );
     const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file]);
+    const map = await mapFiles([file], defaultContext.config);
 
     const output = formatMapOutput(map, { types: ["fix"] });
 
@@ -216,7 +479,7 @@ describe("CLI handlers", () => {
       "// todo ::: follow-up depends:#docs/root",
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const edges = await graphRecords([file]);
+    const edges = await graphRecords([file], defaultContext.config);
     expect(edges).toHaveLength(2);
     expect(edges[0]?.relation).toBe("ref");
     expect(edges[1]?.relation).toBe("depends");
@@ -226,7 +489,11 @@ describe("CLI handlers", () => {
   test("find command filters by type", async () => {
     const source = ["// tldr ::: summary", "// todo ::: task"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const matches = await findRecords({ filePath: file, types: ["todo"] });
+    const matches = await findRecords({
+      filePath: file,
+      types: ["todo"],
+      config: defaultContext.config,
+    });
     expect(matches).toHaveLength(1);
     expect(matches[0]?.type).toBe("todo");
     expect(matches[0]?.contentText).toBe("task");
@@ -236,7 +503,11 @@ describe("CLI handlers", () => {
   test("lint command detects invalid markers", async () => {
     const source = ["// todooo ::: typo marker", "// todo ::: ok"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const report = await lintFiles([file], defaultContext.config.allowTypes);
+    const report = await lintFiles(
+      [file],
+      defaultContext.config.allowTypes,
+      defaultContext.config
+    );
     expect(report.issues).toHaveLength(1);
     expect(report.issues[0]?.type).toBe("todooo");
     await cleanup();
@@ -334,14 +605,11 @@ describe("Unified command", () => {
     const source = ["// tldr ::: summary", "// todo ::: work"].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: true,
-        isGraphMode: false,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: true,
+      isGraphMode: false,
+    });
 
     expect(output).toBe("");
     await cleanup();
@@ -351,15 +619,12 @@ describe("Unified command", () => {
     const source = ["// tldr ::: summary", "// todo ::: work"].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: true,
-        isGraphMode: false,
-        json: true,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: true,
+      isGraphMode: false,
+      json: true,
+    });
 
     const parsed = JSON.parse(output) as Record<
       string,
@@ -376,14 +641,11 @@ describe("Unified command", () => {
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: true,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: true,
+    });
 
     const lines = output.split("\n").filter(Boolean);
     expect(lines).toHaveLength(2);
@@ -394,16 +656,13 @@ describe("Unified command", () => {
     const source = ["// tldr ::: summary", "// todo ::: work"].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        types: ["todo"],
-        json: true,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      types: ["todo"],
+      json: true,
+    });
 
     const parsed = JSON.parse(output) as Array<{ type: string }>;
     expect(parsed).toHaveLength(1);
@@ -417,16 +676,13 @@ describe("Unified command", () => {
     );
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        raised: true,
-        json: true,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      raised: true,
+      json: true,
+    });
 
     const parsed = JSON.parse(output) as Array<{
       signals: { raised: boolean };
@@ -442,16 +698,13 @@ describe("Unified command", () => {
     );
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        starred: true,
-        json: true,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      starred: true,
+      json: true,
+    });
 
     const parsed = JSON.parse(output) as Array<{
       signals: { important: boolean };
@@ -470,19 +723,16 @@ describe("Unified command", () => {
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        types: ["todo"],
-        raised: true,
-        starred: true,
-        tags: ["#perf"],
-        json: true,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      types: ["todo"],
+      raised: true,
+      starred: true,
+      tags: ["#perf"],
+      json: true,
+    });
 
     const parsed = JSON.parse(output) as Array<{
       type: string;
@@ -499,15 +749,12 @@ describe("Unified command", () => {
     const source = "// todo ::: @alice fix bug #perf";
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        displayMode: "long",
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      displayMode: "long",
+    });
 
     expect(output).toContain("Type: todo");
     expect(output).toContain("Signals: raised=false, important=false");
@@ -521,15 +768,12 @@ describe("Unified command", () => {
     const source = "// todo ::: fix bug\n// fix ::: handle error";
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        displayMode: "tree",
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      displayMode: "tree",
+    });
 
     expect(output).toContain("└─");
     expect(output).toContain("todo - fix bug");
@@ -541,15 +785,12 @@ describe("Unified command", () => {
     const source = "// todo ::: fix bug\n// fix ::: handle error";
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        displayMode: "flat",
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      displayMode: "flat",
+    });
 
     const lines = output.split("\n");
     expect(lines).toHaveLength(2);
@@ -567,15 +808,12 @@ describe("Unified command", () => {
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        contextAround: 1,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      contextAround: 1,
+    });
 
     expect(output).toContain("function example() {");
     expect(output).toContain("// todo ::: fix bug");
@@ -588,15 +826,12 @@ describe("Unified command", () => {
       "// todo ::: task one\n// fix ::: bug fix\n// todo ::: task two";
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        groupBy: "type",
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      groupBy: "type",
+    });
 
     expect(output).toContain("=== fix ===");
     expect(output).toContain("=== todo ===");
@@ -612,15 +847,12 @@ describe("Unified command", () => {
     await writeFile(file1, "// todo ::: task in a", "utf8");
     await writeFile(file2, "// fix ::: bug in b", "utf8");
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [dir],
-        isMapMode: false,
-        isGraphMode: false,
-        sortBy: "file",
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [dir],
+      isMapMode: false,
+      isGraphMode: false,
+      sortBy: "file",
+    });
 
     const lines = output.split("\n").filter((l) => l.includes(":::"));
     expect(lines[0]).toContain("a.ts");
@@ -637,15 +869,12 @@ describe("Unified command", () => {
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        limit: 2,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      limit: 2,
+    });
 
     const lines = output.split("\n").filter((l) => l.includes(":::"));
     expect(lines).toHaveLength(2);
@@ -663,18 +892,15 @@ describe("Unified command", () => {
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
-    const output = await runUnifiedCommand(
-      {
-        filePaths: [file],
-        isMapMode: false,
-        isGraphMode: false,
-        types: ["todo"],
-        groupBy: "type",
-        sortBy: "line",
-        limit: 2,
-      },
-      defaultContext
-    );
+    const output = await runUnifiedOutput({
+      filePaths: [file],
+      isMapMode: false,
+      isGraphMode: false,
+      types: ["todo"],
+      groupBy: "type",
+      sortBy: "line",
+      limit: 2,
+    });
 
     expect(output).toContain("=== todo ===");
     expect(output).toContain("task one");
@@ -689,10 +915,7 @@ describe("Unified command", () => {
 // fix ::: handle error
 // note ::: this is a note`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedCommand(
-      parseUnifiedArgs([file, "todo"]),
-      defaultContext
-    );
+    const output = await runUnifiedOutput(parseUnifiedArgs([file, "todo"]));
     expect(output).toContain("fix bug");
     expect(output).not.toContain("handle error");
     expect(output).not.toContain("this is a note");
@@ -704,10 +927,7 @@ describe("Unified command", () => {
 // todo ::: @alice task two
 // fix ::: @agent bug fix`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedCommand(
-      parseUnifiedArgs([file, "@agent"]),
-      defaultContext
-    );
+    const output = await runUnifiedOutput(parseUnifiedArgs([file, "@agent"]));
     expect(output).toContain("task one");
     expect(output).toContain("bug fix");
     expect(output).not.toContain("task two");
@@ -719,10 +939,7 @@ describe("Unified command", () => {
 // fix ::: bug fix #sec
 // note ::: note text #perf`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedCommand(
-      parseUnifiedArgs([file, "#perf"]),
-      defaultContext
-    );
+    const output = await runUnifiedOutput(parseUnifiedArgs([file, "#perf"]));
     expect(output).toContain("task one");
     expect(output).toContain("note text");
     expect(output).not.toContain("bug fix");
@@ -734,9 +951,8 @@ describe("Unified command", () => {
 // todo ::: @alice different task #perf
 // fix ::: @agent bug #sec`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedCommand(
-      parseUnifiedArgs([file, "todo @agent #perf"]),
-      defaultContext
+    const output = await runUnifiedOutput(
+      parseUnifiedArgs([file, "todo @agent #perf"])
     );
     expect(output).toContain("@agent task #perf");
     expect(output).not.toContain("@alice");
@@ -749,10 +965,7 @@ describe("Unified command", () => {
 // todo ::: @alice task two
 // fix ::: @agent bug fix`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedCommand(
-      parseUnifiedArgs([file, "!fix"]),
-      defaultContext
-    );
+    const output = await runUnifiedOutput(parseUnifiedArgs([file, "!fix"]));
     expect(output).toContain("task one");
     expect(output).toContain("task two");
     expect(output).not.toContain("bug fix");
@@ -764,9 +977,8 @@ describe("Unified command", () => {
 // fix ::: handle cache miss
 // note ::: other content`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedCommand(
-      parseUnifiedArgs([file, '"cache invalidation"']),
-      defaultContext
+    const output = await runUnifiedOutput(
+      parseUnifiedArgs([file, '"cache invalidation"'])
     );
     // Text search currently not implemented in filters, but parse should work
     expect(output).toContain("cache invalidation logic");
@@ -778,13 +990,42 @@ describe("Unified command", () => {
 // fix ::: bug fix
 // note ::: note text`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedCommand(
-      parseUnifiedArgs([file, "todos"]),
-      defaultContext
-    );
+    const output = await runUnifiedOutput(parseUnifiedArgs([file, "todos"]));
     expect(output).toContain("task one");
     expect(output).not.toContain("bug fix");
     expect(output).not.toContain("note text");
     await cleanup();
+  });
+});
+
+describe("Logger integration", () => {
+  test("logger is created with default warn level", async () => {
+    const { logger } = await import("./utils/logger.ts");
+    expect(logger.level).toBe("warn");
+  });
+
+  test("logger level can be changed dynamically", async () => {
+    const { logger } = await import("./utils/logger.ts");
+    const originalLevel = logger.level;
+
+    logger.level = "debug";
+    expect(logger.level).toBe("debug");
+
+    logger.level = "info";
+    expect(logger.level).toBe("info");
+
+    // Restore original level
+    logger.level = originalLevel;
+  });
+
+  test("logger has all expected methods", async () => {
+    const { logger } = await import("./utils/logger.ts");
+
+    expect(typeof logger.trace).toBe("function");
+    expect(typeof logger.debug).toBe("function");
+    expect(typeof logger.info).toBe("function");
+    expect(typeof logger.warn).toBe("function");
+    expect(typeof logger.error).toBe("function");
+    expect(typeof logger.fatal).toBe("function");
   });
 });

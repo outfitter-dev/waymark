@@ -1,6 +1,10 @@
 // tldr ::: map command helpers for waymark CLI
 
-import { buildWaymarkMap, type WaymarkMap } from "@waymarks/core";
+import {
+  buildWaymarkMap,
+  type WaymarkConfig,
+  type WaymarkMap,
+} from "@waymarks/core";
 
 import { createArgIterator, isFlag } from "../utils/flags/iterator";
 import { handleJsonFlag } from "../utils/flags/json";
@@ -18,8 +22,11 @@ export type ParsedMapArgs = {
 /**
  * Parse the provided file paths and build the aggregate map from scanned records.
  */
-export async function mapFiles(filePaths: string[]): Promise<WaymarkMap> {
-  const records = await scanRecords(filePaths);
+export async function mapFiles(
+  filePaths: string[],
+  config: WaymarkConfig
+): Promise<WaymarkMap> {
+  const records = await scanRecords(filePaths, config);
   return buildWaymarkMap(records);
 }
 

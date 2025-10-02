@@ -24,6 +24,10 @@ export function parseGlobalOptions(argv: string[]): {
       continue;
     }
 
+    if (consumeLogLevelOption(globalOptions, arg)) {
+      continue;
+    }
+
     rest.push(arg);
   }
 
@@ -85,4 +89,26 @@ export function normalizeScope(value: string): CliScopeOption {
   throw new Error(
     `Invalid scope "${value}". Use one of: default, project, global.`
   );
+}
+
+export function consumeLogLevelOption(
+  globalOptions: GlobalOptions,
+  arg: string
+): boolean {
+  if (arg === "--verbose" || arg === "-v") {
+    globalOptions.logLevel = "info";
+    return true;
+  }
+
+  if (arg === "--debug" || arg === "-d") {
+    globalOptions.logLevel = "debug";
+    return true;
+  }
+
+  if (arg === "--quiet" || arg === "-q") {
+    globalOptions.logLevel = "error";
+    return true;
+  }
+
+  return false;
 }

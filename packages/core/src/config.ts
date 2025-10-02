@@ -16,29 +16,33 @@ import type {
   WaymarkLintConfig,
 } from "./types";
 
-const DEFAULT_FORMAT: WaymarkFormatConfig = {
-  spaceAroundSigil: true,
-  normalizeCase: true,
-  alignContinuations: true,
-};
-
-const DEFAULT_LINT: WaymarkLintConfig = {
-  duplicateProperty: "warn",
-  unknownMarker: "warn",
-  danglingRelation: "error",
-  duplicateCanonical: "error",
-};
-
 export const DEFAULT_CONFIG: WaymarkConfig = {
   typeCase: "lowercase",
   idScope: "repo",
   protectedBranches: ["main", "release/*"],
   signalsOnProtected: "strip",
   allowTypes: [],
-  skipPaths: ["**/.git/**", "**/node_modules/**", "**/dist/**"],
-  format: DEFAULT_FORMAT,
-  lint: DEFAULT_LINT,
-};
+  skipPaths: [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.turbo/**",
+  ],
+  includePaths: [],
+  respectGitignore: true,
+  format: {
+    spaceAroundSigil: true,
+    normalizeCase: true,
+    alignContinuations: true,
+  },
+  lint: {
+    duplicateProperty: "warn",
+    unknownMarker: "warn",
+    danglingRelation: "error",
+    duplicateCanonical: "error",
+  },
+} as const satisfies WaymarkConfig;
 
 export type ResolveConfigOptions = {
   overrides?: PartialWaymarkConfig;
@@ -69,40 +73,46 @@ const RC_FILENAMES = [
   ".waymarkrc.toml",
 ];
 
-function resolveFormatConfig(
-  overrides?: PartialWaymarkConfig
-): WaymarkConfig["format"] {
-  const alignContinuations =
-    overrides?.format?.alignContinuations ??
-    DEFAULT_CONFIG.format.alignContinuations;
-  const alignContinuationsField =
-    alignContinuations !== undefined ? { alignContinuations } : {};
+// Deep merge utility for config resolution
+function deepMerge(
+  target: WaymarkConfig,
+  source: PartialWaymarkConfig
+): WaymarkConfig {
+  const result: WaymarkConfig = { ...target };
 
-  return {
-    spaceAroundSigil:
-      overrides?.format?.spaceAroundSigil ??
-      DEFAULT_CONFIG.format.spaceAroundSigil,
-    normalizeCase:
-      overrides?.format?.normalizeCase ?? DEFAULT_CONFIG.format.normalizeCase,
-    ...alignContinuationsField,
-  };
-}
+  for (const key in source) {
+    if (!Object.hasOwn(source, key)) continue;
+    const sourceValue = source[key as keyof PartialWaymarkConfig];
+    const targetValue = result[key as keyof WaymarkConfig];
 
-function resolveLintConfig(
-  overrides?: PartialWaymarkConfig
-): WaymarkConfig["lint"] {
-  return {
-    duplicateProperty:
-      overrides?.lint?.duplicateProperty ??
-      DEFAULT_CONFIG.lint.duplicateProperty,
-    unknownMarker:
-      overrides?.lint?.unknownMarker ?? DEFAULT_CONFIG.lint.unknownMarker,
-    danglingRelation:
-      overrides?.lint?.danglingRelation ?? DEFAULT_CONFIG.lint.danglingRelation,
-    duplicateCanonical:
-      overrides?.lint?.duplicateCanonical ??
-      DEFAULT_CONFIG.lint.duplicateCanonical,
-  };
+    if (sourceValue === undefined) {
+      continue;
+    }
+
+    // Handle arrays - clone instead of merge
+    if (Array.isArray(sourceValue)) {
+      (result as Record<string, unknown>)[key] = [...sourceValue];
+    }
+    // Handle objects - recursive merge
+    else if (
+      typeof sourceValue === "object" &&
+      sourceValue !== null &&
+      typeof targetValue === "object" &&
+      targetValue !== null &&
+      !Array.isArray(targetValue)
+    ) {
+      (result as Record<string, unknown>)[key] = {
+        ...targetValue,
+        ...sourceValue,
+      };
+    }
+    // Primitives - direct assignment
+    else {
+      (result as Record<string, unknown>)[key] = sourceValue;
+    }
+  }
+
+  return result;
 }
 
 export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
@@ -110,44 +120,11 @@ export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
     return cloneConfig(DEFAULT_CONFIG);
   }
 
-  return {
-    typeCase: overrides.typeCase ?? DEFAULT_CONFIG.typeCase,
-    idScope: overrides.idScope ?? DEFAULT_CONFIG.idScope,
-    protectedBranches:
-      overrides.protectedBranches?.slice() ??
-      DEFAULT_CONFIG.protectedBranches.slice(),
-    signalsOnProtected:
-      overrides.signalsOnProtected ?? DEFAULT_CONFIG.signalsOnProtected,
-    allowTypes:
-      overrides.allowTypes?.slice() ?? DEFAULT_CONFIG.allowTypes.slice(),
-    skipPaths: overrides.skipPaths?.slice() ?? DEFAULT_CONFIG.skipPaths.slice(),
-    format: resolveFormatConfig(overrides),
-    lint: resolveLintConfig(overrides),
-  };
+  return deepMerge(DEFAULT_CONFIG, overrides);
 }
 
 export function cloneConfig(config: WaymarkConfig): WaymarkConfig {
-  return {
-    typeCase: config.typeCase,
-    idScope: config.idScope,
-    protectedBranches: config.protectedBranches.slice(),
-    signalsOnProtected: config.signalsOnProtected,
-    allowTypes: config.allowTypes.slice(),
-    skipPaths: config.skipPaths.slice(),
-    format: {
-      spaceAroundSigil: config.format.spaceAroundSigil,
-      normalizeCase: config.format.normalizeCase,
-      ...(config.format.alignContinuations !== undefined
-        ? { alignContinuations: config.format.alignContinuations }
-        : {}),
-    },
-    lint: {
-      duplicateProperty: config.lint.duplicateProperty,
-      unknownMarker: config.lint.unknownMarker,
-      danglingRelation: config.lint.danglingRelation,
-      duplicateCanonical: config.lint.duplicateCanonical,
-    },
-  };
+  return structuredClone(config);
 }
 
 export async function loadConfigFromDisk(
@@ -346,6 +323,19 @@ function assignScalarOptions(
   const skipPaths = readStringArray(raw, ["skipPaths", "skip_paths"]);
   if (skipPaths) {
     result.skipPaths = skipPaths;
+  }
+
+  const includePaths = readStringArray(raw, ["includePaths", "include_paths"]);
+  if (includePaths) {
+    result.includePaths = includePaths;
+  }
+
+  const respectGitignore = readBoolean(raw, [
+    "respectGitignore",
+    "respect_gitignore",
+  ]);
+  if (typeof respectGitignore === "boolean") {
+    result.respectGitignore = respectGitignore;
   }
 }
 

@@ -16,17 +16,6 @@ export type WaymarkLintConfig = {
   duplicateCanonical: "warn" | "error" | "ignore";
 };
 
-export type PartialWaymarkConfig = {
-  typeCase?: WaymarkConfig["typeCase"];
-  idScope?: WaymarkConfig["idScope"];
-  protectedBranches?: string[];
-  signalsOnProtected?: WaymarkConfig["signalsOnProtected"];
-  allowTypes?: string[];
-  skipPaths?: string[];
-  format?: Partial<WaymarkFormatConfig>;
-  lint?: Partial<WaymarkLintConfig>;
-};
-
 export type WaymarkConfig = {
   typeCase: "lowercase" | "uppercase";
   idScope: "repo" | "file";
@@ -34,8 +23,24 @@ export type WaymarkConfig = {
   signalsOnProtected: "strip" | "fail" | "allow";
   allowTypes: string[];
   skipPaths: string[];
+  includePaths: string[];
+  respectGitignore: boolean;
   format: WaymarkFormatConfig;
   lint: WaymarkLintConfig;
+};
+
+// Manually defined partial config to work with exactOptionalPropertyTypes
+export type PartialWaymarkConfig = {
+  typeCase?: "lowercase" | "uppercase";
+  idScope?: "repo" | "file";
+  protectedBranches?: string[];
+  signalsOnProtected?: "strip" | "fail" | "allow";
+  allowTypes?: string[];
+  skipPaths?: string[];
+  includePaths?: string[];
+  respectGitignore?: boolean;
+  format?: Partial<WaymarkFormatConfig>;
+  lint?: Partial<WaymarkLintConfig>;
 };
 
 import type { WaymarkRecord } from "@waymarks/grammar";

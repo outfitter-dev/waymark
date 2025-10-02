@@ -2,7 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 
-import { isValidType, parse } from "@waymarks/core";
+import { isValidType, parse, type WaymarkConfig } from "@waymarks/core";
 
 import { expandInputPaths } from "../utils/fs";
 
@@ -32,12 +32,13 @@ export function parseLintArgs(argv: string[]): LintCommandOptions {
 
 export async function lintFiles(
   filePaths: string[],
-  allowTypes: string[]
+  allowTypes: string[],
+  config: WaymarkConfig
 ): Promise<LintReport> {
   const issues: LintIssue[] = [];
   const allowList = new Set(allowTypes.map((marker) => marker.toLowerCase()));
 
-  const files = await expandInputPaths(filePaths);
+  const files = await expandInputPaths(filePaths, config);
   for (const path of files) {
     const source = await readFile(path, "utf8").catch(() => null);
     if (typeof source !== "string") {
