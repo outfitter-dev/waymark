@@ -83,11 +83,11 @@ export function consumeScopeOption(
 }
 
 export function normalizeScope(value: string): CliScopeOption {
-  if (value === "default" || value === "project" || value === "global") {
+  if (value === "default" || value === "project" || value === "user") {
     return value;
   }
   throw new Error(
-    `Invalid scope "${value}". Use one of: default, project, global.`
+    `Invalid scope "${value}". Use one of: default, project, user.`
   );
 }
 

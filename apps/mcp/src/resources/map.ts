@@ -39,7 +39,7 @@ async function collectRecords(
   }
 
   const config = await loadConfig({
-    scope: (options.scope as "default" | "project" | "global") ?? "default",
+    scope: (options.scope as "default" | "project" | "user") ?? "default",
     ...(options.configPath ? { configPath: options.configPath } : {}),
   });
 

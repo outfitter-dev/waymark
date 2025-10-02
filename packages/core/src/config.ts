@@ -48,7 +48,7 @@ export type ResolveConfigOptions = {
   overrides?: PartialWaymarkConfig;
 };
 
-export type ConfigScope = "default" | "project" | "global";
+export type ConfigScope = "default" | "project" | "user";
 
 export type LoadConfigOptions = {
   cwd?: string;
@@ -154,11 +154,11 @@ export async function loadConfigFromDisk(
 
   if (scope === "project") {
     overrides = await loadProjectOverrides(cwd);
-  } else if (scope === "global") {
-    overrides = await loadGlobalOverrides(env);
+  } else if (scope === "user") {
+    overrides = await loadUserOverrides(env);
   } else {
     overrides =
-      (await loadProjectOverrides(cwd)) ?? (await loadGlobalOverrides(env));
+      (await loadProjectOverrides(cwd)) ?? (await loadUserOverrides(env));
   }
 
   return resolveConfig(overrides);
@@ -215,7 +215,7 @@ async function loadProjectOverrides(
   return;
 }
 
-async function loadGlobalOverrides(
+async function loadUserOverrides(
   env: NodeJS.ProcessEnv
 ): Promise<Partial<WaymarkConfig> | undefined> {
   const baseDir = env.XDG_CONFIG_HOME

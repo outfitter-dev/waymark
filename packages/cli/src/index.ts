@@ -7,6 +7,7 @@ import { Command } from "commander";
 
 import { formatFile } from "./commands/fmt.ts";
 import { getHelp } from "./commands/help/index.ts";
+import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { migrateFile } from "./commands/migrate.ts";
 import { runUnifiedCommand } from "./commands/unified/index.ts";
@@ -346,11 +347,7 @@ async function createProgram(): Promise<Command> {
     .name("wm")
     .description("Waymark CLI - scan, filter, format, and manage waymarks")
     .version(version, "-v, --version", "output the current version")
-    .option(
-      "--scope <scope>",
-      "config scope (default|project|global)",
-      "default"
-    )
+    .option("--scope <scope>", "config scope (default|project|user)", "default")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("-q, --quiet", "only show errors")
@@ -445,6 +442,34 @@ async function createProgram(): Promise<Command> {
       ) => {
         try {
           await handleMigrateCommand(program, filePath, options);
+        } catch (error) {
+          writeStderr(error instanceof Error ? error.message : String(error));
+          process.exit(1);
+        }
+      }
+    );
+
+  // Init command
+  program
+    .command("init")
+    .option(
+      "-f, --format <format>",
+      "config format (toml|jsonc|yaml|yml)",
+      "toml"
+    )
+    .option("-p, --preset <preset>", "config preset (full|minimal)", "full")
+    .option("-s, --scope <scope>", "config scope (project|user)", "project")
+    .option("--force", "overwrite existing config", false)
+    .description("initialize waymark configuration")
+    .action(
+      async (options: {
+        format?: string;
+        preset?: string;
+        scope?: string;
+        force?: boolean;
+      }) => {
+        try {
+          await runInitCommand(options);
         } catch (error) {
           writeStderr(error instanceof Error ? error.message : String(error));
           process.exit(1);

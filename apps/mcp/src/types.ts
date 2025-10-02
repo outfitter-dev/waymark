@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const configOptionsSchema = z.object({
   configPath: z.string().optional(),
-  scope: z.enum(["default", "project", "global"]).optional(),
+  scope: z.enum(["default", "project", "user"]).optional(),
 });
 
 export const scanInputSchema = configOptionsSchema.extend({

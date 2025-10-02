@@ -50,7 +50,9 @@ export function createLogger(options: LoggerOptions = {}): pino.Logger {
         options: {
           colorize: true,
           ignore: "pid,hostname",
-          translateTime: "HH:MM:ss",
+          translateTime: false,
+          messageFormat: "{msg}",
+          singleLine: true,
         },
       },
     });
