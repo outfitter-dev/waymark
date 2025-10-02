@@ -39,11 +39,38 @@ function getMaxLineWidth(records: WaymarkRecord[]): number {
 }
 
 /**
+ * Get the longest type length (including signals) for a set of records
+ */
+function getLongestTypeLength(records: WaymarkRecord[]): number {
+  let maxLength = 0;
+  for (const record of records) {
+    const signalStr =
+      (record.signals.raised ? "^" : "") +
+      (record.signals.important ? "*" : "");
+    const typeLength = signalStr.length + record.type.length;
+    if (typeLength > maxLength) {
+      maxLength = typeLength;
+    }
+  }
+  return maxLength;
+}
+
+/**
+ * Get the type string with signals
+ */
+function getTypeWithSignal(record: WaymarkRecord): string {
+  const signalStr =
+    (record.signals.raised ? "^" : "") + (record.signals.important ? "*" : "");
+  return signalStr + record.type;
+}
+
+/**
  * Format a single waymark line with proper alignment and styling
  */
 function formatWaymarkLine(
   record: WaymarkRecord,
   lineWidth: number,
+  longestTypeLength: number,
   options: DisplayOptions
 ): string {
   const keepMarkers = options.keepCommentMarkers ?? false;
@@ -54,41 +81,55 @@ function formatWaymarkLine(
     ? record.raw
     : stripCommentMarkers(record.raw, record.commentLeader);
 
+  // Calculate spacing for alignment
+  const typeWithSignal = getTypeWithSignal(record);
+  const baseIndent = 2;
+  const paddingSpaces =
+    baseIndent + (longestTypeLength - typeWithSignal.length);
+
   // Format the type and signals
   const typeStr = styleType(record.type, record.signals);
   const sigilStr = styleSigil(" ::: ");
 
   // Style the content (mentions, tags, etc.)
-  const contentParts = content.split(" ::: ");
+  const contentParts = content.split(SIGIL_SPLIT_PATTERN);
   const waymarkContent =
     contentParts.length > 1
       ? contentParts.slice(1).join(" ::: ")
       : contentParts[0];
   const styledContent = styleContent(waymarkContent || "");
 
-  // Build the waymark string
-  const waymarkStr = `${typeStr}${sigilStr}${styledContent}`;
-
   // Format line number with padding
   const lineNum = String(record.startLine).padStart(lineWidth, " ");
   const lineNumStr = styleLineNumber(Number.parseInt(lineNum, 10));
 
   if (compact) {
-    return `${lineNumStr} ${waymarkStr}`;
+    return `${lineNumStr} ${typeStr}${sigilStr}${styledContent}`;
   }
 
-  // Two-space indent after line number
-  return `${lineNumStr}  ${waymarkStr}`;
+  // Build with proper spacing for alignment
+  const spacing = " ".repeat(paddingSpaces);
+  return `${lineNumStr}${spacing}${typeStr}${sigilStr}${styledContent}`;
 }
 
 /**
  * Format a continuation line (starts with :::)
  */
-function formatContinuationLine(content: string, lineNumStr: string): string {
+function formatContinuationLine(
+  content: string,
+  lineNumStr: string,
+  lineWidth: number,
+  longestTypeLength: number
+): string {
   const continuationContent = content.replace(CONTINUATION_CONTENT_PATTERN, "");
   const styledContent = styleContent(continuationContent);
-  const paddedSigil = styleSigil("     :::");
-  return `${lineNumStr}  ${paddedSigil} ${styledContent}`;
+
+  // Calculate padding to align ::: with other waymarks
+  const sigilColumn = lineWidth + 1 + 2 + longestTypeLength + 1;
+  const paddingSpaces = sigilColumn - lineWidth - 1;
+  const spacing = " ".repeat(paddingSpaces);
+
+  return `${lineNumStr}${spacing}${styleSigil(":::")} ${styledContent}`;
 }
 
 /**
@@ -97,8 +138,14 @@ function formatContinuationLine(content: string, lineNumStr: string): string {
 function formatFirstLine(
   content: string,
   record: WaymarkRecord,
-  lineNumStr: string
+  lineNumStr: string,
+  longestTypeLength: number
 ): string {
+  const typeWithSignal = getTypeWithSignal(record);
+  const baseIndent = 2;
+  const paddingSpaces =
+    baseIndent + (longestTypeLength - typeWithSignal.length);
+
   const typeStr = styleType(record.type, record.signals);
   const sigilStr = styleSigil(" ::: ");
   const waymarkContent = content
@@ -106,15 +153,28 @@ function formatFirstLine(
     .slice(1)
     .join(" ::: ");
   const styledContent = styleContent(waymarkContent);
-  return `${lineNumStr}  ${typeStr}${sigilStr}${styledContent}`;
+
+  const spacing = " ".repeat(paddingSpaces);
+  return `${lineNumStr}${spacing}${typeStr}${sigilStr}${styledContent}`;
 }
 
 /**
  * Format a property or other continuation line
  */
-function formatPropertyLine(content: string, lineNumStr: string): string {
+function formatPropertyLine(
+  content: string,
+  lineNumStr: string,
+  lineWidth: number,
+  longestTypeLength: number
+): string {
   const styledContent = styleContent(content);
-  return `${lineNumStr}  ${styledContent}`;
+
+  // Use same padding as continuation lines to maintain alignment
+  const sigilColumn = lineWidth + 1 + 2 + longestTypeLength + 1;
+  const paddingSpaces = sigilColumn - lineWidth - 1;
+  const spacing = " ".repeat(paddingSpaces);
+
+  return `${lineNumStr}${spacing}${styledContent}`;
 }
 
 /**
@@ -123,6 +183,7 @@ function formatPropertyLine(content: string, lineNumStr: string): string {
 function formatMultiLineWaymark(
   record: WaymarkRecord,
   lineWidth: number,
+  longestTypeLength: number,
   options: DisplayOptions
 ): string[] {
   const lines: string[] = [];
@@ -133,7 +194,9 @@ function formatMultiLineWaymark(
 
   if (rawLines.length === 1) {
     // Single line waymark
-    lines.push(formatWaymarkLine(record, lineWidth, options));
+    lines.push(
+      formatWaymarkLine(record, lineWidth, longestTypeLength, options)
+    );
     return lines;
   }
 
@@ -151,11 +214,22 @@ function formatMultiLineWaymark(
 
     // Determine line type and format accordingly
     if (i === 0) {
-      lines.push(formatFirstLine(content, record, lineNumStr));
+      lines.push(
+        formatFirstLine(content, record, lineNumStr, longestTypeLength)
+      );
     } else if (content.trim().startsWith(":::")) {
-      lines.push(formatContinuationLine(content, lineNumStr));
+      lines.push(
+        formatContinuationLine(
+          content,
+          lineNumStr,
+          lineWidth,
+          longestTypeLength
+        )
+      );
     } else {
-      lines.push(formatPropertyLine(content, lineNumStr));
+      lines.push(
+        formatPropertyLine(content, lineNumStr, lineWidth, longestTypeLength)
+      );
     }
 
     currentLine++;
@@ -178,12 +252,18 @@ export function formatEnhanced(
     // Add file header
     output.push(styleFilePath(filePath));
 
-    // Calculate max line width for this file
+    // Calculate max line width and longest type length for this file
     const lineWidth = getMaxLineWidth(fileRecords);
+    const longestTypeLength = getLongestTypeLength(fileRecords);
 
     // Format each waymark
     for (const record of fileRecords) {
-      const waymarkLines = formatMultiLineWaymark(record, lineWidth, options);
+      const waymarkLines = formatMultiLineWaymark(
+        record,
+        lineWidth,
+        longestTypeLength,
+        options
+      );
       output.push(...waymarkLines);
     }
 
