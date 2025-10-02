@@ -65,13 +65,14 @@ test("project scope reads .waymark/config.* up the tree", async () => {
   });
 });
 
-test("default scope discovers nearest .waymarkrc file", async () => {
-  await withTempDir("waymark-config-rc-", async (dir) => {
+test("default scope discovers .waymark/config.* file", async () => {
+  await withTempDir("waymark-config-default-", async (dir) => {
     const repoRoot = join(dir, "repo");
     const nestedDir = join(repoRoot, "src");
     await mkdir(nestedDir, { recursive: true });
+    await mkdir(join(repoRoot, ".waymark"), { recursive: true });
     await writeFile(
-      join(repoRoot, ".waymarkrc.toml"),
+      join(repoRoot, ".waymark", "config.toml"),
       'type_case = "uppercase"\n',
       "utf8"
     );
@@ -86,8 +87,8 @@ test("global scope reads from XDG_CONFIG_HOME", async () => {
     const configDir = join(dir, "waymark");
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      join(configDir, "config.json"),
-      '{"skip_paths": ["**/build/**"]}\n',
+      join(configDir, "config.toml"),
+      'skip_paths = ["**/build/**"]\n',
       "utf8"
     );
 
