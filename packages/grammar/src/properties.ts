@@ -2,10 +2,11 @@
 
 import type { WaymarkRecord } from "./types";
 
-const PROPERTY_REGEX =
+// Exported regex patterns for reuse in styling and other contexts
+export const PROPERTY_REGEX =
   /(?:^|[\s])([A-Za-z][A-Za-z0-9_-]*)\s*:\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|([^\s,]+(?:,[^\s,]+)*))/gm;
-const MENTION_REGEX = /(?:^|[^A-Za-z0-9/_-])(@[A-Za-z0-9/_-]+)/gm;
-const TAG_REGEX = /(?:^|[^A-Za-z0-9._/:%-])(#[A-Za-z0-9._/:%-]+)/gm;
+export const MENTION_REGEX = /(?:^|[^A-Za-z0-9/_-])(@[A-Za-z0-9/_-]+)/gm;
+export const TAG_REGEX = /(?:^|[^A-Za-z0-9._/:%-])(#[A-Za-z0-9._/:%-]+)/gm;
 
 export const RELATION_KIND_MAP: Record<
   string,

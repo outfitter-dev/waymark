@@ -55,4 +55,5 @@ export type UnifiedCommandOptions = {
   // Formatting
   keepCommentMarkers?: boolean;
   compact?: boolean;
+  noColor?: boolean;
 };

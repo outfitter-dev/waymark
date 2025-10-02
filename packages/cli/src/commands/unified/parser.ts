@@ -51,6 +51,7 @@ export function createParseState(): ParseState {
     // Formatting
     keepCommentMarkers: false,
     compact: false,
+    noColor: false,
   };
 }
 
@@ -220,9 +221,10 @@ export function buildOptions(state: ParseState): UnifiedCommandOptions {
   if (state.keepCommentMarkers) {
     options.keepCommentMarkers = state.keepCommentMarkers;
   }
-  if (state.compact) {
-    options.compact = state.compact;
-  }
+  // Always pass compact through (it's a boolean, not optional)
+  options.compact = state.compact;
+  // Always pass noColor through (it's a boolean, not optional)
+  options.noColor = state.noColor;
 
   return options;
 }

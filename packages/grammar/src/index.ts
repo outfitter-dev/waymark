@@ -10,4 +10,9 @@ export {
   SIGNALS,
 } from "./constants";
 export { isValidType, parse, parseLine } from "./parser";
+export {
+  MENTION_REGEX,
+  PROPERTY_REGEX,
+  TAG_REGEX,
+} from "./properties";
 export type { ParseOptions, WaymarkRecord } from "./types";

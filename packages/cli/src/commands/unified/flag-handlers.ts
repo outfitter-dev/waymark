@@ -33,6 +33,7 @@ export type ParseState = {
   page: number | undefined;
   keepCommentMarkers: boolean;
   compact: boolean;
+  noColor: boolean;
 };
 
 /**
@@ -120,6 +121,25 @@ export function handlePaginationFlags(
 }
 
 /**
+ * Handle formatting flags
+ */
+function handleFormattingFlags(token: string, state: ParseState): boolean {
+  if (token === "--keep-comment-markers") {
+    state.keepCommentMarkers = true;
+    return true;
+  }
+  if (token === "--compact") {
+    state.compact = true;
+    return true;
+  }
+  if (token === "--no-color") {
+    state.noColor = true;
+    return true;
+  }
+  return false;
+}
+
+/**
  * Handle mode and display flags
  */
 export function handleModeDisplayFlags(
@@ -161,14 +181,5 @@ export function handleModeDisplayFlags(
   }
 
   // Formatting flags
-  if (token === "--keep-comment-markers") {
-    state.keepCommentMarkers = true;
-    return true;
-  }
-  if (token === "--compact") {
-    state.compact = true;
-    return true;
-  }
-
-  return false;
+  return handleFormattingFlags(token, state);
 }
