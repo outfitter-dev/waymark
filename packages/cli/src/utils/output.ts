@@ -4,6 +4,44 @@ import type { WaymarkRecord } from "@waymarks/core";
 
 export type ScanOutputFormat = "text" | "json" | "jsonl" | "pretty";
 
+/**
+ * Clean record for JSON output by removing empty arrays and objects
+ */
+function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
+  const cleaned: Partial<WaymarkRecord> = { ...record };
+
+  // Remove empty arrays
+  if (Array.isArray(cleaned.relations) && cleaned.relations.length === 0) {
+    delete cleaned.relations;
+  }
+  if (Array.isArray(cleaned.canonicals) && cleaned.canonicals.length === 0) {
+    delete cleaned.canonicals;
+  }
+  if (Array.isArray(cleaned.mentions) && cleaned.mentions.length === 0) {
+    delete cleaned.mentions;
+  }
+  if (Array.isArray(cleaned.tags) && cleaned.tags.length === 0) {
+    delete cleaned.tags;
+  }
+
+  // Remove empty properties object
+  if (cleaned.properties && Object.keys(cleaned.properties).length === 0) {
+    delete cleaned.properties;
+  }
+
+  // Remove signals if all are false
+  if (
+    cleaned.signals &&
+    !cleaned.signals.raised &&
+    !cleaned.signals.important &&
+    !cleaned.signals.current
+  ) {
+    delete cleaned.signals;
+  }
+
+  return cleaned;
+}
+
 export function renderRecords(
   records: WaymarkRecord[],
   format: ScanOutputFormat
@@ -12,13 +50,16 @@ export function renderRecords(
     return "";
   }
 
+  // Clean records for JSON output
+  const cleanedRecords = records.map(cleanRecord);
+
   switch (format) {
     case "json":
-      return JSON.stringify(records);
+      return JSON.stringify(cleanedRecords);
     case "jsonl":
-      return records.map((record) => JSON.stringify(record)).join("\n");
+      return cleanedRecords.map((record) => JSON.stringify(record)).join("\n");
     case "pretty":
-      return JSON.stringify(records, null, 2);
+      return JSON.stringify(cleanedRecords, null, 2);
     default:
       return records
         .map(
