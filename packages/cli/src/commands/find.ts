@@ -1,6 +1,6 @@
 // tldr ::: find command helpers for waymark CLI
 
-import type { WaymarkRecord } from "@waymarks/core";
+import type { WaymarkConfig, WaymarkRecord } from "@waymarks/core";
 import { searchRecords } from "@waymarks/core";
 import { createArgIterator } from "../utils/flags/iterator";
 import { handleJsonFlag } from "../utils/flags/json";
@@ -15,6 +15,7 @@ export type FindCommandOptions = {
   tags?: string[];
   mentions?: string[];
   json?: boolean;
+  config: WaymarkConfig;
 };
 
 /**
@@ -23,8 +24,8 @@ export type FindCommandOptions = {
 export async function findRecords(
   options: FindCommandOptions
 ): Promise<WaymarkRecord[]> {
-  const { filePath, types, tags, mentions } = options;
-  const records = await scanRecords([filePath]);
+  const { filePath, types, tags, mentions, config } = options;
+  const records = await scanRecords([filePath], config);
 
   const query: Parameters<typeof searchRecords>[1] = {};
   if (types && types.length > 0) {
@@ -43,7 +44,9 @@ export async function findRecords(
 /**
  * Parse CLI arguments for the find command into structured options.
  */
-export function parseFindArgs(argv: string[]): FindCommandOptions {
+export function parseFindArgs(
+  argv: string[]
+): Omit<FindCommandOptions, "config"> {
   const [filePath, ...rest] = argv;
   if (!filePath) {
     throw new Error("find requires a file path");
@@ -63,7 +66,10 @@ export function parseFindArgs(argv: string[]): FindCommandOptions {
     handleMentionFlag(token, iterator, mentions);
   }
 
-  const options: FindCommandOptions = { filePath, json: jsonState.json };
+  const options: Omit<FindCommandOptions, "config"> = {
+    filePath,
+    json: jsonState.json,
+  };
   if (types.length > 0) {
     options.types = types;
   }

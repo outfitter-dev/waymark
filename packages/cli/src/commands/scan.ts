@@ -2,7 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 
-import { parse, type WaymarkRecord } from "@waymarks/core";
+import { parse, type WaymarkConfig, type WaymarkRecord } from "@waymarks/core";
 
 import { expandInputPaths } from "../utils/fs";
 import type { ScanOutputFormat } from "../utils/output";
@@ -13,9 +13,10 @@ export type ParsedScanArgs = {
 };
 
 export async function scanRecords(
-  filePaths: string[]
+  filePaths: string[],
+  config: WaymarkConfig
 ): Promise<WaymarkRecord[]> {
-  const files = await expandInputPaths(filePaths);
+  const files = await expandInputPaths(filePaths, config);
   const records: WaymarkRecord[] = [];
 
   for (const filePath of files) {

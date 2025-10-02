@@ -1,7 +1,7 @@
 <!-- tldr ::: generated map of repo waymarks #docs/rules -->
 # Waymark Map
 
-Generated on 2025-10-01T02:58:32.767Z.
+Generated on 2025-10-02T10:25:34.849Z.
 
 ## TLDR Waymarks
 - AGENTS.md:1 — <!-- tldr ::: agents configuration and development guidelines -->
@@ -62,7 +62,7 @@ Generated on 2025-10-01T02:58:32.767Z.
 - packages/cli/src/commands/unified/query-parser.ts:1 — // tldr ::: natural language query parsing for waymark CLI
 - packages/cli/src/commands/unified/types.ts:1 — // tldr ::: type definitions for unified wm command
 - packages/cli/src/index.test.ts:1 — // tldr ::: smoke and snapshot tests for waymark CLI handlers
-- packages/cli/src/index.ts:2 — // tldr ::: waymark CLI entry point wiring formatter, lint, map, and utility commands
+- packages/cli/src/index.ts:3 — // tldr ::: waymark CLI entry point using commander for command routing and parsing
 - packages/cli/src/types.ts:1 — // tldr ::: shared CLI types
 - packages/cli/src/utils/content-loader.ts:1 — // tldr ::: convention-based loader for help and prompt content files
 - packages/cli/src/utils/context.ts:1 — // tldr ::: context creation helpers for waymark CLI commands
@@ -82,9 +82,13 @@ Generated on 2025-10-01T02:58:32.767Z.
 - packages/cli/src/utils/flags/tag.ts:1 — // tldr ::: helper for --tag flag parsing
 - packages/cli/src/utils/flags/type.ts:1 — // tldr ::: helper for --type flag parsing
 - packages/cli/src/utils/fs.ts:1 — // tldr ::: filesystem helpers for expanding waymark CLI inputs
+- packages/cli/src/utils/ignore.ts:1 — // tldr ::: enhanced ignore system combining gitignore and config-based patterns
+- packages/cli/src/utils/logger.test.ts:1 — // tldr ::: tests for pino logger configuration and level control
+- packages/cli/src/utils/logger.ts:1 — // tldr ::: pino-based logger configuration for CLI with level control
 - packages/cli/src/utils/map-rendering.ts:1 — // tldr ::: map formatting and rendering utilities for waymark CLI
 - packages/cli/src/utils/options.ts:1 — // tldr ::: global option parsing utilities for waymark CLI
 - packages/cli/src/utils/output.ts:1 — // tldr ::: rendering helpers for CLI record output
+- packages/cli/src/utils/prompts.ts:1 — // tldr ::: interactive prompts using inquirer for CLI confirmations and selection
 - packages/core/src/cache/files.ts:1 — // tldr ::: file tracking and staleness detection for waymark cache
 - packages/core/src/cache/index.test.ts:1 — // tldr ::: tests for waymark cache invalidation and metadata tracking
 - packages/core/src/cache/index.ts:1 — // tldr ::: SQLite cache orchestration for waymark records and dependency graphs
@@ -131,13 +135,10 @@ Generated on 2025-10-01T02:58:32.767Z.
 - docs/waymark/SPEC.md:180 — // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
 - docs/waymark/tui-ab-plan.md:86 — <!-- todo ::: summarize findings and mark chosen TUI path once evaluation wraps -->
 - packages/agents/src/index.ts:8 — // todo ::: implement agent toolkit
-- packages/cli/dist/wm.js:13453 — // todo ::: implement auth
-- packages/cli/dist/wm.js:13459 — // todo ::: implement auth
-- packages/cli/dist/wm.js:13529 — // todo ::: implement OAuth
-- packages/cli/dist/wm.js:13530 — // todo ::: implement OAuth
-- packages/cli/dist/wm.js:13849 — // todo ::: implement authentication
-- packages/cli/dist/wm.js:13948 — // todo ::: implement OAuth
-- packages/cli/dist/wm.js:14109 — // todo ::: implement auth #sec
+- packages/cli/dist/wm.js:40180 — // todo ::: implement OAuth
+- packages/cli/dist/wm.js:40181 — // todo ::: implement OAuth
+- packages/cli/dist/wm.js:40493 — // todo ::: implement OAuth
+- packages/cli/dist/wm.js:40590 — // todo ::: implement auth #sec
 - packages/cli/src/commands/format.help.ts:36 — // todo ::: implement auth
 - packages/cli/src/commands/format.help.ts:42 — // todo ::: implement auth
 - packages/cli/src/commands/format.prompt.ts:64 — // todo ::: implement OAuth
@@ -145,9 +146,9 @@ Generated on 2025-10-01T02:58:32.767Z.
 - packages/cli/src/commands/migrate.help.ts:47 — // todo ::: implement authentication
 - packages/cli/src/commands/migrate.prompt.ts:93 — // todo ::: implement OAuth
 - packages/cli/src/commands/unified/index.prompt.ts:12 — // todo ::: implement auth #sec
-- packages/cli/src/index.test.ts:704 — // todo ::: @alice task two
-- packages/cli/src/index.test.ts:734 — // todo ::: @alice different task #perf
-- packages/cli/src/index.test.ts:749 — // todo ::: @alice task two
+- packages/cli/src/index.test.ts:926 — // todo ::: @alice task two
+- packages/cli/src/index.test.ts:950 — // todo ::: @alice different task #perf
+- packages/cli/src/index.test.ts:964 — // todo ::: @alice task two
 - packages/grammar/src/metadata.ts:6 — // todo ::: @codex externalize comment leader detection into shared language metadata #lib/parser
 - packages/grammar/src/metadata.ts:107 — // todo ::: @codex allow configurable overrides for file category inference #lib/parser
 - test/setup.ts:6 — // todo ::: add global test setup when needed
@@ -165,19 +166,13 @@ Generated on 2025-10-01T02:58:32.767Z.
 - docs/waymark/SPEC.md:181 — // review ::: @alice confirm retry strategy #sec:boundary
 - docs/waymark/SPEC.md:182 — // note ::: logs PII-hardened metadata only #docs/logging
 - docs/waymark/tui-ab-plan.md:111 — <!-- note ::: revisit this doc after A/B cycle to archive losing approach and formalize follow-ups -->
-- packages/cli/dist/wm.js:13456 — // ::: handles Stripe webhooks
-- packages/cli/dist/wm.js:13460 — // *fix ::: validate input
-- packages/cli/dist/wm.js:13462 — // ::: handles Stripe webhooks
-- packages/cli/dist/wm.js:13498 — // ::: handles webhooks
-- packages/cli/dist/wm.js:13501 — // ::: handles webhooks
-- packages/cli/dist/wm.js:13533 — // *fix ::: validate input
-- packages/cli/dist/wm.js:13850 — // fix ::: validate email format
-- packages/cli/dist/wm.js:13851 — /* hack ::: this is a hack */
-- packages/cli/dist/wm.js:13852 — // deprecated ::: Use authenticate() instead
-- packages/cli/dist/wm.js:13951 — // fix ::: validate email format
-- packages/cli/dist/wm.js:13954 — /* hack ::: this is a hack */
-- packages/cli/dist/wm.js:14110 — // *fix ::: validate input @alice
-- packages/cli/dist/wm.js:14112 — // ^wip ::: refactoring in progress
+- packages/cli/dist/wm.js:40149 — // ::: handles webhooks
+- packages/cli/dist/wm.js:40152 — // ::: handles webhooks
+- packages/cli/dist/wm.js:40184 — // *fix ::: validate input
+- packages/cli/dist/wm.js:40496 — // fix ::: validate email format
+- packages/cli/dist/wm.js:40499 — /* hack ::: this is a hack */
+- packages/cli/dist/wm.js:40591 — // *fix ::: validate input @alice
+- packages/cli/dist/wm.js:40593 — // ^wip ::: refactoring in progress
 - packages/cli/src/commands/format.help.ts:39 — // ::: handles Stripe webhooks
 - packages/cli/src/commands/format.help.ts:43 — // *fix ::: validate input
 - packages/cli/src/commands/format.help.ts:45 — // ::: handles Stripe webhooks
@@ -191,22 +186,22 @@ Generated on 2025-10-01T02:58:32.767Z.
 - packages/cli/src/commands/migrate.prompt.ts:99 — /* hack ::: this is a hack */
 - packages/cli/src/commands/unified/index.prompt.ts:13 — // *fix ::: validate input @alice
 - packages/cli/src/commands/unified/index.prompt.ts:15 — // ^wip ::: refactoring in progress
-- packages/cli/src/index.test.ts:689 — // fix ::: handle error
-- packages/cli/src/index.test.ts:690 — // note ::: this is a note`;
-- packages/cli/src/index.test.ts:705 — // fix ::: @agent bug fix`;
-- packages/cli/src/index.test.ts:719 — // fix ::: bug fix #sec
-- packages/cli/src/index.test.ts:720 — // note ::: note text #perf`;
-- packages/cli/src/index.test.ts:735 — // fix ::: @agent bug #sec`;
-- packages/cli/src/index.test.ts:750 — // fix ::: @agent bug fix`;
-- packages/cli/src/index.test.ts:764 — // fix ::: handle cache miss
-- packages/cli/src/index.test.ts:765 — // note ::: other content`;
-- packages/cli/src/index.test.ts:778 — // fix ::: bug fix
-- packages/cli/src/index.test.ts:779 — // note ::: note text`;
+- packages/cli/src/index.test.ts:914 — // fix ::: handle error
+- packages/cli/src/index.test.ts:915 — // note ::: this is a note`;
+- packages/cli/src/index.test.ts:927 — // fix ::: @agent bug fix`;
+- packages/cli/src/index.test.ts:938 — // fix ::: bug fix #sec
+- packages/cli/src/index.test.ts:939 — // note ::: note text #perf`;
+- packages/cli/src/index.test.ts:951 — // fix ::: @agent bug #sec`;
+- packages/cli/src/index.test.ts:965 — // fix ::: @agent bug fix`;
+- packages/cli/src/index.test.ts:976 — // fix ::: handle cache miss
+- packages/cli/src/index.test.ts:977 — // note ::: other content`;
+- packages/cli/src/index.test.ts:989 — // fix ::: bug fix
+- packages/cli/src/index.test.ts:990 — // note ::: note text`;
 
 ### Other Marker Counts
-- deprecated: 2
-- fix: 17
-- hack: 4
+- deprecated: 1
+- fix: 15
+- hack: 3
 - note: 6
 - review: 1
 - wip: 2

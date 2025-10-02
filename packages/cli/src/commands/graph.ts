@@ -1,6 +1,10 @@
 // tldr ::: graph command helpers for waymark CLI
 
-import { buildRelationGraph, type WaymarkRecord } from "@waymarks/core";
+import {
+  buildRelationGraph,
+  type WaymarkConfig,
+  type WaymarkRecord,
+} from "@waymarks/core";
 
 import { scanRecords } from "./scan";
 
@@ -9,8 +13,8 @@ export type ParsedGraphArgs = {
   json: boolean;
 };
 
-export async function graphRecords(filePaths: string[]) {
-  const records: WaymarkRecord[] = await scanRecords(filePaths);
+export async function graphRecords(filePaths: string[], config: WaymarkConfig) {
+  const records: WaymarkRecord[] = await scanRecords(filePaths, config);
   return buildRelationGraph(records).edges;
 }
 

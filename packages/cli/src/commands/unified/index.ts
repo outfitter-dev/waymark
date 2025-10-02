@@ -1,5 +1,6 @@
 // tldr ::: unified wm command orchestration and execution
 
+import type { WaymarkRecord } from "@waymarks/grammar";
 import type { CommandContext } from "../../types";
 import { formatRecords } from "../../utils/display";
 import { printMap, serializeMap } from "../../utils/map-rendering";
@@ -10,48 +11,53 @@ import { scanRecords } from "../scan";
 import { applyFilters } from "./filters";
 import type { UnifiedCommandOptions } from "./types";
 
+export type UnifiedCommandResult = {
+  output: string;
+  records?: WaymarkRecord[];
+};
+
 /**
  * Unified command handler that intelligently routes to scan/find/map/graph behavior
  * based on flags and arguments provided.
  */
 export async function runUnifiedCommand(
   options: UnifiedCommandOptions,
-  _context: CommandContext
-): Promise<string> {
+  context: CommandContext
+): Promise<UnifiedCommandResult> {
   const { filePaths, isMapMode, isGraphMode, json, summary } = options;
 
   // Map mode: aggregate TLDRs and marker counts
   if (isMapMode) {
-    const map = await mapFiles(filePaths);
+    const map = await mapFiles(filePaths, context.config);
     const mapOptions = {
       ...(options.types && { types: options.types }),
       ...(summary !== undefined && { includeSummary: summary }),
     };
     if (json) {
-      return JSON.stringify(serializeMap(map, mapOptions));
+      return { output: JSON.stringify(serializeMap(map, mapOptions)) };
     }
     printMap(map, mapOptions);
-    return "";
+    return { output: "" };
   }
 
   // Graph mode: extract relation edges
   if (isGraphMode) {
-    const edges = await graphRecords(filePaths);
+    const edges = await graphRecords(filePaths, context.config);
     if (json) {
-      return JSON.stringify(edges);
+      return { output: JSON.stringify(edges) };
     }
-    return edges.map((edge) => JSON.stringify(edge)).join("\n");
+    return { output: edges.map((edge) => JSON.stringify(edge)).join("\n") };
   }
 
   // Scan + filter mode (find behavior)
-  const records = await scanRecords(filePaths);
+  const records = await scanRecords(filePaths, context.config);
   const filtered = applyFilters(records, options);
 
   // If JSON output requested, use renderRecords
   if (json) {
-    return renderRecords(filtered, "json");
+    return { output: renderRecords(filtered, "json"), records: filtered };
   }
 
   // Otherwise use the new display formatting
-  return formatRecords(filtered, options);
+  return { output: formatRecords(filtered, options), records: filtered };
 }
