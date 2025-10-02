@@ -139,7 +139,7 @@ Use `@agent` as the **first token after `:::`** when the task is meant for a gen
 #### Actor Namespace & Groups
 
 - Actor handles are freeform. Use specific agent names (`@codex`, `@claude`, `@gemini`) when delegating to a known capability; fall back to `@agent` for "any capable agent".
-- The tooling reads actor groups from Waymark configs (`.waymark/config.(jsonc|yaml|yml|toml)` or their global equivalents):
+- The tooling reads actor groups from Waymark configs (`.waymark/config.(jsonc|yaml|yml|toml)` or their user-scoped equivalents in `~/.config/waymark/`):
   - Example: `groups.agents = ["@agent", "@claude", "@codex", "@cursor", "@copilot", "@devin", "@factory", "@gemini", "@jules"]`.
   - Example: `groups.eng = ["@alice", "@bob", "@frontend", "@backend"]`.
 - CLI search expands group identifiers automatically (`waymark find --actor @agents` matches every member). Default presets ship with `@agents` (common AI assistants) and `@humans` (repo-specific to be filled in).
@@ -322,9 +322,9 @@ Each parsed waymark emits a normalized record. This is the stable interchange fo
   - `config.(toml|jsonc|yaml|yml)` — project-scoped configuration, version controlled (detected in that precedence: `toml`, `jsonc`, `yaml`, `yml`).
   - `cache/`, `index/` — transient data; always ignored.
 - **Scopes (`--scope`)** determine where writes land:
-  - `global` (default) — `$XDG_CONFIG_HOME/waymark/config.{toml,jsonc,yaml,yml}` (fallback `~/.config/waymark/`). Applies to every repo.
+  - `user` — `$XDG_CONFIG_HOME/waymark/config.{toml,jsonc,yaml,yml}` (fallback `~/.config/waymark/`). Applies to every repo for the current user.
   - `local` — directory-specific overrides stored under `$XDG_CONFIG_HOME/waymark/local/<fingerprint>.jsonc`; never committed.
-  - `project` — writes to `.waymark/config.*` in the working tree for shared settings.
+  - `project` (default) — writes to `.waymark/config.*` in the working tree for shared team settings.
 - **XDG integration:**
   - Config: `$XDG_CONFIG_HOME/waymark/`
   - Cache: `$XDG_CACHE_HOME/waymark/` (parsed waymarks, search indices).
@@ -399,6 +399,12 @@ The CLI is a thin wrapper over a reusable TypeScript package (`@waymarks/core`) 
   - Output: `--json` (nodes/edges), `--mermaid` (flowchart), `--dot` (Graphviz)
 
 - `waymark migrate [--include-legacy] [path ...]` — Convert legacy `TODO:`/`FIXME:` into Waymark form; optional marker map.
+- `waymark init` — Bootstrap waymark configuration file with interactive prompts or flags.
+
+  - Interactive: `waymark init` prompts for format, preset, and scope
+  - Flags: `--format <toml|jsonc|yaml|yml>` (default: toml), `--preset <full|minimal>` (default: full), `--scope <project|user>` (default: project), `--force` (overwrite existing)
+  - Auto-updates `.gitignore` for project scope
+
 - `waymark tui` — Interactive picker (fuzzy search; jump to file/line).
 
 ### Exit Codes
@@ -453,7 +459,7 @@ lint:
   duplicate_canonical: error
 ```
 
-Config discovery order: CLI flag → nearest `.waymarkrc.yaml` up the tree → repo root → defaults.
+Config discovery order: CLI flag → `WAYMARK_CONFIG_PATH` env var → project `.waymark/config.*` → user `~/.config/waymark/config.*` → defaults.
 
 ## Architecture & Technical Decisions
 
