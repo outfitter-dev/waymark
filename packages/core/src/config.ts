@@ -81,7 +81,9 @@ function deepMerge(
   const result: WaymarkConfig = { ...target };
 
   for (const key in source) {
-    if (!Object.hasOwn(source, key)) continue;
+    if (!Object.hasOwn(source, key)) {
+      continue;
+    }
     const sourceValue = source[key as keyof PartialWaymarkConfig];
     const targetValue = result[key as keyof WaymarkConfig];
 

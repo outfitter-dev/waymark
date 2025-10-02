@@ -327,8 +327,8 @@ describe("CLI handlers", () => {
     const records = await scanRecords([dir], config);
 
     // Should get: src.ts (no rules), important.ts (includePaths), critical.ts (includePaths)
-    const EXPECTED_RECORD_COUNT = 3;
-    expect(records).toHaveLength(EXPECTED_RECORD_COUNT);
+    const ExpectedRecordCount = 3;
+    expect(records).toHaveLength(ExpectedRecordCount);
     expect(records.map((r) => r.type).sort()).toEqual(["note", "tldr", "todo"]);
     expect(records.some((r) => r.file.includes("src.ts"))).toBe(true);
     expect(records.some((r) => r.file.includes("important.ts"))).toBe(true);
