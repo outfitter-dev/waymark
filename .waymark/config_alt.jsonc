@@ -1,0 +1,49 @@
+{
+  // tldr ::: consolidated #waymark #config with repo-specific ignore patterns
+  // ref  ::: #waymark/config
+  "options": {
+    "waymarkTypeCase": "lowercase",
+    "normalizeCase": true,
+    "customWaymarkTypes": ["custom1"]
+  },
+  "workflow": {
+    "raisedWaymarks": {
+      "logLevel": {
+        "preCommit": "info",
+        "prePush": "warn",
+        "targetingProtectedBranch": "error"
+      }
+    },
+    "protectedBranches": ["main", "release/*"]
+  },
+  "canonicalRefs": {
+    "scope": "repo"
+  },
+  "gitignore": true,
+  // note ::: the above could be a boolean or string like `**/.gitignore`
+  "patterns": [
+    {
+      "name": "default",
+      // note ::: the `name` key should be optional, and can be used in other patterns to inherit settings
+      "waymarkTypes": {
+        "include": ["tldr"]
+      },
+      "globs": [
+        "AGENTS.md",
+        "PLAN.md",
+        "README.md",
+        "SCRATCHPAD.md",
+        "PRD.md",
+        ".waymark/rules/**",
+        "docs/waymark/**/*.md"
+      ]
+    },
+    {
+      "extends": "default",
+      "waymarkTypes": {
+        "include": ["todo", "fixme", "bug"]
+      },
+      "globs": ["SCRATCHPAD.md", "PLAN.md"]
+    }
+  ]
+}

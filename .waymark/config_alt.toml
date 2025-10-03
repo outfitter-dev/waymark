@@ -1,0 +1,42 @@
+# tldr ::: consolidated waymark configuration exploring workflow-aware behavior
+
+type_case = "lowercase"
+canonical_ref_scope = "repo"  # note ::: scope for ref:#token uniqueness (repo-wide or file-scoped)
+protected_branches = ["main", "release/*"]
+
+# note ::: ignore patterns to reduce noise in searches
+[ignore]
+gitignore = true  # respect .gitignore patterns
+paths = [
+  "**/.git/**",
+  "**/node_modules/**",
+  "**/dist/**",
+  # Exclude example/documentation waymarks from normal searches
+  "AGENTS.md",
+  "PLAN.md",
+  "README.md",
+  "SCRATCHPAD.md",
+  "PRD.md",
+  ".waymark/rules/**",
+  "docs/waymark/**/*.md"
+]
+
+[format]
+normalize_case = true
+align_sigils = true  # note ::: aligns ::: sigils on consecutive lines containing waymarks
+
+[lint]
+unknown_type = "warn"
+duplicate_property = "warn"
+duplicate_canonical_ref = "error"
+
+[waymark.types]
+custom_types = [
+  "thought"
+]
+
+# note ::: workflow-aware handling of raised (^) waymarks
+[waymark.workflow.raised]
+pre_commit = "info"     # Just log on commit
+pre_push = "warn"       # Warn before push
+protected_branch = "error"  # Block merge to protected branches

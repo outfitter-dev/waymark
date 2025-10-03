@@ -126,5 +126,12 @@
 - 2025-10-02: Implemented `wm init` command for bootstrapping waymark configurations
   - Interactive mode: prompts for format (toml/jsonc/yaml/yml), preset (full/minimal), and scope (project/user)
   - Non-interactive mode: accepts flags `--format`, `--preset`, `--scope`, `--force`
-  - Auto-updates `.gitignore` with `.waymark/cache/` and `.waymark/index/` entries for project scope
+  - Auto-updates `.gitignore` with `.waymark/index.db` entry for project scope
   - Integrated Pino logger with pretty-print formatting for clean CLI output
+- 2025-10-02: Finalized database architecture for `wm insert` and `wm remove` commands
+  - Repo-local databases in `.waymark/` directory (not XDG cache)
+  - `index.db` - Active waymarks, IDs (wid column), file metadata, audit log (gitignored, regenerated from source)
+  - `history.db` - Tombstoned/removed waymarks for undo capability (optional commit for team history)
+  - IDs appear as `wm:a3k9m2p` in waymark content, stored as hash only in database
+  - Separation keeps index.db fast for queries, history.db enables restore/audit
+  - Each repo maintains its own databases; no cross-repo pollution
