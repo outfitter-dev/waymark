@@ -347,34 +347,19 @@ async function updateGitignore(): Promise<void> {
     content = await readFile(gitignorePath, "utf8");
   }
 
-  // Check if waymark entries already exist
-  const hasWaymarkCache = content.includes(".waymark/cache/");
-  const hasWaymarkIndex = content.includes(".waymark/index/");
+  // Check if waymark index.db entry already exists
+  const hasWaymarkIndexDb = content.includes(".waymark/index.db");
 
-  if (hasWaymarkCache && hasWaymarkIndex) {
+  if (hasWaymarkIndexDb) {
     return; // Already configured
-  }
-
-  // Add waymark entries
-  const additions: string[] = [];
-  if (!hasWaymarkCache) {
-    additions.push(".waymark/cache/");
-  }
-  if (!hasWaymarkIndex) {
-    additions.push(".waymark/index/");
-  }
-
-  if (additions.length === 0) {
-    return;
   }
 
   // Append to .gitignore
   const newContent =
     content +
     (content.endsWith("\n") ? "" : "\n") +
-    "\n# Waymark tooling caches\n" +
-    additions.join("\n") +
-    "\n";
+    "\n# Waymark index database (regenerated from source)\n" +
+    ".waymark/index.db\n";
 
   await writeFile(gitignorePath, newContent, "utf8");
 }

@@ -320,19 +320,19 @@ Each parsed waymark emits a normalized record. This is the stable interchange fo
 
 - **Project directory:** Waymark tooling reserves `.waymark/` (singular) in each repo.
   - `config.(toml|jsonc|yaml|yml)` — project-scoped configuration, version controlled (detected in that precedence: `toml`, `jsonc`, `yaml`, `yml`).
-  - `cache/`, `index/` — transient data; always ignored.
+  - `rules/` — agent rule packs and conventions (version controlled).
+  - `index.db` — SQLite database with active waymarks, IDs, file metadata, audit log (regenerated from source; ignored in git).
+  - `history.db` — SQLite database with removed/tombstoned waymarks for undo capability (optional; can be committed for team-shared history).
 - **Scopes (`--scope`)** determine where writes land:
   - `user` — `$XDG_CONFIG_HOME/waymark/config.{toml,jsonc,yaml,yml}` (fallback `~/.config/waymark/`). Applies to every repo for the current user.
   - `local` — directory-specific overrides stored under `$XDG_CONFIG_HOME/waymark/local/<fingerprint>.jsonc`; never committed.
   - `project` (default) — writes to `.waymark/config.*` in the working tree for shared team settings.
 - **XDG integration:**
-  - Config: `$XDG_CONFIG_HOME/waymark/`
-  - Cache: `$XDG_CACHE_HOME/waymark/` (parsed waymarks, search indices).
-  - Data: `$XDG_DATA_HOME/waymark/` (generated reports).
-  - Environment overrides: `WAYMARK_CONFIG_PATH`, `WAYMARK_CACHE_PATH`, `WAYMARK_DATA_PATH`.
+  - Config: `$XDG_CONFIG_HOME/waymark/` (user-scoped config files).
+  - Data: `$XDG_DATA_HOME/waymark/` (generated reports, exports).
+  - Environment overrides: `WAYMARK_CONFIG_PATH`, `WAYMARK_DATA_PATH`.
 - **.gitignore recommendations:**
-  - `.waymark/cache/`
-  - `.waymark/index/`
+  - `.waymark/index.db` — always ignored (regenerated from source files)
 
 ## Waymark Core Library (API)
 
@@ -483,11 +483,14 @@ Config discovery order: CLI flag → `WAYMARK_CONFIG_PATH` env var → project `
 ### Caching Strategy
 
 - **Storage:** Bun's native SQLite (`bun:sqlite`) for zero-dependency, high-performance caching.
-- **Location:** XDG-compliant SQLite database at `$XDG_CACHE_HOME/waymark/waymark-cache.db`.
-- **Schema:** Optimized tables for waymark records, file metadata, dependency edges, and search indices.
+- **Location:** Repo-local SQLite databases in `.waymark/`:
+  - `index.db` - Active waymarks, IDs, file metadata, audit log (gitignored, regenerated from source)
+  - `history.db` - Removed waymarks for undo/restore capability (optional commit for team-shared history)
+- **Schema:** Optimized tables for waymark records, file metadata, dependency edges, search indices, and ID tracking.
 - **Invalidation:** File mtime/size tracking for automatic cache invalidation on changes.
 - **Performance:** WAL mode for concurrent reads, transactions for batch writes (~1000 records/second).
 - **Maintenance:** Automatic VACUUM, ANALYZE, and WAL checkpointing for optimal performance.
+- **Portability:** Each repo maintains its own databases; no cross-repo pollution; clean slate on clone.
 
 ### Index & Performance
 

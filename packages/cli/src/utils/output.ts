@@ -12,21 +12,21 @@ function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
 
   // Remove empty arrays
   if (Array.isArray(cleaned.relations) && cleaned.relations.length === 0) {
-    delete cleaned.relations;
+    cleaned.relations = undefined as unknown as WaymarkRecord["relations"];
   }
   if (Array.isArray(cleaned.canonicals) && cleaned.canonicals.length === 0) {
-    delete cleaned.canonicals;
+    cleaned.canonicals = undefined as unknown as WaymarkRecord["canonicals"];
   }
   if (Array.isArray(cleaned.mentions) && cleaned.mentions.length === 0) {
-    delete cleaned.mentions;
+    cleaned.mentions = undefined as unknown as WaymarkRecord["mentions"];
   }
   if (Array.isArray(cleaned.tags) && cleaned.tags.length === 0) {
-    delete cleaned.tags;
+    cleaned.tags = undefined as unknown as WaymarkRecord["tags"];
   }
 
   // Remove empty properties object
   if (cleaned.properties && Object.keys(cleaned.properties).length === 0) {
-    delete cleaned.properties;
+    cleaned.properties = undefined as unknown as WaymarkRecord["properties"];
   }
 
   // Remove signals if all are false
@@ -36,7 +36,7 @@ function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
     !cleaned.signals.important &&
     !cleaned.signals.current
   ) {
-    delete cleaned.signals;
+    cleaned.signals = undefined as unknown as WaymarkRecord["signals"];
   }
 
   return cleaned;
