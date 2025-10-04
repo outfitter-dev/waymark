@@ -42,6 +42,17 @@ export const DEFAULT_CONFIG: WaymarkConfig = {
     danglingRelation: "error",
     duplicateCanonical: "error",
   },
+  ids: {
+    mode: "prompt",
+    length: 8,
+    rememberUserChoice: true,
+    trackHistory: true,
+    assignOnRefresh: false,
+  },
+  index: {
+    refreshTriggers: ["manual"],
+    autoRefreshAfterMinutes: 10,
+  },
 } as const satisfies WaymarkConfig;
 
 export type ResolveConfigOptions = {
@@ -259,6 +270,8 @@ function normalizeConfigShape(
   assignScalarOptions(result, raw);
   assignFormatOptions(result, raw);
   assignLintOptions(result, raw);
+  assignIdOptions(result, raw);
+  assignIndexOptions(result, raw);
 
   return result;
 }
@@ -376,6 +389,96 @@ function assignLintOptions(
   }
 }
 
+function assignIdOptions(
+  result: Partial<WaymarkConfig>,
+  raw: Record<string, unknown>
+): void {
+  const idsRaw = readObject(raw, "ids");
+  if (!idsRaw) {
+    return;
+  }
+
+  const out: Partial<WaymarkConfig["ids"]> = {};
+
+  const mode = readString(idsRaw, ["mode"]);
+  if (
+    mode === "auto" ||
+    mode === "prompt" ||
+    mode === "off" ||
+    mode === "manual"
+  ) {
+    out.mode = mode;
+  }
+
+  const lengthValue = readNumber(idsRaw, ["length"]);
+  if (
+    typeof lengthValue === "number" &&
+    Number.isInteger(lengthValue) &&
+    lengthValue > 0
+  ) {
+    out.length = lengthValue;
+  }
+
+  const remember = readBoolean(idsRaw, [
+    "rememberUserChoice",
+    "remember_user_choice",
+  ]);
+  if (typeof remember === "boolean") {
+    out.rememberUserChoice = remember;
+  }
+
+  const trackHistory = readBoolean(idsRaw, ["trackHistory", "track_history"]);
+  if (typeof trackHistory === "boolean") {
+    out.trackHistory = trackHistory;
+  }
+
+  const assignOnRefresh = readBoolean(idsRaw, [
+    "assignOnRefresh",
+    "assign_on_refresh",
+  ]);
+  if (typeof assignOnRefresh === "boolean") {
+    out.assignOnRefresh = assignOnRefresh;
+  }
+
+  result.ids = {
+    ...(result.ids ?? DEFAULT_CONFIG.ids),
+    ...out,
+  };
+}
+
+function assignIndexOptions(
+  result: Partial<WaymarkConfig>,
+  raw: Record<string, unknown>
+): void {
+  const indexRaw = readObject(raw, "index");
+  if (!indexRaw) {
+    return;
+  }
+
+  const out: Partial<WaymarkConfig["index"]> = {};
+
+  const triggers = readStringArray(indexRaw, [
+    "refreshTriggers",
+    "refresh_triggers",
+  ]);
+  if (triggers) {
+    out.refreshTriggers = triggers;
+  }
+
+  const minutes = readNumber(indexRaw, [
+    "autoRefreshAfterMinutes",
+    "auto_refresh_after_minutes",
+  ]);
+  if (typeof minutes === "number" && minutes >= 0) {
+    out.autoRefreshAfterMinutes = minutes;
+  }
+
+  result.index = {
+    ...(result.index ?? DEFAULT_CONFIG.index),
+    ...out,
+  };
+}
+
 function readString(
   source: Record<string, unknown>,
   keys: string[]
@@ -383,6 +486,19 @@ function readString(
   for (const key of keys) {
     const value = source[key];
     if (typeof value === "string") {
+      return value;
+    }
+  }
+  return;
+}
+
+function readNumber(
+  source: Record<string, unknown>,
+  keys: string[]
+): number | undefined {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
       return value;
     }
   }

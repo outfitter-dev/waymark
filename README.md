@@ -4,6 +4,8 @@
 
 Waymark defines and maintains the `:::` comment sigil plus supporting tooling so humans and AI agents can leave durable, greppable breadcrumbs in codebases.
 
+> Current prerelease: **1.0.0-beta.1** (2025-10-03)
+
 ## Why Waymarks Exist
 
 - Teams already rely on comment-level anchors (`TODO`, `FIXME`, `MARK`) because they survive refactors and are easy to search. Waymarks unify those patterns under one predictable grammar.

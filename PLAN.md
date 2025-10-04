@@ -69,7 +69,7 @@
   - [ ] Add `install:dev` script with symlink (or use `wmtest` for dev binary name)
   - [ ] Document installation methods in README
 - [ ] Draft migration notes and announce availability of the new CLI and agent toolkit.
-- [ ] Tag an initial prerelease once acceptance criteria are met.
+- [ ] Tag an initial prerelease once acceptance criteria are met — targeting **1.0.0-beta.1** after documentation pass.
 - [ ] Evaluate terminal UI prototypes (see docs/waymark/tui-ab-plan.md) and select approach.
 - [ ] Expose marker categories/aliases in CLI tooling (e.g., `waymark find --category work`, alias normalization).
 
@@ -126,12 +126,15 @@
 - 2025-10-02: Implemented `wm init` command for bootstrapping waymark configurations
   - Interactive mode: prompts for format (toml/jsonc/yaml/yml), preset (full/minimal), and scope (project/user)
   - Non-interactive mode: accepts flags `--format`, `--preset`, `--scope`, `--force`
-  - Auto-updates `.gitignore` with `.waymark/index.db` entry for project scope
+  - Auto-updates `.gitignore` with `.waymark/index.json` entry for project scope
   - Integrated Pino logger with pretty-print formatting for clean CLI output
-- 2025-10-02: Finalized database architecture for `wm insert` and `wm remove` commands
-  - Repo-local databases in `.waymark/` directory (not XDG cache)
-  - `index.db` - Active waymarks, IDs (wid column), file metadata, audit log (gitignored, regenerated from source)
-  - `history.db` - Tombstoned/removed waymarks for undo capability (optional commit for team history)
-  - IDs appear as `wm:a3k9m2p` in waymark content, stored as hash only in database
-  - Separation keeps index.db fast for queries, history.db enables restore/audit
-  - Each repo maintains its own databases; no cross-repo pollution
+- 2025-10-03: Finalized index architecture for `wm insert` and `wm remove` commands
+  - Repo-local JSON files in `.waymark/` directory (not XDG cache)
+  - `index.json` - Active waymarks, IDs (when opted-in), file metadata, audit log (gitignored, regenerated from source)
+  - `history.json` - Tombstoned/removed waymarks for undo capability (optional commit for team history)
+  - IDs appear as `wm:a3k9m2p` in waymark content, stored as hash in index
+  - Fingerprinting system (contentHash, contextHash) tracks waymarks without requiring IDs
+  - Separation keeps index.json focused on active state, history.json enables restore/audit
+  - Each repo maintains its own index files; no cross-repo pollution
+  - `wm index --refresh` command with git hook support for automatic updates
+- 2025-10-03: Locked scope for prerelease **v1.0.0-beta.1** with refactored insert/remove pipelines and changelog coverage ahead of tagging.
