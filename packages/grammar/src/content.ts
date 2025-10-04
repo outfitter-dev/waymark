@@ -117,11 +117,13 @@ export function parseContinuation(
     // Check if it's a known property key
     if (PROPERTY_KEYS.has(lowerKey)) {
       // This is a property continuation
+      const strippedValue = stripHtmlCommentClosure(afterSigil, commentLeader);
+      const propertyValue = strippedValue.trim();
       return {
         type: "property",
-        content: afterSigil.trim(),
+        content: propertyValue,
         propertyKey: lowerKey,
-        propertyValue: afterSigil.trim(),
+        propertyValue,
       };
     }
   }
