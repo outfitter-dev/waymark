@@ -53,6 +53,12 @@ Detailed daily logs are maintained in `.agents/logs/`:
 - Documentation reorganization into phase-specific files
 - CLI help system improvements (registry-based approach)
 
+### 2025-10-03
+
+- Refactored `wm insert`/`wm remove` handlers into shared parsing/output helpers; aligned `@waymarks/core` implementations with new ID reservation and formatting helpers.
+- Eliminated lingering non-null assertions in CLI/core tests, normalized async helpers, and reran `bun run check:all` for release confidence.
+- Authored `CHANGELOG.md`, updated README/PRD/docs navigation to call out the upcoming **1.0.0-beta.1** prerelease, and logged the plan/decision updates accordingly.
+
 ---
 
 ## Historical Notes (Pre-Worklog)
@@ -602,3 +608,12 @@ Detailed daily logs are maintained in `.agents/logs/`:
   - Note: Linter kept auto-reverting `delete` back to `undefined` in pre-commit hook - had to amend commit with `--no-verify`
   - All 155 tests passing, full CI pipeline green
   - Committed as `27d5a72`: "feat(cli): add pino logger and interactive prompts for wm init"
+
+## 2025-10-03
+
+- CLI: wired `createContext` to expose `workspaceRoot` and added helpers for workspace detection and ID manager bootstrapping.
+- CLI: implemented `wm insert` command with inline/JSON parsing, JSON(L)/text outputs, and integration with the new JSON ID index.
+- Core/CLI bridge: added tests covering insert command flows and updated `.gitignore` for `.waymark/index.json` and `.waymark/history.json` artifacts.
+- Core: implemented `removeWaymarks` with ID-aware removal, criteria filtering, and multi-line support plus JSON index updates.
+- CLI: added `wm remove` with preview/confirm flow, JSON(L) output, and tests for line/id removal scenarios.
+- CLI/core: expanded removal criteria with `contains` matching, glob expansion defaulting to the workspace root, and JSON `--from` payloads that can configure command options; added focused tests for these flows.

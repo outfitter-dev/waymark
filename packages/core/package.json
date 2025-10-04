@@ -1,6 +1,6 @@
 {
   "name": "@waymarks/core",
-  "version": "0.0.0",
+  "version": "1.0.0-beta.1",
   "type": "module",
   "main": "dist/index.js",
   "module": "src/index.ts",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@waymarks/grammar": "workspace:*",
     "pino": "^9.11.0",
+    "safe-regex": "2.1.1",
     "strip-json-comments": "5.0.3",
     "toml": "3.0.0",
     "type-fest": "^5.0.1",

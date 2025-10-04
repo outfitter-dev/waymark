@@ -1,4 +1,4 @@
-<!-- tldr ::: design doc for waymark insert and remove commands enabling programmatic waymark management #wip/release -->
+<!-- tldr ::: design doc for waymark insert and remove commands enabling programmatic waymark management #docs/release -->
 
 # Waymark Insert & Remove Commands Design
 
@@ -337,16 +337,16 @@ Track active IDs in a lightweight `.waymark/index.json` file that stays in sync 
       "type": "todo",
       "content": "add rate limiting",
       "source": "@alice",
-      "source_type": "cli",
-      "updated_at": "2025-10-03T04:12:00Z",
-      "content_hash": "sha1-abc123",
-      "context_hash": "sha1-def456"
+      "sourceType": "cli",
+      "updatedAt": "2025-10-03T04:12:00Z",
+      "contentHash": "sha1-abc123",
+      "contextHash": "sha1-def456"
     }
   },
   "files": {
     "src/auth.ts": {
       "hash": "sha1-…",
-      "last_seen": "2025-10-03T04:12:00Z"
+      "lastSeen": "2025-10-03T04:12:00Z"
     }
   }
 }
@@ -354,18 +354,18 @@ Track active IDs in a lightweight `.waymark/index.json` file that stays in sync 
 
 - Repo-local JSON keeps dependencies simple and diffable.
 - Automatic writes occur after each CLI insert/remove so hot paths stay in sync without rescanning.
-- Optional `.waymark/history.json` captures tombstoned waymarks for undo, storing the same payload plus `removed_at`/`removed_by` metadata.
+- Optional `.waymark/history.json` captures tombstoned waymarks for undo, storing the same payload plus `removedAt`/`removedBy` metadata.
 - The files stay gitignored by default, but history can be committed for shared undo if a team wants it.
 - Run `wm index --refresh` to crawl the repo on demand (CI, pre-commit, manual). The refresher hashes files so unchanged paths are skipped; a `--changed-since <ref>` flag scopes even tighter.
 - Optional hook helpers (`wm hook install`) can wire refreshes into git events such as `pre-commit`, `pre-push`, or `post-checkout`; triggers are controlled through config (see `[index].refresh_triggers`).
 - On every CLI invocation we check index freshness (no background daemon required); if the last refresh is older than the configured threshold we offer (or auto-run) `wm index --refresh --changed-since <ref>` depending on `[index].auto_refresh_after_minutes` and trigger policy.
 - When any refresher runs, it can optionally assign IDs to newly discovered waymarks based on configuration (see `[ids].assign_on_refresh`).
-- Each index entry stores both an ID (if present) and a fingerprint pair (`content_hash`, `context_hash`) so we can match drifted waymarks even when IDs are absent.
+- Each index entry stores both an ID (if present) and a fingerprint pair (`contentHash`, `contextHash`) so we can match drifted waymarks even when IDs are absent.
 
 #### Fingerprint Strategy
 
-- `content_hash`: hash of the canonicalized waymark content (type + text + properties). Updates whenever the content changes.
-- `context_hash`: hash of a sliding window (e.g., the two lines above/below plus indentation) to survive line moves.
+- `contentHash`: hash of the canonicalized waymark content (type + text + properties). Updates whenever the content changes.
+- `contextHash`: hash of a sliding window (e.g., the two lines above/below plus indentation) to survive line moves.
 - Matching precedence during refresh:
   1. **ID match** (exact string) – most reliable.
   2. **Content hash** – catches edits that keep semantics but change location.
@@ -526,10 +526,10 @@ interface IdIndexEntry {
   type: string;
   content: string;
   source?: string;
-  source_type?: "cli" | "mcp" | "api" | "manual";
-  content_hash: string;
-  context_hash: string;
-  updated_at: number;
+  sourceType?: "cli" | "mcp" | "api" | "manual";
+  contentHash: string;
+  contextHash: string;
+  updatedAt: number;
 }
 
 export class WaymarkIdManager {
@@ -588,9 +588,9 @@ export class WaymarkIdManager {
       line,
       type,
       content,
-      content_hash: fp.content_hash,
-      context_hash: fp.context_hash,
-      updated_at: Date.now()
+      contentHash: fp.contentHash,
+      contextHash: fp.contextHash,
+      updatedAt: Date.now()
     });
   }
 
@@ -602,8 +602,8 @@ export class WaymarkIdManager {
       ...entry,
       file,
       line,
-      context_hash: fingerprintContext(file, line),
-      updated_at: Date.now()
+      contextHash: fingerprintContext(file, line),
+      updatedAt: Date.now()
     }));
   }
 
@@ -745,7 +745,7 @@ Should users be able to specify custom IDs?
     "total": 2,
     "successful": 2,
     "failed": 0,
-    "files_modified": 1
+    "filesModified": 1
   }
 }
 ```
@@ -819,11 +819,11 @@ function fingerprintRecord(input: {
   line: number;
   type: string;
   content: string;
-}): { content_hash: string; context_hash: string } {
+}): { contentHash: string; contextHash: string } {
   const normalized = `${input.type}:::${normalizeWhitespace(input.content)}`;
   return {
-    content_hash: hash(normalized),
-    context_hash: fingerprintContext(input.file, input.line)
+    contentHash: hash(normalized),
+    contextHash: fingerprintContext(input.file, input.line)
   };
 }
 
@@ -1467,7 +1467,7 @@ wm remove --type todo --interactive
     "total": 2,
     "successful": 2,
     "failed": 0,
-    "files_modified": 2,
+    "filesModified": 2,
     "lines_removed": 2
   }
 }

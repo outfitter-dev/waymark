@@ -14,4 +14,5 @@ export type GlobalOptions = {
 export type CommandContext = {
   config: WaymarkConfig;
   globalOptions: GlobalOptions;
+  workspaceRoot: string;
 };

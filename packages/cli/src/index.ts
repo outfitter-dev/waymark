@@ -4,14 +4,27 @@
 
 import { existsSync } from "node:fs";
 import { Command } from "commander";
+import simpleUpdateNotifier from "simple-update-notifier";
 
 import { formatFile } from "./commands/fmt.ts";
 import { getHelp } from "./commands/help/index.ts";
 import { runInitCommand } from "./commands/init.ts";
+import { parseInsertArgs, runInsertCommand } from "./commands/insert.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { migrateFile } from "./commands/migrate.ts";
+import {
+  maybeConfirmRemoval,
+  type ParsedRemoveArgs,
+  parseRemoveArgs,
+  runRemoveCommand,
+} from "./commands/remove.ts";
 import { runUnifiedCommand } from "./commands/unified/index.ts";
 import { parseUnifiedArgs } from "./commands/unified/parser.ts";
+import {
+  runUpdateCommand,
+  type UpdateCommandOptions,
+} from "./commands/update.ts";
+import type { CommandContext } from "./types.ts";
 import { loadPrompt } from "./utils/content-loader.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
@@ -183,6 +196,206 @@ async function handleMigrateCommand(
   }
 }
 
+async function handleInsertCommand(
+  program: Command,
+  command: Command,
+  options: { prompt?: boolean }
+): Promise<void> {
+  if (options.prompt) {
+    const promptText = loadPrompt("insert");
+    if (promptText) {
+      writeStdout(promptText);
+      return;
+    }
+    writeStderr("No agent prompt available for this command");
+    process.exit(1);
+  }
+
+  const argvTokens = process.argv.slice(2);
+  const commandNames = new Set([command.name(), ...command.aliases()]);
+  const commandIndex = argvTokens.findIndex((token) => commandNames.has(token));
+  const tokens = commandIndex >= 0 ? argvTokens.slice(commandIndex + 1) : [];
+  const filteredTokens = tokens.filter((token) => token !== "--prompt");
+
+  const scopeValue = program.opts().scope as string;
+  const globalOpts = { scope: normalizeScope(scopeValue) };
+  const context = await createContext(globalOpts);
+
+  try {
+    const parsed = parseInsertArgs(filteredTokens);
+    const result = await runInsertCommand(parsed, context);
+
+    if (result.output.length > 0) {
+      writeStdout(result.output);
+    }
+
+    if (result.exitCode !== 0) {
+      process.exit(result.exitCode);
+    }
+  } catch (error) {
+    writeStderr(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+}
+
+async function handleRemoveCommand(
+  program: Command,
+  command: Command,
+  options: { prompt?: boolean }
+): Promise<void> {
+  if (handlePromptOption("remove", options)) {
+    return;
+  }
+
+  const filteredTokens = extractCommandTokens(program, command);
+  const scopeValue = program.opts().scope as string;
+  const context = await createContext({ scope: normalizeScope(scopeValue) });
+
+  const parsedArgs = parseRemoveArgsOrExit(filteredTokens);
+  const preview = await runRemoveCommand(parsedArgs, context, {
+    writeOverride: false,
+  });
+
+  if (parsedArgs.options.write) {
+    await executeRemovalWriteFlow(preview, parsedArgs, context);
+    return;
+  }
+
+  outputRemovalPreview(preview);
+}
+
+function handlePromptOption(
+  key: "insert" | "remove",
+  options: { prompt?: boolean }
+): boolean {
+  if (!options.prompt) {
+    return false;
+  }
+  const promptText = loadPrompt(key);
+  if (promptText) {
+    writeStdout(promptText);
+    return true;
+  }
+  writeStderr("No agent prompt available for this command");
+  process.exit(1);
+}
+
+function extractCommandTokens(_program: Command, command: Command): string[] {
+  const argvTokens = process.argv.slice(2);
+  const names = new Set([command.name(), ...command.aliases()]);
+  const commandIndex = argvTokens.findIndex((token) => names.has(token));
+  if (commandIndex === -1) {
+    return [];
+  }
+  return argvTokens
+    .slice(commandIndex + 1)
+    .filter((token) => token !== "--prompt");
+}
+
+function parseRemoveArgsOrExit(tokens: string[]): ParsedRemoveArgs {
+  try {
+    return parseRemoveArgs(tokens);
+  } catch (error) {
+    writeStderr(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+}
+
+async function executeRemovalWriteFlow(
+  preview: Awaited<ReturnType<typeof runRemoveCommand>>,
+  parsedArgs: ParsedRemoveArgs,
+  context: CommandContext
+): Promise<void> {
+  if (preview.exitCode !== 0) {
+    if (preview.output.length > 0) {
+      writeStdout(preview.output);
+    }
+    process.exit(preview.exitCode);
+  }
+
+  const structuredOutput = preview.options.json || preview.options.jsonl;
+  if (!structuredOutput && preview.output.length > 0) {
+    writeStdout(preview.output);
+  }
+
+  const confirmed = structuredOutput
+    ? true
+    : await maybeConfirmRemoval(preview.summary, {
+        yes: preview.options.yes,
+        confirm: preview.options.confirm,
+      });
+
+  if (!confirmed) {
+    writeStdout("Removal cancelled");
+    process.exit(1);
+  }
+
+  const actual = await runRemoveCommand(parsedArgs, context, {
+    writeOverride: true,
+  });
+
+  if (actual.output.length > 0) {
+    writeStdout(actual.output);
+  }
+
+  if (actual.exitCode !== 0) {
+    process.exit(actual.exitCode);
+  }
+}
+
+function outputRemovalPreview(
+  preview: Awaited<ReturnType<typeof runRemoveCommand>>
+): void {
+  if (preview.output.length > 0) {
+    writeStdout(preview.output);
+  }
+
+  if (preview.exitCode !== 0) {
+    process.exit(preview.exitCode);
+  }
+}
+
+async function handleUpdateAction(
+  options: {
+    dryRun?: boolean;
+    force?: boolean;
+    yes?: boolean;
+    command?: string;
+  } = {}
+): Promise<void> {
+  const updateOptions: UpdateCommandOptions = {};
+  if (typeof options.dryRun === "boolean") {
+    updateOptions.dryRun = options.dryRun;
+  }
+  if (typeof options.force === "boolean") {
+    updateOptions.force = options.force;
+  }
+  if (typeof options.yes === "boolean") {
+    updateOptions.yes = options.yes;
+  }
+  if (typeof options.command === "string" && options.command.length > 0) {
+    updateOptions.command = options.command;
+  }
+
+  const result = await runUpdateCommand(updateOptions);
+
+  if (result.message) {
+    if (result.exitCode === 0) {
+      writeStdout(result.message);
+    } else {
+      writeStderr(result.message);
+    }
+  }
+
+  if (!result.skipped && result.exitCode === 0) {
+    writeStdout("wm update completed.");
+  }
+
+  if (result.exitCode !== 0) {
+    process.exit(result.exitCode);
+  }
+}
+
 const MULTI_VALUE_OPTION_FLAGS = [
   { key: "type", flag: "--type" },
   { key: "tag", flag: "--tag" },
@@ -341,6 +554,11 @@ async function createProgram(): Promise<Command> {
   const packageJson = await import(packageJsonPath.href);
   const version = packageJson.default.version as string;
 
+  await simpleUpdateNotifier({
+    pkg: packageJson.default,
+    shouldNotifyInNpmScript: true,
+  });
+
   const program = new Command();
 
   program
@@ -406,6 +624,40 @@ async function createProgram(): Promise<Command> {
         }
       }
     );
+
+  program
+    .command("insert")
+    .allowUnknownOption(true)
+    .allowExcessArguments(true)
+    .option("--prompt", "show agent-facing prompt instead of help")
+    .description("insert waymarks into files")
+    .action(async function (this: Command, ...actionArgs: unknown[]) {
+      const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
+      await handleInsertCommand(program, this, options);
+    });
+
+  program
+    .command("remove")
+    .allowUnknownOption(true)
+    .allowExcessArguments(true)
+    .option("--prompt", "show agent-facing prompt instead of help")
+    .description("remove waymarks from files")
+    .action(async function (this: Command, ...actionArgs: unknown[]) {
+      const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
+      await handleRemoveCommand(program, this, options);
+    });
+
+  program
+    .command("update")
+    .description("check for and install CLI updates (npm global installs)")
+    .option("--dry-run", "print the npm command without executing it")
+    .option("--force", "run even if the install method cannot be detected")
+    .option("--yes", "skip the confirmation prompt")
+    .option(
+      "--command <command>",
+      "override the underlying update command (defaults to npm)"
+    )
+    .action(handleUpdateAction);
 
   // Lint command
   program

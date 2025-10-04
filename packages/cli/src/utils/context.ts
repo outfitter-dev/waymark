@@ -2,6 +2,7 @@
 
 import { loadConfigFromDisk } from "@waymarks/core";
 import type { CommandContext, GlobalOptions } from "../types.ts";
+import { resolveWorkspaceRoot } from "./workspace.ts";
 
 export async function createContext(
   globalOptions: GlobalOptions
@@ -15,5 +16,7 @@ export async function createContext(
   } as const;
 
   const config = await loadConfigFromDisk(loadOptions);
-  return { config, globalOptions };
+  const workspaceRoot = resolveWorkspaceRoot(loadOptions.cwd);
+
+  return { config, globalOptions, workspaceRoot };
 }

@@ -25,6 +25,7 @@ import { renderRecords } from "./utils/output";
 const defaultContext: CommandContext = {
   config: resolveConfig(),
   globalOptions: {},
+  workspaceRoot: process.cwd(),
 };
 
 async function runUnified(

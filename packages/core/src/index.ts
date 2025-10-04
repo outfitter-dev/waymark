@@ -24,6 +24,18 @@ export type { FormatEdit, FormatOptions, FormatResult } from "./format";
 export { formatText } from "./format";
 export type { GraphEdge, WaymarkGraph } from "./graph";
 export { buildRelationGraph } from "./graph";
+export {
+  type HistoryEntry,
+  type IdIndexEntry,
+  JsonIdIndex,
+} from "./id-index";
+export {
+  fingerprintContent,
+  fingerprintContext,
+  WaymarkIdManager,
+} from "./ids";
+export type { InsertionResult, InsertionSpec, InsertOptions } from "./insert";
+export { insertWaymarks } from "./insert";
 export type { FileSummary, MarkerSummary, WaymarkMap } from "./map";
 export { buildWaymarkMap, summarizeMarkerTotals } from "./map";
 export type {
@@ -39,6 +51,13 @@ export {
   normalizeTags,
   normalizeType,
 } from "./normalize";
+export type {
+  RemovalCriteria,
+  RemovalResult,
+  RemovalSpec,
+  RemoveOptions,
+} from "./remove";
+export { removeWaymarks } from "./remove";
 export type { SearchQuery } from "./search";
 export { searchRecords } from "./search";
 export type { ScanOptions, WaymarkConfig } from "./types";

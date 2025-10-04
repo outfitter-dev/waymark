@@ -347,10 +347,10 @@ async function updateGitignore(): Promise<void> {
     content = await readFile(gitignorePath, "utf8");
   }
 
-  // Check if waymark index.db entry already exists
-  const hasWaymarkIndexDb = content.includes(".waymark/index.db");
+  // Check if waymark index.json entry already exists
+  const hasWaymarkIndex = content.includes(".waymark/index.json");
 
-  if (hasWaymarkIndexDb) {
+  if (hasWaymarkIndex) {
     return; // Already configured
   }
 
@@ -358,8 +358,8 @@ async function updateGitignore(): Promise<void> {
   const newContent =
     content +
     (content.endsWith("\n") ? "" : "\n") +
-    "\n# Waymark index database (regenerated from source)\n" +
-    ".waymark/index.db\n";
+    "\n# Waymark index file (regenerated from source)\n" +
+    ".waymark/index.json\n";
 
   await writeFile(gitignorePath, newContent, "utf8");
 }

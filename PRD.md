@@ -11,6 +11,8 @@ Waymark is a minimal, language‑agnostic way of embedding **lightweight code-ad
 
 Waymark prioritizes grep‑first utility while remaining AI‑native. It standardizes common, ad‑hoc patterns (TODOs, FIXMEs, inline ownership, review notes) into a durable, low‑ceremony grammar that tools can index at scale.
 
+> **Release status:** Preparing prerelease **v1.0.0-beta.1** (2025-10-03) with hardened insert/remove flows and JSON index lifecycle.
+
 ## Goals
 
 - **Greppable by default:** Every waymark is discoverable with plain text search.
@@ -321,8 +323,8 @@ Each parsed waymark emits a normalized record. This is the stable interchange fo
 - **Project directory:** Waymark tooling reserves `.waymark/` (singular) in each repo.
   - `config.(toml|jsonc|yaml|yml)` — project-scoped configuration, version controlled (detected in that precedence: `toml`, `jsonc`, `yaml`, `yml`).
   - `rules/` — agent rule packs and conventions (version controlled).
-  - `index.db` — SQLite database with active waymarks, IDs, file metadata, audit log (regenerated from source; ignored in git).
-  - `history.db` — SQLite database with removed/tombstoned waymarks for undo capability (optional; can be committed for team-shared history).
+  - `index.json` — lightweight JSON index with active waymarks, IDs (when opted-in), file metadata, audit log (regenerated from source; ignored in git).
+  - `history.json` — JSON archive of removed/tombstoned waymarks for undo capability (optional; can be committed for team-shared history).
 - **Scopes (`--scope`)** determine where writes land:
   - `user` — `$XDG_CONFIG_HOME/waymark/config.{toml,jsonc,yaml,yml}` (fallback `~/.config/waymark/`). Applies to every repo for the current user.
   - `local` — directory-specific overrides stored under `$XDG_CONFIG_HOME/waymark/local/<fingerprint>.jsonc`; never committed.
@@ -332,7 +334,7 @@ Each parsed waymark emits a normalized record. This is the stable interchange fo
   - Data: `$XDG_DATA_HOME/waymark/` (generated reports, exports).
   - Environment overrides: `WAYMARK_CONFIG_PATH`, `WAYMARK_DATA_PATH`.
 - **.gitignore recommendations:**
-  - `.waymark/index.db` — always ignored (regenerated from source files)
+  - `.waymark/index.json` — always ignored (regenerated from source files)
 
 ## Waymark Core Library (API)
 
@@ -482,24 +484,23 @@ Config discovery order: CLI flag → `WAYMARK_CONFIG_PATH` env var → project `
 
 ### Caching Strategy
 
-- **Storage:** Bun's native SQLite (`bun:sqlite`) for zero-dependency, high-performance caching.
-- **Location:** Repo-local SQLite databases in `.waymark/`:
-  - `index.db` - Active waymarks, IDs, file metadata, audit log (gitignored, regenerated from source)
-  - `history.db` - Removed waymarks for undo/restore capability (optional commit for team-shared history)
-- **Schema:** Optimized tables for waymark records, file metadata, dependency edges, search indices, and ID tracking.
-- **Invalidation:** File mtime/size tracking for automatic cache invalidation on changes.
-- **Performance:** WAL mode for concurrent reads, transactions for batch writes (~1000 records/second).
-- **Maintenance:** Automatic VACUUM, ANALYZE, and WAL checkpointing for optimal performance.
-- **Portability:** Each repo maintains its own databases; no cross-repo pollution; clean slate on clone.
+- **Storage:** Lightweight JSON files for simplicity, diffability, and git-friendly workflows.
+- **Location:** Repo-local JSON index files in `.waymark/`:
+  - `index.json` - Active waymarks, IDs (when opted-in), file metadata, audit log (gitignored, regenerated from source)
+  - `history.json` - Removed/tombstoned waymarks for undo/restore capability (optional commit for team-shared history)
+- **Schema:** Structured JSON with waymark records, file metadata, dependency edges, and ID mappings.
+- **Invalidation:** File mtime/size tracking for automatic index refresh on changes.
+- **Performance:** In-memory processing with batched file I/O; incremental updates via `wm index --refresh`.
+- **Portability:** Each repo maintains its own index files; no cross-repo pollution; clean slate on clone.
 
 ### Index & Performance
 
 - Streaming JSONL for `scan` avoids memory blow‑ups on large repos.
-- SQLite cache with prepared statements for sub-millisecond lookups.
-- Full-text search on waymark content via SQLite FTS or LIKE queries.
-- Dependency graph traversal via indexed foreign key relationships.
-- Optional memory-mapped I/O for frequently accessed cache segments.
-- Watch mode (future): incremental updates via file system events and cache deltas.
+- In-memory index with fast JSON parsing for sub-millisecond lookups.
+- Full-text search on waymark content via in-memory filtering and pattern matching.
+- Dependency graph traversal via indexed relation arrays.
+- Git hook integration via `wm index --refresh` for automatic index updates.
+- Watch mode (future): incremental updates via file system events and index deltas.
 
 ### Editor/Tooling Hooks
 

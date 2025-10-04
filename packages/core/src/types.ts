@@ -27,6 +27,8 @@ export type WaymarkConfig = {
   respectGitignore: boolean;
   format: WaymarkFormatConfig;
   lint: WaymarkLintConfig;
+  ids: WaymarkIdConfig;
+  index: WaymarkIndexConfig;
 };
 
 // Manually defined partial config to work with exactOptionalPropertyTypes
@@ -41,6 +43,8 @@ export type PartialWaymarkConfig = {
   respectGitignore?: boolean;
   format?: Partial<WaymarkFormatConfig>;
   lint?: Partial<WaymarkLintConfig>;
+  ids?: Partial<WaymarkIdConfig>;
+  index?: Partial<WaymarkIndexConfig>;
 };
 
 import type { WaymarkRecord } from "@waymarks/grammar";
@@ -49,4 +53,17 @@ export type ScanOptions = {
   cache?: boolean;
   filter?: (record: WaymarkRecord) => boolean;
   config?: Partial<WaymarkConfig>;
+};
+
+export type WaymarkIdConfig = {
+  mode: "auto" | "prompt" | "off" | "manual";
+  length: number;
+  rememberUserChoice: boolean;
+  trackHistory: boolean;
+  assignOnRefresh: boolean;
+};
+
+export type WaymarkIndexConfig = {
+  refreshTriggers: string[];
+  autoRefreshAfterMinutes: number;
 };

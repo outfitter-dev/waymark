@@ -43,6 +43,8 @@ temp/
 # Waymark tooling caches
 .waymark/cache/
 .waymark/index/
+.waymark/index.json
+.waymark/history.json
 
 # Turbo cache
 .turbo/
