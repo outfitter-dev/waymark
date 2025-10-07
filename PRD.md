@@ -40,7 +40,7 @@ This preserves the "one grep finds all" feel (searching `#token` surfaces refere
 ## Definitions & Terminology
 
 - **Waymark:** A structured comment in source files following `signal? + marker + ' ::: ' + content`.
-- **Signal:** Optional prefix indicating state/priority: `^` (raised/in-progress), `*` (important). When combined, `^` precedes `*`.
+- **Signal:** Optional prefix indicating state/priority: `^` (raised/in-progress), `*` (starred for important/valuable content). When combined, `^` precedes `*`.
 - **Marker:** Single word describing intent/purpose (e.g., `todo`, `fix`, `note`). Case normalized by formatter.
 - **Sigil:** The literal `:::` separating marker from content.
 - **Content:** Free text after the sigil; may contain properties, hashtags, mentions.
@@ -73,7 +73,7 @@ This preserves the "one grep finds all" feel (searching `#token` surfaces refere
 ### Signals
 
 - `^` (caret) — marks raised/in-progress work and produces a raised waymark that should not land on protected branches
-- `*` (star) — important/high priority
+- `*` (star) — starred to mark important/valuable waymarks
 - Order when combined: caret precedes star (`^*`, e.g., `^*todo`). Double intensity marks (e.g., `**`) are not part of the v1 grammar; use a single `*` only.
 
 ### Markers (Blessed)

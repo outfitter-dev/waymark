@@ -758,7 +758,7 @@ describe("Unified command", () => {
     });
 
     expect(output).toContain("Type: todo");
-    expect(output).toContain("Signals: raised=false, important=false");
+    expect(output).toContain("Signals: raised=false, starred=false");
     expect(output).toContain("Content: @alice fix bug #perf");
     expect(output).toContain("Mentions: @alice");
     expect(output).toContain("Tags: #perf");

@@ -1,0 +1,171 @@
+#compdef wm
+
+# tldr ::: zsh completion script for waymark CLI
+
+_wm() {
+  local -a commands
+  commands=(
+    'format:Format waymarks in a file'
+    'insert:Insert waymarks into files'
+    'modify:Modify existing waymarks'
+    'remove:Remove waymarks from files'
+    'lint:Validate waymark structure'
+    'migrate:Migrate legacy comments'
+    'init:Initialize waymark config'
+    'update:Update CLI to latest version'
+    'help:Display help for command'
+  )
+
+  local -a common_opts
+  common_opts=(
+    '(-v --version)'{-v,--version}'[Output version number]'
+    '--scope[Config scope]:scope:(default project user)'
+    '--verbose[Enable verbose logging]'
+    '--debug[Enable debug logging]'
+    '(-q --quiet)'{-q,--quiet}'[Only show errors]'
+    '(-h --help)'{-h,--help}'[Display help]'
+    '--prompt[Show agent-facing documentation]'
+  )
+
+  local -a filter_opts
+  filter_opts=(
+    '(-t --type)'{-t,--type}'[Filter by waymark type]:type:(todo fix wip done review test check note context tldr this example idea comment warn alert deprecated temp hack blocked needs question)'
+    '--tag[Filter by hashtag]:tag:'
+    '--mention[Filter by mention]:mention:'
+    '(-r --raised)'{-r,--raised}'[Show only raised waymarks]'
+    '(-s --starred)'{-s,--starred}'[Show only important waymarks]'
+  )
+
+  local -a output_opts
+  output_opts=(
+    '--json[Output as JSON]'
+    '--jsonl[Output as JSON Lines]'
+    '--pretty[Output as pretty JSON]'
+    '--long[Show detailed information]'
+    '--tree[Group by directory]'
+    '--flat[Show flat list]'
+    '--map[Show file tree with TLDRs]'
+    '--graph[Show dependency graph]'
+    '--summary[Show summary footer]'
+    '--keep-comment-markers[Keep comment syntax]'
+    '--compact[Compact output]'
+    '--no-color[Disable colors]'
+  )
+
+  local -a display_opts
+  display_opts=(
+    '--group[Group by]:group:(file dir type)'
+    '--sort[Sort by]:sort:(file line type modified)'
+    '(-C --context)'{-C,--context}'[Context lines]:lines:'
+    '(-A --after)'{-A,--after}'[Lines after]:lines:'
+    '(-B --before)'{-B,--before}'[Lines before]:lines:'
+    '--limit[Limit results]:count:'
+    '--page[Page number]:page:'
+  )
+
+  _arguments -C \
+    '1: :->command' \
+    '*:: :->args' \
+    && return 0
+
+  case $state in
+    command)
+      _alternative \
+        'commands:command:(('"${(j. .)commands[@]}"'))' \
+        'paths:file or directory:_files'
+      ;;
+    args)
+      case $words[1] in
+        format|fmt)
+          _arguments \
+            $common_opts \
+            '(-w --write)'{-w,--write}'[Write changes to file]' \
+            '*:file:_files'
+          ;;
+        insert)
+          _arguments \
+            $common_opts \
+            '--from[Read from JSON file]:file:_files' \
+            '--mention[Add mention]:mention:' \
+            '--tag[Add tag]:tag:' \
+            '--property[Add property]:property:' \
+            '--ref[Set canonical reference]:token:' \
+            '--depends[Add dependency]:token:' \
+            '--needs[Add needs relation]:token:' \
+            '--blocks[Add blocks relation]:token:' \
+            '--signal[Add signal]:signal:(^ *)' \
+            '--json[Output as JSON]' \
+            '--jsonl[Output as JSON Lines]'
+          ;;
+        modify)
+          _arguments \
+            $common_opts \
+            '--id[Modify by waymark ID]:id:' \
+            '--type[Change waymark type]:type:(todo fix note warn tldr done)' \
+            '--raise[Add raised signal]' \
+            '--important[Add important signal]' \
+            '--no-signal[Remove all signals]' \
+            '--content[Replace content]:text:' \
+            '(-w --write)'{-w,--write}'[Apply modifications]' \
+            '--interactive[Interactive flow]' \
+            '--json[Output as JSON]' \
+            '--jsonl[Output as JSON Lines]'
+          ;;
+        remove)
+          _arguments \
+            $common_opts \
+            '(-w --write)'{-w,--write}'[Actually remove]' \
+            '--id[Remove by ID]:id:' \
+            '--from[Read from JSON file]:file:_files' \
+            '--criteria[Filter criteria]:query:' \
+            '--yes[Skip confirmation]' \
+            '--confirm[Force confirmation]' \
+            '--json[Output as JSON]' \
+            '--jsonl[Output as JSON Lines]'
+          ;;
+        lint)
+          _arguments \
+            $common_opts \
+            '--json[Output as JSON]' \
+            '*:file:_files'
+          ;;
+        migrate)
+          _arguments \
+            $common_opts \
+            '(-w --write)'{-w,--write}'[Write changes to file]' \
+            '*:file:_files'
+          ;;
+        init)
+          _arguments \
+            $common_opts \
+            '(-f --format)'{-f,--format}'[Config format]:format:(toml jsonc yaml yml)' \
+            '(-p --preset)'{-p,--preset}'[Config preset]:preset:(full minimal)' \
+            '(-s --scope)'{-s,--scope}'[Config scope]:scope:(project user)' \
+            '--force[Overwrite existing]'
+          ;;
+        update)
+          _arguments \
+            $common_opts \
+            '--dry-run[Print command without executing]' \
+            '--force[Run even if install method unknown]' \
+            '--yes[Skip confirmation]' \
+            '--command[Override update command]:command:'
+          ;;
+        help)
+          _arguments \
+            '1:command:(format insert remove lint migrate init update help)'
+          ;;
+        *)
+          _arguments \
+            $common_opts \
+            $filter_opts \
+            $output_opts \
+            $display_opts \
+            '*:path:_files'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_wm "$@"

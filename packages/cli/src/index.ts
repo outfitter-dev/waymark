@@ -3,21 +3,23 @@
 // tldr ::: waymark CLI entry point using commander for command routing and parsing
 
 import { existsSync } from "node:fs";
+import type { WaymarkConfig } from "@waymarks/core";
 import { Command } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 
 import { formatFile } from "./commands/fmt.ts";
-import { getHelp } from "./commands/help/index.ts";
 import { runInitCommand } from "./commands/init.ts";
 import { parseInsertArgs, runInsertCommand } from "./commands/insert.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { migrateFile } from "./commands/migrate.ts";
+import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
 import {
   maybeConfirmRemoval,
   type ParsedRemoveArgs,
   parseRemoveArgs,
   runRemoveCommand,
 } from "./commands/remove.ts";
+import { scanRecords } from "./commands/scan.ts";
 import { runUnifiedCommand } from "./commands/unified/index.ts";
 import { parseUnifiedArgs } from "./commands/unified/parser.ts";
 import {
@@ -265,7 +267,7 @@ async function handleRemoveCommand(
 }
 
 function handlePromptOption(
-  key: "insert" | "remove",
+  key: "insert" | "remove" | "modify",
   options: { prompt?: boolean }
 ): boolean {
   if (!options.prompt) {
@@ -340,6 +342,132 @@ async function executeRemovalWriteFlow(
 
   if (actual.exitCode !== 0) {
     process.exit(actual.exitCode);
+  }
+}
+
+type ModifyCliOptions = {
+  id?: string;
+  type?: string;
+  content?: string;
+  raise?: boolean;
+  starred?: boolean;
+  noSignal?: boolean;
+  write?: boolean;
+  json?: boolean;
+  jsonl?: boolean;
+  interactive?: boolean;
+  prompt?: boolean;
+};
+
+const ID_PATTERN_REGEX = /wm:[a-z0-9-]+/i;
+
+async function resolveInteractiveTarget(
+  workspaceRoot: string,
+  config: WaymarkConfig
+): Promise<{ target: string; id?: string | undefined }> {
+  const records = await scanRecords([workspaceRoot], config);
+  if (records.length === 0) {
+    writeStderr("No waymarks found to modify.");
+    process.exit(1);
+  }
+
+  const selected = await selectWaymark({ records });
+  if (!selected) {
+    writeStderr("No waymark selected.");
+    process.exit(1);
+  }
+
+  const target = `${selected.file}:${selected.startLine}`;
+  let id: string | undefined;
+
+  if (selected.raw.includes("wm:")) {
+    const idMatch = selected.raw.match(ID_PATTERN_REGEX);
+    if (idMatch) {
+      id = idMatch[0];
+    }
+  }
+
+  return { target, id };
+}
+
+function buildModifyOptions(
+  resolvedId: string | undefined,
+  rawOptions: ModifyCliOptions
+): ModifyOptions {
+  const options: ModifyOptions = {};
+
+  if (resolvedId) {
+    options.id = resolvedId;
+  }
+  if (rawOptions.type) {
+    options.type = rawOptions.type;
+  }
+  if (rawOptions.content) {
+    options.content = rawOptions.content;
+  }
+  if (rawOptions.noSignal) {
+    options.noSignal = rawOptions.noSignal;
+  }
+  if (rawOptions.write) {
+    options.write = rawOptions.write;
+  }
+  if (rawOptions.json) {
+    options.json = rawOptions.json;
+  }
+  if (rawOptions.jsonl) {
+    options.jsonl = rawOptions.jsonl;
+  }
+  if (rawOptions.interactive) {
+    options.interactive = rawOptions.interactive;
+  }
+  if (rawOptions.raise) {
+    options.raised = true;
+  }
+  if (rawOptions.starred) {
+    options.starred = true;
+  }
+
+  return options;
+}
+
+async function handleModifyCommand(
+  program: Command,
+  target: string | undefined,
+  rawOptions: ModifyCliOptions
+): Promise<void> {
+  if (handlePromptOption("modify", rawOptions)) {
+    return;
+  }
+
+  if (rawOptions.json && rawOptions.jsonl) {
+    throw new Error("--json and --jsonl cannot be used together");
+  }
+
+  const scopeValue = program.opts().scope as string;
+  const context = await createContext({ scope: normalizeScope(scopeValue) });
+
+  let resolvedTarget = target;
+  let resolvedId = rawOptions.id;
+
+  if (rawOptions.interactive && !resolvedTarget && !resolvedId) {
+    const { target: interactiveTarget, id: interactiveId } =
+      await resolveInteractiveTarget(context.workspaceRoot, context.config);
+    resolvedTarget = interactiveTarget;
+    resolvedId = interactiveId;
+  }
+
+  const options = buildModifyOptions(resolvedId, rawOptions);
+
+  const result = await runModifyCommand(context, resolvedTarget, options, {
+    stdin: process.stdin,
+  });
+
+  if (result.output.length > 0) {
+    writeStdout(result.output);
+  }
+
+  if (result.exitCode !== 0) {
+    process.exit(result.exitCode);
   }
 }
 
@@ -571,6 +699,10 @@ async function createProgram(): Promise<Command> {
     .option("-q, --quiet", "only show errors")
     .helpOption("-h, --help", "display help for command")
     .addHelpCommand(false) // Disable default help command, we'll add custom one
+    .addHelpText(
+      "afterAll",
+      "\nNote: Use --prompt flag with any command to see agent-facing documentation"
+    )
     .hook("preAction", (thisCommand) => {
       // Configure logger based on flags
       const opts = thisCommand.opts();
@@ -598,8 +730,18 @@ async function createProgram(): Promise<Command> {
           writeStderr("No agent prompt available for this command");
           process.exit(1);
         }
+      } else if (commandName) {
+        // Use Commander's built-in help for specific command
+        const cmd = program.commands.find((c) => c.name() === commandName);
+        if (cmd) {
+          cmd.help();
+        } else {
+          writeStderr(`Unknown command: ${commandName}`);
+          program.help();
+        }
       } else {
-        writeStdout(getHelp(commandName));
+        // Show general help
+        program.help();
       }
     });
 
@@ -610,7 +752,33 @@ async function createProgram(): Promise<Command> {
     .argument("<file>", "file to format")
     .option("-w, --write", "write changes to file", false)
     .option("--prompt", "show agent-facing prompt instead of help")
-    .description("format waymarks in a file")
+    .description("format and normalize waymark syntax in files")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm format src/auth.ts              # Preview formatting changes (dry-run)
+  $ wm format src/auth.ts --write      # Apply formatting changes
+  $ wm format src/**/*.ts --write      # Format multiple files
+
+Formatting Rules:
+  - Exactly one space before and after ::: sigil
+  - Marker case normalized (default: lowercase)
+  - Multi-line continuations aligned to parent :::
+  - Property ordering: relations after free text
+  - Signal order: ^ before * when combined
+
+Before Formatting:
+  //todo:::implement auth
+  // *  fix  ::: validate input
+
+After Formatting:
+  // todo ::: implement auth
+  // *fix ::: validate input
+
+See 'wm format --prompt' for agent-facing documentation.
+    `
+    )
     .action(
       async (
         filePath: string,
@@ -629,19 +797,158 @@ async function createProgram(): Promise<Command> {
     .command("insert")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
+    .option(
+      "--from <file>",
+      "read waymark(s) from JSON/JSONL file (use - for stdin)"
+    )
+    .option(
+      "--mention <actor>",
+      "add mention (@agent, @alice) - can be repeated"
+    )
+    .option("--tag <tag>", "add hashtag (#perf, #sec) - can be repeated")
+    .option("--property <kv>", "add property (owner:@alice) - can be repeated")
+    .option("--ref <token>", "set canonical reference (ref:#auth/core)")
+    .option("--depends <token>", "add dependency relation")
+    .option("--needs <token>", "add needs relation")
+    .option("--blocks <token>", "add blocks relation")
+    .option("--signal <signal>", "add signal: ^ (raised) or * (starred)")
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("insert waymarks into files")
+    .addHelpText(
+      "after",
+      `
+Arguments:
+  <file:line>  Location to insert (e.g., src/auth.ts:42)
+  <type>       Waymark type (todo, fix, note, tldr, etc.)
+  <content>    Waymark content text (quote if contains spaces)
+
+Examples:
+  $ wm insert src/auth.ts:42 todo "implement rate limiting"
+  $ wm insert src/db.ts:15 note "assumes UTC" --mention @alice --tag "#time"
+  $ wm insert src/api.ts:100 fix "validate input" --signal *
+  $ wm insert src/pay.ts:200 todo "add retry" --depends "#infra/queue"
+  $ wm insert --from waymarks.json
+  $ echo '{"file":"src/a.ts","line":10,"type":"todo","content":"test"}' | wm insert --from -
+
+Signals:
+  ^  Raised (in-progress work, shouldn't merge to main yet)
+  *  Important (high priority)
+
+Types:
+  Work:       todo, fix, wip, done, review, test, check
+  Info:       note, context, tldr, this, example, idea, comment
+  Caution:    warn, alert, deprecated, temp, hack
+  Workflow:   blocked, needs
+  Inquiry:    question
+
+See 'wm insert --prompt' for agent-facing documentation.
+    `
+    )
     .action(async function (this: Command, ...actionArgs: unknown[]) {
       const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
       await handleInsertCommand(program, this, options);
+    });
+
+  const modifyCmd = program
+    .command("modify")
+    .argument("[target]", "waymark location (file:line)")
+    .option("--id <id>", "waymark ID to modify")
+    .option("--type <marker>", "change waymark type")
+    .option("--raise", "add ^ (raised) signal")
+    .option("--starred", "add * (starred) signal to mark as important/valuable")
+    .option("--no-signal", "remove all signals")
+    .option(
+      "--content <text>",
+      "replace waymark content (use '-' to read from stdin)"
+    )
+    .option("-w, --write", "apply modifications (default: preview)", false)
+    .option("-i, --interactive", "prompt for modifications interactively")
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
+    .option("--prompt", "show agent-facing prompt instead of help")
+    .description("modify existing waymarks");
+
+  modifyCmd
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm modify src/auth.ts:42 --type fix                # Preview type change
+  $ wm modify src/auth.ts:42 --raise --starred         # Preview signal updates
+  $ wm modify --id wm:a3k9m2p --starred --write        # Apply starred flag by ID
+  $ wm modify src/auth.ts:42 --no-signal --write       # Remove all signals
+  $ wm modify src/auth.ts:42 --content "new text" --write
+  $ printf "new text" | wm modify src/auth.ts:42 --content - --write
+  $ wm modify src/auth.ts:42 --interactive             # Guided workflow
+
+Notes:
+  - Provide either FILE:LINE or --id (not both)
+  - Preview is default; add --write to apply
+  - --content '-' reads replacement text from stdin (like wm insert)
+      `
+    )
+    .action(async (target: string | undefined, options: ModifyCliOptions) => {
+      try {
+        await handleModifyCommand(program, target, options);
+      } catch (error) {
+        writeStderr(error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
     });
 
   program
     .command("remove")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
+    .option("--id <id>", "remove waymark by ID (wm:xxxxx)")
+    .option(
+      "--from <file>",
+      "read removal targets from JSON file (use - for stdin)"
+    )
+    .option("--criteria <query>", "remove waymarks matching filter criteria")
+    .option("-w, --write", "actually remove (default is preview)", false)
+    .option("--yes", "skip confirmation prompt", false)
+    .option("--confirm", "always show confirmation (even with --write)", false)
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("remove waymarks from files")
+    .addHelpText(
+      "after",
+      `
+Removal Methods:
+  1. By Location:     wm remove src/auth.ts:42
+  2. By ID:           wm remove --id wm:a3k9m2p
+  3. By Criteria:     wm remove --criteria "type:todo mention:@agent" src/
+  4. From JSON Input: wm remove --from waymarks.json
+
+Examples:
+  $ wm remove src/auth.ts:42                  # Preview removal
+  $ wm remove src/auth.ts:42 --write          # Actually remove
+  $ wm remove --id wm:a3k9m2p --write         # Remove by ID
+  $ wm remove --criteria "type:todo mention:@agent" src/ --write
+  $ wm remove --from removals.json --write
+
+Filter Criteria Syntax:
+  type:<marker>         Match waymark type (todo, fix, note, etc.)
+  mention:<actor>       Match mention (@agent, @alice)
+  tag:<hashtag>         Match tag (#perf, #sec)
+  signal:^              Match raised waymarks
+  signal:*              Match starred waymarks (important/valuable)
+  contains:<text>       Match content containing text
+
+Safety Features:
+  - Default mode is preview (shows what would be removed)
+  - --write flag required for actual removal
+  - Confirmation prompt before removing (unless --yes)
+  - Multi-line waymarks removed atomically
+  - Removed waymarks tracked in .waymark/history.json
+
+See 'wm remove --prompt' for agent-facing documentation.
+    `
+    )
     .action(async function (this: Command, ...actionArgs: unknown[]) {
       const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
       await handleRemoveCommand(program, this, options);
@@ -665,7 +972,38 @@ async function createProgram(): Promise<Command> {
     .argument("<files...>", "files to lint")
     .option("--json", "output JSON", false)
     .option("--prompt", "show agent-facing prompt instead of help")
-    .description("validate waymark structure and types")
+    .description("validate waymark structure and enforce quality rules")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm lint src/auth.ts              # Lint single file
+  $ wm lint src/**/*.ts              # Lint multiple files
+  $ wm lint src/ --json              # JSON output for CI
+  $ git diff --name-only --cached | xargs wm lint    # Pre-commit hook
+
+Lint Rules:
+  WM001   Duplicate property key (warn)
+  WM010   Unknown marker (warn)
+  WM020   Unterminated multi-line block (error)
+  WM030   Multiple tldr in file (error)
+  WM040   Canonical collision (error)
+  WM041   Dangling relation (error)
+  WM050   Signal on protected branch (policy)
+
+Exit Codes:
+  0   No errors (warnings allowed)
+  1   Lint errors found
+  2   Internal/tooling error
+
+Example Output:
+  src/auth.ts:12:1 - error WM041: Dangling relation 'depends:#payments/core'
+  src/auth.ts:34:1 - warn WM001: Duplicate property key 'owner'
+  ✖ 2 errors, 1 warning
+
+See 'wm lint --prompt' for agent-facing documentation.
+    `
+    )
     .action(
       async (
         filePaths: string[],
@@ -685,8 +1023,39 @@ async function createProgram(): Promise<Command> {
     .command("migrate")
     .argument("<file>", "file to migrate")
     .option("-w, --write", "write changes to file", false)
+    .option("--include-legacy", "also migrate non-standard patterns", false)
     .option("--prompt", "show agent-facing prompt instead of help")
-    .description("migrate legacy comments to waymark format")
+    .description("convert legacy comment patterns to waymark syntax")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm migrate src/auth.ts                # Preview migration (dry-run)
+  $ wm migrate src/auth.ts --write        # Apply migration
+  $ wm migrate src/**/*.ts --write        # Migrate multiple files
+  $ wm migrate src/auth.ts --include-legacy --write
+
+Supported Legacy Patterns:
+  TODO:           → todo :::
+  FIXME:          → fix :::
+  HACK:           → hack :::
+  NOTE:           → note :::
+  XXX:            → warn :::
+  @deprecated     → deprecated :::
+
+Before Migration:
+  // TODO: implement authentication
+  // FIXME: validate email format
+  /* XXX: this is a hack */
+
+After Migration:
+  // todo ::: implement authentication
+  // fix ::: validate email format
+  /* hack ::: this is a hack */
+
+See 'wm migrate --prompt' for agent-facing documentation.
+    `
+    )
     .action(
       async (
         filePath: string,
@@ -737,7 +1106,6 @@ async function createProgram(): Promise<Command> {
     .option("--mention <mentions...>", "filter by mention(s)")
     .option("-r, --raised", "filter for raised (^) waymarks")
     .option("-s, --starred", "filter for starred (*) waymarks")
-    .option("-i, --interactive", "enable interactive fuzzy selection")
     .option("--map", "show file tree with TLDRs")
     .option("--graph", "show dependency graph")
     .option("--summary", "show summary footer (map mode)")
@@ -758,6 +1126,27 @@ async function createProgram(): Promise<Command> {
     .option("--limit <n>", "limit number of results", Number.parseInt)
     .option("--page <n>", "page number (with --limit)", Number.parseInt)
     .option("--prompt", "show agent-facing prompt instead of help")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm                                        # Scan current directory
+  $ wm src/ --type todo --mention @agent     # Find todos assigned to @agent
+  $ wm --map docs/ --type tldr               # Map documentation with TLDRs only
+  $ wm --graph --json                        # Export dependency graph as JSON
+  $ wm --starred --tag "#sec"                # Find high-priority security issues
+  $ wm src/ --type todo --type fix --raised --mention @agent
+
+Filter Behavior:
+  Multiple filters of the same type use OR logic:
+    --type todo --type fix    → Shows todos OR fixes
+
+  Different filter types use AND logic:
+    --type todo --tag "#perf" → Shows todos AND tagged with #perf
+
+See 'wm --prompt' for agent-facing documentation.
+    `
+    )
     .action(async (paths: string[], options: Record<string, unknown>) => {
       try {
         await handleUnifiedCommand(program, paths, options);

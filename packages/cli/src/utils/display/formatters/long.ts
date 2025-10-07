@@ -12,7 +12,7 @@ export function formatLong(records: WaymarkRecord[]): string {
     lines.push(`${record.file}:${record.startLine}`);
     lines.push(`  Type: ${record.type}`);
     lines.push(
-      `  Signals: raised=${record.signals.raised}, important=${record.signals.important}`
+      `  Signals: raised=${record.signals.raised}, starred=${record.signals.important}`
     );
     lines.push(`  Content: ${record.contentText}`);
 

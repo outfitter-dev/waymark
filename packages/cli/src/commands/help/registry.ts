@@ -98,6 +98,57 @@ export const commands: HelpRegistry = {
       "wm help lint                       # Show lint command help",
     ],
   },
+  insert: {
+    name: "insert",
+    usage: "wm insert <file:line> <type> <content> [options]",
+    description: "Insert waymarks into files programmatically.",
+    flags: [
+      commonFlags.json,
+      commonFlags.jsonl,
+      commonFlags.config,
+      commonFlags.help,
+    ],
+    examples: [
+      'wm insert src/auth.ts:42 todo "implement OAuth"',
+      'wm insert src/db.ts:15 note "assumes UTC" --mention @alice',
+      "wm insert --from waymarks.json",
+    ],
+  },
+  modify: {
+    name: "modify",
+    usage: "wm modify [file:line] [options]",
+    description:
+      "Update existing waymarks in place by adjusting type, signals, or content.",
+    flags: [
+      commonFlags.write,
+      commonFlags.json,
+      commonFlags.jsonl,
+      commonFlags.config,
+      commonFlags.help,
+    ],
+    examples: [
+      "wm modify src/auth.ts:42 --type fix",
+      "wm modify --id wm:a3k9m2p --starred --write",
+      'printf "new copy" | wm modify src/auth.ts:42 --content - --write',
+    ],
+  },
+  remove: {
+    name: "remove",
+    usage: "wm remove <file:line> [options]",
+    description: "Remove waymarks from files programmatically.",
+    flags: [
+      commonFlags.write,
+      commonFlags.json,
+      commonFlags.jsonl,
+      commonFlags.config,
+      commonFlags.help,
+    ],
+    examples: [
+      "wm remove src/auth.ts:42              # Preview removal",
+      "wm remove src/auth.ts:42 --write      # Actually remove",
+      "wm remove --id wm:a3k9m2p --write     # Remove by ID",
+    ],
+  },
 };
 
 // Main command (unified search/display)
@@ -140,7 +191,7 @@ queries, filtering by type/tag/mention, and multiple output formats.
       name: "starred",
       alias: "s",
       type: "boolean",
-      description: "Show only important (*) waymarks",
+      description: "Show only starred (*) waymarks (important/valuable)",
     },
     {
       name: "map",
