@@ -3,7 +3,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { WaymarkRecord } from "@waymarks/grammar";
 
 import { isFileStale, updateFileInfo } from "./files.ts";
@@ -22,6 +22,8 @@ import {
   insertWaymarksBatch,
   replaceFileWaymarks,
 } from "./writes.ts";
+
+const PATH_SEPARATOR_REGEX = /[/\\]+/;
 
 export type WaymarkCacheOptions = {
   dbPath?: string;
@@ -58,7 +60,14 @@ export class WaymarkCache {
     const allowedParent = resolve(cacheHome, "waymark");
 
     // Validate path is within allowed directory
-    if (!resolved.startsWith(allowedParent)) {
+    const relativeToCache = relative(allowedParent, resolved);
+    const segments = relativeToCache.split(PATH_SEPARATOR_REGEX);
+    const hasTraversal = segments.some((segment) => segment === "..");
+    const isOutsideCache =
+      relativeToCache.length > 0 &&
+      (hasTraversal || isAbsolute(relativeToCache));
+
+    if (isOutsideCache) {
       throw new Error(
         `Cache path must be within ${allowedParent}, got: ${resolved}\n` +
           "This is a security restriction to prevent writing outside cache directories."
