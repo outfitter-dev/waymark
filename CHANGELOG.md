@@ -6,6 +6,7 @@
 
 ### Highlights
 
+- Hardened cache directory enforcement so SQLite paths cannot escape the sandboxed `waymark` cache tree.
 - Refactored `wm insert` and `wm remove` into composable helpers with strict state objects, reducing cognitive complexity across CLI handlers.
 - Rebuilt `@waymarks/core` insert/remove pipelines with deterministic ordering, top-level regex constants, and ID reservation helpers that respect strict optional typing.
 - Split CLI output into dedicated JSON and text formatters, aligning insert/remove summaries and enabling future transport reuse.
