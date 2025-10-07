@@ -179,7 +179,7 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: InsertParseState) => void> =
     "--raised": (state) => {
       state.signals.raised = true;
     },
-    "--important": (state) => {
+    "--starred": (state) => {
       state.signals.important = true;
     },
   };

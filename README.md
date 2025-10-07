@@ -69,7 +69,7 @@ The `wm` command provides a unified interface for all waymark operations:
 wm src/                              # scan and display all waymarks
 wm src/ --type todo                  # filter by waymark type
 wm src/ --raised                     # show only raised (^) waymarks
-wm src/ --starred                    # show only important (*) waymarks
+wm src/ --starred                    # show only starred (*) waymarks (important/valuable)
 wm src/ --type todo --mention @agent # combine filters
 
 # Map mode: file tree with TLDRs
@@ -89,9 +89,38 @@ wm src/ --pretty                     # pretty-printed JSON
 wm format src/example.ts --write     # format a file
 wm lint src/ --json                  # validate waymark types
 wm migrate legacy.ts --write         # convert legacy comments
+wm modify src/auth.ts:42 --raise --write # adjust an existing waymark
 ```
 
 The CLI relies on the core formatter, parser, and map helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
+
+#### Shell Completions
+
+Shell completions are available for zsh, bash, fish, PowerShell, and nushell. After installing the CLI, set up completions for your shell:
+
+```bash
+# Zsh
+mkdir -p ~/.local/share/waymark/completions
+cp node_modules/@waymarks/cli/completions/_wm ~/.local/share/waymark/completions/
+# Add to ~/.zshrc: fpath=(~/.local/share/waymark/completions $fpath)
+
+# Bash
+cp node_modules/@waymarks/cli/completions/wm.bash ~/.local/share/waymark/completions/
+# Add to ~/.bashrc: source ~/.local/share/waymark/completions/wm.bash
+
+# Fish
+cp node_modules/@waymarks/cli/completions/wm.fish ~/.config/fish/completions/
+
+# PowerShell
+cp node_modules/@waymarks/cli/completions/wm.ps1 ~/.config/waymark/completions/
+# Add to $PROFILE: . ~/.config/waymark/completions/wm.ps1
+
+# Nushell
+cp node_modules/@waymarks/cli/completions/wm.nu ~/.config/waymark/completions/
+# Add to config.nu: source ~/.config/waymark/completions/wm.nu
+```
+
+See `packages/cli/completions/README.md` for detailed installation instructions.
 
 ### MCP Server
 

@@ -23,7 +23,7 @@ export function getGroupKey(record: WaymarkRecord, groupBy: GroupBy): string {
         signals.push("raised");
       }
       if (record.signals.important) {
-        signals.push("important");
+        signals.push("starred");
       }
       return signals.length > 0 ? signals.join("+") : "none";
     }

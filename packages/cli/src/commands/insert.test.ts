@@ -27,7 +27,7 @@ describe("parseInsertArgs", () => {
       "--property",
       "owner:@alice",
       "--raised",
-      "--important",
+      "--starred",
       "--continuation",
       "follow up with team",
       "--order",

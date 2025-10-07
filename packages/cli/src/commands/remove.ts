@@ -81,7 +81,7 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
     "--raised": (state) => {
       state.criteria.signals.raised = true;
     },
-    "--important": (state) => {
+    "--starred": (state) => {
       state.criteria.signals.important = true;
     },
   };

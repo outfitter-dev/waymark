@@ -15,7 +15,7 @@ WAYMARK SYNTAX PRIMER
     // ^wip ::: refactoring in progress
 
   Components:
-    - Signals: ^ (raised/in-progress), * (important)
+    - Signals: ^ (raised/in-progress), * (starred for important/valuable)
     - Marker: todo, fix, wip, note, tldr, this, etc.
     - Content: Free text with optional properties
     - Properties: key:value pairs (ref:#token, owner:@alice)
@@ -41,7 +41,7 @@ FILTERING OPTIONS
   --raised            Only show ^ (raised/in-progress) waymarks
                       Use to find work that shouldn't merge yet
 
-  --starred           Only show * (important) waymarks
+  --starred           Only show * (starred) waymarks (important/valuable)
                       Use to find high-priority items
 
 DISPLAY MODES

@@ -23,7 +23,7 @@ FORMATTING RULES
      Before: // TODO ::: fix this
      After:  // todo ::: fix this
 
-  3. Signal order: ^ (raised) before * (important)
+  3. Signal order: ^ (raised) before * (starred)
      Before: // *^todo ::: implement
      After:  // ^*todo ::: implement
 

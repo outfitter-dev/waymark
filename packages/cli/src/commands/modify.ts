@@ -1,0 +1,725 @@
+// tldr ::: modify command implementation for wm CLI
+
+import { readFile, writeFile } from "node:fs/promises";
+
+import {
+  fingerprintContent,
+  fingerprintContext,
+  JsonIdIndex,
+  parse,
+  SIGIL,
+  type WaymarkConfig,
+  type WaymarkRecord,
+} from "@waymarks/core";
+import inquirer from "inquirer";
+
+import type { CommandContext } from "../types.ts";
+import { readStream } from "../utils/stdin.ts";
+
+export type ModifyOptions = {
+  id?: string;
+  type?: string;
+  content?: string;
+  raised?: boolean;
+  starred?: boolean;
+  noSignal?: boolean;
+  write?: boolean;
+  json?: boolean;
+  jsonl?: boolean;
+  interactive?: boolean;
+};
+
+export type ModifyTarget = {
+  file: string;
+  line: number;
+  id?: string;
+};
+
+export type ModifyCommandResult = {
+  output: string;
+  payload: ModifyPayload;
+  exitCode: number;
+};
+
+type ModifySignals = {
+  raised: boolean;
+  important: boolean;
+};
+
+type ModifyIo = {
+  stdin: NodeJS.ReadableStream;
+};
+
+export type ModifyPayload = {
+  preview: boolean;
+  applied: boolean;
+  target: ModifyTarget;
+  modifications: {
+    type?: { from: string; to: string };
+    signals?: { from: ModifySignals; to: ModifySignals };
+    content?: { from: string; to: string };
+  };
+  before: {
+    raw: string;
+    type: string;
+    signals: ModifySignals;
+    content: string;
+  };
+  after: {
+    raw: string;
+    type: string;
+    signals: ModifySignals;
+    content: string;
+  };
+  indexRefreshed: boolean;
+  noChange: boolean;
+};
+
+const LINE_SPLIT_REGEX = /\r?\n/;
+const ID_TRAIL_REGEX = /(wm:[a-z0-9-]+)$/i;
+const DEFAULT_MARKERS = ["todo", "fix", "note", "warn", "tldr", "done"];
+
+const DEFAULT_IO: ModifyIo = {
+  stdin: process.stdin,
+};
+
+export async function runModifyCommand(
+  context: CommandContext,
+  targetArg: string | undefined,
+  options: ModifyOptions,
+  io: ModifyIo = DEFAULT_IO
+): Promise<ModifyCommandResult> {
+  const target = await resolveTarget(context, targetArg, options.id);
+  const snapshot = await loadWaymarkSnapshot(target);
+  const originalFirstLine = snapshot.lines[snapshot.lineIndex];
+  if (!originalFirstLine) {
+    throw new Error(`Line ${snapshot.lineIndex + 1} not found in file`);
+  }
+  const originalContent = extractFirstLineContent(originalFirstLine);
+  const existingId = extractTrailingId(originalContent);
+
+  let effectiveOptions = { ...options };
+  const wasInteractive = effectiveOptions.interactive;
+
+  if (effectiveOptions.interactive) {
+    effectiveOptions = await runInteractiveSession(
+      context,
+      snapshot.record,
+      originalContent,
+      effectiveOptions
+    );
+  }
+
+  // Skip modification check if interactive (user already chose what to modify)
+  if (!wasInteractive) {
+    ensureModificationsSpecified(effectiveOptions);
+  }
+
+  const resolvedContent = await resolveContentInput(effectiveOptions, io.stdin);
+
+  const applyResult = applyModifications({
+    record: snapshot.record,
+    config: context.config,
+    baseContent: originalContent,
+    resolvedContent,
+    options: effectiveOptions,
+  });
+
+  const updatedLines = [...snapshot.lines];
+  updatedLines[snapshot.lineIndex] = applyResult.firstLine;
+
+  const diffDetected = applyResult.firstLine !== originalFirstLine;
+  const shouldWrite = Boolean(effectiveOptions.write && diffDetected);
+
+  let indexRefreshed = false;
+  if (shouldWrite) {
+    const text = buildUpdatedFileContent(
+      updatedLines,
+      snapshot.newline,
+      snapshot.hasTrailingNewline
+    );
+    await writeFile(target.file, text, "utf8");
+
+    const activeId = extractTrailingId(applyResult.content) ?? existingId;
+    if (activeId) {
+      await updateIdIndex(context, target, activeId, applyResult);
+      indexRefreshed = true;
+    }
+  }
+
+  const preview = !shouldWrite;
+  const payload: ModifyPayload = {
+    preview,
+    applied: shouldWrite,
+    target,
+    modifications: buildModificationSummary(snapshot.record, applyResult),
+    before: {
+      raw: originalFirstLine,
+      type: snapshot.record.type,
+      signals: { ...snapshot.record.signals },
+      content: originalContent,
+    },
+    after: {
+      raw: applyResult.firstLine,
+      type: applyResult.type,
+      signals: { ...applyResult.signals },
+      content: applyResult.content,
+    },
+    indexRefreshed,
+    noChange: !diffDetected,
+  };
+
+  const output = formatOutput({
+    payload,
+    options: effectiveOptions,
+    record: snapshot.record,
+    target,
+  });
+
+  const exitCode = 0;
+  return { output, payload, exitCode };
+}
+
+type Snapshot = {
+  record: WaymarkRecord;
+  lines: string[];
+  newline: string;
+  hasTrailingNewline: boolean;
+  lineCount: number;
+  lineIndex: number;
+};
+
+async function loadWaymarkSnapshot(target: ModifyTarget): Promise<Snapshot> {
+  const fileContent = await readFile(target.file, "utf8");
+  const newline = fileContent.includes("\r\n") ? "\r\n" : "\n";
+  const hasTrailingNewline = fileContent.endsWith("\n");
+  const lines = fileContent.split(LINE_SPLIT_REGEX);
+  const records = parse(fileContent, { file: target.file });
+  const record = records.find((entry) => entry.startLine === target.line);
+  if (!record) {
+    throw new Error(`No waymark found at ${target.file}:${target.line}`);
+  }
+  const lineIndex = record.startLine - 1;
+  return {
+    record,
+    lines,
+    newline,
+    hasTrailingNewline,
+    lineCount: lines.length,
+    lineIndex,
+  };
+}
+
+const CARRIAGE_RETURN_REGEX = /\r$/;
+
+function extractFirstLineContent(firstLine: string): string {
+  const sigilIndex = firstLine.indexOf(SIGIL);
+  if (sigilIndex === -1) {
+    return "";
+  }
+  const after = firstLine.slice(sigilIndex + SIGIL.length);
+  const trimmedStart = after.trimStart();
+  return trimmedStart.replace(CARRIAGE_RETURN_REGEX, "");
+}
+
+export type ApplyArgs = {
+  record: WaymarkRecord;
+  config: WaymarkConfig;
+  baseContent: string;
+  resolvedContent?: string | undefined;
+  options: ModifyOptions;
+};
+
+export type ApplyResult = {
+  type: string;
+  signals: ModifySignals;
+  content: string;
+  firstLine: string;
+};
+
+export function applyModifications(args: ApplyArgs): ApplyResult {
+  const { record, config, baseContent, resolvedContent, options } = args;
+
+  const nextType = determineType(record.type, options.type);
+  const nextSignals = determineSignals(record.signals, options);
+  const contentInput =
+    resolvedContent !== undefined ? resolvedContent.trim() : baseContent;
+  const content = preserveId(baseContent, contentInput);
+  const firstLine = renderFirstLine({
+    record,
+    config,
+    type: nextType,
+    signals: nextSignals,
+    content,
+  });
+
+  return {
+    type: nextType,
+    signals: nextSignals,
+    content,
+    firstLine,
+  };
+}
+
+function determineType(current: string, requested?: string): string {
+  if (!requested) {
+    return current;
+  }
+  const trimmed = requested.trim();
+  if (!trimmed) {
+    throw new Error("Waymark type cannot be empty");
+  }
+  return trimmed;
+}
+
+function determineSignals(
+  current: ModifySignals,
+  options: ModifyOptions
+): ModifySignals {
+  if (options.noSignal) {
+    return { raised: false, important: false };
+  }
+
+  return {
+    raised: options.raised ? true : current.raised,
+    important: options.starred ? true : current.important,
+  };
+}
+
+export function preserveId(original: string, updated: string): string {
+  const originalId = extractTrailingId(original);
+  if (!originalId) {
+    return updated;
+  }
+  const withoutId = stripTrailingId(updated);
+  const trimmed = withoutId.trim();
+  if (!trimmed) {
+    return originalId;
+  }
+  return `${trimmed} ${originalId}`.trim();
+}
+
+function extractTrailingId(content: string | undefined): string | undefined {
+  if (!content) {
+    return;
+  }
+  const match = content.match(ID_TRAIL_REGEX);
+  return match ? match[1] : undefined;
+}
+
+function stripTrailingId(content: string): string {
+  return content.replace(ID_TRAIL_REGEX, "").trimEnd();
+}
+
+type RenderArgs = {
+  record: WaymarkRecord;
+  config: WaymarkConfig;
+  type: string;
+  signals: ModifySignals;
+  content: string;
+};
+
+function renderFirstLine(args: RenderArgs): string {
+  const { record, config, type, signals, content } = args;
+  const indent = " ".repeat(record.indent);
+  const leader = record.commentLeader ?? "//";
+  const leaderSeparator = leader.length > 0 ? " " : "";
+
+  const normalizedType = config.format.normalizeCase
+    ? type.toLowerCase()
+    : type;
+
+  const signalPrefix = buildSignalPrefix(signals);
+  const markerToken = `${signalPrefix}${normalizedType}`;
+  const sigil = config.format.spaceAroundSigil ? ` ${SIGIL} ` : SIGIL;
+
+  let rendered = `${indent}${leader}${leaderSeparator}${markerToken}${sigil}`;
+  if (content.length > 0) {
+    rendered += config.format.spaceAroundSigil ? content : `${content}`;
+  }
+
+  rendered = rendered.trimEnd();
+
+  if (leader === "<!--") {
+    return appendHtmlClosure(rendered, content.length > 0);
+  }
+
+  return rendered;
+}
+
+function buildSignalPrefix(signals: ModifySignals): string {
+  let prefix = "";
+  if (signals.raised) {
+    prefix += "^";
+  }
+  if (signals.important) {
+    prefix += "*";
+  }
+  return prefix;
+}
+
+function appendHtmlClosure(rendered: string, hasContent: boolean): string {
+  if (hasContent) {
+    return rendered.endsWith(" ") ? `${rendered}-->` : `${rendered} -->`;
+  }
+  return rendered.endsWith(" ")
+    ? `${rendered.trimEnd()} -->`
+    : `${rendered} -->`;
+}
+
+async function resolveTarget(
+  context: CommandContext,
+  targetArg: string | undefined,
+  idOption?: string
+): Promise<ModifyTarget> {
+  if (targetArg && idOption) {
+    throw new Error("Cannot specify both file:line and --id");
+  }
+  if (!(targetArg || idOption)) {
+    throw new Error("Must provide a target (file:line) or --id");
+  }
+
+  if (idOption) {
+    return await resolveTargetFromId(context.workspaceRoot, idOption);
+  }
+
+  if (!targetArg) {
+    throw new Error("Target argument is required when --id is not provided");
+  }
+
+  const parsed = parseFileLine(targetArg);
+  return parsed;
+}
+
+function parseFileLine(value: string): ModifyTarget {
+  const colonIndex = value.lastIndexOf(":");
+  if (colonIndex === -1) {
+    throw new Error(`Invalid target format: ${value}`);
+  }
+  const file = value.slice(0, colonIndex);
+  const lineRaw = value.slice(colonIndex + 1);
+  const line = Number.parseInt(lineRaw, 10);
+  if (!Number.isFinite(line) || line <= 0) {
+    throw new Error(`Invalid line number in target: ${value}`);
+  }
+  return { file, line };
+}
+
+async function resolveTargetFromId(
+  workspaceRoot: string,
+  id: string
+): Promise<ModifyTarget> {
+  const normalized = normalizeId(id);
+  const index = new JsonIdIndex({ workspaceRoot });
+  const entry = await index.get(normalized);
+  if (!entry) {
+    throw new Error(`Waymark ID ${normalized} not found in index`);
+  }
+  return {
+    file: entry.file,
+    line: entry.line,
+    id: normalized,
+  };
+}
+
+function normalizeId(id: string): string {
+  return id.startsWith("wm:") ? id : `wm:${id}`;
+}
+
+async function runInteractiveSession(
+  context: CommandContext,
+  record: WaymarkRecord,
+  baseContent: string,
+  options: ModifyOptions
+): Promise<ModifyOptions> {
+  const markers = resolveMarkerChoices(context.config, record.type);
+  const questions = [
+    {
+      type: "list",
+      name: "type",
+      message: "Waymark type",
+      choices: markers.map((marker) => ({
+        name: marker,
+        value: marker,
+        short: marker,
+      })),
+      default: record.type,
+    },
+    {
+      type: "confirm",
+      name: "addRaised",
+      message: "Add raised signal (^) ?",
+      default: record.signals.raised,
+    },
+    {
+      type: "confirm",
+      name: "addImportant",
+      message: "Add starred signal (*) to mark as important/valuable?",
+      default: record.signals.important,
+    },
+    {
+      type: "confirm",
+      name: "clearSignals",
+      message: "Remove all signals?",
+      default: false,
+    },
+    {
+      type: "confirm",
+      name: "updateContent",
+      message: "Update content text?",
+      default: false,
+    },
+    {
+      type: "input",
+      name: "content",
+      message: "New content (leave blank to read from stdin)",
+      default: stripTrailingId(baseContent),
+      when: (promptAnswers: { updateContent?: boolean }) =>
+        Boolean(promptAnswers.updateContent),
+    },
+    {
+      type: "confirm",
+      name: "apply",
+      message: "Apply modifications (write to file)?",
+      default: Boolean(options.write),
+    },
+  ];
+
+  // biome-ignore lint/suspicious/noExplicitAny: inquirer types require workaround
+  const answers = (await inquirer.prompt(questions as any)) as {
+    type: string;
+    addRaised: boolean;
+    addImportant: boolean;
+    clearSignals: boolean;
+    updateContent: boolean;
+    content?: string;
+    apply: boolean;
+  };
+
+  const nextOptions: ModifyOptions = {
+    ...options,
+    interactive: false,
+  };
+
+  if (answers.type && answers.type !== record.type) {
+    nextOptions.type = answers.type;
+  }
+
+  if (answers.clearSignals) {
+    nextOptions.noSignal = true;
+  } else {
+    if (answers.addRaised && !record.signals.raised) {
+      nextOptions.raised = true;
+    }
+    if (answers.addImportant && !record.signals.important) {
+      nextOptions.starred = true;
+    }
+  }
+
+  if (answers.updateContent) {
+    const provided = answers.content ?? "";
+    nextOptions.content = provided.length === 0 ? "-" : provided;
+  }
+
+  if (answers.apply) {
+    nextOptions.write = true;
+  }
+
+  return nextOptions;
+}
+
+function resolveMarkerChoices(
+  config: WaymarkConfig,
+  currentType: string
+): string[] {
+  const markers = new Set<string>(
+    (config.allowTypes.length > 0 ? config.allowTypes : DEFAULT_MARKERS).map(
+      (marker) => marker.trim()
+    )
+  );
+  if (currentType.trim()) {
+    markers.add(currentType.trim());
+  }
+  return Array.from(markers.values()).sort((a, b) => a.localeCompare(b));
+}
+
+const TRAILING_NEWLINE_REGEX = /\r?\n$/;
+
+export async function resolveContentInput(
+  options: ModifyOptions,
+  stdin: NodeJS.ReadableStream
+): Promise<string | undefined> {
+  if (options.content === undefined) {
+    return;
+  }
+  if (options.content === "-") {
+    const raw = await readStream(stdin);
+    return raw.replace(TRAILING_NEWLINE_REGEX, "");
+  }
+  return options.content;
+}
+
+function ensureModificationsSpecified(options: ModifyOptions): void {
+  const hasType = Boolean(options.type);
+  const hasSignals = Boolean(
+    options.raised || options.starred || options.noSignal
+  );
+  const hasContent = options.content !== undefined;
+
+  if (!(hasType || hasSignals || hasContent)) {
+    throw new Error(
+      "No modifications specified. Use --type, --raise, --starred, --no-signal, --content, or --interactive."
+    );
+  }
+}
+
+function buildUpdatedFileContent(
+  lines: string[],
+  newline: string,
+  hasTrailingNewline: boolean
+): string {
+  let text = lines.join(newline);
+  if (hasTrailingNewline && !text.endsWith(newline)) {
+    text += newline;
+  }
+  return text;
+}
+
+type OutputArgs = {
+  payload: ModifyPayload;
+  options: ModifyOptions;
+  record: WaymarkRecord;
+  target: ModifyTarget;
+};
+
+function formatOutput(args: OutputArgs): string {
+  const { payload, options, record, target } = args;
+
+  if (options.json || options.jsonl) {
+    const serialized = options.json
+      ? JSON.stringify(payload, null, 2)
+      : JSON.stringify(payload);
+    return serialized;
+  }
+
+  const lines: string[] = [];
+  const heading = payload.applied
+    ? `Modified ${target.file}:${target.line}`
+    : `Preview modification for ${target.file}:${target.line}`;
+  lines.push(heading, "");
+  lines.push("Before:");
+  lines.push(`  ${formatLine(record.startLine, payload.before.raw)}`);
+  lines.push("", "After:");
+  lines.push(`  ${formatLine(record.startLine, payload.after.raw)}`);
+  lines.push("", "Modifications:");
+  const summaryLines = describeChanges(payload);
+  for (const entry of summaryLines) {
+    lines.push(`  - ${entry}`);
+  }
+
+  if (!(payload.applied || payload.noChange)) {
+    lines.push("", "Run with --write to apply changes.");
+  }
+
+  if (payload.indexRefreshed) {
+    lines.push("", `Index refreshed for ${target.file}.`);
+  }
+
+  return lines.join("\n");
+}
+
+const LINE_NUMBER_PADDING = 4;
+
+function formatLine(lineNumber: number, content: string): string {
+  return `${lineNumber.toString().padStart(LINE_NUMBER_PADDING, " ")} | ${content}`;
+}
+
+function describeChanges(payload: ModifyPayload): string[] {
+  if (payload.noChange) {
+    return ["No modifications required"];
+  }
+  const entries: string[] = [];
+  if (payload.modifications.type) {
+    entries.push(
+      `Changed type: ${payload.modifications.type.from} → ${payload.modifications.type.to}`
+    );
+  }
+  if (payload.modifications.signals) {
+    const { from, to } = payload.modifications.signals;
+    if (from.raised !== to.raised) {
+      entries.push(
+        to.raised ? "Added raised signal (^)" : "Removed raised signal (^)"
+      );
+    }
+    if (from.important !== to.important) {
+      entries.push(
+        to.important ? "Added starred signal (*)" : "Removed starred signal (*)"
+      );
+    }
+  }
+  if (payload.modifications.content) {
+    entries.push("Updated content");
+  }
+  return entries.length > 0 ? entries : ["No user-visible changes"];
+}
+
+function buildModificationSummary(
+  previous: WaymarkRecord,
+  applied: ApplyResult
+): ModifyPayload["modifications"] {
+  const summary: ModifyPayload["modifications"] = {};
+  if (previous.type !== applied.type) {
+    summary.type = { from: previous.type, to: applied.type };
+  }
+  if (
+    previous.signals.raised !== applied.signals.raised ||
+    previous.signals.important !== applied.signals.important
+  ) {
+    summary.signals = {
+      from: {
+        raised: previous.signals.raised,
+        important: previous.signals.important,
+      },
+      to: {
+        raised: applied.signals.raised,
+        important: applied.signals.important,
+      },
+    };
+  }
+
+  const beforeFirstLine = previous.raw.split(LINE_SPLIT_REGEX)[0] ?? "";
+  const beforeContent = extractFirstLineContent(beforeFirstLine);
+  if (beforeContent !== applied.content) {
+    summary.content = {
+      from: beforeContent,
+      to: applied.content,
+    };
+  }
+
+  return summary;
+}
+
+async function updateIdIndex(
+  context: CommandContext,
+  target: ModifyTarget,
+  id: string,
+  applied: ApplyResult
+): Promise<void> {
+  const normalized = normalizeId(id);
+  const index = new JsonIdIndex({ workspaceRoot: context.workspaceRoot });
+  const existing = await index.get(normalized);
+  await index.set({
+    id: normalized,
+    file: target.file,
+    line: target.line,
+    type: applied.type,
+    content: applied.content,
+    contentHash: fingerprintContent(applied.content),
+    contextHash: fingerprintContext(
+      `${target.file}:${target.line}:${applied.firstLine}`
+    ),
+    updatedAt: Date.now(),
+    ...(existing?.source ? { source: existing.source } : {}),
+    ...(existing?.sourceType ? { sourceType: existing.sourceType } : {}),
+  });
+}
