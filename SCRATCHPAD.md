@@ -58,6 +58,12 @@ Detailed daily logs are maintained in `.agents/logs/`:
 - Refactored `wm insert`/`wm remove` handlers into shared parsing/output helpers; aligned `@waymarks/core` implementations with new ID reservation and formatting helpers.
 - Eliminated lingering non-null assertions in CLI/core tests, normalized async helpers, and reran `bun run check:all` for release confidence.
 - Authored `CHANGELOG.md`, updated README/PRD/docs navigation to call out the upcoming **1.0.0-beta.1** prerelease, and logged the plan/decision updates accordingly.
+- **Performance: wyhash ID generation** (7.3x faster than SHA-256)
+  - Replaced SHA-256 with `Bun.hash.wyhash()` in `packages/core/src/ids.ts`
+  - Non-cryptographic but sufficient collision resistance for short IDs
+  - Kept SHA-256 for content/context fingerprints (need cryptographic properties)
+  - Added `Bun` to biome.json globals to fix linter
+  - All 60 core tests pass, ID format unchanged (`wm:[base36]`)
 
 ---
 

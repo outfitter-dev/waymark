@@ -40,7 +40,7 @@ This preserves the "one grep finds all" feel (searching `#token` surfaces refere
 ## Definitions & Terminology
 
 - **Waymark:** A structured comment in source files following `signal? + marker + ' ::: ' + content`.
-- **Signal:** Optional prefix indicating state/priority: `^` (raised/in-progress), `*` (starred for important/valuable content). When combined, `^` precedes `*`.
+- **Signal:** Optional prefix indicating state/priority: `^` (raised), `*` (starred). When combined, `^` precedes `*`.
 - **Marker:** Single word describing intent/purpose (e.g., `todo`, `fix`, `note`). Case normalized by formatter.
 - **Sigil:** The literal `:::` separating marker from content.
 - **Content:** Free text after the sigil; may contain properties, hashtags, mentions.
@@ -72,8 +72,8 @@ This preserves the "one grep finds all" feel (searching `#token` surfaces refere
 
 ### Signals
 
-- `^` (caret) — marks raised/in-progress work and produces a raised waymark that should not land on protected branches
-- `*` (star) — starred to mark important/valuable waymarks
+- `^` (caret) — marks waymarks as raised (work-in-progress, branch-scoped)
+- `*` (star) — marks waymarks as starred (important, high-priority)
 - Order when combined: caret precedes star (`^*`, e.g., `^*todo`). Double intensity marks (e.g., `**`) are not part of the v1 grammar; use a single `*` only.
 
 ### Markers (Blessed)
@@ -160,7 +160,7 @@ The canonical declares the authoritative anchor via `ref:#token`; downstream rel
 
 - **Baseline discovery:** `rg ":::"` surfaces all waymarks; `waymark list <paths>` mirrors this in the CLI with structured output.
 - **Actor delegation:** `rg ":::\\s*@agent"` for generic work, `waymark find --actor @claude` for named agents, `waymark find --actor @agents` to query configured groups.
-- **Priority & signals:** `rg "^\\s*//\\s*\\*\\w+\s+:::"` finds work flagged with `*`. Use `waymark find --signal *` to pull high-priority waymarks; double stars (`**`) are not part of the v1 grammar.
+- **Priority & signals:** `rg "^\\s*//\\s*\\*\\w+\s+:::"` finds starred waymarks. Use `waymark find --signal *` to pull starred waymarks; double stars (`**`) are not part of the v1 grammar.
 - **Performance hotspots:** prefer the pattern `rg "#perf:hotpath|#hotpath"` (case-insensitive) or `waymark find #perf:hotpath` which expands to both forms.
 - **Documentation summaries:** `rg "<!-- tldr :::.*#docs" docs/` filters doc TLDRs; the CLI equivalent is `waymark find --file-category docs --type tldr`.
 

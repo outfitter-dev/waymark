@@ -8,6 +8,8 @@ import { JsonIdIndex, resolveConfig } from "@waymarks/core";
 import type { CommandContext } from "../types";
 import { parseRemoveArgs, runRemoveCommand } from "./remove";
 
+const JSON_VALIDATION_ERROR_REGEX = /JSON validation failed/;
+
 async function ensureDir(path: string): Promise<void> {
   await mkdir(path, { recursive: true });
 }
@@ -170,5 +172,98 @@ describe("runRemoveCommand", () => {
     const contents = await readFile(filePath, "utf8");
     expect(contents).not.toContain("remove via json");
     expect(contents).toContain("keep");
+  });
+
+  test("rejects invalid JSON structure with clear errors", async () => {
+    const invalidJsonPath = join(workspace, "invalid.json");
+
+    // Invalid removal spec - no valid removal method
+    const invalidJson = JSON.stringify({
+      invalid: "field",
+    });
+    await writeFile(invalidJsonPath, invalidJson, "utf8");
+
+    const parsed = parseRemoveArgs(["--from", invalidJsonPath]);
+
+    await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
+      JSON_VALIDATION_ERROR_REGEX
+    );
+  });
+
+  test("rejects invalid criteria with clear errors", async () => {
+    const invalidJsonPath = join(workspace, "invalid-criteria.json");
+
+    // Invalid removal spec - empty criteria
+    const invalidJson = JSON.stringify({
+      criteria: {},
+    });
+    await writeFile(invalidJsonPath, invalidJson, "utf8");
+
+    const parsed = parseRemoveArgs(["--from", invalidJsonPath]);
+
+    await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
+      JSON_VALIDATION_ERROR_REGEX
+    );
+  });
+
+  test("validates removal spec types properly", async () => {
+    const invalidJsonPath = join(workspace, "invalid-types.json");
+
+    // Invalid line type (should be positive integer)
+    const invalidJson = JSON.stringify({
+      file: "test.ts",
+      line: "not-a-number",
+    });
+    await writeFile(invalidJsonPath, invalidJson, "utf8");
+
+    const parsed = parseRemoveArgs(["--from", invalidJsonPath]);
+
+    await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
+      JSON_VALIDATION_ERROR_REGEX
+    );
+  });
+
+  test("accepts valid JSON with all removal methods", async () => {
+    const filePath = join(workspace, "test.ts");
+    await writeFile(
+      filePath,
+      "// todo ::: test removal\n// note ::: keep this\n",
+      "utf8"
+    );
+
+    const validJsonPath = join(workspace, "valid.json");
+    const validJson = JSON.stringify({
+      file: filePath,
+      line: 1,
+      id: "wm:test-id",
+      files: [filePath],
+      criteria: {
+        type: "todo",
+        tags: ["#test"],
+        properties: { owner: "@alice" },
+        mentions: ["@alice"],
+        contentPattern: "test.*",
+        contains: "removal",
+        signals: {
+          raised: false,
+          important: false,
+        },
+      },
+    });
+    await writeFile(validJsonPath, validJson, "utf8");
+
+    const parsed = parseRemoveArgs([
+      "--from",
+      validJsonPath,
+      "--write",
+      "--json",
+    ]);
+
+    const result = await runRemoveCommand(parsed, context, {
+      writeOverride: true,
+    });
+    // Since we're testing validation, not actual removal logic,
+    // we just check that it doesn't throw a validation error
+    expect(result.exitCode).toBeDefined();
   });
 });

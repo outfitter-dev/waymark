@@ -568,7 +568,7 @@ function ensureModificationsSpecified(options: ModifyOptions): void {
 
   if (!(hasType || hasSignals || hasContent)) {
     throw new Error(
-      "No modifications specified. Use --type, --raise, --starred, --no-signal, --content, or --interactive."
+      "No modifications specified. Use --type, --raise, --mark-starred, --clear-signals, --content, or --interactive."
     );
   }
 }

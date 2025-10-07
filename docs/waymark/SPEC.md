@@ -12,8 +12,8 @@ Waymark is a lightweight, comment-based grammar for embedding code-adjacent cont
 
 - **Comment leader**: Whatever the host language uses (`//`, `#`, `<!--`, etc.). Waymarks never appear inside string literals or rendered docstrings.
 - **Signals** (optional): A short prefix indicating scope/urgency. The only valid signals are:
-  - `^` (caret) — produces a raised waymark for branch-scoped work that must be cleared before merging to protected branches.
-  - `*` (star) — high-priority item. When combined with the caret, the order is `^*` (e.g., `^*todo`). Double intensity (`**`) and other legacy signals are not part of v1.
+  - `^` (caret) — marks waymarks as raised (work-in-progress, branch-scoped). Raised waymarks must be cleared before merging to protected branches.
+  - `*` (star) — marks waymarks as starred (important, high-priority). When combined with the caret, the order is `^*` (e.g., `^*todo`). Double intensity (`**`) and other legacy signals are not part of v1.
 - **Marker** (required): A single lowercase keyword from the blessed list below.
 - **`:::` sigil**: Exactly three ASCII colons, with one space before and after when a marker is present.
 - **Content**: Free text plus optional properties, tags, and mentions. Parsers tolerate additional spaces but formatters normalize to the canonical shape.
@@ -132,8 +132,8 @@ Recommended ripgrep patterns:
 ```bash
 rg ':::'                          # all waymarks
 rg ':::\s*@agent'                 # generic agent work
-rg '\*\w+\s*:::'                  # high-priority waymarks
-rg '\^\w+\s*:::'                  # raised/ongoing work
+rg '\*\w+\s*:::'                  # starred waymarks
+rg '\^\w+\s*:::'                  # raised waymarks (work-in-progress)
 rg '#perf:hotpath|#hotpath'      # performance hotspots
 rg 'tldr\s*:::.*#docs'            # doc summaries
 rg '\*tldr\s*:::'                 # prioritized summaries

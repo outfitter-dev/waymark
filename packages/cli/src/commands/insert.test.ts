@@ -11,6 +11,7 @@ import { parseInsertArgs, runInsertCommand } from "./insert";
 const SAMPLE_LINE = 42;
 const TODO_HANDLER_REGEX = /todo ::: document handler/;
 const ANY_ID_REGEX = /wm:/;
+const JSON_VALIDATION_ERROR_REGEX = /JSON validation failed/;
 
 describe("parseInsertArgs", () => {
   test("parses inline arguments", () => {
@@ -120,5 +121,116 @@ describe("runInsertCommand", () => {
     const entries = Object.values(indexData.ids);
     expect(entries).toHaveLength(1);
     expect(entries[0]?.file).toBe(sourcePath);
+  });
+
+  test("rejects invalid JSON structure with clear errors", async () => {
+    const testWorkspace = await mkdtemp(join(tmpdir(), "wm-test-"));
+    const invalidJsonPath = join(testWorkspace, "invalid.json");
+
+    // Missing required fields (type and content)
+    const invalidJson = JSON.stringify({
+      file: "test.ts",
+      line: 10,
+    });
+    await writeFile(invalidJsonPath, invalidJson, "utf8");
+
+    const parsed = parseInsertArgs(["--from", invalidJsonPath]);
+    const config = resolveConfig({});
+    const context: CommandContext = {
+      config,
+      workspaceRoot: testWorkspace,
+      globalOptions: {},
+    };
+
+    await expect(runInsertCommand(parsed, context)).rejects.toThrow(
+      JSON_VALIDATION_ERROR_REGEX
+    );
+
+    // Clean up
+    await rm(testWorkspace, { recursive: true, force: true });
+  });
+
+  test("validates insertion spec types properly", async () => {
+    const testWorkspace = await mkdtemp(join(tmpdir(), "wm-test-"));
+    const invalidJsonPath = join(testWorkspace, "invalid-types.json");
+
+    // Invalid line type (should be positive integer)
+    const invalidJson = JSON.stringify({
+      file: "test.ts",
+      line: "not-a-number",
+      type: "todo",
+      content: "test content",
+    });
+    await writeFile(invalidJsonPath, invalidJson, "utf8");
+
+    const parsed = parseInsertArgs(["--from", invalidJsonPath]);
+    const config = resolveConfig({});
+    const context: CommandContext = {
+      config,
+      workspaceRoot: testWorkspace,
+      globalOptions: {},
+    };
+
+    await expect(runInsertCommand(parsed, context)).rejects.toThrow(
+      JSON_VALIDATION_ERROR_REGEX
+    );
+
+    // Clean up
+    await rm(testWorkspace, { recursive: true, force: true });
+  });
+
+  test("accepts valid JSON with all optional fields", async () => {
+    const testWorkspace = await mkdtemp(join(tmpdir(), "wm-test-"));
+    const validJsonPath = join(testWorkspace, "valid.json");
+    const sourcePath = join(testWorkspace, "test.ts");
+
+    await writeFile(sourcePath, "// test file\nconst x = 1;\n", "utf8");
+
+    const validJson = JSON.stringify({
+      file: sourcePath,
+      line: 1,
+      type: "todo",
+      content: "test content",
+      position: "after",
+      signals: {
+        raised: true,
+        important: true,
+      },
+      properties: {
+        owner: "@alice",
+        priority: "high",
+      },
+      tags: ["#test", "#validation"],
+      mentions: ["@alice", "@bob"],
+      continuations: ["first continuation", "second continuation"],
+      id: "wm:custom-id",
+    });
+    await writeFile(validJsonPath, validJson, "utf8");
+
+    const parsed = parseInsertArgs([
+      "--from",
+      validJsonPath,
+      "--write",
+      "--json",
+    ]);
+    const config = resolveConfig({});
+    const context: CommandContext = {
+      config,
+      workspaceRoot: testWorkspace,
+      globalOptions: {},
+    };
+
+    const result = await runInsertCommand(parsed, context);
+    expect(result.exitCode).toBe(0);
+    expect(result.summary.successful).toBe(1);
+
+    const fileContents = await readFile(sourcePath, "utf8");
+    expect(fileContents).toContain("^*todo ::: test content");
+    expect(fileContents).toContain("owner:@alice");
+    expect(fileContents).toContain("#test");
+    expect(fileContents).toContain("@alice");
+
+    // Clean up
+    await rm(testWorkspace, { recursive: true, force: true });
   });
 });

@@ -5,11 +5,15 @@ import { readFile } from "node:fs/promises";
 import {
   type InsertionResult,
   type InsertionSpec,
+  InsertionSpecSchema,
   insertWaymarks,
 } from "@waymarks/core";
+import { ZodError, z } from "zod";
 
 import type { CommandContext } from "../types.ts";
 import { createIdManager } from "../utils/id-manager.ts";
+import { logger } from "../utils/logger.ts";
+import { readFromStdin } from "../utils/stdin.ts";
 
 export type InsertSummary = {
   total: number;
@@ -332,6 +336,12 @@ export async function runInsertCommand(
     write: parsed.options.write,
     config: context.config,
     format: true,
+    logger: {
+      debug: (msg, meta) => logger.debug(meta ?? {}, msg),
+      info: (msg, meta) => logger.info(meta ?? {}, msg),
+      warn: (msg, meta) => logger.warn(meta ?? {}, msg),
+      error: (msg, meta) => logger.error(meta ?? {}, msg),
+    },
   };
 
   if (idManager) {
@@ -347,34 +357,46 @@ export async function runInsertCommand(
   return { results, summary, output, exitCode };
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: JSON parsing requires branching
 async function loadSpecsFromSource(path: string): Promise<InsertionSpec[]> {
   const source =
     path === "-" ? await readFromStdin() : await readFile(path, "utf8");
-  const parsed = JSON.parse(source) as unknown;
 
-  if (Array.isArray(parsed)) {
-    return parsed as InsertionSpec[];
+  try {
+    const parsed = JSON.parse(source);
+
+    // Support both array format and object format with insertions field
+    if (Array.isArray(parsed)) {
+      return z.array(InsertionSpecSchema).parse(parsed);
+    }
+
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      Array.isArray(parsed.insertions)
+    ) {
+      return z.array(InsertionSpecSchema).parse(parsed.insertions);
+    }
+
+    if (typeof parsed === "object" && parsed !== null) {
+      // Single spec object
+      return [InsertionSpecSchema.parse(parsed)];
+    }
+
+    throw new Error(
+      "Invalid JSON: expected InsertionSpec, InsertionSpec[], or { insertions: InsertionSpec[] }"
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      logger.error("JSON validation failed");
+      for (const issue of error.issues) {
+        const issuePath = issue.path.length > 0 ? issue.path.join(".") : "root";
+        logger.error(`  - ${issuePath}: ${issue.message}`);
+      }
+      throw new Error("JSON validation failed");
+    }
+    throw error;
   }
-
-  if (
-    parsed &&
-    typeof parsed === "object" &&
-    Array.isArray((parsed as { insertions?: unknown }).insertions)
-  ) {
-    return (parsed as { insertions: InsertionSpec[] }).insertions;
-  }
-
-  throw new Error(
-    "Invalid insert specification; expected array or { insertions: [] }"
-  );
-}
-
-async function readFromStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-  }
-  return Buffer.concat(chunks).toString("utf8");
 }
 
 function summarize(results: InsertionResult[]): InsertSummary {

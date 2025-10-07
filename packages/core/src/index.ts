@@ -35,7 +35,7 @@ export {
   WaymarkIdManager,
 } from "./ids";
 export type { InsertionResult, InsertionSpec, InsertOptions } from "./insert";
-export { insertWaymarks } from "./insert";
+export { InsertionSpecSchema, insertWaymarks } from "./insert";
 export type { FileSummary, MarkerSummary, WaymarkMap } from "./map";
 export { buildWaymarkMap, summarizeMarkerTotals } from "./map";
 export type {
@@ -57,7 +57,11 @@ export type {
   RemovalSpec,
   RemoveOptions,
 } from "./remove";
-export { removeWaymarks } from "./remove";
+export {
+  RemovalCriteriaSchema,
+  RemovalSpecSchema,
+  removeWaymarks,
+} from "./remove";
 export type { SearchQuery } from "./search";
 export { searchRecords } from "./search";
 export type { ScanOptions, WaymarkConfig } from "./types";

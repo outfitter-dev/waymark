@@ -350,8 +350,8 @@ type ModifyCliOptions = {
   type?: string;
   content?: string;
   raise?: boolean;
-  starred?: boolean;
-  noSignal?: boolean;
+  markStarred?: boolean;
+  clearSignals?: boolean;
   write?: boolean;
   json?: boolean;
   jsonl?: boolean;
@@ -405,8 +405,8 @@ function buildModifyOptions(
   if (rawOptions.content) {
     options.content = rawOptions.content;
   }
-  if (rawOptions.noSignal) {
-    options.noSignal = rawOptions.noSignal;
+  if (rawOptions.clearSignals) {
+    options.noSignal = true;
   }
   if (rawOptions.write) {
     options.write = rawOptions.write;
@@ -423,7 +423,7 @@ function buildModifyOptions(
   if (rawOptions.raise) {
     options.raised = true;
   }
-  if (rawOptions.starred) {
+  if (rawOptions.markStarred) {
     options.starred = true;
   }
 
@@ -856,9 +856,13 @@ See 'wm insert --prompt' for agent-facing documentation.
     .argument("[target]", "waymark location (file:line)")
     .option("--id <id>", "waymark ID to modify")
     .option("--type <marker>", "change waymark type")
-    .option("--raise", "add ^ (raised) signal")
-    .option("--starred", "add * (starred) signal to mark as important/valuable")
-    .option("--no-signal", "remove all signals")
+    .option("--raise", "add ^ (raised) signal", false)
+    .option(
+      "--mark-starred",
+      "add * (starred) signal to mark as important/valuable",
+      false
+    )
+    .option("--clear-signals", "remove all signals", false)
     .option(
       "--content <text>",
       "replace waymark content (use '-' to read from stdin)"
@@ -875,10 +879,10 @@ See 'wm insert --prompt' for agent-facing documentation.
       "after",
       `
 Examples:
-  $ wm modify src/auth.ts:42 --type fix                # Preview type change
-  $ wm modify src/auth.ts:42 --raise --starred         # Preview signal updates
-  $ wm modify --id wm:a3k9m2p --starred --write        # Apply starred flag by ID
-  $ wm modify src/auth.ts:42 --no-signal --write       # Remove all signals
+  $ wm modify src/auth.ts:42 --type fix                    # Preview type change
+  $ wm modify src/auth.ts:42 --raise --mark-starred       # Preview signal updates
+  $ wm modify --id wm:a3k9m2p --mark-starred --write      # Apply starred flag by ID
+  $ wm modify src/auth.ts:42 --clear-signals --write       # Remove all signals
   $ wm modify src/auth.ts:42 --content "new text" --write
   $ printf "new text" | wm modify src/auth.ts:42 --content - --write
   $ wm modify src/auth.ts:42 --interactive             # Guided workflow

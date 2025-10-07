@@ -2,9 +2,12 @@
 
 export const SIGIL = ":::" as const;
 
+// Signal constants
+// ^ = raised (work-in-progress, branch-scoped)
+// * = starred (important, high-priority)
 export const SIGNALS = {
   raised: "^",
-  important: "*",
+  starred: "*",
 } as const;
 
 export type MarkerCategory =
