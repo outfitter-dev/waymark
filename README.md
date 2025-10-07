@@ -30,7 +30,7 @@ export async function authenticate(request: AuthRequest) {
   return issueSession(user, request) // note ::: returns JWT signed with HS256
 }
 
-Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) prefix are valid. Raised waymarks (`^todo`) mark branch-scoped work that must clear before merging; stars elevate priority. Combining them (`^*todo`) is fine, while doubling (`**fix`) is not.
+Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) prefix are valid. Raised waymarks (`^todo`) mark work-in-progress that must clear before merging; starred waymarks (`*fix`) mark high-priority items. Combining them (`^*todo`) is fine, while doubling (`**fix`) is not.
 ```
 
 ## Start Here
@@ -68,8 +68,8 @@ The `wm` command provides a unified interface for all waymark operations:
 # Basic scanning and filtering (default mode)
 wm src/                              # scan and display all waymarks
 wm src/ --type todo                  # filter by waymark type
-wm src/ --raised                     # show only raised (^) waymarks
-wm src/ --starred                    # show only starred (*) waymarks (important/valuable)
+wm src/ --raised                     # show only raised (^) waymarks (work-in-progress)
+wm src/ --starred                    # show only starred (*) waymarks (high-priority)
 wm src/ --type todo --mention @agent # combine filters
 
 # Map mode: file tree with TLDRs

@@ -3,13 +3,14 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, extname } from "node:path";
+import { z } from "zod";
 import {
   fingerprintContent,
   fingerprintContext,
   type WaymarkIdManager,
   type WaymarkIdMetadata,
 } from "./ids.ts";
-import type { WaymarkConfig } from "./types.ts";
+import type { CoreLogger, WaymarkConfig } from "./types.ts";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
 const LEADING_WHITESPACE_REGEX = /^(\s+)/;
@@ -17,23 +18,30 @@ const CONTEXT_BEFORE_LINES = 2;
 const CONTEXT_AFTER_LINES = 3;
 const DEFAULT_EOL = "\n";
 
-export type InsertionSpec = {
-  file: string;
-  line: number;
-  position?: "before" | "after";
-  type: string;
-  content: string;
-  signals?: {
-    raised?: boolean;
-    important?: boolean;
-  };
-  properties?: Record<string, string>;
-  tags?: string[];
-  mentions?: string[];
-  order?: number;
-  continuations?: string[];
-  id?: string;
-};
+// Define the Zod schema for InsertionSpec
+export const InsertionSpecSchema = z.object({
+  file: z.string().min(1, "File path is required"),
+  line: z.number().int().positive("Line must be a positive integer"),
+  position: z.enum(["before", "after"]).optional(),
+  type: z.string().min(1, "Waymark type is required"),
+  content: z.string(),
+  signals: z
+    .object({
+      raised: z.boolean().optional(),
+      important: z.boolean().optional(),
+    })
+    .strict()
+    .optional(),
+  properties: z.record(z.string(), z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+  mentions: z.array(z.string()).optional(),
+  order: z.number().optional(),
+  continuations: z.array(z.string()).optional(),
+  id: z.string().optional(),
+});
+
+// Infer the type from the schema for consistency
+export type InsertionSpec = z.infer<typeof InsertionSpecSchema>;
 
 export type InsertionResult = {
   file: string;
@@ -55,6 +63,7 @@ export type InsertOptions = {
   format?: boolean;
   config?: WaymarkConfig;
   idManager?: WaymarkIdManager;
+  logger?: CoreLogger;
 };
 
 export async function insertWaymarks(
@@ -88,14 +97,25 @@ async function processFileGroup(
   specs: InsertionSpec[],
   options: InsertOptions
 ): Promise<InsertionResult[]> {
+  options.logger?.debug("Processing file group", {
+    file,
+    specCount: specs.length,
+  });
+
   const existing = await readLines(file);
   if (!existing) {
+    options.logger?.debug("File not found", { file });
     return specs.map((spec) =>
       errorResult(file, spec, `File not found: ${file}`)
     );
   }
 
   const { lines, originalEol } = existing;
+  options.logger?.debug("Read file", {
+    file,
+    lineCount: lines.length,
+  });
+
   const context: FileProcessingContext = {
     file,
     lines,
@@ -112,7 +132,14 @@ async function processFileGroup(
   }
 
   if (options.write) {
+    const successCount = results.filter((r) => r.status === "success").length;
+    options.logger?.info("Writing waymarks to file", {
+      file,
+      insertedCount: successCount,
+    });
     await writeUpdatedFile(context);
+  } else {
+    options.logger?.debug("Dry-run mode, skipping write", { file });
   }
 
   return results;
@@ -230,7 +257,19 @@ async function reserveIdIfNeeded(
     metadata.source = spec.properties.owner;
   }
 
-  return await context.options.idManager.reserveId(metadata, spec.id);
+  const reservedId = await context.options.idManager.reserveId(
+    metadata,
+    spec.id
+  );
+  if (reservedId) {
+    context.options.logger?.debug("Reserved waymark ID", {
+      id: reservedId,
+      file: context.file,
+      line: spec.line,
+    });
+  }
+
+  return reservedId;
 }
 
 async function commitReservedIdIfNeeded(args: {

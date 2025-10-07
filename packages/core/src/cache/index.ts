@@ -3,7 +3,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { WaymarkRecord } from "@waymarks/grammar";
 
 import { isFileStale, updateFileInfo } from "./files.ts";
@@ -45,11 +45,28 @@ export class WaymarkCache {
   }
 
   private ensureCacheDirectory(): void {
+    // Allow special SQLite URIs
     if (this.dbPath === ":memory:" || this.dbPath.startsWith("file:")) {
       return;
     }
 
-    const dir = dirname(this.dbPath);
+    // Resolve to absolute path
+    const resolved = resolve(this.dbPath);
+
+    // Determine allowed cache directory
+    const cacheHome = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
+    const allowedParent = resolve(cacheHome, "waymark");
+
+    // Validate path is within allowed directory
+    if (!resolved.startsWith(allowedParent)) {
+      throw new Error(
+        `Cache path must be within ${allowedParent}, got: ${resolved}\n` +
+          "This is a security restriction to prevent writing outside cache directories."
+      );
+    }
+
+    // Create directory if needed
+    const dir = dirname(resolved);
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }

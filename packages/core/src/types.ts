@@ -67,3 +67,10 @@ export type WaymarkIndexConfig = {
   refreshTriggers: string[];
   autoRefreshAfterMinutes: number;
 };
+
+export type CoreLogger = {
+  debug: (msg: string, meta?: Record<string, unknown>) => void;
+  info: (msg: string, meta?: Record<string, unknown>) => void;
+  warn: (msg: string, meta?: Record<string, unknown>) => void;
+  error: (msg: string, meta?: Record<string, unknown>) => void;
+};

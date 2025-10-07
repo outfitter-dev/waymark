@@ -11,7 +11,7 @@
 ## General Rules
 
 - ALWAYS include only one `tldr :::` waymark in each file, near the top (accounting for language-specific preambles, shebangs, front matter, etc.).
-- ONLY use the v1 signals: `^` (raised/in-progress) and a single `*` (important/high priority). No `!`, `!!`, `?`, or other legacy signals anywhere in the repo.
+- ONLY use the v1 signals: `^` (raised) and a single `*` (starred). No `!`, `!!`, `?`, or other legacy signals anywhere in the repo.
 - CLEAR all `^` waymarks before merging to protected branches (`rg '\\^\\w+\\s*:::'`).
 - When adding a new waymark, search for precedent first (e.g., `rg ":::\s.*#<fragment>"`) to avoid proliferating one-off patterns.
 

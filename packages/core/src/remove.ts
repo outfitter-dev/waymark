@@ -5,32 +5,79 @@ import { readFile, writeFile } from "node:fs/promises";
 
 import { parse, type WaymarkRecord } from "@waymarks/grammar";
 import safeRegex from "safe-regex";
+import { z } from "zod";
 
 import type { WaymarkIdManager } from "./ids.ts";
-import type { WaymarkConfig } from "./types.ts";
+import type { CoreLogger, WaymarkConfig } from "./types.ts";
 
-export type RemovalSignals = {
-  raised?: boolean;
-  important?: boolean;
-};
+// Define the signals schema separately so we can reuse it
+const RemovalSignalsSchema = z
+  .object({
+    raised: z.boolean().optional(),
+    important: z.boolean().optional(),
+  })
+  .strict();
 
-export type RemovalCriteria = {
-  type?: string;
-  tags?: string[];
-  properties?: Record<string, string>;
-  mentions?: string[];
-  contentPattern?: string;
-  contains?: string;
-  signals?: RemovalSignals;
-};
+export type RemovalSignals = z.infer<typeof RemovalSignalsSchema>;
 
-export type RemovalSpec = {
-  file?: string;
-  line?: number;
-  id?: string;
-  files?: string[];
-  criteria?: RemovalCriteria;
-};
+// Define the Zod schema for RemovalCriteria
+export const RemovalCriteriaSchema = z
+  .object({
+    type: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    properties: z.record(z.string(), z.string()).optional(),
+    mentions: z.array(z.string()).optional(),
+    contentPattern: z.string().optional(),
+    contains: z.string().optional(),
+    signals: RemovalSignalsSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      // At least one criteria field must be provided
+      return (
+        data.type !== undefined ||
+        data.tags !== undefined ||
+        data.properties !== undefined ||
+        data.mentions !== undefined ||
+        data.contentPattern !== undefined ||
+        data.contains !== undefined ||
+        data.signals !== undefined
+      );
+    },
+    { message: "At least one criteria field must be provided" }
+  );
+
+// Infer the type from the schema for consistency
+export type RemovalCriteria = z.infer<typeof RemovalCriteriaSchema>;
+
+// Define the Zod schema for RemovalSpec
+export const RemovalSpecSchema = z
+  .object({
+    file: z.string().optional(),
+    line: z.number().int().positive().optional(),
+    id: z.string().optional(),
+    files: z.array(z.string()).optional(),
+    criteria: RemovalCriteriaSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      // At least one removal method must be provided
+      return (
+        data.file !== undefined ||
+        data.line !== undefined ||
+        data.id !== undefined ||
+        data.files !== undefined ||
+        data.criteria !== undefined
+      );
+    },
+    {
+      message:
+        "At least one removal method must be provided (file, line, id, files, or criteria)",
+    }
+  );
+
+// Infer the type from the schema for consistency
+export type RemovalSpec = z.infer<typeof RemovalSpecSchema>;
 
 export type RemovalResult = {
   file: string;
@@ -44,6 +91,7 @@ export type RemoveOptions = {
   write?: boolean;
   config?: WaymarkConfig;
   idManager?: WaymarkIdManager;
+  logger?: CoreLogger;
 };
 
 type FileContext = {
@@ -79,6 +127,10 @@ export async function removeWaymarks(
     return [];
   }
 
+  options.logger?.debug("Processing removals", {
+    specCount: specs.length,
+  });
+
   const state: RemovalState = {
     results: [],
     matchesByFile: new Map(),
@@ -101,16 +153,26 @@ async function processRemovalSpec(
 ): Promise<void> {
   const trimmedId = spec.id?.trim();
   if (trimmedId) {
+    state.options.logger?.debug("Processing ID-based removal", {
+      id: trimmedId,
+    });
     await processIdSpec(trimmedId, state);
     return;
   }
 
   if (isLineSpec(spec)) {
+    state.options.logger?.debug("Processing line-based removal", {
+      file: spec.file,
+      line: spec.line,
+    });
     await processLineSpec(spec, state);
     return;
   }
 
   if (spec.criteria) {
+    state.options.logger?.debug("Processing criteria-based removal", {
+      criteria: spec.criteria,
+    });
     await processCriteriaSpec(spec, state);
     return;
   }
@@ -281,7 +343,21 @@ async function applyMatches(state: RemovalState): Promise<void> {
     await applyMatchesForFile(state, filePath, matches, writeOperations);
   }
 
-  if (!state.dryRun) {
+  if (state.dryRun) {
+    state.options.logger?.debug("Dry-run mode, skipping writes", {
+      matchCount: state.matchesByFile.size,
+    });
+  } else {
+    const successfulRemovals = state.results.filter(
+      (r) => r.status === "success"
+    );
+    if (successfulRemovals.length > 0) {
+      state.options.logger?.info("Removed waymarks", {
+        total: state.results.length,
+        successful: successfulRemovals.length,
+        filesModified: state.matchesByFile.size,
+      });
+    }
     await Promise.all(writeOperations);
   }
 }

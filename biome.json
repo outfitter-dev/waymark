@@ -1,6 +1,9 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
   "extends": ["ultracite"],
+  "javascript": {
+    "globals": ["Bun"]
+  },
   "json": {
     "parser": {
       "allowComments": true,

@@ -5,13 +5,17 @@ import { readFile } from "node:fs/promises";
 import {
   type RemovalResult,
   type RemovalSpec,
+  RemovalSpecSchema,
   removeWaymarks,
 } from "@waymarks/core";
+import { ZodError, z } from "zod";
 
 import type { CommandContext } from "../types.ts";
 import { expandInputPaths } from "../utils/fs.ts";
 import { createIdManager } from "../utils/id-manager.ts";
+import { logger } from "../utils/logger.ts";
 import { confirm } from "../utils/prompts.ts";
+import { readFromStdin } from "../utils/stdin.ts";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
 
@@ -316,6 +320,12 @@ export async function runRemoveCommand(
     write: shouldWrite,
     config: context.config,
     ...(idManager ? { idManager } : {}),
+    logger: {
+      debug: (msg, meta) => logger.debug(meta ?? {}, msg),
+      info: (msg, meta) => logger.info(meta ?? {}, msg),
+      warn: (msg, meta) => logger.warn(meta ?? {}, msg),
+      error: (msg, meta) => logger.error(meta ?? {}, msg),
+    },
   };
 
   const results = await removeWaymarks(normalizedSpecs, removeOptions);
@@ -395,40 +405,51 @@ type LoadedRemovePayload = {
   options?: Partial<RemoveCommandOptions>;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: JSON parsing requires branching
 async function loadSpecsFromSource(path: string): Promise<LoadedRemovePayload> {
   const source =
     path === "-" ? await readFromStdin() : await readFile(path, "utf8");
-  const parsed = JSON.parse(source) as unknown;
-  if (Array.isArray(parsed)) {
-    return { specs: parsed as RemovalSpec[] };
-  }
 
-  if (
-    parsed &&
-    typeof parsed === "object" &&
-    Array.isArray((parsed as { removals?: unknown }).removals)
-  ) {
-    const payload = parsed as {
-      removals: RemovalSpec[];
-      options?: Partial<RemoveCommandOptions>;
-    };
-    const result: LoadedRemovePayload = { specs: payload.removals };
-    if (payload.options) {
-      result.options = payload.options;
+  try {
+    const parsed = JSON.parse(source);
+
+    // Support both array format and object format with removals field
+    if (Array.isArray(parsed)) {
+      return { specs: z.array(RemovalSpecSchema).parse(parsed) };
     }
-    return result;
-  }
-  throw new Error(
-    "Invalid removal specification; expected array or { removals: [] }"
-  );
-}
 
-async function readFromStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      Array.isArray(parsed.removals)
+    ) {
+      const specs = z.array(RemovalSpecSchema).parse(parsed.removals);
+      const result: LoadedRemovePayload = { specs };
+      if (parsed.options) {
+        result.options = parsed.options;
+      }
+      return result;
+    }
+
+    if (typeof parsed === "object" && parsed !== null) {
+      // Single spec object
+      return { specs: [RemovalSpecSchema.parse(parsed)] };
+    }
+
+    throw new Error(
+      "Invalid JSON: expected RemovalSpec, RemovalSpec[], or { removals: RemovalSpec[] }"
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      logger.error("JSON validation failed");
+      for (const issue of error.issues) {
+        const issuePath = issue.path.length > 0 ? issue.path.join(".") : "root";
+        logger.error(`  - ${issuePath}: ${issue.message}`);
+      }
+      throw new Error("JSON validation failed");
+    }
+    throw error;
   }
-  return Buffer.concat(chunks).toString("utf8");
 }
 
 function summarize(results: RemovalResult[]): RemoveSummary {

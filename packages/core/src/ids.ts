@@ -5,6 +5,9 @@ import { createHash } from "node:crypto";
 const MIN_ID_SLICE_LENGTH = 4;
 const BASE36_RADIX = 36;
 
+// note ::: content/context fingerprints use SHA-256 for cryptographic properties
+// note ::: IDs use wyhash for speed (10-20x faster, sufficient collision resistance)
+
 import type { IdIndexEntry, JsonIdIndex } from "./id-index.ts";
 import type { WaymarkIdConfig } from "./types.ts";
 
@@ -168,13 +171,12 @@ export class WaymarkIdManager {
   }
 
   private makeId(input: string, attempt: number): string {
-    const hash = createHash("sha256")
-      .update(input)
-      .update(attempt.toString())
-      .digest("hex");
-    const value = BigInt(`0x${hash}`);
+    // Use Bun's built-in wyhash (10-20x faster than SHA-256)
+    // Non-cryptographic but sufficient collision resistance for short IDs
+    const combined = `${input}|${attempt}`;
+    const hash = Bun.hash.wyhash(combined);
     const sliceLength = Math.max(MIN_ID_SLICE_LENGTH, this.config.length);
-    const base36 = value
+    const base36 = hash
       .toString(BASE36_RADIX)
       .padStart(sliceLength, "0")
       .slice(0, sliceLength);

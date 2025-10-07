@@ -1,6 +1,8 @@
 // tldr ::: tests for waymark cache invalidation and metadata tracking
 
 import { describe, expect, test } from "bun:test";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 import type { WaymarkRecord } from "@waymarks/grammar";
 
@@ -12,6 +14,9 @@ const UPDATED_MTIME = 200;
 const UPDATED_SIZE = 20;
 const DEFAULT_MTIME = 100;
 const DEFAULT_SIZE = 10;
+
+// Security test constants
+const SECURITY_ERROR_PATTERN = /must be within/;
 
 const baseRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => {
   const marker = overrides.type ?? "todo";
@@ -272,5 +277,27 @@ describe("WaymarkCache", () => {
     ).toBe(true);
 
     cache.close();
+  });
+
+  test("WaymarkCache rejects path traversal attempts", () => {
+    expect(() => {
+      new WaymarkCache({ dbPath: "../../etc/waymark.db" });
+    }).toThrow(SECURITY_ERROR_PATTERN);
+  });
+
+  test("WaymarkCache rejects absolute paths outside cache", () => {
+    expect(() => {
+      new WaymarkCache({ dbPath: "/tmp/malicious.db" });
+    }).toThrow(SECURITY_ERROR_PATTERN);
+  });
+
+  test("WaymarkCache allows valid cache paths", () => {
+    const cacheDir = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
+    const validPath = join(cacheDir, "waymark", "test.db");
+
+    expect(() => {
+      const cache = new WaymarkCache({ dbPath: validPath });
+      cache[Symbol.dispose]();
+    }).not.toThrow();
   });
 });

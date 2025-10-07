@@ -20,7 +20,7 @@ A waymark is a single comment line (or continuation block) built from the follow
 ```
 
 - **Comment leader**: Whatever the host language uses (`//`, `#`, `<!--`, etc.). Waymarks never live inside string literals or rendered docstrings.
-- **Signals** (optional): the caret (`^`) marks raised/in-progress work, the star (`*`) marks importance. When combined, the caret precedes the star (`^*todo`). No other signals are allowed.
+- **Signals** (optional): the caret (`^`) marks waymarks as raised (work-in-progress, branch-scoped), the star (`*`) marks waymarks as starred (important, high-priority). When combined, the caret precedes the star (`^*todo`). No other signals are allowed.
 - **Marker** (required): One of the blessed keywords below. Lowercase, no spaces.
 - **`:::` sigil**: Exactly three ASCII colons with one space before and after when a marker is present.
 - **Content**: Free text plus optional properties, hashtags, actors, and tags following the grammar defined here.
