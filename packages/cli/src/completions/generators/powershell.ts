@@ -1,4 +1,23 @@
-# tldr ::: PowerShell completion script for waymark CLI
+// tldr ::: PowerShell completion generator for waymark CLI
+
+import type { CompletionGenerator, GeneratorOptions } from "./types.ts";
+
+export class PowerShellGenerator implements CompletionGenerator {
+  private readonly options: GeneratorOptions;
+
+  constructor(options: GeneratorOptions) {
+    this.options = options;
+  }
+
+  getFilename(): string {
+    return "wm.ps1";
+  }
+
+  generate(): string {
+    const types = this.options.types;
+    const typesArray = types.map((t) => `'${t}'`).join(", ");
+
+    return `# tldr ::: PowerShell completion script for waymark CLI
 
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
@@ -186,7 +205,7 @@ Register-ArgumentCompleter -Native -CommandName 'wm' -ScriptBlock {
         $lastParam = $commandElements[-2]
 
         if ($lastParam -match '^--(type|t)$') {
-            $types = @('todo', 'fix', 'fixme', 'wip', 'done', 'review', 'test', 'check', 'note', 'context', 'why', 'tldr', 'this', 'example', 'idea', 'comment', 'warn', 'alert', 'deprecated', 'temp', 'tmp', 'hack', 'stub', 'blocked', 'needs', 'question', 'ask')
+            $types = @(${typesArray})
             $types | ForEach-Object {
                 [CompletionResult]::new($_, $_, [CompletionResultType]::ParameterValue, "Type: $_")
             }
@@ -225,4 +244,7 @@ Register-ArgumentCompleter -Native -CommandName 'wm' -ScriptBlock {
 
     $completions.Where{ $_.CompletionText -like "$wordToComplete*" } |
         Sort-Object -Property ListItemText
+}
+`;
+  }
 }

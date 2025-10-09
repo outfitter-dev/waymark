@@ -36,7 +36,7 @@ Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) pref
 ## Start Here
 
 1. **Product Requirements**: [PRD.md](PRD.md) defines the v1 grammar, tooling scope, and roadmap.
-2. **Specification**: [Waymark Specification](docs/waymark/SPEC.md) mirrors the grammar in the PRD for quick reference.
+2. **Specification**: [Waymark Specification](docs/GRAMMAR.md) mirrors the grammar in the PRD for quick reference.
 3. **Agent Guidelines**: [AGENTS.md](AGENTS.md) covers collaboration expectations for human and AI contributors.
 
 ### Quick Demo: `waymark map`
@@ -160,7 +160,7 @@ The project is mid-rebuild: we are prioritizing documentation, search patterns, 
 ## Repository Map
 
 - `PRD.md` – Source of truth for grammar, tooling, and packaging
-- `docs/` – Published documentation, including historical context (`docs/about`) and the specification (`docs/waymark/SPEC.md`)
+- `docs/` – Published documentation, including historical context (`docs/about`) and the specification (`docs/GRAMMAR.md`)
 - `.waymark/` – Project-specific waymark rules and conventions (`.waymark/rules/`)
 - `.agents/` – General agent rules plus symlinks into `.waymark/rules/`
 - `.migrate/` – Archived v1 content retained for research and migration notes

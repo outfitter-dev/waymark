@@ -1,16 +1,16 @@
-<!-- tldr ::: short-term checklist for CLI ergonomics improvements and refactoring #docs/plan -->
+<!-- tldr ::: archived summary of completed CLI improvement phases; active tracking in Linear #docs/plan -->
 
-# CLI Improvements Checklist
+# CLI Improvements Checklist (Archived)
 
-This document tracks the planned improvements to make the waymark CLI more ergonomic and user-friendly. All items should be completed before v1.0 release.
+This page now serves as a historical snapshot of the v1.0 CLI rewrite. Active planning, backlog, and progress are tracked in Linear (Waymark team, project `Waymark v0.1`).
 
-> **Focus**: deliver a streamlined non-interactive CLI first (rename, unified command, intelligent parsing, ergonomic flags). Interactive TUI/fzf work remains a later phase.
+> **Updated Oct 9, 2025** · For current guidance see [docs/cli/](docs/cli/) and [LINEAR.md](.agents/rules/LINEAR.md). Interactive TUI/fzf work remains deferred and should be managed through Linear issues.
 
 ## Implementation Phases
 
-Detailed documentation for each phase is maintained in `.agents/logs/refactor/`:
+All phases (1-4) are complete and their detailed notes live in `.agents/.archive/`. Phase 5 remains deferred.
 
-### ✅ [Phase 1: Core Refactoring](./.agents/logs/refactor/phase-1-core-refactoring.md)
+### ✅ Phase 1: Core Refactoring
 
 **Status**: COMPLETE (2025-09-30)
 
@@ -23,7 +23,7 @@ Binary renamed to `wm`, version flag added, `fmt` → `format` command renamed.
 - Renamed `fmt` → `format` (kept `fmt` as alias)
 - All 18 tests passing
 
-### ✅ [Phase 2: Unified Command](./.agents/logs/refactor/phase-2-unified-command.md)
+### ✅ Phase 2: Unified Command
 
 **Status**: COMPLETE (2025-09-30)
 
@@ -33,11 +33,10 @@ Merged `scan`, `find`, `map`, `graph` into single intelligent `wm` command.
 
 - Created unified command handler with intent detection
 - Added `--raised` / `-r` and `--starred` / `-s` signal filters
-- Removed all backward compatibility (discrete commands deleted)
-- Only standalone commands: `format`, `lint`, `migrate`, `help`
+- Delivered dedicated commands for `format`, `lint`, `migrate`, `help`, `init`, `insert`, `modify`, `remove`, `update`, plus compatibility entry points (`map`, `graph`, `scan`)
 - All 103 tests passing (added 13 new tests)
 
-### ✅ [Phase 3: Intelligent Query Parsing](./.agents/logs/refactor/phase-3-query-parsing.md)
+### ✅ Phase 3: Intelligent Query Parsing
 
 **Status**: COMPLETE (2025-09-30)
 
@@ -55,7 +54,7 @@ Natural language query parsing like `wm "todo @agent #perf"` → structured filt
 
 **Note**: Boolean operators (AND, OR, NOT) deferred to future work - current implementation sufficient for v1.0
 
-### ✅ [Phase 4: Display & Filtering](./.agents/logs/refactor/phase-4-display-filtering.md)
+### ✅ Phase 4: Display & Filtering
 
 **Status**: COMPLETE (2025-09-30)
 
@@ -73,7 +72,7 @@ Advanced display modes, grouping, sorting, context display, filtering ergonomics
 
 **Note**: Semantic navigation (`--refs <token>`) and stateful pagination (`--next`, `--prev`) deferred to future work
 
-### ⏸️ [Phase 5: Interactive TUI](./.agents/logs/refactor/phase-5-interactive-tui.md)
+### ⏸️ Phase 5: Interactive TUI
 
 **Status**: DEFERRED
 
@@ -123,6 +122,13 @@ wm format <file> --write
 wm lint <file...>
 wm migrate <file> --write
 wm help
+wm init --scope project --format toml
+wm insert <file:line> <type> <content> --write
+wm modify <file:line> --type fix --raise --write
+wm remove <file:line> --write
+wm update           # metadata refresh / migrations
+wm map <path> --summary
+wm graph <path> --json
 ```
 
 ### Query Syntax (Phase 3 - Complete)
@@ -158,12 +164,11 @@ wm "todo" --limit 10
 # Note: --refs (semantic navigation) and --next/--prev (stateful pagination) deferred
 ```
 
-## Documentation
+## Documentation & Tracking
 
-- **Phase Details**: See `.agents/logs/refactor/` for comprehensive documentation
-- **Testing**: Each phase includes testing requirements and success criteria
-- **Migration Notes**: Breaking changes documented per phase
-- **Cross-References**: Links between related features maintained
+- **Current references**: [docs/README.md](docs/README.md), [docs/cli/](docs/cli/), [docs/GRAMMAR.md](docs/GRAMMAR.md)
+- **Issue tracking**: Manage new improvements in Linear (`WAY-*`), not in this checklist
+- **Scratchpad usage**: Use `SCRATCHPAD.md` for in-progress worklogs only; archive durable decisions in Linear or PRD
 
 ## Success Criteria
 
@@ -172,7 +177,3 @@ wm "todo" --limit 10
 - [x] Phase 3: Query parsing feels natural and predictable
 - [x] Phase 4: Display modes enhance understanding, filters work intuitively
 - [ ] Phase 5: TUI provides excellent interactive experience (DEFERRED)
-
----
-
-For detailed task lists, implementation notes, and technical decisions, see the phase-specific documentation in `.agents/logs/refactor/`.

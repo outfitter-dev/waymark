@@ -85,7 +85,7 @@ Shell completions are available for zsh, bash, fish, PowerShell, and nushell. Se
 
 ## Documentation
 
-See the [main README](../../README.md) for comprehensive CLI documentation and the [Waymark specification](../../docs/waymark/SPEC.md) for grammar details.
+See the [main README](../../README.md) for comprehensive CLI documentation and the [Waymark specification](../../docs/GRAMMAR.md) for grammar details.
 
 ## License
 

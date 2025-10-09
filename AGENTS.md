@@ -16,7 +16,7 @@ For now we will be working exclusively from the `gt/v1.0/rewrite` branch.
 ### Old Project References
 
 - **Local**: `~/Developer/outfitter/waymark-old`
-- **GitHub**: [`outfitter-dev/waymark-old`](https://github.com/outfitter-dev/waymark-old)
+- **GitHub**: outfitter-dev/waymark-old (retired; see `archive/pre-rebuild-2025-01` branch)
 - **Archive Branch**: `archive/pre-rebuild-2025-01` contains all previous implementation work
 
 The rebuild focuses on clarity, simplicity, and progressive enhancement of the waymark pattern.

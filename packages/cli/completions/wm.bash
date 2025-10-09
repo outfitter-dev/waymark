@@ -131,7 +131,7 @@ _wm_completion() {
       # Main command (unified)
       case "${prev}" in
         --type)
-          COMPREPLY=( $(compgen -W "todo fix wip done review test check note context tldr this example idea comment warn alert deprecated temp hack blocked needs question" -- ${cur}) )
+          COMPREPLY=( $(compgen -W "todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask" -- ${cur}) )
           return 0
           ;;
         --group)
@@ -151,12 +151,12 @@ _wm_completion() {
           if [[ ${COMP_CWORD} -eq 1 ]]; then
             local all_opts="${commands} ${opts}"
             COMPREPLY=( $(compgen -W "${all_opts}" -- ${cur}) )
-            compgen -f "${cur}" >> COMPREPLY
+            COMPREPLY+=( $(compgen -f -- "${cur}") )
           else
             # Subsequent args: options or paths
             local main_opts="${opts} --type --tag --mention --raised --starred --map --graph --summary --json --jsonl --pretty --long --tree --flat --keep-comment-markers --compact --no-color --group --sort --context --after --before --limit --page"
             COMPREPLY=( $(compgen -W "${main_opts}" -- ${cur}) )
-            compgen -f "${cur}" >> COMPREPLY
+            COMPREPLY+=( $(compgen -f -- "${cur}") )
           fi
           return 0
           ;;

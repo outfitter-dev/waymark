@@ -48,3 +48,6 @@ temp/
 
 # Turbo cache
 .turbo/
+
+# Agent archives (historical docs)
+.agents/.archive/

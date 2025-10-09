@@ -416,7 +416,7 @@ Areas for potential architectural evolution:
 
 ## References
 
-- [PRD.md](../../PRD.md) - Product requirements and v1.0 scope
-- [PLAN.md](../../PLAN.md) - Execution roadmap and decisions log
-- [TypeScript Conventions](../../.agents/rules/conventions/typescript.md)
-- [Bun Conventions](../../.agents/rules/conventions/bun.md)
+- [PRD.md](../PRD.md) - Product requirements and v1.0 scope
+- [PLAN.md](../PLAN.md) - Execution roadmap and decisions log
+- [TypeScript Conventions](../.agents/rules/conventions/typescript.md)
+- [Bun Conventions](../.agents/rules/conventions/bun.md)

@@ -2,7 +2,7 @@
 
 # Waymark & Docstring Compatibility
 
-Docstrings/inline documentation and waymarks must complement one another without polluting rendered output. Country-specific docstrings (Go doc comments, Python triple quotes, JS JSDoc) should continue to work exactly as intended while still giving agents the anchors they need.
+Docstrings/inline documentation and waymarks must complement one another without polluting rendered output. Language-specific docstrings (Go doc comments, Python triple quotes, JS JSDoc) should continue to work exactly as intended while still giving agents the anchors they need.
 
 ## General Guidance
 

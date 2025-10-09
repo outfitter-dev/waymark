@@ -10,6 +10,8 @@ Keep this log current while working. Each session should append entries under th
 <!--         ::: the intent is to capture thoughts, concerns, etc. so other agents can see them -->
 <!--         ::: keep this space tidy though, and prune it periodically when things may no longer be relevant -->
 
+<!-- note ::: Track milestones and tasks in Linear; keep this scratchpad as an ephemeral worklog snapshot -->
+
 - Matt's notes:
   - The `:::` sigil is placed after the marker intentionally
     - While I did try a format like `::: <marker>` it didn't maintain backwards compatibility with various tooling that already worked with `TODO` type comments. Moving it to after the marker meant that those tools would still see `todo :::` waymarks.
@@ -20,33 +22,33 @@ Keep this log current while working. Each session should append entries under th
 
 ## Daily Worklogs
 
-Detailed daily logs are maintained in `.agents/logs/`:
+Detailed daily logs are archived in `.agents/.archive/`:
 
-### [2025-09-26](./.agents/logs/20250926-worklog.md)
+### [2025-09-26](./.agents/.archive/20250926-worklog.md)
 
 - Initial project setup with workspace scaffolding and build pipeline
 - SQLite caching implementation with Bun native support
 - Grammar package creation and parser implementation
 
-### [2025-09-27](./.agents/logs/20250927-worklog.md)
+### [2025-09-27](./.agents/.archive/20250927-worklog.md)
 
 - Quality review and remediation (normalization, cache metadata, SQL security)
 - MCP server implementation with stdio transport
 - Configuration alignment across schemas and runtime
 
-### [2025-09-28](./.agents/logs/20250928-worklog.md)
+### [2025-09-28](./.agents/.archive/20250928-worklog.md)
 
 - Formatting remediation and map enhancements
 - CLI modularization and scope support implementation
 - Cache performance optimizations with batch inserts
 
-### [2025-09-29](./.agents/logs/20250929-worklog.md)
+### [2025-09-29](./.agents/.archive/20250929-worklog.md)
 
 - Multi-line grammar change (dots → markerless `:::` continuations)
 - Marker constants refactoring with rich metadata
 - Signal migration from `!` to `*`
 
-### [2025-09-30](./.agents/logs/20250930-worklog.md)
+### [2025-09-30](./.agents/.archive/20250930-worklog.md)
 
 - Comprehensive marker-to-type terminology refactoring
 - CLI Phase 1 & 2 completion (binary rename, unified command)
@@ -64,6 +66,26 @@ Detailed daily logs are maintained in `.agents/logs/`:
   - Kept SHA-256 for content/context fingerprints (need cryptographic properties)
   - Added `Bun` to biome.json globals to fix linter
   - All 60 core tests pass, ID format unchanged (`wm:[base36]`)
+
+### 2025-10-07
+
+- **Cache Schema Migration Strategy** (fixes CodeRabbit critical issue)
+  - Added `CACHE_SCHEMA_VERSION = 2` constant with metadata table storage
+  - Implemented automatic cache invalidation on schema version mismatch
+  - Breaking change: `marker` column → `type` column (from 2025-09-30 refactoring)
+  - Migration strategy: drop all tables and regenerate from source (caches are ephemeral)
+  - Added `getSchemaVersion()`, `setSchemaVersion()`, `invalidateCache()` functions
+  - Created comprehensive test suite: `packages/core/src/cache/schema.test.ts` (8 tests)
+  - Updated cache tests with migration scenarios (16 tests total, all passing)
+  - Documented strategy in `packages/core/src/cache/MIGRATION.md`
+  - All 71 core tests passing, full CI pipeline green
+  - Version history documented: v1 (marker column) → v2 (type column)
+- **PR #7 Review Feedback & Archive Cleanup**
+  - Used `logbooks snapshot` to capture CodeRabbit feedback (34 comments, see `.agents/.archive/20251007-review-feedback.md`)
+  - Archived 15 completed log/planning files to `.agents/.archive/` (gitignored)
+  - Removed orphaned links in `IMPROVEMENTS.md` referencing archived refactor docs
+  - `.agents/logs/` now empty - active work tracked in `SCRATCHPAD.md` only
+  - All critical/minor CodeRabbit issues addressed
 
 ---
 
@@ -306,7 +328,7 @@ Detailed daily logs are maintained in `.agents/logs/`:
     - Property-as-marker pattern implemented for known properties
     - Formatter supports alignment configuration (format.alignContinuations)
     - All parser and formatter tests passing (except 1 unrelated HTML comment test)
-    - Documentation fully updated in PRD.md, SPEC.md, and WAYMARKS.md
+    - Documentation fully updated in PRD.md, docs/GRAMMAR.md, and WAYMARKS.md
 
 - **Marker Constants Refactoring**
   - Refactored `packages/grammar/src/constants.ts` to include rich metadata
@@ -327,7 +349,7 @@ Detailed daily logs are maintained in `.agents/logs/`:
 
 - Bang priority signal migration
   - Replaced `!` with `*` in signal parsing/rendering (grammar, core formatter, MCP insert helper, audit/map scripts) and updated schema metadata.
-  - Refreshed docs (PRD, SPEC, README) plus plan guidance to describe `^`/`*` signals and removed all migration waymarks tied to the bang-to-star swap.
+  - Refreshed docs (PRD, docs/GRAMMAR.md, README) plus plan guidance to describe `^`/`*` signals and removed all migration waymarks tied to the bang-to-star swap.
   - Ran `bun ci:validate` to cover typecheck, tests, and builds across packages; all green.
 
 ## 2025-09-30 (Continued)
@@ -377,7 +399,7 @@ Detailed daily logs are maintained in `.agents/logs/`:
 
   - **Phase 8: Schemas and Documentation**
     - Batch updated JSON schemas with sed
-    - Updated PRD.md, README.md, SPEC.md with new terminology
+    - Updated PRD.md, README.md, docs/GRAMMAR.md with new terminology
     - Changed `.waymark/config.jsonc` example
 
   - **Phase 9: Validation & Tests**
@@ -470,7 +492,7 @@ Detailed daily logs are maintained in `.agents/logs/`:
     - `packages/cli/src/index.test.ts` (updated test names and assertions)
     - `README.md` (updated CLI examples)
     - `PRD.md` (updated command documentation and search ergonomics section)
-    - `docs/waymark/SPEC.md` (updated CLI examples)
+    - `docs/GRAMMAR.md` (updated CLI examples)
     - `.waymark/rules/WAYMARKS.md` (updated CLI examples)
     - Regenerated `.waymark/map.md` to reflect new file structure
   - **Internal API unchanged**: Core library still uses `marker` in data structures (WaymarkRecord.marker) - only CLI flags and user-facing documentation changed

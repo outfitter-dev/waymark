@@ -210,6 +210,25 @@ const logger = {
       }),
     );
   },
+  warn(message: string, error: unknown, meta?: Record<string, unknown>) {
+    console.warn(
+      JSON.stringify({
+        level: 'warn',
+        message,
+        error:
+          error instanceof Error
+            ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack,
+                cause: error.cause,
+              }
+            : error,
+        timestamp: new Date().toISOString(),
+        ...meta,
+      }),
+    );
+  },
 };
 ```
 

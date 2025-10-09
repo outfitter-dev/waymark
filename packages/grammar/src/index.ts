@@ -5,6 +5,7 @@ export {
   BLESSED_MARKERS,
   getCanonicalType,
   getTypeCategory,
+  MARKER_DEFINITIONS,
   MARKERS,
   SIGIL,
   SIGNALS,

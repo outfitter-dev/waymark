@@ -70,14 +70,14 @@
   - [ ] Document installation methods in README
 - [ ] Draft migration notes and announce availability of the new CLI and agent toolkit.
 - [ ] Tag an initial prerelease once acceptance criteria are met — targeting **1.0.0-beta.1** after documentation pass.
-- [ ] Evaluate terminal UI prototypes (see docs/waymark/tui-ab-plan.md) and select approach.
+- [ ] Evaluate terminal UI prototypes (see `.agents/.archive/refactor/phase-5-interactive-tui.md`) and select approach.
 - [ ] Expose marker categories/aliases in CLI tooling (e.g., `waymark find --category work`, alias normalization).
 
 ## Phase 3a — Multi-line Grammar Update (Complete)
 
 - [x] Update multi-line waymark syntax from `...` to markerless `:::`
   - [x] Update PRD.md multi-line section
-  - [x] Update docs/waymark/SPEC.md examples
+  - [x] Update grammar examples (see docs/GRAMMAR.md)
   - [x] Update .waymark/rules/WAYMARKS.md documentation
   - [x] Refactor parser.ts to recognize markerless `:::` as continuation
   - [x] Update parser tests for new continuation syntax

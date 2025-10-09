@@ -1,12 +1,12 @@
 // tldr ::: scan tool handler for waymark MCP server
 
-import { readFile } from "node:fs/promises";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ConfigScope, WaymarkRecord } from "@waymarks/core";
 import { parse } from "@waymarks/core";
 import type { RenderFormat } from "../types";
 import { scanInputSchema } from "../types";
 import { loadConfig } from "../utils/config";
+import { safeReadFile } from "../utils/errors";
 import {
   applySkipPaths,
   expandInputPaths,
@@ -46,8 +46,8 @@ async function collectRecords(
   const records: WaymarkRecord[] = [];
   await Promise.all(
     filePaths.map(async (filePath) => {
-      const source = await readFile(filePath, "utf8").catch(() => null);
-      if (typeof source !== "string") {
+      const source = await safeReadFile(filePath, { logContext: "scan" });
+      if (!source) {
         return;
       }
       const parsed = parse(source, { file: normalizePathForOutput(filePath) });
@@ -59,10 +59,6 @@ async function collectRecords(
 }
 
 function renderRecords(records: WaymarkRecord[], format: RenderFormat): string {
-  if (records.length === 0) {
-    return "";
-  }
-
   switch (format) {
     case "json":
       return JSON.stringify(records);
@@ -71,6 +67,9 @@ function renderRecords(records: WaymarkRecord[], format: RenderFormat): string {
     case "pretty":
       return JSON.stringify(records, null, 2);
     default:
+      if (records.length === 0) {
+        return "";
+      }
       return records
         .map(
           (record) =>
@@ -108,4 +107,4 @@ export const scanToolDefinition = {
   description:
     "Parses one or more files (or directories) and returns waymark records in the requested format.",
   inputSchema: scanInputSchema.shape,
-};
+} as const;

@@ -28,8 +28,9 @@ const COMMENT_STYLE_BY_EXTENSION: Record<string, CommentStyle> = {
   ".html": { leader: "<!--", closing: " -->" },
   ".java": { leader: "//" },
   ".js": { leader: "//" },
+  ".json5": { leader: "//" },
+  ".jsonc": { leader: "//" },
   ".jsx": { leader: "//" },
-  ".json": { leader: "//" },
   ".kt": { leader: "//" },
   ".kts": { leader: "//" },
   ".md": { leader: "<!--", closing: " -->" },
@@ -334,7 +335,7 @@ export const insertToolDefinition = {
   description:
     "Creates a new waymark (e.g., tldr/this/todo) at the requested location and normalizes the file.",
   inputSchema: insertWaymarkInputSchema.shape,
-};
+} as const;
 
 // Wrapper for test compatibility
 export function handleInsertWaymark(params: {

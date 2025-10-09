@@ -1,4 +1,23 @@
-#compdef wm
+// tldr ::: zsh completion generator for waymark CLI
+
+import type { CompletionGenerator, GeneratorOptions } from "./types.ts";
+import { getTypesString } from "./utils.ts";
+
+export class ZshGenerator implements CompletionGenerator {
+  private readonly options: GeneratorOptions;
+
+  constructor(options: GeneratorOptions) {
+    this.options = options;
+  }
+
+  getFilename(): string {
+    return "_wm";
+  }
+
+  generate(): string {
+    const typesString = getTypesString(this.options.types);
+
+    return `#compdef wm
 # tldr ::: zsh completion script for waymark CLI
 
 _wm() {
@@ -18,7 +37,7 @@ _wm() {
 
   local -a filter_opts
   filter_opts=(
-    '(-t --type)'{-t,--type}'[Filter by waymark type]:type:(todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask)'
+    '(-t --type)'{-t,--type}'[Filter by waymark type]:type:(${typesString})'
     '--tag[Filter by hashtag]:tag:'
     '--mention[Filter by mention]:mention:'
     '(-r --raised)'{-r,--raised}'[Show only raised waymarks]'
@@ -52,9 +71,9 @@ _wm() {
     '--page[Page number]:page:'
   )
 
-  _arguments -C \
-    $common_opts \
-    '1: :->cmds' \
+  _arguments -C \\
+    $common_opts \\
+    '1: :->cmds' \\
     '*:: :->args'
 
   case $state in
@@ -78,78 +97,78 @@ _wm() {
     args)
       case $line[1] in
         format)
-          _arguments \
-            $common_opts \
-            '(-w --write)'{-w,--write}'[Write changes to file]' \
+          _arguments \\
+            $common_opts \\
+            '(-w --write)'{-w,--write}'[Write changes to file]' \\
             '*:file:_files'
           ;;
         insert)
-          _arguments \
-            $common_opts \
-            '--from[Read from JSON file]:file:_files' \
-            '--mention[Add mention]:mention:' \
-            '--tag[Add hashtag]:tag:' \
-            '--property[Add property]:property:' \
-            '--ref[Set canonical reference]:ref:' \
-            '--depends[Add dependency]:depends:' \
-            '--needs[Add needs relation]:needs:' \
-            '--blocks[Add blocks relation]:blocks:' \
-            '--signal[Add signal]:signal:(^ *)' \
-            '--json[Output as JSON]' \
+          _arguments \\
+            $common_opts \\
+            '--from[Read from JSON file]:file:_files' \\
+            '--mention[Add mention]:mention:' \\
+            '--tag[Add hashtag]:tag:' \\
+            '--property[Add property]:property:' \\
+            '--ref[Set canonical reference]:ref:' \\
+            '--depends[Add dependency]:depends:' \\
+            '--needs[Add needs relation]:needs:' \\
+            '--blocks[Add blocks relation]:blocks:' \\
+            '--signal[Add signal]:signal:(^ *)' \\
+            '--json[Output as JSON]' \\
             '--jsonl[Output as JSON Lines]'
           ;;
         modify)
-          _arguments \
-            $common_opts \
-            '--id[Modify by waymark ID]:id:' \
-            '--type[Change waymark type]:type:(todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask)' \
-            '--raise[Add raised signal]' \
-            '--important[Add important signal]' \
-            '--no-signal[Remove all signals]' \
-            '--content[Replace content]:text:' \
-            '(-w --write)'{-w,--write}'[Apply modifications]' \
-            '--interactive[Interactive flow]' \
-            '--json[Output as JSON]' \
+          _arguments \\
+            $common_opts \\
+            '--id[Modify by waymark ID]:id:' \\
+            '--type[Change waymark type]:type:(${typesString})' \\
+            '--raise[Add raised signal]' \\
+            '--important[Add important signal]' \\
+            '--no-signal[Remove all signals]' \\
+            '--content[Replace content]:text:' \\
+            '(-w --write)'{-w,--write}'[Apply modifications]' \\
+            '--interactive[Interactive flow]' \\
+            '--json[Output as JSON]' \\
             '--jsonl[Output as JSON Lines]'
           ;;
         remove)
-          _arguments \
-            $common_opts \
-            '(-w --write)'{-w,--write}'[Actually remove]' \
-            '--id[Remove by ID]:id:' \
-            '--from[Read from JSON file]:file:_files' \
-            '--criteria[Filter criteria]:criteria:' \
-            '--yes[Skip confirmation]' \
-            '--confirm[Force confirmation]' \
-            '--json[Output as JSON]' \
+          _arguments \\
+            $common_opts \\
+            '(-w --write)'{-w,--write}'[Actually remove]' \\
+            '--id[Remove by ID]:id:' \\
+            '--from[Read from JSON file]:file:_files' \\
+            '--criteria[Filter criteria]:criteria:' \\
+            '--yes[Skip confirmation]' \\
+            '--confirm[Force confirmation]' \\
+            '--json[Output as JSON]' \\
             '--jsonl[Output as JSON Lines]'
           ;;
         lint)
-          _arguments \
-            $common_opts \
-            '--json[Output as JSON]' \
+          _arguments \\
+            $common_opts \\
+            '--json[Output as JSON]' \\
             '*:file:_files'
           ;;
         migrate)
-          _arguments \
-            $common_opts \
-            '(-w --write)'{-w,--write}'[Write changes to file]' \
+          _arguments \\
+            $common_opts \\
+            '(-w --write)'{-w,--write}'[Write changes to file]' \\
             '*:file:_files'
           ;;
         init)
-          _arguments \
-            $common_opts \
-            '(-f --format)'{-f,--format}'[Config format]:format:(toml jsonc yaml yml)' \
-            '(-p --preset)'{-p,--preset}'[Config preset]:preset:(full minimal)' \
-            '(-s --scope)'{-s,--scope}'[Config scope]:scope:(project user)' \
+          _arguments \\
+            $common_opts \\
+            '(-f --format)'{-f,--format}'[Config format]:format:(toml jsonc yaml yml)' \\
+            '(-p --preset)'{-p,--preset}'[Config preset]:preset:(full minimal)' \\
+            '(-s --scope)'{-s,--scope}'[Config scope]:scope:(project user)' \\
             '--force[Overwrite existing]'
           ;;
         update)
-          _arguments \
-            $common_opts \
-            '--dry-run[Print command without executing]' \
-            '--force[Run even if install method unknown]' \
-            '--yes[Skip confirmation]' \
+          _arguments \\
+            $common_opts \\
+            '--dry-run[Print command without executing]' \\
+            '--force[Run even if install method unknown]' \\
+            '--yes[Skip confirmation]' \\
             '--command[Override update command]:command:'
           ;;
         help)
@@ -163,3 +182,6 @@ _wm() {
 }
 
 _wm "$@"
+`;
+  }
+}
