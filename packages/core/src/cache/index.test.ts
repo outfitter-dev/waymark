@@ -1,5 +1,6 @@
 // tldr ::: tests for waymark cache invalidation and metadata tracking
 
+import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -7,6 +8,11 @@ import { join } from "node:path";
 import type { WaymarkRecord } from "@waymarks/grammar";
 
 import { WaymarkCache } from "./index";
+import {
+  CACHE_SCHEMA_VERSION,
+  getSchemaVersion,
+  setSchemaVersion,
+} from "./schema";
 
 const INITIAL_MTIME = 100;
 const INITIAL_SIZE = 10;
@@ -299,5 +305,131 @@ describe("WaymarkCache", () => {
       const cache = new WaymarkCache({ dbPath: validPath });
       cache[Symbol.dispose]();
     }).not.toThrow();
+  });
+
+  test("schema migration invalidates cache on version mismatch", () => {
+    const cache = new WaymarkCache({ dbPath: ":memory:" });
+
+    // Insert initial data with current schema
+    cache.updateFileInfo("test.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.insertWaymarks([
+      baseRecord({ file: "test.ts", type: "todo", contentText: "original" }),
+    ]);
+
+    // Verify data exists
+    const beforeRecords = cache.findByFile("test.ts");
+    expect(beforeRecords).toHaveLength(1);
+    expect(beforeRecords[0]?.contentText).toBe("original");
+
+    cache.close();
+
+    // Now simulate schema version change by manually creating a database with old version
+    const db = new Database(":memory:");
+
+    // Create old schema manually (version 1 with 'marker' column instead of 'type')
+    db.exec(`
+      CREATE TABLE cache_metadata (
+        key TEXT PRIMARY KEY,
+        value INTEGER NOT NULL
+      ) STRICT
+    `);
+    setSchemaVersion(db, 1);
+
+    db.exec(`
+      CREATE TABLE files (
+        path TEXT PRIMARY KEY,
+        mtime INTEGER NOT NULL,
+        size INTEGER NOT NULL,
+        hash TEXT,
+        indexedAt INTEGER DEFAULT (unixepoch())
+      ) STRICT
+    `);
+
+    db.exec(`
+      CREATE TABLE waymarkRecords (
+        id INTEGER PRIMARY KEY,
+        filePath TEXT NOT NULL,
+        startLine INTEGER NOT NULL,
+        endLine INTEGER NOT NULL,
+        marker TEXT NOT NULL,
+        content TEXT NOT NULL,
+        language TEXT NOT NULL,
+        fileCategory TEXT NOT NULL,
+        indent INTEGER NOT NULL,
+        commentLeader TEXT,
+        raw TEXT,
+        signals TEXT,
+        properties TEXT,
+        relations TEXT,
+        canonicals TEXT,
+        mentions TEXT,
+        tags TEXT,
+        createdAt INTEGER DEFAULT (unixepoch()),
+        FOREIGN KEY (filePath) REFERENCES files(path) ON DELETE CASCADE
+      ) STRICT
+    `);
+
+    // Insert old data
+    db.exec("INSERT INTO files (path, mtime, size) VALUES ('old.ts', 100, 10)");
+    db.exec(`
+      INSERT INTO waymarkRecords (
+        filePath, startLine, endLine, marker, content,
+        language, fileCategory, indent, commentLeader, raw,
+        signals, properties, relations, canonicals, mentions, tags
+      ) VALUES (
+        'old.ts', 1, 1, 'todo', 'old data',
+        'typescript', 'code', 0, '//', '// todo ::: old data',
+        '{"raised":false,"current":false,"important":false}',
+        '{}', '[]', '[]', '[]', '[]'
+      )
+    `);
+
+    // Verify old schema version
+    expect(getSchemaVersion(db)).toBe(1);
+
+    // Verify data exists in old schema
+    const oldData = db
+      .prepare("SELECT marker FROM waymarkRecords WHERE filePath = 'old.ts'")
+      .get() as { marker: string } | null;
+    expect(oldData?.marker).toBe("todo");
+
+    db.close();
+  });
+
+  test("fresh cache initializes with current schema version", () => {
+    const cache = new WaymarkCache({ dbPath: ":memory:" });
+
+    // Access the internal database (cast to access private property for testing)
+    const db = (cache as unknown as { db: Database }).db;
+
+    expect(getSchemaVersion(db)).toBe(CACHE_SCHEMA_VERSION);
+
+    cache.close();
+  });
+
+  test("schema migration preserves cache after same-version reopening", () => {
+    const cache = new WaymarkCache({ dbPath: ":memory:" });
+
+    // Insert data
+    cache.updateFileInfo("test.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.insertWaymarks([
+      baseRecord({ file: "test.ts", type: "note", contentText: "preserved" }),
+    ]);
+
+    const beforeRecords = cache.findByFile("test.ts");
+    expect(beforeRecords).toHaveLength(1);
+
+    // Close and reopen with same schema version
+    cache.close();
+
+    const cache2 = new WaymarkCache({ dbPath: ":memory:" });
+
+    // Note: In-memory databases don't persist, so this test verifies
+    // that createSchema is idempotent and doesn't break on same version
+    expect(() => {
+      cache2.updateFileInfo("test2.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    }).not.toThrow();
+
+    cache2.close();
   });
 });

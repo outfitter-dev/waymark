@@ -1,11 +1,11 @@
 // tldr ::: graph tool handler for waymark MCP server
 
-import { readFile } from "node:fs/promises";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ConfigScope, WaymarkRecord } from "@waymarks/core";
 import { buildRelationGraph, parse } from "@waymarks/core";
 import { graphInputSchema } from "../types";
 import { loadConfig } from "../utils/config";
+import { safeReadFile } from "../utils/errors";
 import {
   applySkipPaths,
   expandInputPaths,
@@ -45,8 +45,8 @@ async function collectRecords(
   const records: WaymarkRecord[] = [];
   await Promise.all(
     filePaths.map(async (filePath) => {
-      const source = await readFile(filePath, "utf8").catch(() => null);
-      if (typeof source !== "string") {
+      const source = await safeReadFile(filePath, { logContext: "graph" });
+      if (!source) {
         return;
       }
       const parsed = parse(source, { file: normalizePathForOutput(filePath) });
@@ -74,4 +74,4 @@ export const graphToolDefinition = {
   description:
     "Produces the relation edges (ref/depends/needs/etc.) extracted from the provided files.",
   inputSchema: graphInputSchema.shape,
-};
+} as const;

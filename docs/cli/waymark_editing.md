@@ -1,6 +1,6 @@
-<!-- tldr ::: design doc for waymark insert and remove commands enabling programmatic waymark management #docs/release -->
+<!-- tldr ::: comprehensive guide to insert, remove, and modify commands for waymark management #docs/cli -->
 
-# Waymark Insert & Remove Commands Design
+# Waymark Editing Guide
 
 ## Overview
 

@@ -1,4 +1,23 @@
-# tldr ::: fish completion script for waymark CLI
+// tldr ::: fish completion generator for waymark CLI
+
+import type { CompletionGenerator, GeneratorOptions } from "./types.ts";
+import { getTypesString } from "./utils.ts";
+
+export class FishGenerator implements CompletionGenerator {
+  private readonly options: GeneratorOptions;
+
+  constructor(options: GeneratorOptions) {
+    this.options = options;
+  }
+
+  getFilename(): string {
+    return "wm.fish";
+  }
+
+  generate(): string {
+    const typesString = getTypesString(this.options.types);
+
+    return `# tldr ::: fish completion script for waymark CLI
 
 # Common completions
 complete -c wm -s v -l version -d "Output version number"
@@ -38,7 +57,7 @@ complete -c wm -n "__fish_seen_subcommand_from insert" -l jsonl -d "Output as JS
 
 # Modify command
 complete -c wm -n "__fish_seen_subcommand_from modify" -l id -d "Modify by ID"
-complete -c wm -n "__fish_seen_subcommand_from modify" -l type -d "Change waymark type" -a "todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask"
+complete -c wm -n "__fish_seen_subcommand_from modify" -l type -d "Change waymark type" -a "${typesString}"
 complete -c wm -n "__fish_seen_subcommand_from modify" -l raise -d "Add raised signal"
 complete -c wm -n "__fish_seen_subcommand_from modify" -l important -d "Add important signal"
 complete -c wm -n "__fish_seen_subcommand_from modify" -l no-signal -d "Remove all signals"
@@ -80,7 +99,7 @@ complete -c wm -n "__fish_seen_subcommand_from update" -l command -d "Override u
 complete -c wm -n "__fish_seen_subcommand_from help" -a "format insert modify remove lint migrate init update help"
 
 # Main command (unified) - filters
-complete -c wm -n "__fish_use_subcommand" -s t -l type -d "Filter by waymark type" -a "todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask"
+complete -c wm -n "__fish_use_subcommand" -s t -l type -d "Filter by waymark type" -a "${typesString}"
 complete -c wm -n "__fish_use_subcommand" -l tag -d "Filter by hashtag"
 complete -c wm -n "__fish_use_subcommand" -l mention -d "Filter by mention"
 complete -c wm -n "__fish_use_subcommand" -s r -l raised -d "Show only raised waymarks"
@@ -106,3 +125,6 @@ complete -c wm -n "__fish_use_subcommand" -s A -l after -d "Lines after" -r
 complete -c wm -n "__fish_use_subcommand" -s B -l before -d "Lines before" -r
 complete -c wm -n "__fish_use_subcommand" -l limit -d "Limit results" -r
 complete -c wm -n "__fish_use_subcommand" -l page -d "Page number" -r
+`;
+  }
+}

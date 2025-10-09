@@ -11,6 +11,8 @@
     "completions"
   ],
   "scripts": {
+    "generate:completions": "bun src/completions/index.ts",
+    "prebuild": "bun run generate:completions",
     "build": "bun build src/index.ts --outfile dist/wm.js --target bun",
     "dev": "bun build src/index.ts --outfile dist/wm.js --target bun --watch",
     "install:bin": "bun run build && sudo ln -sf \"$(pwd)/dist/wm.js\" /usr/local/bin/wm && echo 'wm installed to /usr/local/bin (waymark available via package bin)'",

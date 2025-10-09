@@ -49,7 +49,7 @@ const records: WaymarkRecord[] = parse(sourceCode, {
 
 ## Documentation
 
-See the [main README](../../README.md) for comprehensive documentation and the [Waymark specification](../../docs/waymark/SPEC.md) for grammar details.
+See the [main README](../../README.md) for comprehensive documentation and the [Waymark specification](../../docs/GRAMMAR.md) for grammar details.
 
 ## License
 

@@ -25,7 +25,7 @@ const commonFlags = {
   scope: {
     name: "scope",
     type: "string",
-    placeholder: "project|global|default",
+    placeholder: "project|user|default",
     description: "Select config scope",
   },
   json: {
@@ -103,6 +103,87 @@ export const commands: HelpRegistry = {
     usage: "wm insert <file:line> <type> <content> [options]",
     description: "Insert waymarks into files programmatically.",
     flags: [
+      commonFlags.write,
+      {
+        name: "from",
+        type: "string",
+        placeholder: "path",
+        description: "Read insertion specs from JSON/JSONL file",
+      },
+      {
+        name: "type",
+        type: "string",
+        placeholder: "todo|fix|...",
+        description: "Waymark type (can be positional)",
+      },
+      {
+        name: "content",
+        type: "string",
+        placeholder: "text",
+        description: "Waymark content (can be positional)",
+      },
+      {
+        name: "position",
+        type: "string",
+        placeholder: "before|after",
+        description: "Insert position relative to line",
+      },
+      {
+        name: "before",
+        type: "boolean",
+        description: "Insert before target line (shorthand)",
+      },
+      {
+        name: "after",
+        type: "boolean",
+        description: "Insert after target line (shorthand)",
+      },
+      {
+        name: "tag",
+        type: "string",
+        placeholder: "#tag",
+        description: "Add hashtag (repeatable)",
+      },
+      {
+        name: "mention",
+        type: "string",
+        placeholder: "@handle",
+        description: "Add mention (repeatable)",
+      },
+      {
+        name: "property",
+        type: "string",
+        placeholder: "key:value",
+        description: "Add property (repeatable)",
+      },
+      {
+        name: "continuation",
+        type: "string",
+        placeholder: "text",
+        description: "Add continuation line (repeatable)",
+      },
+      {
+        name: "raised",
+        type: "boolean",
+        description: "Add raised signal (^)",
+      },
+      {
+        name: "starred",
+        type: "boolean",
+        description: "Add starred signal (*)",
+      },
+      {
+        name: "order",
+        type: "string",
+        placeholder: "n",
+        description: "Insertion order for batch operations",
+      },
+      {
+        name: "id",
+        type: "string",
+        placeholder: "wm:abcdef",
+        description: "Reserve specific ID for waymark",
+      },
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
@@ -111,7 +192,8 @@ export const commands: HelpRegistry = {
     examples: [
       'wm insert src/auth.ts:42 todo "implement OAuth"',
       'wm insert src/db.ts:15 note "assumes UTC" --mention @alice',
-      "wm insert --from waymarks.json",
+      'wm insert src/api.ts:10 todo "add caching" --tag #perf --raised',
+      "wm insert --from waymarks.json --write",
     ],
   },
   modify: {
@@ -121,6 +203,44 @@ export const commands: HelpRegistry = {
       "Update existing waymarks in place by adjusting type, signals, or content.",
     flags: [
       commonFlags.write,
+      {
+        name: "id",
+        type: "string",
+        placeholder: "wm:abcdef",
+        description: "Target waymark by ID instead of file:line",
+      },
+      {
+        name: "type",
+        type: "string",
+        placeholder: "todo|fix|...",
+        description: "Change waymark type",
+      },
+      {
+        name: "content",
+        type: "string",
+        placeholder: "text|-",
+        description: "Replace content (- reads from stdin)",
+      },
+      {
+        name: "raised",
+        type: "boolean",
+        description: "Add raised signal (^)",
+      },
+      {
+        name: "starred",
+        type: "boolean",
+        description: "Add starred signal (*)",
+      },
+      {
+        name: "no-signal",
+        type: "boolean",
+        description: "Remove all signals",
+      },
+      {
+        name: "interactive",
+        type: "boolean",
+        description: "Interactive modification flow",
+      },
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
@@ -130,6 +250,7 @@ export const commands: HelpRegistry = {
       "wm modify src/auth.ts:42 --type fix",
       "wm modify --id wm:a3k9m2p --starred --write",
       'printf "new copy" | wm modify src/auth.ts:42 --content - --write',
+      "wm modify src/api.ts:15 --interactive",
     ],
   },
   remove: {
@@ -138,6 +259,80 @@ export const commands: HelpRegistry = {
     description: "Remove waymarks from files programmatically.",
     flags: [
       commonFlags.write,
+      {
+        name: "from",
+        type: "string",
+        placeholder: "path",
+        description: "Read removal specs from JSON/JSONL file",
+      },
+      {
+        name: "id",
+        type: "string",
+        placeholder: "wm:abcdef",
+        description: "Remove by ID (repeatable)",
+      },
+      {
+        name: "type",
+        type: "string",
+        placeholder: "todo|fix|...",
+        description: "Filter by waymark type",
+      },
+      {
+        name: "tag",
+        type: "string",
+        placeholder: "#tag",
+        description: "Filter by hashtag (repeatable)",
+      },
+      {
+        name: "mention",
+        type: "string",
+        placeholder: "@handle",
+        description: "Filter by mention (repeatable)",
+      },
+      {
+        name: "property",
+        type: "string",
+        placeholder: "key:value",
+        description: "Filter by property (repeatable)",
+      },
+      {
+        name: "file",
+        type: "string",
+        placeholder: "path",
+        description: "Filter by file pattern (repeatable)",
+      },
+      {
+        name: "content-pattern",
+        type: "string",
+        placeholder: "regex",
+        description: "Filter by content regex pattern",
+      },
+      {
+        name: "contains",
+        type: "string",
+        placeholder: "text",
+        description: "Filter by content substring",
+      },
+      {
+        name: "raised",
+        type: "boolean",
+        description: "Filter by raised signal (^)",
+      },
+      {
+        name: "starred",
+        type: "boolean",
+        description: "Filter by starred signal (*)",
+      },
+      {
+        name: "yes",
+        type: "boolean",
+        description: "Skip confirmation prompt",
+      },
+      {
+        name: "confirm",
+        type: "boolean",
+        description: "Force confirmation prompt",
+      },
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
@@ -147,6 +342,82 @@ export const commands: HelpRegistry = {
       "wm remove src/auth.ts:42              # Preview removal",
       "wm remove src/auth.ts:42 --write      # Actually remove",
       "wm remove --id wm:a3k9m2p --write     # Remove by ID",
+      "wm remove --type todo --tag #wip --write --yes  # Batch removal",
+    ],
+  },
+  init: {
+    name: "init",
+    usage: "wm init [options]",
+    description:
+      "Initialize waymark configuration file with interactive prompts or flags.",
+    flags: [
+      {
+        name: "format",
+        alias: "f",
+        type: "string",
+        placeholder: "toml|jsonc|yaml|yml",
+        description: "Config file format",
+      },
+      {
+        name: "preset",
+        alias: "p",
+        type: "string",
+        placeholder: "full|minimal",
+        description: "Config preset template",
+      },
+      {
+        name: "scope",
+        alias: "s",
+        type: "string",
+        placeholder: "project|user",
+        description: "Config scope",
+      },
+      {
+        name: "force",
+        type: "boolean",
+        description: "Overwrite existing config file",
+      },
+      commonFlags.help,
+    ],
+    examples: [
+      "wm init                               # Interactive prompts",
+      "wm init --format toml --scope project # Create project config",
+      "wm init --preset minimal --force      # Overwrite with minimal config",
+    ],
+  },
+  update: {
+    name: "update",
+    usage: "wm update [options]",
+    description:
+      "Update CLI to the latest version using the detected install method (npm global or workspace).",
+    flags: [
+      {
+        name: "dry-run",
+        type: "boolean",
+        description: "Print update command without executing",
+      },
+      {
+        name: "force",
+        type: "boolean",
+        description: "Force update even if install method is unknown",
+      },
+      {
+        name: "yes",
+        type: "boolean",
+        description: "Skip confirmation prompt",
+      },
+      {
+        name: "command",
+        type: "string",
+        placeholder: "cmd",
+        description: "Override auto-detected update command",
+      },
+      commonFlags.help,
+    ],
+    examples: [
+      "wm update                             # Update with confirmation",
+      "wm update --yes                       # Update without confirmation",
+      "wm update --dry-run                   # Preview update command",
     ],
   },
 };

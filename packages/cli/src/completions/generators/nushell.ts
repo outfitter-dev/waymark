@@ -1,4 +1,24 @@
-# tldr ::: nushell completion script for waymark CLI
+// tldr ::: nushell completion generator for waymark CLI
+
+import type { CompletionGenerator, GeneratorOptions } from "./types.ts";
+import { getTypesString } from "./utils.ts";
+
+export class NushellGenerator implements CompletionGenerator {
+  private readonly options: GeneratorOptions;
+
+  constructor(options: GeneratorOptions) {
+    this.options = options;
+  }
+
+  getFilename(): string {
+    return "wm.nu";
+  }
+
+  generate(): string {
+    const _typesString = getTypesString(this.options.types);
+    const allTypes = this.options.types;
+
+    return `# tldr ::: nushell completion script for waymark CLI
 
 # Main wm command
 export extern "wm" [
@@ -139,7 +159,7 @@ def "nu-complete wm commands" [] {
 }
 
 def "nu-complete wm types" [] {
-    ["todo" "fix" "fixme" "wip" "done" "review" "test" "check" "note" "context" "why" "tldr" "this" "example" "idea" "comment" "warn" "alert" "deprecated" "temp" "tmp" "hack" "stub" "blocked" "needs" "question" "ask"]
+    [${allTypes.map((t) => `"${t}"`).join(" ")}]
 }
 
 def "nu-complete wm scope" [] {
@@ -168,4 +188,7 @@ def "nu-complete wm preset" [] {
 
 def "nu-complete wm init-scope" [] {
     ["project" "user"]
+}
+`;
+  }
 }

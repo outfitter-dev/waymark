@@ -23,6 +23,7 @@
     "check:waymarks": "bun scripts/waymark-map.ts",
     "waymark:map": "bun scripts/waymark-map.ts",
     "audit": "bun scripts/waymark-audit.ts",
+    "completions:generate": "cd packages/cli && bun run generate:completions",
     "install:bin": "cd packages/cli && bun run install:bin",
     "uninstall:bin": "cd packages/cli && bun run uninstall:bin",
     "ci:local": "turbo run ci:local",

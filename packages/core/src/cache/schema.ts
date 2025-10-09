@@ -2,6 +2,11 @@
 
 import type { Database } from "bun:sqlite";
 
+// Schema version for cache database
+// Increment when making breaking schema changes (e.g., column renames, type changes)
+// On version mismatch, cache is invalidated and recreated
+export const CACHE_SCHEMA_VERSION = 2;
+
 export function configureForPerformance(db: Database): void {
   db.exec("PRAGMA foreign_keys = ON");
   // Enable WAL mode for better concurrency
@@ -16,7 +21,53 @@ export function configureForPerformance(db: Database): void {
   db.exec("PRAGMA auto_vacuum = INCREMENTAL");
 }
 
+export function getSchemaVersion(db: Database): number {
+  // Create metadata table if it doesn't exist
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cache_metadata (
+      key TEXT PRIMARY KEY,
+      value INTEGER NOT NULL
+    ) STRICT
+  `);
+
+  const stmt = db.prepare(
+    "SELECT value FROM cache_metadata WHERE key = 'schema_version'"
+  );
+  const row = stmt.get() as { value: number } | null;
+  return row?.value ?? 0;
+}
+
+export function setSchemaVersion(db: Database, version: number): void {
+  db.exec(`
+    INSERT OR REPLACE INTO cache_metadata (key, value)
+    VALUES ('schema_version', ${version})
+  `);
+}
+
+export function invalidateCache(db: Database): void {
+  // Drop all existing tables
+  db.exec("DROP TABLE IF EXISTS dependencies");
+  db.exec("DROP TABLE IF EXISTS waymarkRecords");
+  db.exec("DROP TABLE IF EXISTS files");
+  db.exec("DROP TABLE IF EXISTS cache_metadata");
+}
+
 export function createSchema(db: Database): void {
+  // Check schema version and invalidate if mismatch
+  const currentVersion = getSchemaVersion(db);
+  if (currentVersion !== 0 && currentVersion !== CACHE_SCHEMA_VERSION) {
+    invalidateCache(db);
+  }
+
+  // Create metadata table and set version
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cache_metadata (
+      key TEXT PRIMARY KEY,
+      value INTEGER NOT NULL
+    ) STRICT
+  `);
+  setSchemaVersion(db, CACHE_SCHEMA_VERSION);
+
   // Files table for tracking modification times
   db.exec(`
     CREATE TABLE IF NOT EXISTS files (

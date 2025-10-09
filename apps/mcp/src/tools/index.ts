@@ -10,7 +10,9 @@ export function registerTools(server: McpServer): void {
   server.registerTool("waymark.scan", scanToolDefinition, handleScan);
   server.registerTool("waymark.map", mapToolDefinition, handleMap);
   server.registerTool("waymark.graph", graphToolDefinition, handleGraph);
-  server.registerTool("waymark.insert", insertToolDefinition, (input) =>
-    handleInsert(input, server)
+  server.registerTool(
+    "waymark.insert",
+    insertToolDefinition,
+    (input: unknown) => handleInsert(input, server)
   );
 }

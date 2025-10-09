@@ -107,7 +107,7 @@ interface PaginatedResponse<T> extends ApiResponse<T[]> {
 
 ```typescript
 Bun.serve({
-  port: process.env.PORT || 3000,
+  port: process.env.PORT ? Number(process.env.PORT) : 3000,
   hostname: '0.0.0.0',
 
   async fetch(req: Request): Promise<Response> {
@@ -258,7 +258,7 @@ class RateLimiter {
 
 ```typescript
 export function corsHeaders(origin?: string): HeadersInit {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',

@@ -56,4 +56,4 @@ Have you seen an anchor pattern we should learn from? Open a PR and drop a refer
 
 ---
 
-> See also: [Waymark Specification v2.0](../../SPEC_NEXT.md) for how these lessons shaped the current grammar.
+> See also: [Waymark Specification v2.0](../GRAMMAR.md) for how these lessons shaped the current grammar.

@@ -315,7 +315,10 @@ export async function runRemoveCommand(
   const { mergedOptions, normalizedSpecs, shouldWrite } =
     await resolveRemoveInput(parsed, context, execution);
 
-  const idManager = shouldWrite ? await createIdManager(context) : undefined;
+  // Create idManager if writing OR if any spec contains an ID (needed for lookups in dry-run)
+  const needsIdManager =
+    shouldWrite || normalizedSpecs.some((spec) => spec.id !== undefined);
+  const idManager = needsIdManager ? await createIdManager(context) : undefined;
   const removeOptions: Parameters<typeof removeWaymarks>[1] = {
     write: shouldWrite,
     config: context.config,
