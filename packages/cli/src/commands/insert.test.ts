@@ -233,4 +233,72 @@ describe("runInsertCommand", () => {
     // Clean up
     await rm(testWorkspace, { recursive: true, force: true });
   });
+
+  test("--from reads batches from JSON array", async () => {
+    const testWorkspace = await mkdtemp(join(tmpdir(), "wm-insert-array-"));
+    const source = join(testWorkspace, "source.ts");
+    await writeFile(source, "// fixture\n", "utf8");
+
+    const batchJsonPath = join(testWorkspace, "batch.json");
+    const batchJson = JSON.stringify([
+      { file: source, line: 1, type: "todo", content: "array payload 1" },
+      { file: source, line: 1, type: "note", content: "array payload 2" },
+    ]);
+    await writeFile(batchJsonPath, batchJson, "utf8");
+
+    const parsed = parseInsertArgs(["--from", batchJsonPath, "--write"]);
+    const config = resolveConfig({});
+    const context: CommandContext = {
+      config,
+      workspaceRoot: testWorkspace,
+      globalOptions: {},
+    };
+
+    const result = await runInsertCommand(parsed, context);
+    expect(result.exitCode).toBe(0);
+    expect(result.summary.successful).toBe(2);
+    expect(result.summary.filesModified).toBe(1);
+
+    const fileContents = await readFile(source, "utf8");
+    expect(fileContents).toContain("todo ::: array payload 1");
+    expect(fileContents).toContain("note ::: array payload 2");
+
+    // Clean up
+    await rm(testWorkspace, { recursive: true, force: true });
+  });
+
+  test("--from reads batches from insertions wrapper object", async () => {
+    const testWorkspace = await mkdtemp(join(tmpdir(), "wm-insert-wrapper-"));
+    const source = join(testWorkspace, "source.ts");
+    await writeFile(source, "// fixture\n", "utf8");
+
+    const wrapperJsonPath = join(testWorkspace, "wrapper.json");
+    const wrapperJson = JSON.stringify({
+      insertions: [
+        { file: source, line: 1, type: "todo", content: "wrapper payload 1" },
+        { file: source, line: 1, type: "fix", content: "wrapper payload 2" },
+      ],
+    });
+    await writeFile(wrapperJsonPath, wrapperJson, "utf8");
+
+    const parsed = parseInsertArgs(["--from", wrapperJsonPath, "--write"]);
+    const config = resolveConfig({});
+    const context: CommandContext = {
+      config,
+      workspaceRoot: testWorkspace,
+      globalOptions: {},
+    };
+
+    const result = await runInsertCommand(parsed, context);
+    expect(result.exitCode).toBe(0);
+    expect(result.summary.successful).toBe(2);
+    expect(result.summary.filesModified).toBe(1);
+
+    const fileContents = await readFile(source, "utf8");
+    expect(fileContents).toContain("todo ::: wrapper payload 1");
+    expect(fileContents).toContain("fix ::: wrapper payload 2");
+
+    // Clean up
+    await rm(testWorkspace, { recursive: true, force: true });
+  });
 });
