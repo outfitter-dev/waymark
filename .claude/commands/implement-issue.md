@@ -26,12 +26,12 @@ Orchestrate a complete implementation workflow for the requested Linear issue us
    - Update the issue status to “In Progress” once work begins.
 
 2. **Check stack alignment**
-   - Review the current stack: !`gt log short`
+   - Review the current stack: `gt log short`
    - If the issue depends on other Linear tickets, verify their branches exist and sit downstack from where this work will land.
    - Missing or incomplete dependencies → report the blockage to the user before proceeding.
 
 3. **Verify branch selection**
-   - Inspect current branch: !`git branch --show-current`
+   - Inspect current branch: `git branch --show-current`
    - Ensure the branch name matches the Linear `gitBranchName`. If not, inform the user and propose `gt create <gitBranchName>` from the correct parent (typically `gt/v1.0/rewrite` or the highest dependency branch).
    - Confirm stack positioning with `gt log` and adjust using `gt move --onto <parent>` if needed.
 
