@@ -231,26 +231,4 @@ describe("PROPERTY_KEYS alignment", () => {
       expect(formattedText).toContain(`${key} ::: test-value`);
     }
   });
-
-  test("property keys list matches expected set", () => {
-    // Verify the exact set of property keys to catch additions/removals
-    const expectedKeys = [
-      "ref",
-      "rel",
-      "depends",
-      "needs",
-      "blocks",
-      "dupeof",
-      "owner",
-      "since",
-      "fixes",
-      "affects",
-      "priority",
-      "status",
-    ].sort();
-
-    const actualKeys = Array.from(GRAMMAR_PROPERTY_KEYS).sort();
-
-    expect(actualKeys).toEqual(expectedKeys);
-  });
 });

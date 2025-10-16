@@ -136,6 +136,9 @@ export const MARKER_DEFINITIONS: MarkerDefinition[] = [
 ];
 
 // Build a flat list of all markers including aliases for backward compatibility
+// Note: "needs" and "blocks" appear in both BLESSED_MARKERS and PROPERTY_KEYS by design.
+// In continuation context, the parser explicitly excludes blessed markers from being
+// treated as property continuations (see parseContinuation in content.ts).
 export const BLESSED_MARKERS = MARKER_DEFINITIONS.flatMap((def) => [
   def.name,
   ...(def.aliases || []),
@@ -195,6 +198,9 @@ export const MARKERS = {
 
 // Known property keys that can act as pseudo-markers in continuation context
 // This is the single source of truth for property keys recognized by the parser and formatter
+// Note: "needs" and "blocks" appear in both BLESSED_MARKERS and PROPERTY_KEYS by design.
+// When these appear in continuation context (after another waymark), they are treated as
+// property continuations only if they are NOT valid blessed markers in that position.
 export const PROPERTY_KEYS = new Set([
   "ref",
   "rel",
