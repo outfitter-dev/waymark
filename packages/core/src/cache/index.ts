@@ -23,8 +23,6 @@ import {
   replaceFileWaymarks,
 } from "./writes.ts";
 
-const PATH_SEPARATOR_REGEX = /[/\\]+/;
-
 export type WaymarkCacheOptions = {
   dbPath?: string;
 };
@@ -55,21 +53,22 @@ export class WaymarkCache {
     // Resolve to absolute path
     const resolved = resolve(this.dbPath);
 
-    // Determine allowed cache directory
+    // Determine allowed parent directories
     const cacheHome = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
-    const allowedParent = resolve(cacheHome, "waymark");
+    const allowedParents = [
+      resolve(cacheHome, "waymark"),
+      resolve(process.cwd()),
+    ];
 
-    // Validate path is within allowed directory
-    const relativeToCache = relative(allowedParent, resolved);
-    const segments = relativeToCache.split(PATH_SEPARATOR_REGEX);
-    const hasTraversal = segments.some((segment) => segment === "..");
-    const isOutsideCache =
-      relativeToCache.length > 0 &&
-      (hasTraversal || isAbsolute(relativeToCache));
+    // Validate path is within one of the allowed directories
+    const isInsideAllowed = allowedParents.some((parent) => {
+      const rel = relative(parent, resolved);
+      return rel && !rel.startsWith("..") && !isAbsolute(rel);
+    });
 
-    if (isOutsideCache) {
+    if (!isInsideAllowed) {
       throw new Error(
-        `Cache path must be within ${allowedParent}, got: ${resolved}\n` +
+        `Cache path must be within ${allowedParents.join(" or ")}, got: ${resolved}\n` +
           "This is a security restriction to prevent writing outside cache directories."
       );
     }
