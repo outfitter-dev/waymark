@@ -19,7 +19,7 @@
 
 Reference Linear issues in the commit message footer:
 
-```text
+```plaintext
 feat: implement authentication flow
 
 Implements user login with OAuth 2.0 and session management.
@@ -31,7 +31,7 @@ Linear: WAY-123
 
 When a commit addresses multiple issues:
 
-```text
+```plaintext
 fix: resolve validation bugs
 
 Fixes multiple edge cases in input validation.
@@ -52,7 +52,7 @@ gt create -m "feat: implement auth"
 
 Include the issue ID in PR titles for traceability:
 
-```text
+```plaintext
 [WAY-123] feat: implement authentication flow
 ```
 
