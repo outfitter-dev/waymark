@@ -2,7 +2,7 @@
 
 import { existsSync, statSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import type { WaymarkConfig } from "@waymarks/core";
 import { getIgnoreFilter, type IgnoreFilter } from "./ignore";
 
@@ -27,6 +27,33 @@ function determineRootDir(inputs: string[]): string {
   return cwd;
 }
 
+/**
+ * Validates that a path input doesn't use relative traversal to escape the workspace.
+ *
+ * @param rootDir - The workspace root directory
+ * @param input - The original input path (before resolution)
+ * @param resolved - The resolved absolute path
+ * @throws Error if the input uses relative traversal to escape the workspace
+ */
+function assertNoTraversal(
+  rootDir: string,
+  input: string,
+  resolved: string
+): void {
+  // Absolute paths are allowed (user explicitly specifies them)
+  if (isAbsolute(input)) {
+    return;
+  }
+
+  // For relative paths, ensure they don't escape the workspace
+  const relativePath = relative(rootDir, resolved);
+
+  // Path escapes workspace if relative() returns a path starting with ".."
+  if (relativePath.startsWith("..")) {
+    throw new Error(`Input resolves outside workspace: ${resolved}`);
+  }
+}
+
 export async function expandInputPaths(
   inputs: string[],
   config: WaymarkConfig
@@ -49,6 +76,10 @@ export async function expandInputPaths(
 
   for (const input of inputs) {
     const resolved = resolve(rootDir, input);
+
+    // Prevent path traversal attacks using relative paths like "../.."
+    assertNoTraversal(rootDir, input, resolved);
+
     if (!existsSync(resolved)) {
       continue;
     }
