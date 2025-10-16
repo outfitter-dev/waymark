@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -300,5 +300,48 @@ describe("runInsertCommand", () => {
 
     // Clean up
     await rm(testWorkspace, { recursive: true, force: true });
+  });
+
+  test("--from - reads batch from stdin", async () => {
+    const testWorkspace = await mkdtemp(join(tmpdir(), "wm-insert-stdin-"));
+    const source = join(testWorkspace, "source.ts");
+    await writeFile(source, "// fixture\n", "utf8");
+
+    // Mock stdin data with JSON array
+    const stdinData = JSON.stringify([
+      { file: source, line: 1, type: "todo", content: "stdin payload 1" },
+      { file: source, line: 1, type: "note", content: "stdin payload 2" },
+    ]);
+
+    // Spy on readFromStdin to return our test data
+    const stdinModule = await import("../utils/stdin.ts");
+    const readStdinSpy = spyOn(stdinModule, "readFromStdin").mockResolvedValue(
+      stdinData
+    );
+
+    try {
+      const parsed = parseInsertArgs(["--from", "-", "--write"]);
+      const config = resolveConfig({});
+      const context: CommandContext = {
+        config,
+        workspaceRoot: testWorkspace,
+        globalOptions: {},
+      };
+
+      const result = await runInsertCommand(parsed, context);
+      expect(result.exitCode).toBe(0);
+      expect(result.summary.successful).toBe(2);
+      expect(result.summary.filesModified).toBe(1);
+      expect(readStdinSpy).toHaveBeenCalledTimes(1);
+
+      const fileContents = await readFile(source, "utf8");
+      expect(fileContents).toContain("todo ::: stdin payload 1");
+      expect(fileContents).toContain("note ::: stdin payload 2");
+    } finally {
+      // Restore original function
+      readStdinSpy.mockRestore();
+      // Clean up
+      await rm(testWorkspace, { recursive: true, force: true });
+    }
   });
 });
