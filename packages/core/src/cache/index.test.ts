@@ -307,6 +307,28 @@ describe("WaymarkCache", () => {
     }).not.toThrow();
   });
 
+  test("WaymarkCache allows workspace-local cache paths", () => {
+    const workspacePath = join(process.cwd(), "test-cache", "waymark.db");
+
+    expect(() => {
+      const cache = new WaymarkCache({ dbPath: workspacePath });
+      cache[Symbol.dispose]();
+    }).not.toThrow();
+  });
+
+  test("WaymarkCache allows relative workspace paths", () => {
+    expect(() => {
+      const cache = new WaymarkCache({ dbPath: "./fixtures/test-cache.db" });
+      cache[Symbol.dispose]();
+    }).not.toThrow();
+  });
+
+  test("WaymarkCache rejects paths outside workspace and cache", () => {
+    expect(() => {
+      new WaymarkCache({ dbPath: "/etc/waymark.db" });
+    }).toThrow(SECURITY_ERROR_PATTERN);
+  });
+
   test("schema migration invalidates cache on version mismatch", () => {
     const cache = new WaymarkCache({ dbPath: ":memory:" });
 
