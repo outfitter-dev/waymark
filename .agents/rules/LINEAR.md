@@ -6,7 +6,7 @@
 
 - Team: Waymark (subteam of Outfitter)
 - ID: `WAY`
-- Project: `Waymark v0.1`
+- Project: `Waymark v1.0.0-beta.1`
 
 ## Rules
 
