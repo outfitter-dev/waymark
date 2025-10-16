@@ -1,6 +1,6 @@
 // tldr ::: content segment processing and continuation handling for waymark grammar
 
-import { BLESSED_MARKERS, SIGIL } from "./constants";
+import { BLESSED_MARKERS, PROPERTY_KEYS, SIGIL } from "./constants";
 import {
   extractMentions,
   extractPropertiesAndRelations,
@@ -10,22 +10,6 @@ import type { WaymarkRecord } from "./types";
 
 const LEADING_SPACES_REGEX = /^\s+/;
 const HTML_COMMENT_CLOSE_REGEX = /\s*-->\s*$/;
-
-// Known property keys that can act as pseudo-markers in continuation context
-const PROPERTY_KEYS = new Set([
-  "ref",
-  "rel",
-  "depends",
-  "needs",
-  "blocks",
-  "dupeof",
-  "owner",
-  "since",
-  "fixes",
-  "affects",
-  "priority",
-  "status",
-]);
 
 export type ContentSegment = {
   text: string;

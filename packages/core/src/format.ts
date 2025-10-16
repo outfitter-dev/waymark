@@ -1,7 +1,7 @@
 // tldr ::: formatting utilities for normalizing waymark comments
 
 import type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";
-import { parse, SIGIL } from "@waymarks/grammar";
+import { PROPERTY_KEYS, parse, SIGIL } from "@waymarks/grammar";
 
 import { resolveConfig } from "./config";
 import type { PartialWaymarkConfig, WaymarkConfig } from "./types";
@@ -27,22 +27,6 @@ const HTML_COMMENT_LEADER = "<!--";
 const SINGLE_SPACE = " ";
 const NEWLINE = "\n";
 const LINE_SPLIT_REGEX = /\r?\n/;
-
-// Known property keys that can act as pseudo-markers in continuation context
-const PROPERTY_KEYS = new Set([
-  "ref",
-  "rel",
-  "depends",
-  "needs",
-  "blocks",
-  "dupeof",
-  "owner",
-  "since",
-  "fixes",
-  "affects",
-  "priority",
-  "status",
-]);
 
 export function formatText(
   source: string,

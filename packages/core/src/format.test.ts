@@ -1,6 +1,7 @@
 // tldr ::: tests for waymark formatting utilities
 
 import { describe, expect, test } from "bun:test";
+import { PROPERTY_KEYS as GRAMMAR_PROPERTY_KEYS } from "@waymarks/grammar";
 
 import { formatText } from "./format";
 
@@ -203,5 +204,53 @@ describe("formatText", () => {
       "// todo:::task",
       "// :::continuation",
     ]);
+  });
+});
+
+describe("PROPERTY_KEYS alignment", () => {
+  test("formatter uses PROPERTY_KEYS from grammar package", () => {
+    // This test ensures the formatter imports PROPERTY_KEYS from @waymarks/grammar
+    // instead of maintaining its own duplicate list.
+    // If this test fails, it means the lists have diverged.
+
+    // The formatter should recognize the same property keys as the grammar
+    const expectedKeys = Array.from(GRAMMAR_PROPERTY_KEYS).sort();
+
+    // Test that all expected property keys are recognized in property continuations
+    for (const key of expectedKeys) {
+      const source = [
+        "// tldr ::: test waymark",
+        `// ${key} ::: test-value`,
+      ].join("\n");
+
+      const { formattedText } = formatText(source, {
+        file: "src/test.ts",
+      });
+
+      // If the key is recognized, it should be formatted as a property continuation
+      expect(formattedText).toContain(`${key} ::: test-value`);
+    }
+  });
+
+  test("property keys list matches expected set", () => {
+    // Verify the exact set of property keys to catch additions/removals
+    const expectedKeys = [
+      "ref",
+      "rel",
+      "depends",
+      "needs",
+      "blocks",
+      "dupeof",
+      "owner",
+      "since",
+      "fixes",
+      "affects",
+      "priority",
+      "status",
+    ].sort();
+
+    const actualKeys = Array.from(GRAMMAR_PROPERTY_KEYS).sort();
+
+    expect(actualKeys).toEqual(expectedKeys);
   });
 });
