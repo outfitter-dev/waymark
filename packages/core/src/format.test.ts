@@ -13,6 +13,16 @@ const MULTILINE_SAMPLE = [
 ].join("\n");
 const CONTINUATION_LINE_PATTERN = /^\/\/\s+::: with OAuth 2\.0 and PKCE$/;
 
+// HTML closure test patterns
+const HTML_OWNER_PATTERN = /<!-- owner\s+::: @alice -->$/;
+const HTML_SINCE_PATTERN = /<!-- since\s+::: 2025-01-01 -->$/;
+const HTML_REF_AUTH_PATTERN = /<!--\s+ref ::: #auth\/service -->$/;
+const HTML_OWNER_ALIGNED_PATTERN = /<!--\s+owner ::: @alice -->$/;
+const HTML_BOB_PATTERN = /<!-- owner\s+::: @bob -->$/;
+const HTML_REF_PAYMENTS_PATTERN = /<!--\s+ref ::: #payments\/stripe -->$/;
+const HTML_DEPENDS_PATTERN = /<!--\s+depends ::: #infra\/cache -->$/;
+const HTML_CLOSURE_PATTERN = /-->\s*$/;
+
 describe("formatText", () => {
   test("normalizes type casing and spacing", () => {
     const { formattedText, edits } = formatText(SAMPLE, {
@@ -252,5 +262,129 @@ describe("PROPERTY_KEYS alignment", () => {
     const actualKeys = Array.from(GRAMMAR_PROPERTY_KEYS).sort();
 
     expect(actualKeys).toEqual(expectedKeys);
+  });
+});
+
+describe("HTML comment closure with property continuations", () => {
+  test("formats HTML waymark with property-only continuations", () => {
+    const htmlPropertyOnly = [
+      "<!-- todo ::: implement auth",
+      "<!-- owner ::: @alice",
+      "<!-- since ::: 2025-01-01",
+    ].join("\n");
+
+    const { formattedText } = formatText(htmlPropertyOnly, {
+      file: "docs/tasks.md",
+      config: {
+        format: {
+          alignContinuations: true,
+        },
+      },
+    });
+
+    const lines = formattedText.split("\n");
+    // Each line should end with -->
+    expect(lines[0]).toBe("<!-- todo ::: implement auth -->");
+    expect(lines[1]).toMatch(HTML_OWNER_PATTERN);
+    expect(lines[2]).toMatch(HTML_SINCE_PATTERN);
+  });
+
+  test("formats HTML waymark with mixed text and property continuations", () => {
+    const htmlMixed = [
+      "<!-- tldr ::: authentication service",
+      "<!--      ::: managing JWT lifecycle",
+      "<!-- ref ::: #auth/service",
+      "<!-- owner ::: @alice",
+    ].join("\n");
+
+    const { formattedText } = formatText(htmlMixed, {
+      file: "docs/arch.md",
+      config: {
+        format: {
+          alignContinuations: true,
+        },
+      },
+    });
+
+    const lines = formattedText.split("\n");
+    // All lines should end with -->
+    expect(lines[0]).toBe("<!-- tldr ::: authentication service -->");
+    expect(lines[1]).toBe("<!--      ::: managing JWT lifecycle -->");
+    // Property lines have alignment spacing
+    expect(lines[2]).toMatch(HTML_REF_AUTH_PATTERN);
+    expect(lines[3]).toMatch(HTML_OWNER_ALIGNED_PATTERN);
+  });
+
+  test("preserves existing HTML closure markers", () => {
+    const htmlWithClosure = [
+      "<!-- todo ::: task one -->",
+      "<!-- owner ::: @bob -->",
+    ].join("\n");
+
+    const { formattedText } = formatText(htmlWithClosure, {
+      file: "docs/tasks.md",
+    });
+
+    const lines = formattedText.split("\n");
+    // Should not add duplicate -->
+    expect(lines[0]).toBe("<!-- todo ::: task one -->");
+    expect(lines[1]).toMatch(HTML_BOB_PATTERN);
+    // Verify no double -->
+    expect(lines[0]).not.toContain("---->");
+    expect(lines[1]).not.toContain("---->");
+  });
+
+  test("handles HTML waymark with only properties (no text content)", () => {
+    const htmlPropertiesOnly = [
+      "<!-- this ::: service handler",
+      "<!-- ref ::: #payments/stripe",
+      "<!-- owner ::: @alice",
+      "<!-- depends ::: #infra/cache",
+    ].join("\n");
+
+    const { formattedText } = formatText(htmlPropertiesOnly, {
+      file: "docs/design.md",
+      config: {
+        format: {
+          alignContinuations: true,
+        },
+      },
+    });
+
+    const lines = formattedText.split("\n");
+    // First line (has type marker)
+    expect(lines[0]).toBe("<!-- this ::: service handler -->");
+    // Property continuations should all have --> with alignment spacing
+    expect(lines[1]).toMatch(HTML_REF_PAYMENTS_PATTERN);
+    expect(lines[2]).toMatch(HTML_OWNER_ALIGNED_PATTERN);
+    expect(lines[3]).toMatch(HTML_DEPENDS_PATTERN);
+  });
+
+  test("applies closure to all HTML continuation types", () => {
+    const complexHtml = [
+      "<!-- tldr ::: comprehensive waymark example",
+      "<!--      ::: with text continuation",
+      "<!--      ::: and another text line",
+      "<!-- ref ::: #docs/example",
+      "<!-- owner ::: @team",
+      "<!-- since ::: 2025-01-15",
+    ].join("\n");
+
+    const { formattedText } = formatText(complexHtml, {
+      file: "docs/example.md",
+      config: {
+        format: {
+          alignContinuations: true,
+        },
+      },
+    });
+
+    const lines = formattedText.split("\n");
+    // Verify every line ends with -->
+    for (const line of lines) {
+      expect(line).toMatch(HTML_CLOSURE_PATTERN);
+      // Verify no double closures
+      expect(line).not.toContain("---->");
+    }
   });
 });

@@ -645,3 +645,20 @@ Detailed daily logs are archived in `.agents/.archive/`:
 - Core: implemented `removeWaymarks` with ID-aware removal, criteria filtering, and multi-line support plus JSON index updates.
 - CLI: added `wm remove` with preview/confirm flow, JSON(L) output, and tests for line/id removal scenarios.
 - CLI/core: expanded removal criteria with `contains` matching, glob expansion defaulting to the workspace root, and JSON `--from` payloads that can configure command options; added focused tests for these flows.
+
+### 2025-10-16
+
+- **WAY-20: HTML Property Continuation Formatting** (Lock down HTML closure)
+  - Created unified `applyHtmlClosure()` helper to centralize HTML comment closure logic
+  - Refactored `formatMultiLine()` to apply closure via single `.map()` call instead of dual code paths
+  - Removed `ensureHtmlClosure()` function and inline closure logic from `renderContinuationLines()`
+  - Eliminated duplication: property continuations now handled consistently with text continuations
+  - Added comprehensive test suite covering:
+    - HTML waymarks with property-only continuations
+    - Mixed text and property continuations
+    - Preservation of existing closure markers (no double `-->`)
+    - Complex multi-line HTML blocks with all continuation types
+  - All 298 tests passing, full `bun check:all` green
+  - Files modified:
+    - `packages/core/src/format.ts` (unified closure, removed duplicate logic)
+    - `packages/core/src/format.test.ts` (5 new tests with regex constants)

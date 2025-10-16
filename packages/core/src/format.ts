@@ -201,15 +201,8 @@ function formatMultiLine(
     })
   );
 
-  if (commentLeader === HTML_COMMENT_LEADER) {
-    ensureHtmlClosure({
-      blockLines,
-      continuations,
-      firstSegment,
-    });
-  }
-
-  return blockLines;
+  // Apply HTML closure to all lines if needed
+  return blockLines.map((line) => applyHtmlClosure(line, commentLeader));
 }
 
 function normalizeType(record: WaymarkRecord, config: WaymarkConfig): string {
@@ -241,6 +234,20 @@ function appendHtmlClosure(rendered: string, hasContent: boolean): string {
   return rendered.endsWith(SINGLE_SPACE)
     ? `${rendered.trimEnd()} -->`
     : `${rendered} -->`;
+}
+
+/**
+ * applyHtmlClosure ::: unified HTML closure helper applying --> to waymark lines
+ *
+ * Centralizes HTML comment closure logic. Checks if line needs closure based on
+ * comment leader and existing closure, then applies it consistently.
+ */
+function applyHtmlClosure(line: string, commentLeader: string): string {
+  if (commentLeader !== HTML_COMMENT_LEADER || line.includes("-->")) {
+    return line;
+  }
+  const hasContent = line.includes(SIGIL);
+  return appendHtmlClosure(line, hasContent).trimEnd();
 }
 
 type FirstLineRenderParams = {
@@ -292,10 +299,9 @@ function renderContinuationLines(params: ContinuationRenderParams): string[] {
     config,
     sigilPosition,
   } = params;
-  const lastIndex = continuations.length - 1;
   const alignContinuations = config.format.alignContinuations ?? true;
 
-  return continuations.map((segment, index) => {
+  return continuations.map((segment) => {
     // Build the base line with comment leader
     const base = `${indent}${commentLeader}${leaderSeparator}`;
 
@@ -310,18 +316,6 @@ function renderContinuationLines(params: ContinuationRenderParams): string[] {
 
     if (segment.length > 0) {
       line += config.format.spaceAroundSigil ? ` ${segment}` : segment;
-    }
-
-    // Handle explicit closing on last line
-    const isLast = index === lastIndex;
-    if (
-      isLast &&
-      segment.endsWith(` ${SIGIL}`) &&
-      commentLeader === HTML_COMMENT_LEADER &&
-      !line.includes("-->")
-    ) {
-      // Already has closing, don't add another
-      line = appendHtmlClosure(line, segment.length > 0);
     }
 
     return line.trimEnd();
@@ -407,29 +401,4 @@ function calculateSigilPosition(params: SigilPositionParams): number {
   const spaceBeforeSigil = config.format.spaceAroundSigil ? 1 : 0;
 
   return baseLength + markerLength + spaceBeforeSigil;
-}
-
-type EnsureHtmlClosureParams = {
-  blockLines: string[];
-  continuations: string[];
-  firstSegment: string;
-};
-
-function ensureHtmlClosure(params: EnsureHtmlClosureParams): void {
-  const { blockLines } = params;
-
-  // For HTML comments, each line needs to be properly closed with -->
-  for (let i = 0; i < blockLines.length; i++) {
-    const line = blockLines[i] ?? "";
-
-    // Skip if line already has closure
-    if (line.includes("-->")) {
-      continue;
-    }
-
-    // Add closure to lines that need it
-    const hasContent = line.includes(":::");
-    const closed = appendHtmlClosure(line, hasContent);
-    blockLines[i] = closed.trimEnd();
-  }
 }
