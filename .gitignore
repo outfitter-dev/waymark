@@ -46,6 +46,10 @@ temp/
 .waymark/index.json
 .waymark/history.json
 
+# Test cache databases (SQLite artifacts from test runs)
+packages/core/fixtures/test-cache.db*
+packages/core/test-cache/waymark.db*
+
 # Turbo cache
 .turbo/
 
