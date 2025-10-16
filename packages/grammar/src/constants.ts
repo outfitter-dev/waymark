@@ -192,3 +192,20 @@ export const MARKERS = {
   question: "question",
   ask: "ask",
 } as const;
+
+// Known property keys that can act as pseudo-markers in continuation context
+// This is the single source of truth for property keys recognized by the parser and formatter
+export const PROPERTY_KEYS = new Set([
+  "ref",
+  "rel",
+  "depends",
+  "needs",
+  "blocks",
+  "dupeof",
+  "owner",
+  "since",
+  "fixes",
+  "affects",
+  "priority",
+  "status",
+]);
