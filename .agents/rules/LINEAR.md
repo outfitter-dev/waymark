@@ -5,7 +5,7 @@
 ## Project
 
 - Team: Waymark (subteam of Outfitter)
-- ID: `WM`
+- ID: `WAY`
 - Project: `Waymark v0.1`
 
 ## Rules
