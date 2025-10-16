@@ -70,6 +70,7 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
         const source = await readFile(filePath, "utf8").catch((error) => {
           // Only silently skip ENOENT; log other errors
           if (error.code !== "ENOENT") {
+            // biome-ignore lint/suspicious/noConsole: CLI tool needs to log errors to stderr
             console.warn(`Failed to read ${filePath}:`, error.message);
           }
           return null;
