@@ -67,7 +67,13 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
       const records: import("@waymarks/core").WaymarkRecord[] = [];
 
       for (const filePath of filePaths) {
-        const source = await readFile(filePath, "utf8").catch(() => null);
+        const source = await readFile(filePath, "utf8").catch((error) => {
+          // Only silently skip ENOENT; log other errors
+          if (error.code !== "ENOENT") {
+            console.warn(`Failed to read ${filePath}:`, error.message);
+          }
+          return null;
+        });
         if (typeof source !== "string") {
           continue;
         }
