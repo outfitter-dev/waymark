@@ -8,6 +8,7 @@ import {
   parse,
   resolveConfig,
 } from "@waymarks/core";
+import packageJson from "../package.json" with { type: "json" };
 
 export type { ParseOptions, WaymarkRecord } from "@waymarks/core";
 export type { PartialWaymarkConfig } from "./types.ts";
@@ -34,7 +35,7 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
   const config = resolveConfig(options.config ?? {});
 
   return {
-    agentVersion: "1.0.0-beta.1",
+    agentVersion: packageJson.version,
 
     /**
      * Parse waymark syntax from a source string.
@@ -86,4 +87,4 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
   };
 }
 
-export const agentVersion = "1.0.0-beta.1";
+export const agentVersion = packageJson.version;
