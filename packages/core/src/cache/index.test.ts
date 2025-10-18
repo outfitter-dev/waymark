@@ -2,7 +2,8 @@
 
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
-import { homedir } from "node:os";
+import { mkdtemp, rm, symlink } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { WaymarkRecord } from "@waymarks/grammar";
@@ -295,6 +296,21 @@ describe("WaymarkCache", () => {
     expect(() => {
       new WaymarkCache({ dbPath: "/tmp/malicious.db" });
     }).toThrow(SECURITY_ERROR_PATTERN);
+  });
+
+  test("WaymarkCache rejects workspace symlink that escapes allowed roots", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "wm-cache-workspace-"));
+    const outsideDir = await mkdtemp(join(tmpdir(), "wm-cache-outside-"));
+    const linkDir = join(workspace, "unsafe-link");
+
+    await symlink(outsideDir, linkDir, "dir");
+
+    expect(() => {
+      new WaymarkCache({ dbPath: join(linkDir, "cache.db") });
+    }).toThrow(SECURITY_ERROR_PATTERN);
+
+    await rm(workspace, { recursive: true, force: true });
+    await rm(outsideDir, { recursive: true, force: true });
   });
 
   test("WaymarkCache allows valid cache paths", () => {
