@@ -1,37 +1,38 @@
 // tldr ::: filesystem helpers for expanding waymark CLI inputs
 
-import { existsSync, statSync } from "node:fs";
-import { readdir, stat } from "node:fs/promises";
+import { existsSync, realpathSync, statSync } from "node:fs";
+import { lstat, readdir, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import type { WaymarkConfig } from "@waymarks/core";
 import { getIgnoreFilter, type IgnoreFilter } from "./ignore";
 
 function determineRootDir(inputs: string[]): string {
   const cwd = process.cwd();
+  const cwdReal = tryRealpathSync(cwd) ?? cwd;
 
-  // If scanning a single directory that exists, use it as root
-  if (inputs.length === 1 && inputs[0]) {
-    const resolved = resolve(cwd, inputs[0]);
+  if (inputs.length !== 1) {
+    return cwd;
+  }
 
-    // Security: Prevent relative path traversal from changing the root directory
-    // to a location outside the workspace. Absolute paths are allowed.
-    if (!isAbsolute(inputs[0])) {
-      const relativePath = relative(cwd, resolved);
-      if (relativePath.startsWith("..")) {
-        // Don't allow relative traversal to become the root directory
-        return cwd;
+  const [input] = inputs;
+  if (!input) {
+    return cwd;
+  }
+
+  const resolved = resolve(cwd, input);
+
+  if (!isAbsolute(input) && escapesWorkspace(resolved, cwd, cwdReal)) {
+    return cwd;
+  }
+
+  if (existsSync(resolved)) {
+    try {
+      const stats = statSync(resolved);
+      if (stats.isDirectory()) {
+        return resolved;
       }
-    }
-
-    if (existsSync(resolved)) {
-      try {
-        const stats = statSync(resolved);
-        if (stats.isDirectory()) {
-          return resolved;
-        }
-      } catch {
-        // Fall through to using cwd
-      }
+    } catch {
+      // Fall through to using cwd
     }
   }
 
@@ -48,6 +49,7 @@ function determineRootDir(inputs: string[]): string {
  */
 function assertNoTraversal(
   rootDir: string,
+  rootRealPath: string,
   input: string,
   resolved: string
 ): void {
@@ -63,7 +65,38 @@ function assertNoTraversal(
   if (relativePath.startsWith("..")) {
     throw new Error(`Input "${input}" resolves outside workspace: ${resolved}`);
   }
+
+  try {
+    const resolvedReal = realpathSync(resolved);
+    const relativeReal = relative(rootRealPath, resolvedReal);
+    if (relativeReal.startsWith("..")) {
+      throw new Error(
+        `Input "${input}" resolves outside workspace: ${resolvedReal}`
+      );
+    }
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+    ) {
+      // Non-existent paths handled later
+      return;
+    }
+    throw error;
+  }
 }
+
+type VisitedSet = Set<string>;
+
+type TraversalContext = {
+  rootDir: string;
+  rootRealPath: string;
+  ignoreFilter: IgnoreFilter;
+  visited: VisitedSet;
+  enforceBoundary: boolean;
+};
 
 export async function expandInputPaths(
   inputs: string[],
@@ -74,6 +107,7 @@ export async function expandInputPaths(
   }
 
   const rootDir = determineRootDir(inputs);
+  const rootRealPath = await getRealPath(rootDir);
   const ignoreFilter = getIgnoreFilter({
     rootDir,
     config: {
@@ -84,17 +118,26 @@ export async function expandInputPaths(
   });
 
   const files = new Set<string>();
+  const visited: VisitedSet = new Set();
 
   for (const input of inputs) {
     const resolved = resolve(rootDir, input);
+    const enforceBoundary = !isAbsolute(input);
+    const context: TraversalContext = {
+      rootDir,
+      rootRealPath,
+      ignoreFilter,
+      visited,
+      enforceBoundary,
+    };
 
     // Prevent path traversal attacks using relative paths like "../.."
-    assertNoTraversal(rootDir, input, resolved);
+    assertNoTraversal(rootDir, rootRealPath, input, resolved);
 
     if (!existsSync(resolved)) {
       continue;
     }
-    await collectFilesRecursive(resolved, files, ignoreFilter);
+    await collectFilesRecursive(resolved, files, context);
   }
 
   return Array.from(files);
@@ -103,18 +146,25 @@ export async function expandInputPaths(
 async function collectFilesRecursive(
   path: string,
   files: Set<string>,
-  ignoreFilter: IgnoreFilter
+  context: TraversalContext
 ): Promise<void> {
-  const info = await stat(path);
-  const isDirectory = info.isDirectory();
+  const { ignoreFilter, visited } = context;
+  const { targetPath, stats } = await resolveSafePath(path, context);
+
+  if (visited.has(targetPath)) {
+    return;
+  }
+  visited.add(targetPath);
+
+  const isDirectory = stats.isDirectory();
 
   // Check if this path should be ignored
-  if (ignoreFilter.shouldIgnore(path, isDirectory)) {
+  if (ignoreFilter.shouldIgnore(targetPath, isDirectory)) {
     return;
   }
 
-  if (info.isFile()) {
-    files.add(normalizePathForOutput(path));
+  if (stats.isFile()) {
+    files.add(normalizePathForOutput(targetPath));
     return;
   }
 
@@ -127,7 +177,7 @@ async function collectFilesRecursive(
   // including respect for includePaths that might target files inside
   // otherwise-skipped directories like dist/ or build/.
 
-  await collectDirectoryEntries(path, files, ignoreFilter);
+  await collectDirectoryEntries(targetPath, files, context);
 }
 
 // Removed: shouldSkipDirectory function - now handled by IgnoreFilter
@@ -135,19 +185,58 @@ async function collectFilesRecursive(
 async function collectDirectoryEntries(
   directory: string,
   files: Set<string>,
-  ignoreFilter: IgnoreFilter
+  context: TraversalContext
 ): Promise<void> {
   const entries = await readdir(directory, { withFileTypes: true });
   for (const entry of entries) {
     const child = join(directory, entry.name);
 
-    if (entry.isDirectory()) {
-      // Ignore filter handles all directory filtering now
-      await collectFilesRecursive(child, files, ignoreFilter);
-    } else if (entry.isFile()) {
-      await collectFilesRecursive(child, files, ignoreFilter);
+    if (entry.isDirectory() || entry.isFile() || entry.isSymbolicLink()) {
+      await collectFilesRecursive(child, files, context);
     }
   }
+}
+
+async function resolveSafePath(
+  path: string,
+  context: TraversalContext
+): Promise<{ targetPath: string; stats: Awaited<ReturnType<typeof stat>> }> {
+  const { rootDir, rootRealPath, enforceBoundary } = context;
+  const lstatInfo = await lstat(path);
+
+  if (!enforceBoundary) {
+    return followSymlinkWithoutBoundary(path, lstatInfo);
+  }
+
+  if (!lstatInfo.isSymbolicLink()) {
+    return { targetPath: path, stats: lstatInfo };
+  }
+
+  const realPath = await realpath(path).catch((error) => {
+    if (isEnoent(error)) {
+      return null;
+    }
+    throw error;
+  });
+
+  if (!realPath) {
+    return { targetPath: path, stats: lstatInfo };
+  }
+
+  const relativeToRoot = relative(rootDir, realPath);
+  const relativeToRealRoot = relative(rootRealPath, realPath);
+  if (relativeToRoot.startsWith("..") || relativeToRealRoot.startsWith("..")) {
+    throw new Error(`Input "${path}" resolves outside workspace: ${realPath}`);
+  }
+
+  const targetStats = await stat(realPath).catch((error) => {
+    if (isEnoent(error)) {
+      return lstatInfo;
+    }
+    throw error;
+  });
+
+  return { targetPath: realPath, stats: targetStats };
 }
 
 function normalizePathForOutput(path: string): string {
@@ -158,5 +247,69 @@ function normalizePathForOutput(path: string): string {
 export function ensureFileExists(path: string): void {
   if (!(existsSync(path) || existsSync(resolve(process.cwd(), path)))) {
     throw new Error(`File not found: ${path}`);
+  }
+}
+
+function tryRealpathSync(path: string): string | null {
+  try {
+    return realpathSync(path);
+  } catch (error) {
+    if (isEnoent(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function escapesWorkspace(candidate: string, cwd: string, cwdReal: string): boolean {
+  const relativeToCwd = relative(cwd, candidate);
+  if (relativeToCwd.startsWith("..")) {
+    return true;
+  }
+
+  const candidateReal = tryRealpathSync(candidate);
+  if (!candidateReal) {
+    return false;
+  }
+
+  return relative(cwdReal, candidateReal).startsWith("..");
+}
+
+function followSymlinkWithoutBoundary(
+  path: string,
+  lstatInfo: Awaited<ReturnType<typeof lstat>>
+): Promise<{ targetPath: string; stats: Awaited<ReturnType<typeof stat>> }> {
+  return stat(path)
+    .then((directStats) => ({ targetPath: path, stats: directStats }))
+    .catch((error) => {
+      if (isEnoent(error)) {
+        return { targetPath: path, stats: lstatInfo };
+      }
+      throw error;
+    });
+}
+
+function isEnoent(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
+}
+
+async function getRealPath(path: string): Promise<string> {
+  try {
+    return await realpath(path);
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+    ) {
+      return path;
+    }
+    throw error;
   }
 }
