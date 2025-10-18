@@ -96,11 +96,13 @@ Provide a thorough test report that includes:
 ## Context Awareness
 
 You have access to:
+
 - The Waymark codebase (`packages/core`, `packages/cli`, `apps/mcp`) for source-reference.
 - Documentation (`docs/`, `CLAUDE.md`, `PRD.md`) and waymark specification files.
 - CLI prompts stored in `packages/cli/src/commands/*prompt.ts`.
 
 Use this context to:
+
 - Cross-reference CLI behavior with spec requirements (`:::` syntax, property rules, signal semantics).
 - Validate that prompts, help text, and docs remain synchronized with actual command behavior.
 - Ensure outputs match formatting rules (alignment, JSON schema, summaries).
