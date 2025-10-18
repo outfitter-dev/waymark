@@ -1,7 +1,7 @@
 // tldr ::: tests for filesystem path expansion and traversal prevention
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -90,6 +90,38 @@ describe("expandInputPaths", () => {
     await expect(expandInputPaths(["src/../../"], config)).rejects.toThrow(
       OUTSIDE_WORKSPACE_ERROR
     );
+  });
+
+  test("rejects file symlink that escapes workspace", async () => {
+    const config = resolveConfig({});
+    const outsideDir = await mkdtemp(join(tmpdir(), "external-target-"));
+    const outsideFile = join(outsideDir, "secret.txt");
+    await writeFile(outsideFile, "secret", "utf8");
+
+    const linkPath = join(workspace, "src", "escape-link.ts");
+    await symlink(outsideFile, linkPath);
+
+    await expect(
+      expandInputPaths(["src/escape-link.ts"], config)
+    ).rejects.toThrow(OUTSIDE_WORKSPACE_ERROR);
+
+    await rm(outsideDir, { recursive: true, force: true });
+  });
+
+  test("rejects directory symlink that escapes workspace", async () => {
+    const config = resolveConfig({});
+    const outsideDir = await mkdtemp(join(tmpdir(), "external-dir-"));
+    const outsideFile = join(outsideDir, "exposed.ts");
+    await writeFile(outsideFile, "// outside file", "utf8");
+
+    const linkDir = join(workspace, "external");
+    await symlink(outsideDir, linkDir, "dir");
+
+    await expect(expandInputPaths(["external"], config)).rejects.toThrow(
+      OUTSIDE_WORKSPACE_ERROR
+    );
+
+    await rm(outsideDir, { recursive: true, force: true });
   });
 
   test("allows relative paths within workspace", async () => {
