@@ -194,11 +194,14 @@ function findExistingAncestor(pathValue: string): string | null {
 function isWithinAllowedParents(candidate: string, parents: string[]): boolean {
   return parents.some((parent) => {
     const rel = relative(parent, candidate);
-    return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+    return rel === "" || !(rel.startsWith("..") || isAbsolute(rel));
   });
 }
 
-function throwSecurityError(pathValue: string, allowedParents: string[]): never {
+function throwSecurityError(
+  pathValue: string,
+  allowedParents: string[]
+): never {
   throw new Error(
     `Cache path must be within ${allowedParents.join(" or ")}, got: ${pathValue}\n` +
       "This is a security restriction to prevent writing outside cache directories."
