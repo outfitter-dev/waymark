@@ -1,7 +1,7 @@
 // tldr ::: SQLite cache orchestration for waymark records and dependency graphs
 
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { WaymarkRecord } from "@waymarks/grammar";
@@ -59,19 +59,9 @@ export class WaymarkCache {
       resolve(cacheHome, "waymark"),
       resolve(process.cwd()),
     ];
+    const allowedRealParents = expandAllowedParents(allowedParents);
 
-    // Validate path is within one of the allowed directories
-    const isInsideAllowed = allowedParents.some((parent) => {
-      const rel = relative(parent, resolved);
-      return rel && !rel.startsWith("..") && !isAbsolute(rel);
-    });
-
-    if (!isInsideAllowed) {
-      throw new Error(
-        `Cache path must be within ${allowedParents.join(" or ")}, got: ${resolved}\n` +
-          "This is a security restriction to prevent writing outside cache directories."
-      );
-    }
+    ensurePathWithinAllowed(resolved, allowedParents, allowedRealParents);
 
     // Create directory if needed
     const dir = dirname(resolved);
@@ -153,4 +143,84 @@ export class WaymarkCache {
   [Symbol.dispose](): void {
     this.close();
   }
+}
+
+function expandAllowedParents(parents: string[]): string[] {
+  const seen = new Set<string>();
+  for (const parent of parents) {
+    const absolute = resolve(parent);
+    seen.add(absolute);
+    const real = tryRealpathSync(absolute);
+    if (real) {
+      seen.add(real);
+    }
+  }
+  return Array.from(seen);
+}
+
+function ensurePathWithinAllowed(
+  target: string,
+  allowedDisplayParents: string[],
+  allowedParents: string[]
+): void {
+  const absolute = resolve(target);
+  if (!isWithinAllowedParents(absolute, allowedParents)) {
+    throwSecurityError(absolute, allowedDisplayParents);
+  }
+
+  const existingAncestor = findExistingAncestor(absolute);
+  if (!existingAncestor) {
+    return;
+  }
+
+  const ancestorReal = tryRealpathSync(existingAncestor);
+  if (ancestorReal && !isWithinAllowedParents(ancestorReal, allowedParents)) {
+    throwSecurityError(ancestorReal, allowedDisplayParents);
+  }
+}
+
+function findExistingAncestor(pathValue: string): string | null {
+  let current = resolve(pathValue);
+  while (!existsSync(current)) {
+    const parent = dirname(current);
+    if (parent === current) {
+      return null;
+    }
+    current = parent;
+  }
+  return current;
+}
+
+function isWithinAllowedParents(candidate: string, parents: string[]): boolean {
+  return parents.some((parent) => {
+    const rel = relative(parent, candidate);
+    return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+  });
+}
+
+function throwSecurityError(pathValue: string, allowedParents: string[]): never {
+  throw new Error(
+    `Cache path must be within ${allowedParents.join(" or ")}, got: ${pathValue}\n` +
+      "This is a security restriction to prevent writing outside cache directories."
+  );
+}
+
+function tryRealpathSync(pathValue: string): string | null {
+  try {
+    return realpathSync(pathValue);
+  } catch (error) {
+    if (isEnoent(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function isEnoent(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
 }
