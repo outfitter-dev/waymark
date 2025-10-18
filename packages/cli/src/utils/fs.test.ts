@@ -66,19 +66,16 @@ describe("expandInputPaths", () => {
     );
   });
 
-  test(
-    "rejects single-input traversal preventing attacker-controlled root (P0 fix)",
-    async () => {
-      const config = resolveConfig({});
-      // Critical security test from Codex review:
-      // When a single relative path traverses outside workspace,
-      // determineRootDir should NOT use it as the root directory.
-      // This test ensures the fix prevents the security boundary from becoming attacker-controlled.
-      await expect(expandInputPaths(["../../etc"], config)).rejects.toThrow(
-        OUTSIDE_WORKSPACE_ERROR
-      );
-    }
-  );
+  test("rejects single-input traversal preventing attacker-controlled root (P0 fix)", async () => {
+    const config = resolveConfig({});
+    // Critical security test from Codex review:
+    // When a single relative path traverses outside workspace,
+    // determineRootDir should NOT use it as the root directory.
+    // This test ensures the fix prevents the security boundary from becoming attacker-controlled.
+    await expect(expandInputPaths(["../../etc"], config)).rejects.toThrow(
+      OUTSIDE_WORKSPACE_ERROR
+    );
+  });
   test("rejects mixed traversal attempts", async () => {
     const config = resolveConfig({});
 

@@ -261,7 +261,11 @@ function tryRealpathSync(path: string): string | null {
   }
 }
 
-function escapesWorkspace(candidate: string, cwd: string, cwdReal: string): boolean {
+function escapesWorkspace(
+  candidate: string,
+  cwd: string,
+  cwdReal: string
+): boolean {
   const relativeToCwd = relative(cwd, candidate);
   if (relativeToCwd.startsWith("..")) {
     return true;
