@@ -4,6 +4,7 @@
 export extern "wm" [
     ...paths: string # Files or directories to scan
     --version(-v) # Output version number
+    --config: string # Config file path
     --scope: string@"nu-complete wm scope" # Config scope
     --verbose # Enable verbose logging
     --debug # Enable debug logging
@@ -68,8 +69,8 @@ export extern "wm modify" [
     --id: string # Modify by waymark ID
     --type: string@"nu-complete wm types" # Change waymark type
     --raise # Add raised signal (^)
-    --important # Add important signal (*)
-    --no-signal # Remove all signals
+    --mark-starred # Add starred signal (*)
+    --clear-signals # Remove all signals
     --content: string # Replace content (use '-' for stdin)
     --write(-w) # Apply modifications
     --interactive # Interactive flow
@@ -86,6 +87,15 @@ export extern "wm remove" [
     --id: string # Remove by ID
     --from: string # Read from JSON file
     --criteria: string # Filter criteria
+    --type: string@"nu-complete wm types" # Filter by waymark type
+    --tag: string # Filter by hashtag
+    --mention: string # Filter by mention
+    --property: string # Filter by property
+    --file: string # Filter by file pattern
+    --content-pattern: string # Filter by content regex
+    --contains: string # Filter by content substring
+    --raised # Filter by raised signal
+    --starred # Filter by starred signal
     --yes # Skip confirmation
     --confirm # Force confirmation
     --json # Output as JSON

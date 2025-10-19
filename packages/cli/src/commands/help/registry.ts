@@ -16,6 +16,11 @@ const commonFlags = {
     type: "boolean",
     description: "Show version number",
   },
+  prompt: {
+    name: "prompt",
+    type: "boolean",
+    description: "Show agent-facing prompt instead of executing",
+  },
   config: {
     name: "config",
     type: "string",
@@ -43,6 +48,81 @@ const commonFlags = {
     type: "boolean",
     description: "Output as pretty-printed JSON",
   },
+  long: {
+    name: "long",
+    type: "boolean",
+    description: "Show detailed record information",
+  },
+  tree: {
+    name: "tree",
+    type: "boolean",
+    description: "Group output by directory",
+  },
+  flat: {
+    name: "flat",
+    type: "boolean",
+    description: "Show flat list output",
+  },
+  keepCommentMarkers: {
+    name: "keep-comment-markers",
+    type: "boolean",
+    description: "Keep comment syntax in output",
+  },
+  compact: {
+    name: "compact",
+    type: "boolean",
+    description: "Compact output format",
+  },
+  noColor: {
+    name: "no-color",
+    type: "boolean",
+    description: "Disable ANSI colors",
+  },
+  group: {
+    name: "group",
+    type: "string",
+    placeholder: "file|dir|type",
+    description: "Group results by field",
+  },
+  sort: {
+    name: "sort",
+    type: "string",
+    placeholder: "file|line|type|modified",
+    description: "Sort results by field",
+  },
+  context: {
+    name: "context",
+    alias: "C",
+    type: "string",
+    placeholder: "n",
+    description: "Show N lines of context",
+  },
+  after: {
+    name: "after",
+    alias: "A",
+    type: "string",
+    placeholder: "n",
+    description: "Show N lines after matches",
+  },
+  before: {
+    name: "before",
+    alias: "B",
+    type: "string",
+    placeholder: "n",
+    description: "Show N lines before matches",
+  },
+  limit: {
+    name: "limit",
+    type: "string",
+    placeholder: "n",
+    description: "Limit number of results",
+  },
+  page: {
+    name: "page",
+    type: "string",
+    placeholder: "n",
+    description: "Page number (used with --limit)",
+  },
   write: {
     name: "write",
     alias: "w",
@@ -58,7 +138,12 @@ export const commands: HelpRegistry = {
     usage: "wm format <file> [options]",
     description:
       "Format waymark comments in a file, normalizing spacing, case, and alignment.",
-    flags: [commonFlags.write, commonFlags.config, commonFlags.help],
+    flags: [
+      commonFlags.write,
+      commonFlags.config,
+      commonFlags.prompt,
+      commonFlags.help,
+    ],
     examples: [
       "wm format src/index.ts             # Preview formatting changes",
       "wm format src/index.ts --write     # Apply formatting changes",
@@ -70,7 +155,12 @@ export const commands: HelpRegistry = {
     usage: "wm lint <file...> [options]",
     description:
       "Validate waymark types against configured allowlist and grammar rules.",
-    flags: [commonFlags.json, commonFlags.config, commonFlags.help],
+    flags: [
+      commonFlags.json,
+      commonFlags.config,
+      commonFlags.prompt,
+      commonFlags.help,
+    ],
     examples: [
       "wm lint src/                       # Lint all files in src/",
       "wm lint src/*.ts                   # Lint TypeScript files",
@@ -81,7 +171,12 @@ export const commands: HelpRegistry = {
     name: "migrate",
     usage: "wm migrate <file> [options]",
     description: "Convert legacy TODO/FIXME/NOTE comments to waymark syntax.",
-    flags: [commonFlags.write, commonFlags.config, commonFlags.help],
+    flags: [
+      commonFlags.write,
+      commonFlags.config,
+      commonFlags.prompt,
+      commonFlags.help,
+    ],
     examples: [
       "wm migrate src/legacy.ts           # Preview migration",
       "wm migrate src/legacy.ts --write   # Apply migration",
@@ -114,13 +209,13 @@ export const commands: HelpRegistry = {
         name: "type",
         type: "string",
         placeholder: "todo|fix|...",
-        description: "Waymark type (can be positional)",
+        description: "Waymark type (required when not using --from)",
       },
       {
         name: "content",
         type: "string",
-        placeholder: "text",
-        description: "Waymark content (can be positional)",
+        placeholder: "text|-",
+        description: "Waymark content (use '-' to read from stdin)",
       },
       {
         name: "position",
@@ -139,16 +234,16 @@ export const commands: HelpRegistry = {
         description: "Insert after target line (shorthand)",
       },
       {
-        name: "tag",
-        type: "string",
-        placeholder: "#tag",
-        description: "Add hashtag (repeatable)",
-      },
-      {
         name: "mention",
         type: "string",
         placeholder: "@handle",
         description: "Add mention (repeatable)",
+      },
+      {
+        name: "tag",
+        type: "string",
+        placeholder: "#tag",
+        description: "Add hashtag (repeatable)",
       },
       {
         name: "property",
@@ -157,10 +252,40 @@ export const commands: HelpRegistry = {
         description: "Add property (repeatable)",
       },
       {
+        name: "ref",
+        type: "string",
+        placeholder: "token",
+        description: "Set canonical reference token",
+      },
+      {
+        name: "depends",
+        type: "string",
+        placeholder: "token",
+        description: "Add dependency relation (repeatable)",
+      },
+      {
+        name: "needs",
+        type: "string",
+        placeholder: "token",
+        description: "Add needs relation (repeatable)",
+      },
+      {
+        name: "blocks",
+        type: "string",
+        placeholder: "token",
+        description: "Add blocks relation (repeatable)",
+      },
+      {
         name: "continuation",
         type: "string",
         placeholder: "text",
         description: "Add continuation line (repeatable)",
+      },
+      {
+        name: "signal",
+        type: "string",
+        placeholder: "^|*",
+        description: "Add signal (^ raised, * starred)",
       },
       {
         name: "raised",
@@ -187,6 +312,7 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
+      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -227,12 +353,12 @@ export const commands: HelpRegistry = {
         description: "Add raised signal (^)",
       },
       {
-        name: "starred",
+        name: "mark-starred",
         type: "boolean",
         description: "Add starred signal (*)",
       },
       {
-        name: "no-signal",
+        name: "clear-signals",
         type: "boolean",
         description: "Remove all signals",
       },
@@ -244,6 +370,7 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
+      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -336,6 +463,7 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
+      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -482,8 +610,22 @@ queries, filtering by type/tag/mention, and multiple output formats.
     commonFlags.json,
     commonFlags.jsonl,
     commonFlags.pretty,
+    commonFlags.long,
+    commonFlags.tree,
+    commonFlags.flat,
+    commonFlags.keepCommentMarkers,
+    commonFlags.compact,
+    commonFlags.noColor,
+    commonFlags.group,
+    commonFlags.sort,
+    commonFlags.context,
+    commonFlags.after,
+    commonFlags.before,
+    commonFlags.limit,
+    commonFlags.page,
     commonFlags.config,
     commonFlags.scope,
+    commonFlags.prompt,
     commonFlags.help,
     commonFlags.version,
   ],

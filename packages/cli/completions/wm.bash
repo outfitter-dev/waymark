@@ -10,7 +10,7 @@ _wm_completion() {
   commands="format insert modify remove lint migrate init update help"
 
   # Common options
-  opts="--version --scope --verbose --debug --quiet --help --prompt"
+  opts="--version --config --scope --verbose --debug --quiet --help --prompt"
 
   # Command-specific completion
   case "${COMP_WORDS[1]}" in
@@ -34,6 +34,10 @@ _wm_completion() {
           COMPREPLY=( $(compgen -f "${cur}") )
           return 0
           ;;
+        --config)
+          COMPREPLY=( $(compgen -f "${cur}") )
+          return 0
+          ;;
         --signal)
           COMPREPLY=( $(compgen -W "^ *" -- ${cur}) )
           return 0
@@ -47,7 +51,7 @@ _wm_completion() {
       ;;
 
     modify)
-      opts="${opts} --id --type --raise --important --no-signal --content --write --interactive --json --jsonl"
+      opts="${opts} --id --type --raise --mark-starred --clear-signals --content --write --interactive --json --jsonl"
       COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
       return 0
       ;;
@@ -58,8 +62,16 @@ _wm_completion() {
           COMPREPLY=( $(compgen -f "${cur}") )
           return 0
           ;;
+        --config)
+          COMPREPLY=( $(compgen -f "${cur}") )
+          return 0
+          ;;
+        --type)
+          COMPREPLY=( $(compgen -W "todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask" -- ${cur}) )
+          return 0
+          ;;
         *)
-          opts="${opts} --write --id --from --criteria --yes --confirm --json --jsonl"
+          opts="${opts} --write --id --from --criteria --type --tag --mention --property --file --content-pattern --contains --raised --starred --yes --confirm --json --jsonl"
           COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
           return 0
           ;;
@@ -108,6 +120,10 @@ _wm_completion() {
           COMPREPLY=( $(compgen -W "project user" -- ${cur}) )
           return 0
           ;;
+        --config)
+          COMPREPLY=( $(compgen -f "${cur}") )
+          return 0
+          ;;
         *)
           opts="${opts} --format --preset --scope --force"
           COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
@@ -144,6 +160,17 @@ _wm_completion() {
           ;;
         --scope)
           COMPREPLY=( $(compgen -W "default project user" -- ${cur}) )
+          return 0
+          ;;
+        --config)
+          COMPREPLY=( $(compgen -f "${cur}") )
+          return 0
+          ;;
+        --tag|--mention|--property|--ref|--depends|--needs|--blocks|--id|--criteria|--file|--content-pattern|--contains|--command)
+          # These flags expect free-form values; fall back to default path/word completion
+          ;;
+        --limit|--page|--context|--after|--before)
+          COMPREPLY=( $(compgen -W "" -- ${cur}) )
           return 0
           ;;
         *)

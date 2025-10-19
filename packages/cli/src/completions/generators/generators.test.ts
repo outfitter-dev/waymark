@@ -19,6 +19,10 @@ const WRITE_PATTERN = /write/;
 const TLDR_PATTERN = /tldr\s*:::/;
 const BASH_TYPE_FLAG_PATTERN = /--type\)/;
 const SIGNAL_PATTERN = /[\\^]\^|\*|--signal/;
+const CONFIG_PATTERN = /--config|-l config/;
+const MARK_STARRED_PATTERN = /mark-starred/;
+const CLEAR_SIGNALS_PATTERN = /clear-signals/;
+const CONTENT_PATTERN_FLAG = /content-pattern/;
 const MIN_EXPECTED_TYPE_COUNT = 20;
 
 describe("completion generators", () => {
@@ -87,6 +91,15 @@ describe("completion generators", () => {
         expect(output).toMatch(TYPE_PATTERN);
         expect(output).toContain("json");
         expect(output).toMatch(WRITE_PATTERN);
+        expect(output).toMatch(CONFIG_PATTERN);
+      });
+
+      test("includes key CLI-specific flags", () => {
+        const output = generator.generate();
+        expect(output).toMatch(MARK_STARRED_PATTERN);
+        expect(output).toMatch(CLEAR_SIGNALS_PATTERN);
+        expect(output).toMatch(CONTENT_PATTERN_FLAG);
+        expect(output).toMatch(SIGNAL_PATTERN);
       });
 
       test("includes tldr comment", () => {

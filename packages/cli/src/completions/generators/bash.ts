@@ -1,7 +1,12 @@
 // tldr ::: bash completion generator for waymark CLI
 
 import type { CompletionGenerator, GeneratorOptions } from "./types.ts";
-import { getTypesString } from "./utils.ts";
+import {
+  CONFIG_SCOPES,
+  GROUP_BY_OPTIONS,
+  getTypesString,
+  SORT_BY_OPTIONS,
+} from "./utils.ts";
 
 export class BashGenerator implements CompletionGenerator {
   private readonly options: GeneratorOptions;
@@ -16,6 +21,9 @@ export class BashGenerator implements CompletionGenerator {
 
   generate(): string {
     const typesString = getTypesString(this.options.types);
+    const scopeValues = CONFIG_SCOPES.join(" ");
+    const groupValues = GROUP_BY_OPTIONS.join(" ");
+    const sortValues = SORT_BY_OPTIONS.join(" ");
 
     return `# tldr ::: bash completion script for waymark CLI
 
@@ -29,7 +37,7 @@ _wm_completion() {
   commands="format insert modify remove lint migrate init update help"
 
   # Common options
-  opts="--version --scope --verbose --debug --quiet --help --prompt"
+  opts="--version --config --scope --verbose --debug --quiet --help --prompt"
 
   # Command-specific completion
   case "\${COMP_WORDS[1]}" in
@@ -53,6 +61,10 @@ _wm_completion() {
           COMPREPLY=( $(compgen -f "\${cur}") )
           return 0
           ;;
+        --config)
+          COMPREPLY=( $(compgen -f "\${cur}") )
+          return 0
+          ;;
         --signal)
           COMPREPLY=( $(compgen -W "^ *" -- \${cur}) )
           return 0
@@ -66,7 +78,7 @@ _wm_completion() {
       ;;
 
     modify)
-      opts="\${opts} --id --type --raise --important --no-signal --content --write --interactive --json --jsonl"
+      opts="\${opts} --id --type --raise --mark-starred --clear-signals --content --write --interactive --json --jsonl"
       COMPREPLY=( $(compgen -W "\${opts}" -- \${cur}) )
       return 0
       ;;
@@ -77,8 +89,16 @@ _wm_completion() {
           COMPREPLY=( $(compgen -f "\${cur}") )
           return 0
           ;;
+        --config)
+          COMPREPLY=( $(compgen -f "\${cur}") )
+          return 0
+          ;;
+        --type)
+          COMPREPLY=( $(compgen -W "${typesString}" -- \${cur}) )
+          return 0
+          ;;
         *)
-          opts="\${opts} --write --id --from --criteria --yes --confirm --json --jsonl"
+          opts="\${opts} --write --id --from --criteria --type --tag --mention --property --file --content-pattern --contains --raised --starred --yes --confirm --json --jsonl"
           COMPREPLY=( $(compgen -W "\${opts}" -- \${cur}) )
           return 0
           ;;
@@ -127,6 +147,10 @@ _wm_completion() {
           COMPREPLY=( $(compgen -W "project user" -- \${cur}) )
           return 0
           ;;
+        --config)
+          COMPREPLY=( $(compgen -f "\${cur}") )
+          return 0
+          ;;
         *)
           opts="\${opts} --format --preset --scope --force"
           COMPREPLY=( $(compgen -W "\${opts}" -- \${cur}) )
@@ -154,15 +178,26 @@ _wm_completion() {
           return 0
           ;;
         --group)
-          COMPREPLY=( $(compgen -W "file dir type" -- \${cur}) )
+          COMPREPLY=( $(compgen -W "${groupValues}" -- \${cur}) )
           return 0
           ;;
         --sort)
-          COMPREPLY=( $(compgen -W "file line type modified" -- \${cur}) )
+          COMPREPLY=( $(compgen -W "${sortValues}" -- \${cur}) )
           return 0
           ;;
         --scope)
-          COMPREPLY=( $(compgen -W "default project user" -- \${cur}) )
+          COMPREPLY=( $(compgen -W "${scopeValues}" -- \${cur}) )
+          return 0
+          ;;
+        --config)
+          COMPREPLY=( $(compgen -f "\${cur}") )
+          return 0
+          ;;
+        --tag|--mention|--property|--ref|--depends|--needs|--blocks|--id|--criteria|--file|--content-pattern|--contains|--command)
+          # These flags expect free-form values; fall back to default path/word completion
+          ;;
+        --limit|--page|--context|--after|--before)
+          COMPREPLY=( $(compgen -W "" -- \${cur}) )
           return 0
           ;;
         *)
