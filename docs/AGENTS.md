@@ -106,7 +106,7 @@ pre-commit:
       run: bun run format
 
     waymark-map:
-      run: bun run check:waymarks || true  # Non-blocking
+      run: bun run waymark:map || true  # Non-blocking
 ```
 
 **Philosophy:**
@@ -128,7 +128,7 @@ pre-push:
       run: bun run lint && bun run typecheck && bun run test
 
     waymark-map:
-      run: bun run check:waymarks || true  # Non-blocking
+      run: bun run waymark:map || true  # Non-blocking
 ```
 
 **Philosophy:**
@@ -514,7 +514,7 @@ Our agent-assisted development is working when:
 
 ```bash
 # Quality checks
-bun run check:all          # Full pipeline (lint, typecheck, test, waymarks)
+bun run check:all          # Full pipeline (lint, typecheck, test)
 bun run lint               # Lint all packages
 bun run typecheck          # Check types
 bun run test               # Run all tests
@@ -529,7 +529,7 @@ gt modify -acm "message"   # Amend with message
 gt submit                  # Submit stack to remote
 
 # Waymarks
-bun run check:waymarks     # Generate waymark map
+bun run waymark:map        # Generate waymark map
 rg ":::"                   # Find all waymarks
 waymark find --type todo # Find specific types
 ```
