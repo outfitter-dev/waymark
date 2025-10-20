@@ -225,7 +225,7 @@ async function resolveSafePath(
 
   const relativeToRoot = relative(rootDir, realPath);
   const relativeToRealRoot = relative(rootRealPath, realPath);
-  if (relativeToRoot.startsWith("..") || relativeToRealRoot.startsWith("..")) {
+  if (relativeToRoot.startsWith("..") && relativeToRealRoot.startsWith("..")) {
     throw new Error(`Input "${path}" resolves outside workspace: ${realPath}`);
   }
 
