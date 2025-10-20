@@ -24,6 +24,7 @@ reviews:
       - "feat/.*"
       - "gt/.*"      # Graphite stacked branches with slash prefix
       - "gt-.*"      # Graphite stacked branches with dash prefix
+      - "way-.*"     # Linear-generated branches like way-123-description
       - ".*-way-[0-9]+"  # Linear-generated branches like feature-way-123
 
   tools:
