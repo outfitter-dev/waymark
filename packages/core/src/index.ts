@@ -1,6 +1,6 @@
 // tldr ::: core waymark utilities with caching and scanning
 
-export const version = "0.0.0";
+export const version = "1.0.0-beta.1";
 
 export type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";
 // biome-ignore lint/performance/noBarrelFile: Intentional re-export of grammar for convenience

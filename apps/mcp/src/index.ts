@@ -7,7 +7,7 @@ import { registerPrompts } from "./prompts";
 import { registerResources } from "./resources";
 import { registerTools } from "./tools";
 
-const VERSION = process.env.npm_package_version ?? "0.0.0";
+const VERSION = process.env.npm_package_version ?? "1.0.0-beta.1";
 
 async function main(): Promise<void> {
   const server = new McpServer({ name: "waymark-mcp", version: VERSION });

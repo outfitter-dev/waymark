@@ -2,7 +2,7 @@
 
 # CLI Improvements Checklist (Archived)
 
-This page now serves as a historical snapshot of the v1.0 CLI rewrite. Active planning, backlog, and progress are tracked in Linear (Waymark team, project `Waymark v0.1`).
+This page now serves as a historical snapshot of the v1.0 CLI rewrite. Active planning, backlog, and progress are tracked in Linear (Waymark team, project `Waymark v1.0.0-beta.1`).
 
 > **Updated Oct 9, 2025** · For current guidance see [docs/cli/](docs/cli/) and [LINEAR.md](.agents/rules/LINEAR.md). Interactive TUI/fzf work remains deferred and should be managed through Linear issues.
 
