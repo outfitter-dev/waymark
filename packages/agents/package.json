@@ -14,7 +14,7 @@
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun",
     "dev": "bun build src/index.ts --outdir dist --target bun --watch",
-    "test": "bun test || echo 'No tests yet'",
+    "test": "bun test",
     "typecheck": "tsc --noEmit",
     "lint": "bunx ultracite check"
   },
