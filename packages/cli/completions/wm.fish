@@ -2,7 +2,8 @@
 
 # Common completions
 complete -c wm -s v -l version -d "Output version number"
-complete -c wm -l scope -d "Config scope" -a "default project user"
+complete -c wm -l config -d "Config file path" -r
+complete -c wm -l scope -d "Config scope" -r -a "default project user"
 complete -c wm -l verbose -d "Enable verbose logging"
 complete -c wm -l debug -d "Enable debug logging"
 complete -c wm -s q -l quiet -d "Only show errors"
@@ -25,14 +26,14 @@ complete -c wm -n "__fish_seen_subcommand_from format" -s w -l write -d "Write c
 
 # Insert command
 complete -c wm -n "__fish_seen_subcommand_from insert" -l from -d "Read from JSON file" -r
-complete -c wm -n "__fish_seen_subcommand_from insert" -l mention -d "Add mention"
-complete -c wm -n "__fish_seen_subcommand_from insert" -l tag -d "Add hashtag"
-complete -c wm -n "__fish_seen_subcommand_from insert" -l property -d "Add property"
-complete -c wm -n "__fish_seen_subcommand_from insert" -l ref -d "Set canonical reference"
-complete -c wm -n "__fish_seen_subcommand_from insert" -l depends -d "Add dependency"
-complete -c wm -n "__fish_seen_subcommand_from insert" -l needs -d "Add needs relation"
-complete -c wm -n "__fish_seen_subcommand_from insert" -l blocks -d "Add blocks relation"
-complete -c wm -n "__fish_seen_subcommand_from insert" -l signal -d "Add signal" -a "^ *"
+complete -c wm -n "__fish_seen_subcommand_from insert" -l mention -d "Add mention" -r
+complete -c wm -n "__fish_seen_subcommand_from insert" -l tag -d "Add hashtag" -r
+complete -c wm -n "__fish_seen_subcommand_from insert" -l property -d "Add property" -r
+complete -c wm -n "__fish_seen_subcommand_from insert" -l ref -d "Set canonical reference" -r
+complete -c wm -n "__fish_seen_subcommand_from insert" -l depends -d "Add dependency" -r
+complete -c wm -n "__fish_seen_subcommand_from insert" -l needs -d "Add needs relation" -r
+complete -c wm -n "__fish_seen_subcommand_from insert" -l blocks -d "Add blocks relation" -r
+complete -c wm -n "__fish_seen_subcommand_from insert" -l signal -d "Add signal" -r -a "^ *"
 complete -c wm -n "__fish_seen_subcommand_from insert" -l json -d "Output as JSON"
 complete -c wm -n "__fish_seen_subcommand_from insert" -l jsonl -d "Output as JSON Lines"
 
@@ -40,8 +41,8 @@ complete -c wm -n "__fish_seen_subcommand_from insert" -l jsonl -d "Output as JS
 complete -c wm -n "__fish_seen_subcommand_from modify" -l id -d "Modify by ID"
 complete -c wm -n "__fish_seen_subcommand_from modify" -l type -d "Change waymark type" -a "todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask"
 complete -c wm -n "__fish_seen_subcommand_from modify" -l raise -d "Add raised signal"
-complete -c wm -n "__fish_seen_subcommand_from modify" -l important -d "Add important signal"
-complete -c wm -n "__fish_seen_subcommand_from modify" -l no-signal -d "Remove all signals"
+complete -c wm -n "__fish_seen_subcommand_from modify" -l mark-starred -d "Add starred signal"
+complete -c wm -n "__fish_seen_subcommand_from modify" -l clear-signals -d "Remove all signals"
 complete -c wm -n "__fish_seen_subcommand_from modify" -l content -d "Replace content" -r
 complete -c wm -n "__fish_seen_subcommand_from modify" -s w -l write -d "Apply modifications"
 complete -c wm -n "__fish_seen_subcommand_from modify" -l interactive -d "Interactive flow"
@@ -52,7 +53,16 @@ complete -c wm -n "__fish_seen_subcommand_from modify" -l jsonl -d "Output as JS
 complete -c wm -n "__fish_seen_subcommand_from remove" -s w -l write -d "Actually remove"
 complete -c wm -n "__fish_seen_subcommand_from remove" -l id -d "Remove by ID"
 complete -c wm -n "__fish_seen_subcommand_from remove" -l from -d "Read from JSON file" -r
-complete -c wm -n "__fish_seen_subcommand_from remove" -l criteria -d "Filter criteria"
+complete -c wm -n "__fish_seen_subcommand_from remove" -l criteria -d "Filter criteria" -r
+complete -c wm -n "__fish_seen_subcommand_from remove" -l type -d "Filter by waymark type" -r -a "todo fix fixme wip done review test check note context why tldr this example idea comment warn alert deprecated temp tmp hack stub blocked needs question ask"
+complete -c wm -n "__fish_seen_subcommand_from remove" -l tag -d "Filter by hashtag" -r
+complete -c wm -n "__fish_seen_subcommand_from remove" -l mention -d "Filter by mention" -r
+complete -c wm -n "__fish_seen_subcommand_from remove" -l property -d "Filter by property" -r
+complete -c wm -n "__fish_seen_subcommand_from remove" -l file -d "Filter by file pattern" -r
+complete -c wm -n "__fish_seen_subcommand_from remove" -l content-pattern -d "Filter by content regex" -r
+complete -c wm -n "__fish_seen_subcommand_from remove" -l contains -d "Filter by content substring" -r
+complete -c wm -n "__fish_seen_subcommand_from remove" -l raised -d "Filter by raised signal"
+complete -c wm -n "__fish_seen_subcommand_from remove" -l starred -d "Filter by starred signal"
 complete -c wm -n "__fish_seen_subcommand_from remove" -l yes -d "Skip confirmation"
 complete -c wm -n "__fish_seen_subcommand_from remove" -l confirm -d "Force confirmation"
 complete -c wm -n "__fish_seen_subcommand_from remove" -l json -d "Output as JSON"
