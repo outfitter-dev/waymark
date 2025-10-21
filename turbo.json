@@ -44,19 +44,6 @@
       "outputs": [],
       "cache": false
     },
-    "check:waymarks": {
-      "dependsOn": [],
-      "inputs": [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.js",
-        "**/*.jsx",
-        "**/*.md",
-        "**/*.mdx"
-      ],
-      "outputs": [],
-      "cache": true
-    },
     "ci:local": {
       "dependsOn": ["lint", "test", "typecheck", "build"],
       "cache": false
