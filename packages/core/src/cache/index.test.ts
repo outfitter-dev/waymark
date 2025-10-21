@@ -2,7 +2,8 @@
 
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
-import { homedir } from "node:os";
+import { mkdtemp, rm, symlink } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { WaymarkRecord } from "@waymarks/grammar";
@@ -297,6 +298,21 @@ describe("WaymarkCache", () => {
     }).toThrow(SECURITY_ERROR_PATTERN);
   });
 
+  test("WaymarkCache rejects workspace symlink that escapes allowed roots", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "wm-cache-workspace-"));
+    const outsideDir = await mkdtemp(join(tmpdir(), "wm-cache-outside-"));
+    const linkDir = join(workspace, "unsafe-link");
+
+    await symlink(outsideDir, linkDir, "dir");
+
+    expect(() => {
+      new WaymarkCache({ dbPath: join(linkDir, "cache.db") });
+    }).toThrow(SECURITY_ERROR_PATTERN);
+
+    await rm(workspace, { recursive: true, force: true });
+    await rm(outsideDir, { recursive: true, force: true });
+  });
+
   test("WaymarkCache allows valid cache paths", () => {
     const cacheDir = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
     const validPath = join(cacheDir, "waymark", "test.db");
@@ -305,6 +321,28 @@ describe("WaymarkCache", () => {
       const cache = new WaymarkCache({ dbPath: validPath });
       cache[Symbol.dispose]();
     }).not.toThrow();
+  });
+
+  test("WaymarkCache allows workspace-local cache paths", () => {
+    const workspacePath = join(process.cwd(), "test-cache", "waymark.db");
+
+    expect(() => {
+      const cache = new WaymarkCache({ dbPath: workspacePath });
+      cache[Symbol.dispose]();
+    }).not.toThrow();
+  });
+
+  test("WaymarkCache allows relative workspace paths", () => {
+    expect(() => {
+      const cache = new WaymarkCache({ dbPath: "./fixtures/test-cache.db" });
+      cache[Symbol.dispose]();
+    }).not.toThrow();
+  });
+
+  test("WaymarkCache rejects paths outside workspace and cache", () => {
+    expect(() => {
+      new WaymarkCache({ dbPath: "/etc/waymark.db" });
+    }).toThrow(SECURITY_ERROR_PATTERN);
   });
 
   test("schema migration invalidates cache on version mismatch", () => {
