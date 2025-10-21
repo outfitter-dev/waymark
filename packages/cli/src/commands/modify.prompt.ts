@@ -9,7 +9,7 @@ Key capabilities:
 - Toggle signals: --raise adds ^, --starred adds *, --no-signal clears both
 - Replace the first-line content via --content <text> or stdin with --content -
 - Preview changes by default; add --write to apply them atomically
-- Use --interactive to walk through prompts for type, signals, and content
+- Interactive prompts run automatically when no positional arguments are supplied; use --no-interactive to skip them
 - Structured output available with --json or --jsonl
 
 Workflow tips:
@@ -22,5 +22,5 @@ Examples:
 - Preview a type change: wm modify api/auth.ts:120 --type fix
 - Remove signals via ID: wm modify --id wm:a3k9m2p --no-signal --write
 - Supply content from stdin: printf "validate JWT" | wm modify src/auth.ts:42 --content - --write
-- Interactive tweaks: wm modify src/auth.ts:42 --interactive
+- Skip prompts: wm modify --no-interactive
 `;

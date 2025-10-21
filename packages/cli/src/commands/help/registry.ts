@@ -29,6 +29,7 @@ const commonFlags = {
   },
   scope: {
     name: "scope",
+    alias: "s",
     type: "string",
     placeholder: "project|user|default",
     description: "Select config scope",
@@ -113,6 +114,7 @@ const commonFlags = {
   },
   limit: {
     name: "limit",
+    alias: "n",
     type: "string",
     placeholder: "n",
     description: "Limit number of results",
@@ -289,6 +291,7 @@ export const commands: HelpRegistry = {
       },
       {
         name: "raised",
+        alias: "R",
         type: "boolean",
         description: "Add raised signal (^)",
       },
@@ -330,6 +333,12 @@ export const commands: HelpRegistry = {
     flags: [
       commonFlags.write,
       {
+        name: "no-interactive",
+        type: "boolean",
+        description:
+          "Skip automatic interactive prompts when no target is provided",
+      },
+      {
         name: "id",
         type: "string",
         placeholder: "wm:abcdef",
@@ -349,6 +358,7 @@ export const commands: HelpRegistry = {
       },
       {
         name: "raised",
+        alias: "R",
         type: "boolean",
         description: "Add raised signal (^)",
       },
@@ -362,11 +372,6 @@ export const commands: HelpRegistry = {
         type: "boolean",
         description: "Remove all signals",
       },
-      {
-        name: "interactive",
-        type: "boolean",
-        description: "Interactive modification flow",
-      },
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
@@ -377,7 +382,8 @@ export const commands: HelpRegistry = {
       "wm modify src/auth.ts:42 --type fix",
       "wm modify --id wm:a3k9m2p --starred --write",
       'printf "new copy" | wm modify src/auth.ts:42 --content - --write',
-      "wm modify src/api.ts:15 --interactive",
+      "wm modify                                # Interactive prompts (no args)",
+      "wm modify --no-interactive --id wm:a3k9m2p",
     ],
   },
   remove: {
@@ -442,16 +448,19 @@ export const commands: HelpRegistry = {
       },
       {
         name: "raised",
+        alias: "R",
         type: "boolean",
         description: "Filter by raised signal (^)",
       },
       {
         name: "starred",
+        alias: "S",
         type: "boolean",
         description: "Filter by starred signal (*)",
       },
       {
         name: "yes",
+        alias: "y",
         type: "boolean",
         description: "Skip confirmation prompt",
       },
@@ -521,16 +530,19 @@ export const commands: HelpRegistry = {
     flags: [
       {
         name: "dry-run",
+        alias: "n",
         type: "boolean",
         description: "Print update command without executing",
       },
       {
         name: "force",
+        alias: "f",
         type: "boolean",
         description: "Force update even if install method is unknown",
       },
       {
         name: "yes",
+        alias: "y",
         type: "boolean",
         description: "Skip confirmation prompt",
       },
@@ -582,13 +594,13 @@ queries, filtering by type/tag/mention, and multiple output formats.
     },
     {
       name: "raised",
-      alias: "r",
+      alias: "R",
       type: "boolean",
       description: "Show only raised (^) waymarks",
     },
     {
       name: "starred",
-      alias: "s",
+      alias: "S",
       type: "boolean",
       description: "Show only starred (*) waymarks (important/valuable)",
     },

@@ -1,16 +1,8 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "tasks": {
-    "generate:completions": {
-      "cache": true,
-      "inputs": [
-        "packages/grammar/src/constants.ts",
-        "packages/cli/src/completions/**/*.ts"
-      ],
-      "outputs": ["completions/**"]
-    },
     "build": {
-      "dependsOn": ["^build", "generate:completions", "typecheck"],
+      "dependsOn": ["^build", "typecheck"],
       "outputs": ["dist/**", "build/**", ".next/**", "!.next/cache/**"]
     },
     "dev": {

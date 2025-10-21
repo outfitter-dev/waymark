@@ -81,7 +81,26 @@ wm src/ --tree              # Tree view grouped by directory
 
 ## Shell Completions
 
-Shell completions are available for zsh, bash, fish, PowerShell, and nushell. See [completions/README.md](./completions/README.md) for installation instructions.
+Generate completions with the built-in `wm complete` command:
+
+```bash
+# Zsh
+wm complete zsh > ~/.local/share/waymark/completions/wm.zsh
+echo 'source ~/.local/share/waymark/completions/wm.zsh' >> ~/.zshrc
+
+# Bash
+wm complete bash > ~/.local/share/waymark/completions/wm.bash
+echo 'source ~/.local/share/waymark/completions/wm.bash' >> ~/.bashrc
+
+# Fish
+wm complete fish > ~/.config/fish/completions/wm.fish
+
+# PowerShell
+wm complete powershell > ~/.config/waymark/completions/wm.ps1
+Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
+```
+
+Run `wm complete` with no arguments to see the supported shells.
 
 ## Documentation
 

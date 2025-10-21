@@ -61,8 +61,14 @@ type RemoveParseState = {
 
 const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
   {
+    "-w": (state) => {
+      state.optionState.write = true;
+    },
     "--write": (state) => {
       state.optionState.write = true;
+    },
+    "-y": (state) => {
+      state.optionState.yes = true;
     },
     "--json": (state) => {
       if (state.optionState.jsonl) {
@@ -82,8 +88,14 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
     "--yes": (state) => {
       state.optionState.yes = true;
     },
+    "-R": (state) => {
+      state.criteria.signals.raised = true;
+    },
     "--raised": (state) => {
       state.criteria.signals.raised = true;
+    },
+    "-S": (state) => {
+      state.criteria.signals.important = true;
     },
     "--starred": (state) => {
       state.criteria.signals.important = true;

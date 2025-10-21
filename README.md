@@ -96,31 +96,33 @@ The CLI relies on the core formatter, parser, and map helpers exported from `@wa
 
 #### Shell Completions
 
-Shell completions are available for zsh, bash, fish, PowerShell, and nushell. After installing the CLI, set up completions for your shell:
+Generate completions dynamically with the built-in `complete` command. The
+examples below write the script to a cache directory and source it from your
+shell profile:
 
 ```bash
 # Zsh
 mkdir -p ~/.local/share/waymark/completions
-cp node_modules/@waymarks/cli/completions/_wm ~/.local/share/waymark/completions/
-# Add to ~/.zshrc: fpath=(~/.local/share/waymark/completions $fpath)
+wm complete zsh > ~/.local/share/waymark/completions/wm.zsh
+echo 'source ~/.local/share/waymark/completions/wm.zsh' >> ~/.zshrc
 
 # Bash
-cp node_modules/@waymarks/cli/completions/wm.bash ~/.local/share/waymark/completions/
-# Add to ~/.bashrc: source ~/.local/share/waymark/completions/wm.bash
+mkdir -p ~/.local/share/waymark/completions
+wm complete bash > ~/.local/share/waymark/completions/wm.bash
+echo 'source ~/.local/share/waymark/completions/wm.bash' >> ~/.bashrc
 
 # Fish
-cp node_modules/@waymarks/cli/completions/wm.fish ~/.config/fish/completions/
+mkdir -p ~/.config/fish/completions
+wm complete fish > ~/.config/fish/completions/wm.fish
 
 # PowerShell
-cp node_modules/@waymarks/cli/completions/wm.ps1 ~/.config/waymark/completions/
-# Add to $PROFILE: . ~/.config/waymark/completions/wm.ps1
-
-# Nushell
-cp node_modules/@waymarks/cli/completions/wm.nu ~/.config/waymark/completions/
-# Add to config.nu: source ~/.config/waymark/completions/wm.nu
+mkdir -p ~/.config/waymark/completions
+wm complete powershell > ~/.config/waymark/completions/wm.ps1
+Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 ```
 
-See `packages/cli/completions/README.md` for detailed installation instructions.
+Run `wm complete` without arguments to list supported shells or emit debugging
+information.
 
 ### MCP Server
 

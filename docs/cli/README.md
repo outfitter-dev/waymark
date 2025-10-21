@@ -47,63 +47,33 @@ wm --version
 
 ## Shell Completions
 
-Install completions for your shell to enable tab completion for commands and flags.
-
-### Zsh
+Use the built-in `wm complete` command to generate completions for your shell.
+Each command below writes the script to a cache directory and references it from
+your shell profile:
 
 ```bash
+# Zsh
 mkdir -p ~/.local/share/waymark/completions
-cp node_modules/@waymarks/cli/completions/_wm ~/.local/share/waymark/completions/
-```
+wm complete zsh > ~/.local/share/waymark/completions/wm.zsh
+echo 'source ~/.local/share/waymark/completions/wm.zsh' >> ~/.zshrc
 
-Add to `~/.zshrc`:
-
-```bash
-fpath=(~/.local/share/waymark/completions $fpath)
-```
-
-### Bash
-
-```bash
+# Bash
 mkdir -p ~/.local/share/waymark/completions
-cp node_modules/@waymarks/cli/completions/wm.bash ~/.local/share/waymark/completions/
+wm complete bash > ~/.local/share/waymark/completions/wm.bash
+echo 'source ~/.local/share/waymark/completions/wm.bash' >> ~/.bashrc
+
+# Fish
+mkdir -p ~/.config/fish/completions
+wm complete fish > ~/.config/fish/completions/wm.fish
+
+# PowerShell
+mkdir -p ~/.config/waymark/completions
+wm complete powershell > ~/.config/waymark/completions/wm.ps1
+Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 ```
 
-Add to `~/.bashrc`:
-
-```bash
-source ~/.local/share/waymark/completions/wm.bash
-```
-
-### Fish
-
-```bash
-cp node_modules/@waymarks/cli/completions/wm.fish ~/.config/fish/completions/
-```
-
-### PowerShell
-
-```powershell
-cp node_modules/@waymarks/cli/completions/wm.ps1 ~/.config/waymark/completions/
-```
-
-Add to `$PROFILE`:
-
-```powershell
-. ~/.config/waymark/completions/wm.ps1
-```
-
-### Nushell
-
-```bash
-cp node_modules/@waymarks/cli/completions/wm.nu ~/.config/waymark/completions/
-```
-
-Add to `config.nu`:
-
-```nushell
-source ~/.config/waymark/completions/wm.nu
-```
+Run `wm complete` without arguments to list supported shells and debugging
+helpers.
 
 ---
 
