@@ -64,6 +64,9 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
     "--write": (state) => {
       state.optionState.write = true;
     },
+    "-y": (state) => {
+      state.optionState.yes = true;
+    },
     "--json": (state) => {
       if (state.optionState.jsonl) {
         throw new Error("--json and --jsonl are mutually exclusive");
@@ -75,6 +78,9 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
         throw new Error("--json and --jsonl are mutually exclusive");
       }
       state.optionState.jsonl = true;
+    },
+    "-R": (state) => {
+      state.criteria.signals.raised = true;
     },
     "-R": (state) => {
       state.criteria.signals.raised = true;
