@@ -7,6 +7,7 @@ export {
   getTypeCategory,
   MARKER_DEFINITIONS,
   MARKERS,
+  PROPERTY_KEYS,
   SIGIL,
   SIGNALS,
 } from "./constants";
