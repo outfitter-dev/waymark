@@ -34,6 +34,10 @@ lerna-debug.log*
 # Testing
 coverage/
 .nyc_output/
+**/test-cache/
+**/test-cache.db
+**/test-cache.db-shm
+**/test-cache.db-wal
 
 # Temporary files
 tmp/
