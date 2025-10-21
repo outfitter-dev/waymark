@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://outfitter.dev/schemas/waymark-record.schema.json",
+  "title": "WaymarkRecord",
+  "description": "A parsed waymark record from source code",
+  "type": "object",
+  "required": ["file", "startLine", "endLine", "type", "contentText"],
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "The file path where this waymark was found"
+    },
+    "language": {
+      "type": ["string", "null"],
+      "description": "Programming language of the source file"
+    },
+    "fileCategory": {
+      "type": "string",
+      "enum": ["code", "docs", "config", "data", "test"],
+      "description": "Category of the source file"
+    },
+    "startLine": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Starting line number of the waymark"
+    },
+    "endLine": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Ending line number of the waymark (inclusive)"
+    },
+    "indent": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of spaces of indentation"
+    },
+    "commentLeader": {
+      "type": ["string", "null"],
+      "description": "Comment syntax used (e.g., '//', '#', '<!--')"
+    },
+    "signals": {
+      "type": "object",
+      "description": "Signal flags for the waymark",
+      "properties": {
+        "raised": {
+          "type": "boolean",
+          "description": "Whether marked with ^ (raised work in progress)"
+        },
+        "important": {
+          "type": "boolean",
+          "description": "Whether marked with * (high priority)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "type": {
+      "type": "string",
+      "description": "The waymark marker (e.g., 'todo', 'fix', 'note')"
+    },
+    "contentText": {
+      "type": "string",
+      "description": "The content text after the ::: sigil"
+    },
+    "properties": {
+      "type": "object",
+      "description": "Key-value properties embedded in the content",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "description": "Relational references to other waymarks",
+      "items": {
+        "type": "object",
+        "required": ["kind", "token"],
+        "properties": {
+          "kind": {
+            "enum": ["ref", "rel", "depends", "needs", "blocks", "dupeof"],
+            "description": "Type of relation"
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^#[A-Za-z0-9._/-]+$",
+            "description": "Token being referenced"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "canonicals": {
+      "type": "array",
+      "description": "Canonical tokens declared with ref:#token",
+      "items": {
+        "type": "string",
+        "pattern": "^#[A-Za-z0-9._/-]+$"
+      }
+    },
+    "mentions": {
+      "type": "array",
+      "description": "Actor mentions (@alice, @agent)",
+      "items": {
+        "type": "string",
+        "pattern": "^@[A-Za-z0-9._-]+$"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Hashtags embedded in the content",
+      "items": {
+        "type": "string",
+        "pattern": "^#[A-Za-z0-9._/:%-]+$"
+      }
+    },
+    "raw": {
+      "type": "string",
+      "description": "Raw source text of the waymark"
+    }
+  },
+  "additionalProperties": false
+}

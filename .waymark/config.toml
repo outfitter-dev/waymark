@@ -1,0 +1,34 @@
+# tldr ::: consolidated waymark configuration with repo-specific ignore patterns
+
+type_case = "lowercase"
+id_scope = "repo"
+protected_branches = ["main", "release/*"]
+signals_on_protected = "strip"
+allow_types = ["idea", "example"]
+
+skip_paths = [
+  "**/.git/**",
+  "**/node_modules/**",
+  "**/dist/**",
+  "AGENTS.md",
+  "PLAN.md",
+  "README.md",
+  "SCRATCHPAD.md",
+  "PRD.md",
+  ".waymark/rules/**",
+  "docs/waymark/**/*.md"
+]
+
+[format]
+space_around_sigil = true
+normalize_case = true
+
+[lint]
+unknown_marker = "warn"
+duplicate_property = "warn"  # ask ::: @agent what was this intended to do?
+dangling_relation = "error"  # todo ::: @agent this shouldn't be user-configurable
+duplicate_canonical = "error"  # todo ::: @agent this shouldn't be user-configurable
+
+# note ::: keepMarkers retained here for future map integration once CLI supports it directly
+[map]
+keep_markers = ["tldr"]

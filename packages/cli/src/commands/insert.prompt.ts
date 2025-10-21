@@ -1,0 +1,199 @@
+// tldr ::: agent-facing usage guide for insert command
+
+export default `
+INSERT COMMAND - Agent Usage Guide
+
+PURPOSE
+  Programmatically insert waymarks into files with automatic formatting and ID management.
+
+COMMAND SYNTAX
+  wm insert <file:line> <type> <content> [options]
+  wm insert --from <json-file>
+  echo '<json>' | wm insert --from -
+
+INPUT MODES
+
+  1. Inline Arguments:
+     wm insert src/auth.ts:42 todo "implement OAuth flow" --mention @agent --tag "#sec"
+
+  2. JSON Input (single waymark):
+     wm insert --from waymark.json
+     {
+       "file": "src/auth.ts",
+       "line": 42,
+       "type": "todo",
+       "content": "implement OAuth flow",
+       "mentions": ["@agent"],
+       "tags": ["#sec"]
+     }
+
+  3. JSONL Input (multiple waymarks):
+     cat waymarks.jsonl | wm insert --from -
+     {"file":"src/auth.ts","line":42,"type":"todo","content":"implement OAuth"}
+     {"file":"src/db.ts","line":15,"type":"note","content":"assumes UTC timestamps"}
+
+  4. JSON Array (batch insert):
+     wm insert --from batch.json
+     [
+       {"file":"src/auth.ts","line":42,"type":"todo","content":"implement OAuth"},
+       {"file":"src/db.ts","line":15,"type":"note","content":"assumes UTC"}
+     ]
+
+INLINE ARGUMENT FLAGS
+
+  --mention <actor>    Add mention(s): @agent, @alice
+                       Can be repeated: --mention @agent --mention @alice
+
+  --tag <tag>          Add hashtag(s): #perf, #sec
+                       Can be repeated: --tag "#perf" --tag "#sec"
+
+  --property <kv>      Add property: key:value
+                       Can be repeated: --property owner:@alice --property priority:high
+
+  --ref <token>        Set canonical reference: ref:#auth/core
+
+  --depends <token>    Add dependency: depends:#infra/db
+  --needs <token>      Add needs relation: needs:#api/v2
+  --blocks <token>     Add blocks relation: blocks:#feature/launch
+
+  --signal <signal>    Add signal: ^ (raised) or * (starred)
+                       Can combine: --signal ^ --signal *
+
+OUTPUT FORMATS
+
+  Default:  Human-readable text with file:line and inserted content
+  --json:   Compact JSON array of inserted records
+  --jsonl:  Newline-delimited JSON (one record per line)
+
+EXAMPLES
+
+  1. Insert simple todo:
+     wm insert src/auth.ts:42 todo "implement rate limiting"
+
+  2. Insert with mentions and tags:
+     wm insert src/db.ts:15 note "assumes UTC timestamps" --mention @alice --tag "#time"
+
+  3. Insert with signal (starred to mark as important/valuable):
+     wm insert src/api.ts:100 fix "validate input" --signal *
+
+  4. Insert with signal (raised, in-progress):
+     wm insert src/refactor.ts:50 wip "refactoring auth flow" --signal ^
+
+  5. Insert with dependency relation:
+     wm insert src/payments.ts:200 todo "add retry logic" --depends "#infra/queue"
+
+  6. Insert with canonical reference:
+     wm insert src/auth.ts:1 tldr "user authentication service" --ref "#auth/service"
+
+  7. Insert with multiple properties:
+     wm insert src/api.ts:75 todo "add validation" --property owner:@bob --property priority:high
+
+  8. Batch insert from JSONL:
+     cat waymarks.jsonl | wm insert --from -
+
+  9. Insert with JSON output:
+     wm insert src/auth.ts:42 todo "implement OAuth" --json
+
+AGENT WORKFLOWS
+
+  1. Track implementation work:
+     # Agent inserts todo as it identifies work
+     wm insert src/auth.ts:42 todo "@agent implement OAuth flow" --tag "#sec"
+
+  2. Add documentation breadcrumbs:
+     # Agent adds tldr to newly created file
+     wm insert src/newfile.ts:1 tldr "utility functions for date handling"
+
+  3. Mark performance hotspots:
+     # Agent identifies hotpath during profiling
+     wm insert src/query.ts:156 note "performance hotpath" --tag "#perf:hotpath"
+
+  4. Create dependency graph:
+     # Agent maps dependencies while building
+     wm insert src/api.ts:50 todo "implement endpoint" --depends "#db/schema"
+
+  5. Batch insert from analysis:
+     # Agent analyzes codebase and generates waymarks
+     echo '[
+       {"file":"src/a.ts","line":10,"type":"todo","content":"add tests"},
+       {"file":"src/b.ts","line":20,"type":"fix","content":"handle edge case"}
+     ]' | wm insert --from - --json
+
+JSON INPUT SCHEMA
+
+  Required fields:
+    file:    string - File path (absolute or relative)
+    line:    number - Line number (1-indexed)
+    type:    string - Waymark type (todo, fix, note, etc.)
+    content: string - Waymark content text
+
+  Optional fields:
+    signals: object - {raised?: boolean, important?: boolean}
+    properties: object - Key-value pairs
+    mentions: string[] - Actor mentions (include @ prefix)
+    tags: string[] - Hashtags (include # prefix)
+    relations: object[] - [{kind: "depends", token: "#token"}]
+
+AUTOMATIC BEHAVIORS
+
+  1. ID Management:
+     - Checks if ID system is enabled in config
+     - Reserves unique ID if configured
+     - Adds wm:xxxxx to waymark content automatically
+
+  2. Formatting:
+     - Applies standard formatting rules
+     - Aligns continuation lines
+     - Normalizes marker case
+
+  3. Index Updates:
+     - Updates .waymark/index.json with new waymark
+     - Tracks file metadata and audit log
+     - Maintains dependency graph
+
+CONFIGURATION
+
+  Insert behavior controlled by .waymark/config.toml:
+
+  [ids]
+  enabled = true          # Enable ID reservation
+  scope = "repo"          # ID scope: repo or file
+  format = "base36"       # ID format
+
+  [format]
+  typeCase = "lowercase"  # Marker normalization
+  alignContinuations = true
+
+TIPS FOR AGENTS
+
+  ✓ Use JSONL format for batch operations (one waymark per line)
+  ✓ Always validate file exists and line number is valid
+  ✓ Use --json output for programmatic workflows
+  ✓ Combine insert with scan to verify waymarks were added
+  ✓ Use signals (^ or *) to mark priority or in-progress work
+  ✓ Add mentions (@agent) to delegate work to specific actors
+  ✓ Use tags (#perf, #sec) for categorization and filtering
+
+ERROR HANDLING
+
+  Common errors:
+  - File not found → Check file path is correct
+  - Invalid line number → Line must be within file bounds
+  - Unknown type → Use blessed types or configure allowTypes
+  - Malformed JSON → Validate JSON syntax before piping
+
+COMBINING WITH OTHER COMMANDS
+
+  # Insert then scan to verify
+  wm insert src/auth.ts:42 todo "implement OAuth" && wm src/auth.ts --type todo
+
+  # Insert multiple waymarks and output as JSON
+  cat waymarks.jsonl | wm insert --from - --json > results.json
+
+  # Find files missing tldr, insert them
+  wm . --map | grep -v "tldr:" | awk '{print $1":1"}' | while read loc; do
+    wm insert $loc tldr "TODO: add file summary"
+  done
+
+For human-facing help, use: wm insert --help
+`;

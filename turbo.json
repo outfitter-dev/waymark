@@ -1,0 +1,73 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "tasks": {
+    "generate:completions": {
+      "cache": true,
+      "inputs": [
+        "packages/grammar/src/constants.ts",
+        "packages/cli/src/completions/**/*.ts"
+      ],
+      "outputs": ["completions/**"]
+    },
+    "build": {
+      "dependsOn": ["^build", "generate:completions", "typecheck"],
+      "outputs": ["dist/**", "build/**", ".next/**", "!.next/cache/**"]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "persistent": true,
+      "cache": false
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "*.ts", "*.tsx", "tsconfig.json"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "test/**", "*.test.ts", "*.test.tsx"],
+      "outputs": [],
+      "cache": true
+    },
+    "lint": {
+      "dependsOn": [],
+      "outputs": [],
+      "cache": false
+    },
+    "lint:biome": {
+      "dependsOn": [],
+      "outputs": [],
+      "cache": false
+    },
+    "format": {
+      "dependsOn": [],
+      "outputs": [],
+      "cache": false
+    },
+    "check:waymarks": {
+      "dependsOn": [],
+      "inputs": [
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.js",
+        "**/*.jsx",
+        "**/*.md",
+        "**/*.mdx"
+      ],
+      "outputs": [],
+      "cache": true
+    },
+    "ci:local": {
+      "dependsOn": ["lint", "test", "typecheck", "build"],
+      "cache": false
+    },
+    "ci:validate": {
+      "dependsOn": ["test", "typecheck", "build"],
+      "cache": false
+    }
+  },
+  "globalEnv": ["NODE_ENV", "CI", "PATH", "HOME", "USER"],
+  "remoteCache": {
+    "enabled": false
+  }
+}

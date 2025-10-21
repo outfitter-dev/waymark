@@ -1,0 +1,14 @@
+# Lefthook configuration for Waymark project
+# https://lefthook.dev/configuration/
+
+pre-commit:
+  parallel: false
+  commands:
+    format:
+      run: bun run format
+
+pre-push:
+  parallel: false
+  commands:
+    quality-gates:
+      run: bun run lint && bun run typecheck && bun run test

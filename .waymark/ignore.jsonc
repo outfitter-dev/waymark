@@ -1,0 +1,14 @@
+{
+  // tldr ::: default map ignore configuration and marker keep list #docs/rules
+  "keepMarkers": ["tldr"],
+  // note ::: Paths to ignore (gitignore-style globs, relative to repo root)
+  "ignore": [
+    "AGENTS.md",
+    "PLAN.md",
+    "README.md",
+    "SCRATCHPAD.md",
+    "PRD.md",
+    ".waymark/rules/**",
+    "docs/waymark/**/*.md"
+  ]
+}

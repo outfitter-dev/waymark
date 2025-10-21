@@ -4,6 +4,8 @@
 
 Waymark defines and maintains the `:::` comment sigil plus supporting tooling so humans and AI agents can leave durable, greppable breadcrumbs in codebases.
 
+> Current prerelease: **1.0.0-beta.1** (2025-10-03)
+
 ## Why Waymarks Exist
 
 - Teams already rely on comment-level anchors (`TODO`, `FIXME`, `MARK`) because they survive refactors and are easy to search. Waymarks unify those patterns under one predictable grammar.
@@ -18,23 +20,23 @@ Read the full background in [Historical Priors for Waymark-Style Anchors](docs/a
 // tldr ::: managing customer authentication flow
 
 export async function authenticate(request: AuthRequest) {
-  // !fix ::: validate OTP length before verifying
+  // *fix ::: validate OTP length before verifying
   // context ::: callers must pass a sanitized email #security
 
   const user = await fetchUser(request.email)
   // question ::: should we allow social login here? @product
 
-  // *todo ::: @agent implement refresh token rotation once backend ships
+  /* ^todo ::: @agent implement refresh token rotation once backend ships */
   return issueSession(user, request) // note ::: returns JWT signed with HS256
 }
 
-Signals follow the v1 grammar: only `*` and a single `!` prefix are valid (`*!todo` is fine, `!!fix` is not).
+Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) prefix are valid. Raised waymarks (`^todo`) mark work-in-progress that must clear before merging; starred waymarks (`*fix`) mark high-priority items. Combining them (`^*todo`) is fine, while doubling (`**fix`) is not.
 ```
 
 ## Start Here
 
 1. **Product Requirements**: [PRD.md](PRD.md) defines the v1 grammar, tooling scope, and roadmap.
-2. **Specification**: [Waymark Specification](docs/waymark/SPEC.md) mirrors the grammar in the PRD for quick reference.
+2. **Specification**: [Waymark Specification](docs/GRAMMAR.md) mirrors the grammar in the PRD for quick reference.
 3. **Agent Guidelines**: [AGENTS.md](AGENTS.md) covers collaboration expectations for human and AI contributors.
 
 ### Quick Demo: `waymark map`
@@ -58,6 +60,99 @@ src/
 
 This tree view instantly tells you what every file does - perfect for onboarding developers or giving AI agents context about your codebase architecture.
 
+### CLI Usage
+
+The `wm` command provides a unified interface for all waymark operations:
+
+```bash
+# Basic scanning and filtering (default mode)
+wm src/                              # scan and display all waymarks
+wm src/ --type todo                  # filter by waymark type
+wm src/ --raised                     # show only raised (^) waymarks (work-in-progress)
+wm src/ --starred                    # show only starred (*) waymarks (high-priority)
+wm src/ --type todo --mention @agent # combine filters
+
+# Map mode: file tree with TLDRs
+wm src/ --map                        # show file tree with TLDR summaries
+wm docs/ --map --type todo --summary # focus on types with summary footer
+
+# Graph mode: relation edges
+wm src/ --graph                      # extract dependency relations
+wm src/ --graph --json               # JSON output for tooling
+
+# Output formats
+wm src/ --json                       # compact JSON array
+wm src/ --jsonl                      # newline-delimited JSON
+wm src/ --pretty                     # pretty-printed JSON
+
+# Standalone commands
+wm format src/example.ts --write     # format a file
+wm lint src/ --json                  # validate waymark types
+wm migrate legacy.ts --write         # convert legacy comments
+wm modify src/auth.ts:42 --raise --write # adjust an existing waymark
+```
+
+The CLI relies on the core formatter, parser, and map helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
+
+#### Shell Completions
+
+Shell completions are available for zsh, bash, fish, PowerShell, and nushell. After installing the CLI, set up completions for your shell:
+
+```bash
+# Zsh
+mkdir -p ~/.local/share/waymark/completions
+cp node_modules/@waymarks/cli/completions/_wm ~/.local/share/waymark/completions/
+# Add to ~/.zshrc: fpath=(~/.local/share/waymark/completions $fpath)
+
+# Bash
+cp node_modules/@waymarks/cli/completions/wm.bash ~/.local/share/waymark/completions/
+# Add to ~/.bashrc: source ~/.local/share/waymark/completions/wm.bash
+
+# Fish
+cp node_modules/@waymarks/cli/completions/wm.fish ~/.config/fish/completions/
+
+# PowerShell
+cp node_modules/@waymarks/cli/completions/wm.ps1 ~/.config/waymark/completions/
+# Add to $PROFILE: . ~/.config/waymark/completions/wm.ps1
+
+# Nushell
+cp node_modules/@waymarks/cli/completions/wm.nu ~/.config/waymark/completions/
+# Add to config.nu: source ~/.config/waymark/completions/wm.nu
+```
+
+See `packages/cli/completions/README.md` for detailed installation instructions.
+
+### MCP Server
+
+Waymark also ships a Model Context Protocol server so agents can consume the same tooling over stdio:
+
+```bash
+waymark-mcp
+```
+
+The server advertises a compact surface area:
+
+- **Tools**
+  - `waymark.scan` – parse files/directories and return waymark records in `text`, `json`, `jsonl`, or `pretty` formats.
+  - `waymark.map` – produce the TLDR/marker summary JSON that powers the CLI map.
+  - `waymark.graph` – emit relation edges (ref/depends/needs/etc.).
+  - `waymark.insert` – insert any waymark (including `tldr`, `this`, `todo`, or custom markers) into a file, normalize it with the formatter, and return the inserted record metadata.
+- **Resources**
+  - `waymark://map` – repository-wide summary of TLDRs and marker counts.
+  - `waymark://todos` – filtered list of every `todo` waymark detected.
+- **Prompts**
+  - `waymark.tldr` – drafts a TLDR sentence for a file given an optional snippet window.
+  - `waymark.todo` – drafts actionable TODO content based on a summary/context payload.
+
+Tools accept the same configuration options as the CLI (`configPath`, `scope`) so agents respect local project settings. The server streams JSON over stdout/stdin; see `apps/mcp/src/index.ts` for the exact schemas.
+
+### Code Structure
+
+- `packages/cli/src/index.ts` is a thin dispatcher that parses global flags and routes commands.
+- Each command lives in `packages/cli/src/commands/<name>.ts` with its own argument parser and executor.
+- Shared utilities reside in `packages/cli/src/utils/` (filesystem expansion, record rendering) and shared CLI types in `packages/cli/src/types.ts`.
+- Tests primarily target the modules directly, while `packages/cli/src/index.test.ts` keeps a lightweight smoke suite.
+
 ## Current Focus
 
 The project is mid-rebuild: we are prioritizing documentation, search patterns, and migration guidance before reintroducing heavy tooling. Favor clarity and greppability while we land the v1 toolchain.
@@ -65,7 +160,7 @@ The project is mid-rebuild: we are prioritizing documentation, search patterns, 
 ## Repository Map
 
 - `PRD.md` – Source of truth for grammar, tooling, and packaging
-- `docs/` – Published documentation, including historical context (`docs/about`) and the specification (`docs/waymark/SPEC.md`)
+- `docs/` – Published documentation, including historical context (`docs/about`) and the specification (`docs/GRAMMAR.md`)
 - `.waymark/` – Project-specific waymark rules and conventions (`.waymark/rules/`)
 - `.agents/` – General agent rules plus symlinks into `.waymark/rules/`
 - `.migrate/` – Archived v1 content retained for research and migration notes

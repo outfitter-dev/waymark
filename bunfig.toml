@@ -1,0 +1,27 @@
+[install]
+peer-dependencies = "error"
+engine = "bun"
+# Auto-install exact versions for reproducible builds
+exact = true
+
+[install.cache]
+# Keep Bun's install cache tucked inside a hidden `.bun` folder instead of
+# the default `aggressive/` directory at the repo root.
+dir = ".bun/install/cache"
+
+[build]
+# Enable Bun's native bundling optimizations
+minify = true
+splitting = true
+# Target modern environments
+target = "bun"
+
+[test]
+# Test configuration
+root = "./"
+preload = "./test/setup.ts"
+coverage = true
+
+[cache]
+# Configure cache directory
+dir = ".bun"

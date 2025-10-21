@@ -1,0 +1,28 @@
+{
+  "name": "@waymarks/agents",
+  "version": "1.0.0-beta.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "rules",
+    "commands",
+    "instructions"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "dev": "bun build src/index.ts --outdir dist --target bun --watch",
+    "test": "bun test || echo 'No tests yet'",
+    "typecheck": "tsc --noEmit",
+    "lint": "bunx ultracite check",
+    "check:waymarks": "echo 'Waymarks check will be implemented in v1.0'"
+  },
+  "dependencies": {
+    "@waymarks/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "1.2.22"
+  }
+}

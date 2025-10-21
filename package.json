@@ -1,0 +1,50 @@
+{
+  "name": "@waymarks/root",
+  "type": "module",
+  "private": true,
+  "packageManager": "bun@1.2.22",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "bunx ultracite fix --unsafe && bun run format:md",
+    "format:md": "bunx markdownlint-cli2 --fix \"**/*.md\" \"!**/.bun/**\"",
+    "format:prettier": "bunx prettier --write .",
+    "lint": "turbo run lint && bun run lint:md",
+    "lint:biome": "bunx ultracite check",
+    "lint:md": "bunx markdownlint-cli2 \"**/*.md\" \"!**/.bun/**\"",
+    "check": "bun run lint",
+    "check:all": "bun run lint && bun run typecheck && bun run test",
+    "check:waymarks": "bun scripts/waymark-map.ts",
+    "waymark:map": "bun scripts/waymark-map.ts",
+    "audit": "bun scripts/waymark-audit.ts",
+    "completions:generate": "cd packages/cli && bun run generate:completions",
+    "install:bin": "cd packages/cli && bun run install:bin",
+    "uninstall:bin": "cd packages/cli && bun run uninstall:bin",
+    "ci:local": "turbo run ci:local",
+    "ci:validate": "turbo run ci:validate",
+    "dev:core": "turbo run dev --filter=@waymarks/core",
+    "dev:cli": "turbo run dev --filter=@waymarks/cli",
+    "build:core": "turbo run build --filter=@waymarks/core",
+    "build:cli": "turbo run build --filter=@waymarks/cli",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@types/bun": "^1.2.22",
+    "lefthook": "^1.13.4",
+    "markdownlint-cli2": "^0.18.1",
+    "pino": "9.13.0",
+    "pino-pretty": "13.1.1",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.2",
+    "ultracite": "^5.4.5"
+  },
+  "version": "1.0.0-beta.1"
+}
