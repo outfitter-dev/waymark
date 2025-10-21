@@ -6,6 +6,11 @@ import { isAbsolute, join, relative, resolve } from "node:path";
 import type { WaymarkConfig } from "@waymarks/core";
 import { getIgnoreFilter, type IgnoreFilter } from "./ignore";
 
+/**
+ * Chooses the workspace directory that should act as the traversal root for the
+ * given CLI inputs. We prefer a single directory input when possible so relative
+ * traversal checks later on use the most specific anchor.
+ */
 function determineRootDir(inputs: string[]): string {
   const cwd = process.cwd();
   const cwdReal = tryRealpathSync(cwd) ?? cwd;
@@ -98,6 +103,14 @@ type TraversalContext = {
   enforceBoundary: boolean;
 };
 
+/**
+ * Expands CLI path inputs into a normalized list of files while enforcing
+ * workspace traversal boundaries and respect for configured ignore filters.
+ *
+ * @param inputs - Raw CLI path arguments (relative or absolute)
+ * @param config - Waymark CLI configuration containing skip/include rules
+ * @returns A de-duplicated array of normalized file paths ready for scanning
+ */
 export async function expandInputPaths(
   inputs: string[],
   config: WaymarkConfig
@@ -143,6 +156,14 @@ export async function expandInputPaths(
   return Array.from(files);
 }
 
+/**
+ * Recursively walks a directory tree, applying ignore filters and enforcing
+ * symlink boundaries, adding discovered files to the provided set.
+ *
+ * @param path - Current filesystem path being visited
+ * @param files - Mutable set tracking discovered files (normalized)
+ * @param context - Shared traversal state (boundary enforcement, ignores, etc.)
+ */
 async function collectFilesRecursive(
   path: string,
   files: Set<string>,
@@ -182,6 +203,15 @@ async function collectFilesRecursive(
 
 // Removed: shouldSkipDirectory function - now handled by IgnoreFilter
 
+/**
+ * Walks a directory's immediate children and recurses into each entry that could
+ * contain files, delegating back to `collectFilesRecursive` so boundary checks
+ * remain centralized.
+ *
+ * @param directory - Absolute path to the directory being enumerated
+ * @param files - Mutable set tracking discovered files (normalized)
+ * @param context - Shared traversal state (boundary enforcement, ignores, etc.)
+ */
 async function collectDirectoryEntries(
   directory: string,
   files: Set<string>,
@@ -197,6 +227,15 @@ async function collectDirectoryEntries(
   }
 }
 
+/**
+ * Resolves symlinks safely by checking both the nominal and real workspace
+ * boundaries before following the link. When boundary enforcement is disabled,
+ * the original lstat information is returned unchanged.
+ *
+ * @param path - Current path candidate that may be a symlink
+ * @param context - Traversal metadata including workspace bounds
+ * @returns The resolved target path and filesystem stats
+ */
 async function resolveSafePath(
   path: string,
   context: TraversalContext
@@ -239,17 +278,35 @@ async function resolveSafePath(
   return { targetPath: realPath, stats: targetStats };
 }
 
+/**
+ * Normalizes a filesystem path relative to the current working directory, while
+ * preserving absolute paths when the target lies outside the workspace.
+ *
+ * @param path - Absolute path to normalize
+ * @returns A relative path when inside the workspace, otherwise the original path
+ */
 function normalizePathForOutput(path: string): string {
   const rel = relative(process.cwd(), path);
   return rel === "" || rel.startsWith("..") ? path : rel;
 }
 
+/**
+ * Asserts that the provided path exists either as-is or relative to the current
+ * working directory, throwing a descriptive error when it cannot be found.
+ *
+ * @param path - The file path to verify
+ * @throws Error if the path does not resolve to an existing file
+ */
 export function ensureFileExists(path: string): void {
   if (!(existsSync(path) || existsSync(resolve(process.cwd(), path)))) {
     throw new Error(`File not found: ${path}`);
   }
 }
 
+/**
+ * Attempts to resolve the real path for a candidate path, returning null when
+ * the path does not exist instead of throwing so callers can handle ENOENT.
+ */
 function tryRealpathSync(path: string): string | null {
   try {
     return realpathSync(path);
@@ -261,6 +318,14 @@ function tryRealpathSync(path: string): string | null {
   }
 }
 
+/**
+ * Determines whether a candidate path escapes either the nominal or real CWD.
+ *
+ * @param candidate - Path being evaluated
+ * @param cwd - The nominal working directory
+ * @param cwdReal - The resolved real path of the working directory
+ * @returns True when the candidate escapes the workspace boundaries
+ */
 function escapesWorkspace(
   candidate: string,
   cwd: string,
@@ -279,6 +344,14 @@ function escapesWorkspace(
   return relative(cwdReal, candidateReal).startsWith("..");
 }
 
+/**
+ * Follows a symlink without enforcing workspace boundaries, falling back to the
+ * original lstat information when the target cannot be resolved.
+ *
+ * @param path - Symlink path being followed
+ * @param lstatInfo - Original lstat metadata for the symlink
+ * @returns The resolved target path and stats, or the original metadata on ENOENT
+ */
 function followSymlinkWithoutBoundary(
   path: string,
   lstatInfo: Awaited<ReturnType<typeof lstat>>
@@ -293,6 +366,9 @@ function followSymlinkWithoutBoundary(
     });
 }
 
+/**
+ * Type guard that checks whether a caught error represents an ENOENT condition.
+ */
 function isEnoent(error: unknown): error is NodeJS.ErrnoException {
   return (
     typeof error === "object" &&
@@ -302,6 +378,10 @@ function isEnoent(error: unknown): error is NodeJS.ErrnoException {
   );
 }
 
+/**
+ * Resolves the real path for a filesystem entry, returning the original path
+ * when it does not exist so callers can continue gracefully.
+ */
 async function getRealPath(path: string): Promise<string> {
   try {
     return await realpath(path);
