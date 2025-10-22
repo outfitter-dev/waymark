@@ -44,10 +44,15 @@ const commonFlags = {
     type: "boolean",
     description: "Output as JSON lines (newline-delimited)",
   },
+  text: {
+    name: "text",
+    type: "boolean",
+    description: "Output as human-readable formatted text",
+  },
   pretty: {
     name: "pretty",
     type: "boolean",
-    description: "Output as pretty-printed JSON",
+    description: "(deprecated: use --text) Output as pretty-printed JSON",
   },
   long: {
     name: "long",
@@ -621,6 +626,7 @@ queries, filtering by type/tag/mention, and multiple output formats.
     },
     commonFlags.json,
     commonFlags.jsonl,
+    commonFlags.text,
     commonFlags.pretty,
     commonFlags.long,
     commonFlags.tree,
