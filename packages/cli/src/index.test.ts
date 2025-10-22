@@ -1,6 +1,6 @@
 // tldr ::: smoke and snapshot tests for waymark CLI handlers
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, spyOn, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -21,6 +21,21 @@ import type { UnifiedCommandOptions } from "./commands/unified/types";
 import { formatMapOutput, serializeMap } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
+
+// Test helpers
+const __test = {
+  async createProgram() {
+    const { createProgram } = await import("./index");
+    return createProgram();
+  },
+};
+
+async function runCliCaptured(
+  args: string[]
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  // TODO: Implement proper CLI capture for testing
+  return { exitCode: 0, stdout: "", stderr: "" };
+}
 
 const defaultContext: CommandContext = {
   config: resolveConfig(),
@@ -1000,6 +1015,217 @@ describe("Unified command", () => {
     expect(output).not.toContain("bug fix");
     expect(output).not.toContain("note text");
     await cleanup();
+  });
+});
+
+describe("Commander integration", () => {
+  test("find command receives --json flag from Commander", async () => {
+    const program = await __test.createProgram();
+    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    expect(findCommand).toBeDefined();
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    findCommand?.action(
+      (_paths: string[], options: Record<string, unknown>) => {
+        receivedOptions = options;
+      }
+    );
+
+    const result = await runCliCaptured(["find", "--json"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(receivedOptions?.json).toBe(true);
+  });
+
+  test("find command forwards --map with --json combination", async () => {
+    const program = await __test.createProgram();
+    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    expect(findCommand).toBeDefined();
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    findCommand?.action(
+      (_paths: string[], options: Record<string, unknown>) => {
+        receivedOptions = options;
+      }
+    );
+
+    const result = await runCliCaptured(["find", "--map", "--json"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(receivedOptions?.json).toBe(true);
+    expect(receivedOptions?.map).toBe(true);
+  });
+
+  test("find command forwards --graph with --json combination", async () => {
+    const program = await __test.createProgram();
+    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    expect(findCommand).toBeDefined();
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    findCommand?.action(
+      (_paths: string[], options: Record<string, unknown>) => {
+        receivedOptions = options;
+      }
+    );
+
+    const result = await runCliCaptured(["find", "--graph", "--json"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(receivedOptions?.json).toBe(true);
+    expect(receivedOptions?.graph).toBe(true);
+  });
+
+  test("add command forwards --json flag to parser", async () => {
+    const addModule = await import("./commands/add");
+    const contextModule = await import("./utils/context");
+    const parseSpy = spyOn(addModule, "parseAddArgs");
+    const runSpy = spyOn(addModule, "runAddCommand").mockResolvedValue({
+      results: [],
+      summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
+      output: "",
+      exitCode: 0,
+    } as ReturnType<typeof addModule.runAddCommand>);
+    const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
+      defaultContext
+    );
+
+    try {
+      const result = await runCliCaptured([
+        "add",
+        "src/sample.ts:1",
+        "todo",
+        "task",
+        "--json",
+      ]);
+      expect(result.exitCode).toBe(0);
+      expect(parseSpy).toHaveBeenCalled();
+      const tokens = parseSpy.mock.calls[0]?.[0] ?? [];
+      expect(tokens).toContain("--json");
+      expect(runSpy).toHaveBeenCalled();
+      const parsedArgs = runSpy.mock.calls[0]?.[0];
+      expect(parsedArgs?.options.json).toBe(true);
+    } finally {
+      parseSpy.mockRestore();
+      runSpy.mockRestore();
+      contextSpy.mockRestore();
+    }
+  });
+
+  test("modify command forwards --json option", async () => {
+    const modifyModule = await import("./commands/modify");
+    const contextModule = await import("./utils/context");
+    const runSpy = spyOn(modifyModule, "runModifyCommand").mockResolvedValue({
+      output: "",
+      payload: {} as unknown,
+      exitCode: 0,
+    } as ReturnType<typeof modifyModule.runModifyCommand>);
+    const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
+      defaultContext
+    );
+
+    try {
+      const result = await runCliCaptured([
+        "modify",
+        "src/sample.ts:1",
+        "--json",
+      ]);
+      expect(result.exitCode).toBe(0);
+      expect(runSpy).toHaveBeenCalled();
+      const optionsArg = runSpy.mock.calls[0]?.[2];
+      expect(optionsArg?.json).toBe(true);
+    } finally {
+      runSpy.mockRestore();
+      contextSpy.mockRestore();
+    }
+  });
+
+  test("remove command forwards --json flag to parser", async () => {
+    const removeModule = await import("./commands/remove");
+    const contextModule = await import("./utils/context");
+    const parseSpy = spyOn(removeModule, "parseRemoveArgs");
+    const runSpy = spyOn(removeModule, "runRemoveCommand").mockResolvedValue({
+      results: [],
+      summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
+      output: "",
+      exitCode: 0,
+      options: {
+        write: false,
+        json: true,
+        jsonl: false,
+        confirm: false,
+        yes: false,
+      },
+    } as ReturnType<typeof removeModule.runRemoveCommand>);
+    const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
+      defaultContext
+    );
+
+    try {
+      const result = await runCliCaptured([
+        "remove",
+        "src/sample.ts:1",
+        "--json",
+      ]);
+      expect(result.exitCode).toBe(0);
+      expect(parseSpy).toHaveBeenCalled();
+      const tokens = parseSpy.mock.calls[0]?.[0] ?? [];
+      expect(tokens).toContain("--json");
+      expect(runSpy).toHaveBeenCalled();
+      const parsedArgs = runSpy.mock.calls[0]?.[0];
+      expect(parsedArgs?.options.json).toBe(true);
+    } finally {
+      parseSpy.mockRestore();
+      runSpy.mockRestore();
+      contextSpy.mockRestore();
+    }
+  });
+
+  test("root help lists global options only", async () => {
+    const result = await runCliCaptured(["--help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Global Options:");
+    expect(result.stdout).toContain("--json");
+    expect(result.stdout).not.toContain("--type <types...>");
+  });
+
+  test("wm find --help shows filter options", async () => {
+    const result = await runCliCaptured(["find", "--help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Filter Options:");
+    expect(result.stdout).toContain("--type <types...>");
+    expect(result.stdout).toContain("Output Formats:");
+  });
+
+  test("other commands do not list find filters", async () => {
+    const result = await runCliCaptured(["format", "--help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain("--type <types...>");
+  });
+
+  test("implicit command emits deprecation warning", async () => {
+    const { file, cleanup } = await withTempFile("// todo ::: legacy\n");
+
+    try {
+      const result = await runCliCaptured([file]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toContain("Implicit command syntax is deprecated");
+      expect(result.stdout.length).toBeGreaterThan(0);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test("'wm find' does not emit deprecation warning", async () => {
+    const { file, cleanup } = await withTempFile("// todo ::: explicit\n");
+
+    try {
+      const result = await runCliCaptured(["find", file, "--json"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(result.stdout.trim().length).toBeGreaterThan(0);
+    } finally {
+      await cleanup();
+    }
   });
 });
 

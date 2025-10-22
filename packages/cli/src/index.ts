@@ -846,6 +846,21 @@ async function createProgram(): Promise<Command> {
 
   const program = new Command();
 
+  const jsonOption = new Option("--json", "Output as JSON array");
+  const jsonlOption = new Option(
+    "--jsonl",
+    "Output as JSON Lines (newline-delimited)"
+  ).conflicts(jsonOption);
+  const textOption = new Option(
+    "--text",
+    "Output as human-readable formatted text"
+  );
+  jsonOption.conflicts("jsonl");
+  jsonOption.conflicts("text");
+  jsonlOption.conflicts("json");
+  textOption.conflicts("json");
+  textOption.conflicts("jsonl");
+
   program
     .name("wm")
     .description(
@@ -1389,9 +1404,17 @@ Output Formats:
 See 'wm find --prompt' for agent-facing documentation.
     `
     )
-    .action(async (paths: string[], options: Record<string, unknown>) => {
+    .action(async function (
+      this: Command,
+      paths: string[],
+      _options: Record<string, unknown>
+    ) {
       try {
-        await handleUnifiedCommand(program, paths, options);
+        const mergedOptions =
+          typeof this.optsWithGlobals === "function"
+            ? this.optsWithGlobals()
+            : program.opts();
+        await handleUnifiedCommand(program, paths, mergedOptions);
       } catch (error) {
         writeStderr(error instanceof Error ? error.message : String(error));
         process.exit(1);
