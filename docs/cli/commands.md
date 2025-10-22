@@ -29,7 +29,7 @@ wm lint src/                         # validate waymarks
 
 # Waymark management
 wm add src/auth.ts:42 todo "add rate limiting" --write
-wm remove src/auth.ts:42 --write
+wm remove src/auth.ts:42 --write             # or: wm rm
 wm modify src/auth.ts:42 --raise --write
 
 # Output formats
@@ -397,7 +397,7 @@ For detailed documentation on waymark management commands, see [Waymark Editing 
 wm add src/auth.ts:42 todo "add rate limiting" --write
 
 # Remove waymark
-wm remove src/auth.ts:42 --write
+wm remove src/auth.ts:42 --write              # or: wm rm src/auth.ts:42 --write
 
 # Modify waymark signals
 wm modify src/auth.ts:42 --raise --write
@@ -416,7 +416,7 @@ wm help
 # Command-specific help
 wm help format
 wm help insert
-wm help remove
+wm help remove                       # or: wm help rm
 ```
 
 ---

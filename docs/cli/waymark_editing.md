@@ -1299,7 +1299,7 @@ Should `file` field support globs?
 
 ### Overview
 
-The `wm remove` command enables programmatic removal of waymarks based on various criteria. This complements `wm add` and enables cleanup workflows, task completion automation, and maintenance operations.
+The `wm remove` command (alias: `wm rm`) enables programmatic removal of waymarks based on various criteria. This complements `wm add` and enables cleanup workflows, task completion automation, and maintenance operations.
 
 ### Motivation
 
