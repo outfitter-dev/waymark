@@ -99,7 +99,7 @@ wm format src/example.ts --write     # normalize syntax
 wm lint src/                         # validate waymarks
 
 # Waymark management
-wm insert src/auth.ts:42 todo "add rate limiting" --write
+wm add src/auth.ts:42 todo "add rate limiting" --write
 wm remove src/auth.ts:42 --write
 wm modify src/auth.ts:42 --raise --write
 
@@ -130,10 +130,10 @@ This creates `.waymark/config.toml` with default settings.
 
 ```bash
 # Add a file summary (TLDR)
-wm insert src/index.ts:1 tldr "application entry point" --write
+wm add src/index.ts:1 tldr "application entry point" --write
 
 # Add a TODO
-wm insert src/auth.ts:42 todo "implement rate limiting" --write
+wm add src/auth.ts:42 todo "implement rate limiting" --write
 
 # Verify
 wm src/

@@ -85,7 +85,7 @@ Orchestrate a complete implementation workflow for the requested Linear issue us
    - For persistent issues, bring in `@agent-systematic-debugger` (failures) or `@agent-code-reviewer` (lint/style gaps).
 
 7. **Manual verification (CLI & docs)**
-   - For CLI changes (`packages/cli`), run representative commands locally (e.g., `bun run wm insert …`) within a sandbox directory.
+   - For CLI changes (`packages/cli`), run representative commands locally (e.g., `bun run wm add …`) within a sandbox directory.
    - For docs, ensure rendered Markdown has correct waymarks (`<!-- tldr ::: -->`, etc.).
 
 ### Phase 4: Documentation & Completion

@@ -1,23 +1,23 @@
-// tldr ::: agent-facing usage guide for insert command
+// tldr ::: agent-facing usage guide for add command (formerly insert)
 
 export default `
-INSERT COMMAND - Agent Usage Guide
+ADD COMMAND - Agent Usage Guide
 
 PURPOSE
-  Programmatically insert waymarks into files with automatic formatting and ID management.
+  Programmatically add waymarks into files with automatic formatting and ID management.
 
 COMMAND SYNTAX
-  wm insert <file:line> <type> <content> [options]
-  wm insert --from <json-file>
-  echo '<json>' | wm insert --from -
+  wm add <file:line> <type> <content> [options]
+  wm add --from <json-file>
+  echo '<json>' | wm add --from -
 
 INPUT MODES
 
   1. Inline Arguments:
-     wm insert src/auth.ts:42 todo "implement OAuth flow" --mention @agent --tag "#sec"
+     wm add src/auth.ts:42 todo "implement OAuth flow" --mention @agent --tag "#sec"
 
   2. JSON Input (single waymark):
-     wm insert --from waymark.json
+     wm add --from waymark.json
      {
        "file": "src/auth.ts",
        "line": 42,
@@ -28,12 +28,12 @@ INPUT MODES
      }
 
   3. JSONL Input (multiple waymarks):
-     cat waymarks.jsonl | wm insert --from -
+     cat waymarks.jsonl | wm add --from -
      {"file":"src/auth.ts","line":42,"type":"todo","content":"implement OAuth"}
      {"file":"src/db.ts","line":15,"type":"note","content":"assumes UTC timestamps"}
 
   4. JSON Array (batch insert):
-     wm insert --from batch.json
+     wm add --from batch.json
      [
        {"file":"src/auth.ts","line":42,"type":"todo","content":"implement OAuth"},
        {"file":"src/db.ts","line":15,"type":"note","content":"assumes UTC"}
@@ -68,56 +68,56 @@ OUTPUT FORMATS
 EXAMPLES
 
   1. Insert simple todo:
-     wm insert src/auth.ts:42 todo "implement rate limiting"
+     wm add src/auth.ts:42 todo "implement rate limiting"
 
   2. Insert with mentions and tags:
-     wm insert src/db.ts:15 note "assumes UTC timestamps" --mention @alice --tag "#time"
+     wm add src/db.ts:15 note "assumes UTC timestamps" --mention @alice --tag "#time"
 
   3. Insert with signal (starred to mark as important/valuable):
-     wm insert src/api.ts:100 fix "validate input" --signal *
+     wm add src/api.ts:100 fix "validate input" --signal *
 
   4. Insert with signal (raised, in-progress):
-     wm insert src/refactor.ts:50 wip "refactoring auth flow" --signal ^
+     wm add src/refactor.ts:50 wip "refactoring auth flow" --signal ^
 
   5. Insert with dependency relation:
-     wm insert src/payments.ts:200 todo "add retry logic" --depends "#infra/queue"
+     wm add src/payments.ts:200 todo "add retry logic" --depends "#infra/queue"
 
   6. Insert with canonical reference:
-     wm insert src/auth.ts:1 tldr "user authentication service" --ref "#auth/service"
+     wm add src/auth.ts:1 tldr "user authentication service" --ref "#auth/service"
 
   7. Insert with multiple properties:
-     wm insert src/api.ts:75 todo "add validation" --property owner:@bob --property priority:high
+     wm add src/api.ts:75 todo "add validation" --property owner:@bob --property priority:high
 
   8. Batch insert from JSONL:
-     cat waymarks.jsonl | wm insert --from -
+     cat waymarks.jsonl | wm add --from -
 
   9. Insert with JSON output:
-     wm insert src/auth.ts:42 todo "implement OAuth" --json
+     wm add src/auth.ts:42 todo "implement OAuth" --json
 
 AGENT WORKFLOWS
 
   1. Track implementation work:
      # Agent inserts todo as it identifies work
-     wm insert src/auth.ts:42 todo "@agent implement OAuth flow" --tag "#sec"
+     wm add src/auth.ts:42 todo "@agent implement OAuth flow" --tag "#sec"
 
   2. Add documentation breadcrumbs:
      # Agent adds tldr to newly created file
-     wm insert src/newfile.ts:1 tldr "utility functions for date handling"
+     wm add src/newfile.ts:1 tldr "utility functions for date handling"
 
   3. Mark performance hotspots:
      # Agent identifies hotpath during profiling
-     wm insert src/query.ts:156 note "performance hotpath" --tag "#perf:hotpath"
+     wm add src/query.ts:156 note "performance hotpath" --tag "#perf:hotpath"
 
   4. Create dependency graph:
      # Agent maps dependencies while building
-     wm insert src/api.ts:50 todo "implement endpoint" --depends "#db/schema"
+     wm add src/api.ts:50 todo "implement endpoint" --depends "#db/schema"
 
   5. Batch insert from analysis:
      # Agent analyzes codebase and generates waymarks
      echo '[
        {"file":"src/a.ts","line":10,"type":"todo","content":"add tests"},
        {"file":"src/b.ts","line":20,"type":"fix","content":"handle edge case"}
-     ]' | wm insert --from - --json
+     ]' | wm add --from - --json
 
 JSON INPUT SCHEMA
 
@@ -185,15 +185,15 @@ ERROR HANDLING
 COMBINING WITH OTHER COMMANDS
 
   # Insert then scan to verify
-  wm insert src/auth.ts:42 todo "implement OAuth" && wm src/auth.ts --type todo
+  wm add src/auth.ts:42 todo "implement OAuth" && wm src/auth.ts --type todo
 
   # Insert multiple waymarks and output as JSON
-  cat waymarks.jsonl | wm insert --from - --json > results.json
+  cat waymarks.jsonl | wm add --from - --json > results.json
 
   # Find files missing tldr, insert them
   wm . --map | grep -v "tldr:" | awk '{print $1":1"}' | while read loc; do
-    wm insert $loc tldr "TODO: add file summary"
+    wm add $loc tldr "TODO: add file summary"
   done
 
-For human-facing help, use: wm insert --help
+For human-facing help, use: wm add --help
 `;

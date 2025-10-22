@@ -7,10 +7,9 @@ import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
 import { Command } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
-
+import { parseAddArgs, runAddCommand } from "./commands/add.ts";
 import { formatFile } from "./commands/fmt.ts";
 import { runInitCommand } from "./commands/init.ts";
-import { parseInsertArgs, runInsertCommand } from "./commands/insert.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { migrateFile } from "./commands/migrate.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
@@ -212,13 +211,13 @@ async function handleMigrateCommand(
   }
 }
 
-async function handleInsertCommand(
+async function handleAddCommand(
   program: Command,
   command: Command,
   options: { prompt?: boolean }
 ): Promise<void> {
   if (options.prompt) {
-    const promptText = loadPrompt("insert");
+    const promptText = loadPrompt("add");
     if (promptText) {
       writeStdout(promptText);
       return;
@@ -238,8 +237,8 @@ async function handleInsertCommand(
   const context = await createContext(globalOpts);
 
   try {
-    const parsed = parseInsertArgs(filteredTokens);
-    const result = await runInsertCommand(parsed, context);
+    const parsed = parseAddArgs(filteredTokens);
+    const result = await runAddCommand(parsed, context);
 
     if (result.output.length > 0) {
       writeStdout(result.output);
@@ -858,7 +857,8 @@ See 'wm format --prompt' for agent-facing documentation.
     );
 
   program
-    .command("insert")
+    .command("add")
+    .alias("insert")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
     .option(
@@ -879,22 +879,22 @@ See 'wm format --prompt' for agent-facing documentation.
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .option("--prompt", "show agent-facing prompt instead of help")
-    .description("insert waymarks into files")
+    .description("add waymarks into files")
     .addHelpText(
       "after",
       `
 Arguments:
-  <file:line>  Location to insert (e.g., src/auth.ts:42)
+  <file:line>  Location to add waymark (e.g., src/auth.ts:42)
   <type>       Waymark type (todo, fix, note, tldr, etc.)
   <content>    Waymark content text (quote if contains spaces)
 
 Examples:
-  $ wm insert src/auth.ts:42 todo "implement rate limiting"
-  $ wm insert src/db.ts:15 note "assumes UTC" --mention @alice --tag "#time"
-  $ wm insert src/api.ts:100 fix "validate input" --signal *
-  $ wm insert src/pay.ts:200 todo "add retry" --depends "#infra/queue"
-  $ wm insert --from waymarks.json
-  $ echo '{"file":"src/a.ts","line":10,"type":"todo","content":"test"}' | wm insert --from -
+  $ wm add src/auth.ts:42 todo "implement rate limiting"
+  $ wm add src/db.ts:15 note "assumes UTC" --mention @alice --tag "#time"
+  $ wm add src/api.ts:100 fix "validate input" --signal *
+  $ wm add src/pay.ts:200 todo "add retry" --depends "#infra/queue"
+  $ wm add --from waymarks.json
+  $ echo '{"file":"src/a.ts","line":10,"type":"todo","content":"test"}' | wm add --from -
 
 Signals:
   ^  Raised (in-progress work, shouldn't merge to main yet)
@@ -907,12 +907,13 @@ Types:
   Workflow:   blocked, needs
   Inquiry:    question
 
-See 'wm insert --prompt' for agent-facing documentation.
+Note: 'wm insert' is deprecated, use 'wm add' instead.
+See 'wm add --prompt' for agent-facing documentation.
     `
     )
     .action(async function (this: Command, ...actionArgs: unknown[]) {
       const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
-      await handleInsertCommand(program, this, options);
+      await handleAddCommand(program, this, options);
     });
 
   const modifyCmd = program

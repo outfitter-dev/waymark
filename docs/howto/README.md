@@ -30,7 +30,7 @@ wm init
 
 # 3. Add your first waymarks
 # Add file summary
-wm insert src/index.ts:1 tldr "application entry point" --write
+wm add src/index.ts:1 tldr "application entry point" --write
 
 # 4. Verify
 wm src/
@@ -139,7 +139,7 @@ wm src/ --tag "#perf:hotpath"
 
 ```bash
 # Add TODO for teammate
-wm insert src/auth.ts:42 todo "@alice implement OAuth flow" --write
+wm add src/auth.ts:42 todo "@alice implement OAuth flow" --write
 
 # Find all work assigned to Alice
 wm src/ --mention @alice
@@ -177,7 +177,7 @@ wm src/ --mention @agents --type todo
 
 ```bash
 # Add dependency
-wm insert src/payments.ts:56 todo "implement refunds depends:#payments/charge" --write
+wm add src/payments.ts:56 todo "implement refunds depends:#payments/charge" --write
 
 # Find dependency graph
 wm src/ --graph
@@ -196,7 +196,7 @@ wm src/ --blocks "#auth/session"
 
 ```bash
 # Add agent TODO
-wm insert src/cache.ts:23 todo "@agent implement Redis fallback" --write
+wm add src/cache.ts:23 todo "@agent implement Redis fallback" --write
 
 # Find all agent work
 wm src/ --type todo --mention @agent
@@ -236,11 +236,11 @@ See [MCP Server Documentation](../../README.md#mcp-server) for integration detai
 
 ```bash
 # 1. Add canonical reference
-wm insert src/auth.ts:1 tldr "authentication service ref:#auth/service" --write
+wm add src/auth.ts:1 tldr "authentication service ref:#auth/service" --write
 
 # 2. Reference from other files
-wm insert src/middleware.ts:45 note "delegates to ref:#auth/service" --write
-wm insert src/api.ts:78 todo "coordinate with depends:#auth/service" --write
+wm add src/middleware.ts:45 note "delegates to ref:#auth/service" --write
+wm add src/api.ts:78 todo "coordinate with depends:#auth/service" --write
 
 # 3. Find all references to a canonical
 wm src/ --tag "#auth/service"
@@ -276,13 +276,13 @@ wm src/ --tag "#auth/service"
 
 ```bash
 # Mark hotspot
-wm insert src/query.ts:67 note "database query hotspot #perf:hotpath" --write
+wm add src/query.ts:67 note "database query hotspot #perf:hotpath" --write
 
 # Find all hotspots
 wm src/ --tag "#perf:hotpath"
 
 # Add performance TODOs
-wm insert src/cache.ts:34 todo "add Redis caching #perf" --write
+wm add src/cache.ts:34 todo "add Redis caching #perf" --write
 ```
 
 **Performance tags**:
@@ -297,13 +297,13 @@ wm insert src/cache.ts:34 todo "add Redis caching #perf" --write
 
 ```bash
 # Mark security boundary
-wm insert src/api.ts:12 note "validates all inputs #sec:boundary" --write
+wm add src/api.ts:12 note "validates all inputs #sec:boundary" --write
 
 # Find security-critical code
 wm src/ --tag "#sec"
 
 # Security TODOs
-wm insert src/auth.ts:89 fix "validate JWT expiry #sec:auth" --write
+wm add src/auth.ts:89 fix "validate JWT expiry #sec:auth" --write
 ```
 
 **Security tags**:
@@ -319,7 +319,7 @@ wm insert src/auth.ts:89 fix "validate JWT expiry #sec:auth" --write
 
 ```bash
 # In code
-wm insert src/api.ts:1 tldr "REST API handlers ref:#api/rest #docs/api" --write
+wm add src/api.ts:1 tldr "REST API handlers ref:#api/rest #docs/api" --write
 
 # In docs (docs/api/README.md)
 <!-- tldr ::: REST API documentation for backend services ref:#docs/api -->
@@ -361,10 +361,10 @@ wm src/ --type tldr --type this
 
 ```bash
 # 1. Mark files for refactor
-wm insert src/legacy.ts:1 ^wip "refactoring to TypeScript @yourname" --write
+wm add src/legacy.ts:1 ^wip "refactoring to TypeScript @yourname" --write
 
 # 2. Document dependencies
-wm insert src/legacy.ts:1 note "depends:#new-api/client" --write
+wm add src/legacy.ts:1 note "depends:#new-api/client" --write
 
 # 3. Track refactor progress
 wm src/ --raised --mention @yourname
