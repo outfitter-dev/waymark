@@ -12,6 +12,7 @@ import chalk from "chalk";
 export type MapRenderOptions = {
   types?: string[];
   includeSummary?: boolean;
+  compact?: boolean;
 };
 
 export type MapSerializeOptions = MapRenderOptions;
@@ -29,6 +30,34 @@ export function printMap(
 }
 
 /**
+ * Format a waymark map in compact mode (one line per file).
+ */
+export function formatMapCompact(
+  map: WaymarkMap,
+  typeFilter?: Set<string>
+): string {
+  const summaries = Array.from(map.files.values())
+    .filter((summary) => shouldIncludeTldr(summary, typeFilter))
+    .sort((a, b) => a.file.localeCompare(b.file));
+
+  if (summaries.length === 0) {
+    return typeFilter && typeFilter.size > 0
+      ? "No matching waymarks."
+      : "No waymarks found.";
+  }
+
+  return summaries
+    .map((summary) => {
+      const tldr = summary.tldr;
+      if (!tldr) return "";
+      const filePath = chalk.blue(`${summary.file}:${tldr.startLine}`);
+      return `${filePath} ${tldr.contentText}`;
+    })
+    .filter((line) => line.length > 0)
+    .join("\n");
+}
+
+/**
  * Format a waymark map for human-friendly CLI output.
  */
 export function formatMapOutput(
@@ -36,6 +65,13 @@ export function formatMapOutput(
   options: MapRenderOptions = {}
 ): string {
   const typeFilter = toTypeFilter(options.types);
+
+  // Compact mode: one line per file
+  if (options.compact) {
+    return formatMapCompact(map, typeFilter);
+  }
+
+  // Tree mode: hierarchical structure
   const fileLines = buildFileBlocks(map, typeFilter);
   const outputLines = fileLines.flat();
 
@@ -249,9 +285,10 @@ export function buildFileLines(
 
   // File path in blue with tree drawing prefix
   const includeTldr = shouldIncludeTldr(summary, typeFilter);
-  const fileDisplay = includeTldr && summary.tldr
-    ? `${fileName}:${summary.tldr.startLine}`
-    : fileName;
+  const fileDisplay =
+    includeTldr && summary.tldr
+      ? `${fileName}:${summary.tldr.startLine}`
+      : fileName;
   const filePath = chalk.blue(fileDisplay);
   lines.push(`${linePrefix} ${filePath}`);
 
