@@ -871,7 +871,6 @@ See 'wm format --prompt' for agent-facing documentation.
 
   program
     .command("add")
-    .alias("insert")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
     .option(
@@ -920,7 +919,6 @@ Types:
   Workflow:   blocked, needs
   Inquiry:    question
 
-Note: 'wm insert' is deprecated, use 'wm add' instead.
 See 'wm add --prompt' for agent-facing documentation.
     `
     )
@@ -1333,16 +1331,15 @@ See 'wm find --help' for all available options and comprehensive documentation.
 
   tab(program);
 
-  // Rename 'complete' command to 'completions' with backward-compatible alias (WAY-32)
+  // Rename 'complete' command to 'completions' (WAY-32)
   // The tab library adds a 'complete' command automatically, but we want 'completions' as primary
   const completeCommand = program.commands.find(
     (cmd) => cmd.name() === "complete"
   );
   if (completeCommand) {
-    // Update the name to 'completions' and add 'complete' as an alias
+    // Update the name to 'completions' without backward-compatible alias
     // biome-ignore lint/suspicious/noExplicitAny: accessing internal Commander.js structure to rename command
     (completeCommand as any)._name = "completions";
-    completeCommand.alias("complete");
   }
 
   return program;
