@@ -35,7 +35,7 @@ wm modify src/auth.ts:42 --raise --write
 # Output formats
 wm src/ --json                       # compact JSON
 wm src/ --jsonl                      # newline-delimited JSON
-wm src/ --pretty                     # pretty-printed JSON
+wm src/ --text                       # human-readable formatted text
 
 # Configuration
 wm init                              # interactive config setup
@@ -248,8 +248,8 @@ wm src/ --graph
 # JSON output
 wm src/ --graph --json
 
-# Pretty JSON
-wm src/ --graph --pretty
+# Formatted text
+wm src/ --graph --text
 ```
 
 #### Output Formats
@@ -261,7 +261,7 @@ wm src/
 # JSON formats
 wm src/ --json                       # compact JSON array
 wm src/ --jsonl                      # newline-delimited JSON
-wm src/ --pretty                     # pretty-printed JSON
+wm src/ --text                       # human-readable formatted text
 ```
 
 #### Display Options
@@ -561,12 +561,12 @@ Output:
 {"file":"src/auth.ts","startLine":56,"type":"fix","contentText":"validate email format"}
 ```
 
-### Pretty JSON
+### Formatted Text
 
-Pretty-printed JSON with indentation:
+Human-readable formatted text output:
 
 ```bash
-wm src/ --pretty
+wm src/ --text
 ```
 
 ---
