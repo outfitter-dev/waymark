@@ -69,11 +69,6 @@ const commonFlags = {
     type: "boolean",
     description: "Show flat list output",
   },
-  keepCommentMarkers: {
-    name: "keep-comment-markers",
-    type: "boolean",
-    description: "Keep comment syntax in output",
-  },
   compact: {
     name: "compact",
     type: "boolean",
@@ -631,7 +626,6 @@ queries, filtering by type/tag/mention, and multiple output formats.
     commonFlags.long,
     commonFlags.tree,
     commonFlags.flat,
-    commonFlags.keepCommentMarkers,
     commonFlags.compact,
     commonFlags.noColor,
     commonFlags.group,

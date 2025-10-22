@@ -13,7 +13,6 @@ export type DisplayOptions = Pick<
   | "reverse"
   | "limit"
   | "page"
-  | "keepCommentMarkers"
   | "compact"
   | "noColor"
 >;
