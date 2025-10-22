@@ -759,18 +759,18 @@ async function createProgram(): Promise<Command> {
         "  wm format <file> --write  Format waymarks in file\n" +
         "  wm init                   Initialize waymark configuration"
     )
-    .version(version, "-v, --version", "output the current version")
-    .helpOption("-h, --help", "display help for command")
+    .version(version, "--version, -v", "output the current version")
+    .helpOption("--help, -h", "display help for command")
     .addHelpCommand(false) // Disable default help command, we'll add custom one
     .option(
-      "-s, --scope <scope>",
+      "--scope <scope>, -s",
       "config scope (default|project|user)",
       "default"
     )
     .option("--prompt", "show agent-facing documentation")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
-    .option("-q, --quiet", "only show errors")
+    .option("--quiet, -q", "only show errors")
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .option("--text", "output as human-readable formatted text")
@@ -825,7 +825,7 @@ async function createProgram(): Promise<Command> {
   program
     .command("format")
     .argument("[paths...]", "files or directories to format")
-    .option("-w, --write", "write changes to file", false)
+    .option("--write, -w", "write changes to file", false)
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("format and normalize waymark syntax in files")
     .addHelpText(
@@ -888,6 +888,7 @@ See 'wm format --prompt' for agent-facing documentation.
     .option("--needs <token>", "add needs relation")
     .option("--blocks <token>", "add blocks relation")
     .option("--signal <signal>", "add signal: ^ (raised) or * (starred)")
+    .option("--write, -w", "apply changes to file (default: preview)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -943,7 +944,7 @@ See 'wm add --prompt' for agent-facing documentation.
       "--content <text>",
       "replace waymark content (use '-' to read from stdin)"
     )
-    .option("-w, --write", "apply modifications (default: preview)", false)
+    .option("--write, -w", "apply modifications (default: preview)", false)
     .option(
       "--no-interactive",
       "skip interactive prompts when no target is provided"
@@ -999,8 +1000,8 @@ Notes:
       "read removal targets from JSON file (use - for stdin)"
     )
     .option("--criteria <query>", "remove waymarks matching filter criteria")
-    .option("-w, --write", "actually remove (default is preview)", false)
-    .option("-y, --yes", "skip confirmation prompt", false)
+    .option("--write, -w", "actually remove (default is preview)", false)
+    .option("--yes, -y", "skip confirmation prompt", false)
     .option("--confirm", "always show confirmation (even with --write)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
@@ -1048,9 +1049,9 @@ See 'wm remove --prompt' for agent-facing documentation.
   program
     .command("update")
     .description("check for and install CLI updates (npm global installs)")
-    .option("-n, --dry-run", "print the npm command without executing it")
-    .option("-f, --force", "run even if the install method cannot be detected")
-    .option("-y, --yes", "skip the confirmation prompt")
+    .option("--dry-run, -n", "print the npm command without executing it")
+    .option("--force, -f", "run even if the install method cannot be detected")
+    .option("--yes, -y", "skip the confirmation prompt")
     .option(
       "--command <command>",
       "override the underlying update command (defaults to npm)"
@@ -1114,7 +1115,7 @@ See 'wm lint --prompt' for agent-facing documentation.
   program
     .command("migrate")
     .argument("[paths...]", "files or directories to migrate")
-    .option("-w, --write", "write changes to file", false)
+    .option("--write, -w", "write changes to file", false)
     .option("--include-legacy", "also migrate non-standard patterns", false)
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("convert legacy comment patterns to waymark syntax")
@@ -1167,12 +1168,12 @@ See 'wm migrate --prompt' for agent-facing documentation.
   program
     .command("init")
     .option(
-      "-f, --format <format>",
+      "--format <format>, -f",
       "config format (toml|jsonc|yaml|yml)",
       "toml"
     )
-    .option("-p, --preset <preset>", "config preset (full|minimal)", "full")
-    .option("-s, --scope <scope>", "config scope (project|user)", "project")
+    .option("--preset <preset>, -p", "config preset (full|minimal)", "full")
+    .option("--scope <scope>, -s", "config scope (project|user)", "project")
     .option("--force", "overwrite existing config", false)
     .description("initialize waymark configuration")
     .action(
@@ -1195,11 +1196,11 @@ See 'wm migrate --prompt' for agent-facing documentation.
   program
     .command("find")
     .argument("[paths...]", "files or directories to scan")
-    .option("-t, --type <types...>", "filter by waymark type(s)")
+    .option("--type <types...>, -t", "filter by waymark type(s)")
     .option("--tag <tags...>", "filter by tag(s)")
     .option("--mention <mentions...>", "filter by mention(s)")
-    .option("-R, --raised", "filter for raised (^) waymarks")
-    .option("-S, --starred", "filter for starred (*) waymarks")
+    .option("--raised, -R", "filter for raised (^) waymarks")
+    .option("--starred, -S", "filter for starred (*) waymarks")
     .option("--tldr", "shorthand for --type tldr")
     .option("--map", "show file tree with TLDRs")
     .option("--graph", "show dependency graph")
@@ -1210,10 +1211,10 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("--compact", "compact output format")
     .option("--group <by>", "group by: file, dir, type")
     .option("--sort <by>", "sort by: file, line, type, modified")
-    .option("-C, --context <n>", "show N lines of context", Number.parseInt)
-    .option("-A, --after <n>", "show N lines after match", Number.parseInt)
-    .option("-B, --before <n>", "show N lines before match", Number.parseInt)
-    .option("-n, --limit <n>", "limit number of results", Number.parseInt)
+    .option("--context <n>, -C", "show N lines of context", Number.parseInt)
+    .option("--after <n>, -A", "show N lines after match", Number.parseInt)
+    .option("--before <n>, -B", "show N lines before match", Number.parseInt)
+    .option("--limit <n>, -n", "limit number of results", Number.parseInt)
     .option("--page <n>", "page number (with --limit)", Number.parseInt)
     .option("--interactive", "interactively select a waymark")
     .option("--json", "output as JSON")
