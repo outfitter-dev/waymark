@@ -31,7 +31,6 @@ export type ParseState = {
   reverse: boolean;
   limit: number | undefined;
   page: number | undefined;
-  keepCommentMarkers: boolean;
   compact: boolean;
   noColor: boolean;
 };
@@ -124,10 +123,6 @@ export function handlePaginationFlags(
  * Handle formatting flags
  */
 function handleFormattingFlags(token: string, state: ParseState): boolean {
-  if (token === "--keep-comment-markers") {
-    state.keepCommentMarkers = true;
-    return true;
-  }
   if (token === "--compact") {
     state.compact = true;
     return true;

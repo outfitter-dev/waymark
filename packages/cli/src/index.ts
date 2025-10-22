@@ -590,7 +590,6 @@ const BOOLEAN_OPTION_FLAGS = [
   { key: "long", flag: "--long" },
   { key: "tree", flag: "--tree" },
   { key: "flat", flag: "--flat" },
-  { key: "keepCommentMarkers", flag: "--keep-comment-markers" },
   { key: "compact", flag: "--compact" },
   { key: "noColor", flag: "--no-color" },
 ] as const;
@@ -1184,7 +1183,6 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("--long", "show detailed record information")
     .option("--tree", "group output by directory structure")
     .option("--flat", "show flat list (default)")
-    .option("--keep-comment-markers", "keep comment syntax in output")
     .option("--compact", "compact output format")
     .option("--no-color", "disable colored output")
     .option("--group <by>", "group by: file, dir, type")

@@ -75,13 +75,10 @@ function formatWaymarkLine(
   longestTypeLength: number,
   options: DisplayOptions
 ): string {
-  const keepMarkers = options.keepCommentMarkers ?? false;
   const compact = options.compact ?? false;
 
-  // Extract the waymark content
-  const content = keepMarkers
-    ? record.raw
-    : stripCommentMarkers(record.raw, record.commentLeader);
+  // Extract the waymark content (always strip comment markers)
+  const content = stripCommentMarkers(record.raw, record.commentLeader);
 
   // Calculate spacing for alignment
   const typeWithSignal = getTypeWithSignal(record);
@@ -208,7 +205,6 @@ function formatMultiLineWaymark(
   options: DisplayOptions
 ): string[] {
   const lines: string[] = [];
-  const keepMarkers = options.keepCommentMarkers ?? false;
 
   // Split raw text into lines if multi-line
   const rawLines = record.raw.split("\n");
@@ -229,9 +225,8 @@ function formatMultiLineWaymark(
     const lineNum = String(currentLine).padStart(lineWidth, " ");
     const lineNumStr = styleLineNumber(lineNum);
 
-    const content = keepMarkers
-      ? rawLine
-      : stripCommentMarkers(rawLine, record.commentLeader || "");
+    // Always strip comment markers
+    const content = stripCommentMarkers(rawLine, record.commentLeader);
 
     // Determine line type and format accordingly
     if (i === 0) {
