@@ -588,6 +588,11 @@ queries, filtering by type/tag/mention, and multiple output formats.
       description: "Filter by waymark type (todo, fix, note, etc.)",
     },
     {
+      name: "tldr",
+      type: "boolean",
+      description: "Shorthand for --type tldr (show TLDR summaries)",
+    },
+    {
       name: "tag",
       type: "string",
       placeholder: "#tag",
@@ -651,6 +656,7 @@ queries, filtering by type/tag/mention, and multiple output formats.
   examples: [
     "wm src/                            # Scan and display all waymarks",
     "wm --type todo                     # Show all TODOs",
+    "wm --tldr                          # Show all TLDRs (shorthand)",
     "wm --type todo --raised            # Show raised TODOs (^todo)",
     "wm --mention @alice                # Show waymarks mentioning @alice",
     "wm --tag perf                      # Show waymarks tagged #perf",

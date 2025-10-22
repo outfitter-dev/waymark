@@ -592,6 +592,7 @@ const MULTI_VALUE_OPTION_FLAGS = [
 const BOOLEAN_OPTION_FLAGS = [
   { key: "raised", flag: "--raised" },
   { key: "starred", flag: "--starred" },
+  { key: "tldr", flag: "--tldr" },
   { key: "map", flag: "--map" },
   { key: "graph", flag: "--graph" },
   { key: "summary", flag: "--summary" },
