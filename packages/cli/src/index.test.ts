@@ -20,7 +20,11 @@ import {
 } from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
+<<<<<<< HEAD
 import { formatMapOutput, serializeMap } from "./index";
+=======
+import { __test, formatMapOutput, serializeMap } from "./index";
+>>>>>>> d8c6284 (test(cli): assert graph json flag wiring (WAY-50))
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
 
@@ -1035,6 +1039,7 @@ describe("Commander integration", () => {
       }
     );
 
+<<<<<<< HEAD
     const result = await runCliCaptured(["find", "--json"]);
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBe("");
@@ -1054,6 +1059,9 @@ describe("Commander integration", () => {
         receivedOptions = options;
       }
     );
+=======
+    await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
+>>>>>>> d8c6284 (test(cli): assert graph json flag wiring (WAY-50))
 
     const result = await runCliCaptured(["find", "--map", "--json"]);
     expect(result.exitCode).toBe(0);
@@ -1274,6 +1282,26 @@ describe("Commander integration", () => {
 
     expect(receivedOptions?.json).toBe(true);
     expect(receivedOptions?.map).toBe(true);
+  });
+
+  test("find command forwards --graph with --json combination", async () => {
+    const program = await __test.createProgram();
+    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    expect(findCommand).toBeDefined();
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    findCommand?.action(
+      (_paths: string[], options: Record<string, unknown>) => {
+        receivedOptions = options;
+      }
+    );
+
+    await program.parseAsync(["find", "--graph", "--json", "sample.ts"], {
+      from: "user",
+    });
+
+    expect(receivedOptions?.json).toBe(true);
+    expect(receivedOptions?.graph).toBe(true);
   });
 });
 
