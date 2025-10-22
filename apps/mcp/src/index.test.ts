@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { handleInsertWaymark } from "./tools/insert";
+import { handleAddWaymark } from "./tools/add";
 import type { SignalFlags } from "./types";
 import { truncateSource } from "./utils/config";
 
@@ -24,7 +24,7 @@ const SAMPLE_SOURCE = ["line 1", "line 2", "line 3", "line 4", "line 5"].join(
 const TRUNCATION_LIMIT = 3;
 const EXPECTED_TRUNCATED_LINES = 4;
 
-describe("handleInsertWaymark", () => {
+describe("handleAddWaymark", () => {
   test("inserts TLDR at top of file", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-tldr-"));
     const file = join(dir, "example.ts");
@@ -42,7 +42,7 @@ describe("handleInsertWaymark", () => {
     );
 
     const server = new TestServer();
-    const response = await handleInsertWaymark({
+    const response = await handleAddWaymark({
       server,
       filePath: file,
       type: "tldr",
@@ -84,7 +84,7 @@ describe("handleInsertWaymark", () => {
 
     const signals: SignalFlags = { raised: true };
     const server = new TestServer();
-    const response = await handleInsertWaymark({
+    const response = await handleAddWaymark({
       server,
       filePath: file,
       type: "this",
@@ -122,7 +122,7 @@ describe("handleInsertWaymark", () => {
 
     const server = new TestServer();
     await expect(
-      handleInsertWaymark({
+      handleAddWaymark({
         server,
         filePath: file,
         type: "tldr",
@@ -147,7 +147,7 @@ describe("handleInsertWaymark", () => {
     );
 
     const server = new TestServer();
-    const response = await handleInsertWaymark({
+    const response = await handleAddWaymark({
       server,
       filePath: file,
       type: "idea",
