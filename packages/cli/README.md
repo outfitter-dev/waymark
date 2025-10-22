@@ -60,12 +60,12 @@ wm lint src/
 ## Key Commands
 
 - `wm [paths...]` - Scan and filter waymarks (default command)
-- `wm format <file>` - Format and normalize waymark syntax
+- `wm format [paths...]` - Format and normalize waymark syntax
 - `wm insert <file:line> <type> <content>` - Insert waymarks into files
 - `wm modify <file:line>` - Modify existing waymarks
 - `wm remove <file:line>` - Remove waymarks from files
-- `wm lint <files...>` - Validate waymark structure
-- `wm migrate <file>` - Convert legacy patterns to waymark syntax
+- `wm lint [paths...]` - Validate waymark structure
+- `wm migrate [paths...]` - Convert legacy patterns to waymark syntax
 - `wm init` - Initialize waymark configuration
 - `wm update` - Check for and install CLI updates
 
@@ -74,7 +74,7 @@ wm lint src/
 ```bash
 wm src/ --json              # Compact JSON array
 wm src/ --jsonl             # Newline-delimited JSON
-wm src/ --pretty            # Pretty-printed JSON
+wm src/ --text              # Human-readable formatted text
 wm src/ --long              # Detailed record information
 wm src/ --tree              # Tree view grouped by directory
 ```

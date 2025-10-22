@@ -58,7 +58,7 @@ function ensureFileExists(path: string): void {
 // Command handlers extracted for complexity management
 async function handleFormatCommand(
   program: Command,
-  filePath: string,
+  paths: string[],
   options: { write?: boolean; prompt?: boolean }
 ): Promise<void> {
   if (options.prompt) {
@@ -75,43 +75,48 @@ async function handleFormatCommand(
   const globalOpts = { scope: normalizeScope(scopeValue) };
   const context = await createContext(globalOpts);
 
-  ensureFileExists(filePath);
+  // If no paths provided, default to current directory
+  const pathsToFormat = paths.length > 0 ? paths : ["."];
 
-  // First, format without writing to see what changes would be made
-  const { formattedText, edits } = await formatFile(
-    { filePath, write: false },
-    context
-  );
+  for (const filePath of pathsToFormat) {
+    ensureFileExists(filePath);
 
-  if (edits.length === 0) {
-    writeStdout(`${filePath}: no changes`);
-    return;
-  }
+    // First, format without writing to see what changes would be made
+    const { formattedText, edits } = await formatFile(
+      { filePath, write: false },
+      context
+    );
 
-  // If --write flag is set, confirm before writing
-  if (options.write) {
-    const shouldWrite = await confirmWrite({
-      filePath,
-      changeCount: edits.length,
-      actionVerb: "format",
-    });
-
-    if (shouldWrite) {
-      // Actually write the changes
-      await formatFile({ filePath, write: true }, context);
-      writeStdout(`${filePath}: formatted (${edits.length} edits)`);
-    } else {
-      writeStdout("Write cancelled");
-      process.exit(1);
+    if (edits.length === 0) {
+      writeStdout(`${filePath}: no changes`);
+      continue;
     }
-  } else {
-    writeStdout(formattedText);
+
+    // If --write flag is set, confirm before writing
+    if (options.write) {
+      const shouldWrite = await confirmWrite({
+        filePath,
+        changeCount: edits.length,
+        actionVerb: "format",
+      });
+
+      if (shouldWrite) {
+        // Actually write the changes
+        await formatFile({ filePath, write: true }, context);
+        writeStdout(`${filePath}: formatted (${edits.length} edits)`);
+      } else {
+        writeStdout("Write cancelled");
+        process.exit(1);
+      }
+    } else {
+      writeStdout(formattedText);
+    }
   }
 }
 
 async function handleLintCommand(
   program: Command,
-  filePaths: string[],
+  paths: string[],
   options: { json?: boolean; prompt?: boolean }
 ): Promise<void> {
   if (options.prompt) {
@@ -128,8 +133,11 @@ async function handleLintCommand(
   const globalOpts = { scope: normalizeScope(scopeValue) };
   const context = await createContext(globalOpts);
 
+  // If no paths provided, default to current directory
+  const pathsToLint = paths.length > 0 ? paths : ["."];
+
   const report = await runLint(
-    filePaths,
+    pathsToLint,
     context.config.allowTypes,
     context.config
   );
@@ -152,7 +160,7 @@ async function handleLintCommand(
 
 async function handleMigrateCommand(
   program: Command,
-  filePath: string,
+  paths: string[],
   options: { write?: boolean; prompt?: boolean }
 ): Promise<void> {
   if (options.prompt) {
@@ -169,33 +177,38 @@ async function handleMigrateCommand(
   const globalOpts = { scope: normalizeScope(scopeValue) };
   const context = await createContext(globalOpts);
 
-  ensureFileExists(filePath);
+  // If no paths provided, default to current directory
+  const pathsToMigrate = paths.length > 0 ? paths : ["."];
 
-  // First, migrate without writing to see what changes would be made
-  const result = await migrateFile({ filePath, write: false }, context);
+  for (const filePath of pathsToMigrate) {
+    ensureFileExists(filePath);
 
-  if (!result.changed) {
-    writeStdout(`${filePath}: no changes`);
-    return;
-  }
+    // First, migrate without writing to see what changes would be made
+    const result = await migrateFile({ filePath, write: false }, context);
 
-  // If --write flag is set, confirm before writing
-  if (options.write) {
-    const shouldWrite = await confirmWrite({
-      filePath,
-      actionVerb: "migrate",
-    });
-
-    if (shouldWrite) {
-      // Actually write the changes
-      await migrateFile({ filePath, write: true }, context);
-      writeStdout(`${filePath}: migrated`);
-    } else {
-      writeStdout("Write cancelled");
-      process.exit(1);
+    if (!result.changed) {
+      writeStdout(`${filePath}: no changes`);
+      continue;
     }
-  } else {
-    writeStdout(result.output);
+
+    // If --write flag is set, confirm before writing
+    if (options.write) {
+      const shouldWrite = await confirmWrite({
+        filePath,
+        actionVerb: "migrate",
+      });
+
+      if (shouldWrite) {
+        // Actually write the changes
+        await migrateFile({ filePath, write: true }, context);
+        writeStdout(`${filePath}: migrated`);
+      } else {
+        writeStdout("Write cancelled");
+        process.exit(1);
+      }
+    } else {
+      writeStdout(result.output);
+    }
   }
 }
 
@@ -799,7 +812,7 @@ async function createProgram(): Promise<Command> {
   // Format command
   program
     .command("format")
-    .argument("<file>", "file to format")
+    .argument("[paths...]", "files or directories to format")
     .option("-w, --write", "write changes to file", false)
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("format and normalize waymark syntax in files")
@@ -807,9 +820,10 @@ async function createProgram(): Promise<Command> {
       "after",
       `
 Examples:
-  $ wm format src/auth.ts              # Preview formatting changes (dry-run)
-  $ wm format src/auth.ts --write      # Apply formatting changes
+  $ wm format src/auth.ts              # Preview formatting single file
+  $ wm format src/auth.ts --write      # Apply formatting to single file
   $ wm format src/**/*.ts --write      # Format multiple files
+  $ wm format src/ --write             # Format all files in directory
 
 Formatting Rules:
   - Exactly one space before and after ::: sigil
@@ -831,11 +845,11 @@ See 'wm format --prompt' for agent-facing documentation.
     )
     .action(
       async (
-        filePath: string,
+        paths: string[],
         options: { write?: boolean; prompt?: boolean }
       ) => {
         try {
-          await handleFormatCommand(program, filePath, options);
+          await handleFormatCommand(program, paths, options);
         } catch (error) {
           writeStderr(error instanceof Error ? error.message : String(error));
           process.exit(1);
@@ -1033,7 +1047,7 @@ See 'wm remove --prompt' for agent-facing documentation.
   // Lint command
   program
     .command("lint")
-    .argument("<files...>", "files to lint")
+    .argument("[paths...]", "files or directories to lint")
     .option("--json", "output JSON", false)
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("validate waymark structure and enforce quality rules")
@@ -1043,6 +1057,7 @@ See 'wm remove --prompt' for agent-facing documentation.
 Examples:
   $ wm lint src/auth.ts              # Lint single file
   $ wm lint src/**/*.ts              # Lint multiple files
+  $ wm lint src/                     # Lint directory
   $ wm lint src/ --json              # JSON output for CI
   $ git diff --name-only --cached | xargs wm lint    # Pre-commit hook
 
@@ -1070,11 +1085,11 @@ See 'wm lint --prompt' for agent-facing documentation.
     )
     .action(
       async (
-        filePaths: string[],
+        paths: string[],
         options: { json?: boolean; prompt?: boolean }
       ) => {
         try {
-          await handleLintCommand(program, filePaths, options);
+          await handleLintCommand(program, paths, options);
         } catch (error) {
           writeStderr(error instanceof Error ? error.message : String(error));
           process.exit(1);
@@ -1085,7 +1100,7 @@ See 'wm lint --prompt' for agent-facing documentation.
   // Migrate command
   program
     .command("migrate")
-    .argument("<file>", "file to migrate")
+    .argument("[paths...]", "files or directories to migrate")
     .option("-w, --write", "write changes to file", false)
     .option("--include-legacy", "also migrate non-standard patterns", false)
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -1094,9 +1109,10 @@ See 'wm lint --prompt' for agent-facing documentation.
       "after",
       `
 Examples:
-  $ wm migrate src/auth.ts                # Preview migration (dry-run)
-  $ wm migrate src/auth.ts --write        # Apply migration
+  $ wm migrate src/auth.ts                # Preview migration of single file
+  $ wm migrate src/auth.ts --write        # Apply migration to single file
   $ wm migrate src/**/*.ts --write        # Migrate multiple files
+  $ wm migrate src/ --write               # Migrate directory
   $ wm migrate src/auth.ts --include-legacy --write
 
 Supported Legacy Patterns:
@@ -1122,11 +1138,11 @@ See 'wm migrate --prompt' for agent-facing documentation.
     )
     .action(
       async (
-        filePath: string,
+        paths: string[],
         options: { write?: boolean; prompt?: boolean }
       ) => {
         try {
-          await handleMigrateCommand(program, filePath, options);
+          await handleMigrateCommand(program, paths, options);
         } catch (error) {
           writeStderr(error instanceof Error ? error.message : String(error));
           process.exit(1);

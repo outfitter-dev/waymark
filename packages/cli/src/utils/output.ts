@@ -2,7 +2,7 @@
 
 import type { WaymarkRecord } from "@waymarks/core";
 
-export type ScanOutputFormat = "text" | "json" | "jsonl" | "pretty";
+export type ScanOutputFormat = "text" | "json" | "jsonl";
 
 /**
  * Clean record for JSON output by removing empty arrays and objects
@@ -58,7 +58,7 @@ export function renderRecords(
       return JSON.stringify(cleanedRecords);
     case "jsonl":
       return cleanedRecords.map((record) => JSON.stringify(record)).join("\n");
-    case "pretty":
+    case "text":
       return JSON.stringify(cleanedRecords, null, 2);
     default:
       return records

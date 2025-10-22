@@ -53,7 +53,7 @@ OUTPUT FORMATS
   (default)           Human-readable text
   --json              JSON array (best for parsing)
   --jsonl             Newline-delimited JSON (best for streaming)
-  --pretty            Pretty-printed JSON (best for debugging)
+  --text              Formatted text output (human-readable)
 
 FILTER BEHAVIOR
   OR logic within same flag type:
