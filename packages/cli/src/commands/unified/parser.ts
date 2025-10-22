@@ -6,6 +6,7 @@ import { handleJsonFlag } from "../../utils/flags/json";
 import { handleMentionFlag } from "../../utils/flags/mention";
 import { handleSummaryFlag } from "../../utils/flags/summary";
 import { handleTagFlag } from "../../utils/flags/tag";
+import { handleTldrFlag } from "../../utils/flags/tldr";
 import { handleTypeFlag } from "../../utils/flags/type";
 import type { ParseState } from "./flag-handlers";
 import {
@@ -111,6 +112,7 @@ export function processToken(
   // Standard filters
   handleJsonFlag(token, state.jsonState);
   handleSummaryFlag(token, state.summaryState);
+  handleTldrFlag(token, state.types);
   handleTypeFlag(token, iterator, state.types);
   handleTagFlag(token, iterator, state.tags);
   handleMentionFlag(token, iterator, state.mentions);

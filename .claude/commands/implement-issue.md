@@ -6,7 +6,6 @@ Instructions tailored for the Waymark repository.
 
 - Linear Team ID: `bf82309c-7e23-4a19-890d-a36b4ecad5c3`
 - Linear Team Name: `Waymark`
-- Default work branch: `gt/v1.0/rewrite`
 
 ## Overview
 
@@ -15,7 +14,6 @@ Orchestrate a complete implementation workflow for the requested Linear issue us
 ## Important
 
 - Use `gt` / Graphite commands exclusively for branch and commit management.
-- Keep all work on top of `gt/v1.0/rewrite` unless the user states otherwise.
 - Pause and check in with the user if you hit unexpected behavior or blocking issues.
 
 ## Preparation
