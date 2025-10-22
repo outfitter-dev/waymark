@@ -28,11 +28,6 @@ SAFETY MODEL
   1. Preview → Inspect what will be removed
   2. Execute → Add --write to apply changes
 
-  Confirmation:
-  - Default: prompts before writing
-  - --yes: skip confirmation
-  - --confirm: force confirmation even with --yes
-
 INPUT METHODS
 
   1. By Location:
@@ -103,7 +98,7 @@ AGENT WORKFLOWS
   1. Clean up completed work:
      # Agent finds done waymarks and removes them
      wm scan --type done --json | jq -r '.file + ":" + (.startLine|tostring)' | \\
-       while read loc; do wm remove $loc --write --yes; done
+       while read loc; do wm remove $loc --write; done
 
   2. Remove raised waymarks after merge:
      # Agent removes ^ waymarks after PR merges
@@ -206,7 +201,6 @@ TIPS FOR AGENTS
   ✓ Use criteria filters for bulk cleanup operations
   ✓ Verify removal with scan command afterward
   ✓ Review .waymark/history.json for audit trail
-  ✓ Use --yes for automated workflows (after preview)
   ✓ Consider committing history.json for team sync
 
 UNDO CAPABILITY (future)
