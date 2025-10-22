@@ -81,26 +81,26 @@ wm src/ --tree              # Tree view grouped by directory
 
 ## Shell Completions
 
-Generate completions with the built-in `wm complete` command:
+Generate completions with the built-in `wm completions` command:
 
 ```bash
 # Zsh
-wm complete zsh > ~/.local/share/waymark/completions/wm.zsh
+wm completions zsh > ~/.local/share/waymark/completions/wm.zsh
 echo 'source ~/.local/share/waymark/completions/wm.zsh' >> ~/.zshrc
 
 # Bash
-wm complete bash > ~/.local/share/waymark/completions/wm.bash
+wm completions bash > ~/.local/share/waymark/completions/wm.bash
 echo 'source ~/.local/share/waymark/completions/wm.bash' >> ~/.bashrc
 
 # Fish
-wm complete fish > ~/.config/fish/completions/wm.fish
+wm completions fish > ~/.config/fish/completions/wm.fish
 
 # PowerShell
-wm complete powershell > ~/.config/waymark/completions/wm.ps1
+wm completions powershell > ~/.config/waymark/completions/wm.ps1
 Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 ```
 
-Run `wm complete` with no arguments to see the supported shells.
+Run `wm completions` with no arguments to see the supported shells. Note: `wm complete` is also supported as a backward-compatible alias.
 
 ## Documentation
 
