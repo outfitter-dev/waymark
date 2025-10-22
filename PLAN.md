@@ -128,7 +128,7 @@
   - Non-interactive mode: accepts flags `--format`, `--preset`, `--scope`, `--force`
   - Auto-updates `.gitignore` with `.waymark/index.json` entry for project scope
   - Integrated Pino logger with pretty-print formatting for clean CLI output
-- 2025-10-03: Finalized index architecture for `wm insert` and `wm remove` commands
+- 2025-10-03: Finalized index architecture for `wm add` and `wm remove` commands
   - Repo-local JSON files in `.waymark/` directory (not XDG cache)
   - `index.json` - Active waymarks, IDs (when opted-in), file metadata, audit log (gitignored, regenerated from source)
   - `history.json` - Tombstoned/removed waymarks for undo capability (optional commit for team history)

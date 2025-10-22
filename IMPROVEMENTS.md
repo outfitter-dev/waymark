@@ -123,7 +123,7 @@ wm lint <file...>
 wm migrate <file> --write
 wm help
 wm init --scope project --format toml
-wm insert <file:line> <type> <content> --write
+wm add <file:line> <type> <content> --write
 wm modify <file:line> --type fix --raise --write
 wm remove <file:line> --write
 wm update           # metadata refresh / migrations
