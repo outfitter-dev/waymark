@@ -31,7 +31,8 @@ The server communicates over stdio and implements the Model Context Protocol, al
 - `waymark.scan` - Parse files/directories and return waymark records (supports text, json, jsonl, pretty formats)
 - `waymark.map` - Generate file tree with TLDR summaries
 - `waymark.graph` - Extract dependency graph from relations
-- `waymark.insert` - Insert formatted waymarks into files
+- `waymark.add` - Add formatted waymarks into files
+- `waymark.insert` - (deprecated, use `waymark.add` instead)
 
 ### Resources
 

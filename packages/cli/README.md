@@ -45,7 +45,7 @@ wm src/ --graph
 wm format src/auth.ts --write
 
 # Insert waymarks
-wm insert src/auth.ts:42 todo "implement rate limiting"
+wm add src/auth.ts:42 todo "implement rate limiting"
 
 # Remove waymarks
 wm remove src/auth.ts:42 --write
@@ -61,7 +61,7 @@ wm lint src/
 
 - `wm [paths...]` - Scan and filter waymarks (default command)
 - `wm format [paths...]` - Format and normalize waymark syntax
-- `wm insert <file:line> <type> <content>` - Insert waymarks into files
+- `wm add <file:line> <type> <content>` - Insert waymarks into files
 - `wm modify <file:line>` - Modify existing waymarks
 - `wm remove <file:line>` - Remove waymarks from files
 - `wm lint [paths...]` - Validate waymark structure

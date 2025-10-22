@@ -195,10 +195,10 @@ export const commands: HelpRegistry = {
       "wm help lint                       # Show lint command help",
     ],
   },
-  insert: {
-    name: "insert",
-    usage: "wm insert <file:line> <type> <content> [options]",
-    description: "Insert waymarks into files programmatically.",
+  add: {
+    name: "add",
+    usage: "wm add <file:line> <type> <content> [options]",
+    description: "Add waymarks into files programmatically.",
     flags: [
       commonFlags.write,
       {
@@ -319,11 +319,18 @@ export const commands: HelpRegistry = {
       commonFlags.help,
     ],
     examples: [
-      'wm insert src/auth.ts:42 todo "implement OAuth"',
-      'wm insert src/db.ts:15 note "assumes UTC" --mention @alice',
-      'wm insert src/api.ts:10 todo "add caching" --tag #perf --raised',
-      "wm insert --from waymarks.json --write",
+      'wm add src/auth.ts:42 todo "implement OAuth"',
+      'wm add src/db.ts:15 note "assumes UTC" --mention @alice',
+      'wm add src/api.ts:10 todo "add caching" --tag #perf --raised',
+      "wm add --from waymarks.json --write",
     ],
+  },
+  insert: {
+    name: "insert",
+    usage: "wm insert (deprecated, use 'wm add' instead)",
+    description: "Deprecated alias for 'add' command.",
+    flags: [],
+    examples: ["wm add src/auth.ts:42 todo \"use 'add' instead of 'insert'\""],
   },
   modify: {
     name: "modify",

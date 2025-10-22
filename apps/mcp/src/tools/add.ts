@@ -1,4 +1,4 @@
-// tldr ::: insert tool handler for waymark MCP server
+// tldr ::: add tool handler for waymark MCP server (formerly insert)
 
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
@@ -9,7 +9,7 @@ import type { ConfigScope, WaymarkRecord } from "@waymarks/core";
 import { formatText, parse } from "@waymarks/core";
 import { MARKERS } from "@waymarks/grammar";
 import type { CommentStyle, SignalFlags } from "../types";
-import { insertWaymarkInputSchema } from "../types";
+import { addWaymarkInputSchema } from "../types";
 import { loadConfig } from "../utils/config";
 import { normalizePathForOutput } from "../utils/filesystem";
 
@@ -78,11 +78,11 @@ type InsertWaymarkResult = {
   lineNumber: number;
 };
 
-export async function handleInsert(
+export async function handleAdd(
   input: unknown,
   server: Pick<McpServer, "sendResourceListChanged">
 ): Promise<CallToolResult> {
-  const params = insertWaymarkInputSchema.parse(input);
+  const params = addWaymarkInputSchema.parse(input);
   const { filePath, type, content, line, signals, configPath, scope } = params;
 
   const absolutePath = resolve(process.cwd(), filePath);
@@ -109,7 +109,7 @@ export async function handleInsert(
   }
 
   const commentStyle = resolveCommentStyle(absolutePath, existingRecords);
-  const insertion = insertWaymark({
+  const insertion = _addWaymark({
     source: originalSource,
     type,
     content,
@@ -149,7 +149,7 @@ export async function handleInsert(
   });
 }
 
-function insertWaymark(params: InsertWaymarkParams): InsertWaymarkResult {
+function _addWaymark(params: InsertWaymarkParams): InsertWaymarkResult {
   const {
     source,
     type,
@@ -330,15 +330,15 @@ function toJsonResponse(value: unknown): CallToolResult {
   };
 }
 
-export const insertToolDefinition = {
+export const addToolDefinition = {
   title: "Insert a waymark",
   description:
     "Creates a new waymark (e.g., tldr/this/todo) at the requested location and normalizes the file.",
-  inputSchema: insertWaymarkInputSchema.shape,
+  inputSchema: addWaymarkInputSchema.shape,
 } as const;
 
 // Wrapper for test compatibility
-export function handleInsertWaymark(params: {
+export function handleAddWaymark(params: {
   filePath: string;
   type: string;
   content: string;
@@ -348,5 +348,8 @@ export function handleInsertWaymark(params: {
   scope?: ConfigScope | undefined;
   server: Pick<McpServer, "sendResourceListChanged">;
 }): Promise<CallToolResult> {
-  return handleInsert(params, params.server);
+  return handleAdd(params, params.server);
 }
+
+// Deprecated alias for backward compatibility
+export const handleInsertWaymark = handleAddWaymark;
