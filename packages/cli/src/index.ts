@@ -735,6 +735,104 @@ async function handleUnifiedCommand(
   }
 }
 
+const _DEFAULT_HELP_WIDTH = 80;
+
+const COMMAND_ORDER = [
+  "find",
+  "add",
+  "modify",
+  "remove",
+  "init",
+  "migrate",
+  "completions",
+  "update",
+  "help",
+];
+
+const HIDDEN_COMMANDS = ["format", "lint"];
+
+/**
+ * Sort comparator for commands based on predefined order.
+ */
+function compareCommandOrder(a: Command, b: Command): number {
+  const aIndex = COMMAND_ORDER.indexOf(a.name());
+  const bIndex = COMMAND_ORDER.indexOf(b.name());
+  if (aIndex === -1 && bIndex === -1) {
+    return 0;
+  }
+  if (aIndex === -1) {
+    return 1;
+  }
+  if (bIndex === -1) {
+    return -1;
+  }
+  return aIndex - bIndex;
+}
+
+/**
+ * Filter and sort commands for help display.
+ */
+function getVisibleCommands(commands: readonly Command[]): Command[] {
+  return commands
+    .filter((c) => !HIDDEN_COMMANDS.includes(c.name()))
+    .sort(compareCommandOrder);
+}
+
+/**
+ * Format help text for commander with custom command ordering.
+ */
+function formatCustomHelp(
+  cmd: Command,
+  helper: ReturnType<Command["createHelp"]>,
+  visibleCommands: Command[]
+): string {
+  const termWidth = helper.padWidth(cmd, helper);
+
+  let output = helper.commandUsage(cmd);
+  output += "\n";
+  output += helper.commandDescription(cmd);
+
+  // Add arguments section
+  const argumentList = helper.visibleArguments(cmd);
+  if (argumentList.length > 0) {
+    output += "\n\nArguments:\n";
+    for (const arg of argumentList) {
+      output += `  ${helper.argumentTerm(arg).padEnd(termWidth)}  ${helper.argumentDescription(arg)}\n`;
+    }
+  }
+
+  // Add options section
+  const optionList = helper.visibleOptions(cmd);
+  if (optionList.length > 0) {
+    output += "\n\nOptions:\n";
+    for (const opt of optionList) {
+      output += `  ${helper.optionTerm(opt).padEnd(termWidth)}  ${helper.optionDescription(opt)}\n`;
+    }
+  }
+
+  // Add commands section
+  if (visibleCommands.length > 0) {
+    output += "\n\nCommands:\n";
+    for (const c of visibleCommands) {
+      const name = c.name() + (c.alias() ? `|${c.alias()}` : "");
+      output += `  ${name.padEnd(termWidth)}  ${c.description()}\n`;
+    }
+  }
+
+  return `${output}\n`;
+}
+
+/**
+ * Build custom help formatter for commander.
+ * Filters out soft-deprecated commands and reorders visible commands.
+ */
+function buildCustomHelpFormatter() {
+  return (cmd: Command, helper: ReturnType<Command["createHelp"]>) => {
+    const visibleCommands = getVisibleCommands(cmd.commands);
+    return formatCustomHelp(cmd, helper, visibleCommands);
+  };
+}
+
 async function createProgram(): Promise<Command> {
   // Read version from package.json
   const packageJsonPath = new URL("../package.json", import.meta.url);
@@ -762,6 +860,9 @@ async function createProgram(): Promise<Command> {
     .version(version, "--version, -v", "output the current version")
     .helpOption("--help, -h", "display help for command")
     .addHelpCommand(false) // Disable default help command, we'll add custom one
+    .configureHelp({
+      formatHelp: buildCustomHelpFormatter(),
+    })
     .option(
       "--scope <scope>, -s",
       "config scope (default|project|user)",
