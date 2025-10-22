@@ -872,10 +872,6 @@ async function createProgram(): Promise<Command> {
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
-    .option("--json", "output as JSON")
-    .option("--jsonl", "output as JSON Lines")
-    .option("--text", "output as human-readable formatted text")
-    .option("--no-color", "disable colored output")
     .addHelpText(
       "afterAll",
       "\nNote: Use --prompt flag with any command to see agent-facing documentation"
