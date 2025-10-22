@@ -1255,6 +1255,26 @@ describe("Commander integration", () => {
       await cleanup();
     }
   });
+
+  test("find command forwards --map with --json combination", async () => {
+    const program = await __test.createProgram();
+    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    expect(findCommand).toBeDefined();
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    findCommand?.action(
+      (_paths: string[], options: Record<string, unknown>) => {
+        receivedOptions = options;
+      }
+    );
+
+    await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
+      from: "user",
+    });
+
+    expect(receivedOptions?.json).toBe(true);
+    expect(receivedOptions?.map).toBe(true);
+  });
 });
 
 describe("Logger integration", () => {
