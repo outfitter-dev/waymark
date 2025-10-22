@@ -1478,12 +1478,21 @@ if (import.meta.main) {
 
 // For testing
 export async function runCli(argv: string[]): Promise<{ exitCode: number }> {
+  const previousArgv = [...process.argv];
+  const cliArgv = ["node", "wm", ...argv];
+  process.argv = [...cliArgv];
+
   try {
     const program = await createProgram();
-    // Parse without executing (for testing)
-    await program.parseAsync(["node", "wm", ...argv]);
+    await program.parseAsync(cliArgv);
     return { exitCode: 0 };
   } catch (_error) {
     return { exitCode: 1 };
+  } finally {
+    process.argv = previousArgv;
   }
 }
+
+export const __test = {
+  createProgram,
+};
