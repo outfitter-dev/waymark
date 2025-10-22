@@ -42,7 +42,8 @@ export function parseScanArgs(argv: string[]): ParsedScanArgs {
   const formatFlags: Record<string, ScanOutputFormat> = {
     "--json": "json",
     "--jsonl": "jsonl",
-    "--pretty": "pretty",
+    "--text": "text",
+    "--pretty": "text", // Deprecated alias for --text
   };
 
   for (const arg of argv) {

@@ -83,7 +83,7 @@ wm src/ --graph --json               # JSON output for tooling
 # Output formats
 wm src/ --json                       # compact JSON array
 wm src/ --jsonl                      # newline-delimited JSON
-wm src/ --pretty                     # pretty-printed JSON
+wm src/ --text                       # human-readable formatted text
 
 # Standalone commands
 wm format src/example.ts --write     # format a file
