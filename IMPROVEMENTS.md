@@ -115,7 +115,7 @@ wm src/ --graph --json
 # Output formats
 wm src/ --json         # Compact JSON array
 wm src/ --jsonl        # Newline-delimited JSON
-wm src/ --pretty       # Pretty-printed JSON
+wm src/ --text         # Human-readable formatted text
 
 # Standalone commands
 wm format <file> --write

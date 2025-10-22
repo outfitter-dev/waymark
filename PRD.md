@@ -387,7 +387,7 @@ The CLI is a thin wrapper over a reusable TypeScript package (`@waymarks/core`) 
 
 - `waymark scan [path ...]` — Stream JSONL of all parsed waymarks.
 
-  - Flags: `--jsonl` (default), `--pretty`, `--type <m>`, `--since <semver|date>`, `--tag <#token>`, `--rel <kind:#token>`
+  - Flags: `--jsonl` (default), `--text`, `--type <m>`, `--since <semver|date>`, `--tag <#token>`, `--rel <kind:#token>`
 
 - `waymark find [query]` — Filtered view; supports types, tags, relations, canonicals.
 
