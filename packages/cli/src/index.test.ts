@@ -1200,8 +1200,6 @@ describe("Commander integration", () => {
         write: false,
         json: true,
         jsonl: false,
-        confirm: false,
-        yes: false,
       },
     });
     const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
