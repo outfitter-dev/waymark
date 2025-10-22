@@ -4,13 +4,18 @@ import { readFileSync } from "node:fs";
 import type { WaymarkRecord } from "@waymarks/core";
 import type { DisplayOptions } from "../types";
 
+/** Default line number width (3 digits = column 4 for colon) */
+const LINE_NUMBER_WIDTH = 3;
+
 /**
  * Format a single record in simple format
  */
 export function formatRecordSimple(record: WaymarkRecord): string {
   const signals =
     (record.signals.raised ? "^" : "") + (record.signals.important ? "*" : "");
-  return `${record.file}:${record.startLine}: // ${signals}${record.type} ::: ${record.contentText}`;
+  // Pad line numbers to 3 digits (aligned to column 4) unless > 999
+  const lineStr = String(record.startLine).padStart(LINE_NUMBER_WIDTH, " ");
+  return `${record.file}:${lineStr}: // ${signals}${record.type} ::: ${record.contentText}`;
 }
 
 /**
@@ -23,7 +28,9 @@ export function formatRecordWithContext(
   const before = options.contextBefore ?? options.contextAround ?? 0;
   const after = options.contextAfter ?? options.contextAround ?? 0;
 
-  const lines: string[] = [`${record.file}:${record.startLine}`];
+  // Pad line number to 3 digits
+  const lineStr = String(record.startLine).padStart(LINE_NUMBER_WIDTH, " ");
+  const lines: string[] = [`${record.file}:${lineStr}`];
 
   try {
     const fileContent = readFileSync(record.file, "utf8");
@@ -32,10 +39,15 @@ export function formatRecordWithContext(
     const startLine = Math.max(0, record.startLine - before - 1);
     const endLine = Math.min(fileLines.length - 1, record.endLine + after - 1);
 
+    // Calculate max line number width for context lines
+    const maxLineNum = endLine + 1;
+    const lineWidth = Math.max(LINE_NUMBER_WIDTH, String(maxLineNum).length);
+
     for (let i = startLine; i <= endLine; i++) {
       const lineNum = i + 1;
       const content = fileLines[i];
-      lines.push(`${lineNum}: ${content}`);
+      const paddedLineNum = String(lineNum).padStart(lineWidth, " ");
+      lines.push(`${paddedLineNum}: ${content}`);
     }
   } catch (error) {
     lines.push(
