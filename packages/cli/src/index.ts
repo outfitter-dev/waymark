@@ -760,16 +760,21 @@ async function createProgram(): Promise<Command> {
         "  wm init                   Initialize waymark configuration"
     )
     .version(version, "-v, --version", "output the current version")
+    .helpOption("-h, --help", "display help for command")
+    .addHelpCommand(false) // Disable default help command, we'll add custom one
     .option(
       "-s, --scope <scope>",
       "config scope (default|project|user)",
       "default"
     )
+    .option("--prompt", "show agent-facing documentation")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("-q, --quiet", "only show errors")
-    .helpOption("-h, --help", "display help for command")
-    .addHelpCommand(false) // Disable default help command, we'll add custom one
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
+    .option("--text", "output as human-readable formatted text")
+    .option("--no-color", "disable colored output")
     .addHelpText(
       "afterAll",
       "\nNote: Use --prompt flag with any command to see agent-facing documentation"
@@ -1197,21 +1202,14 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("--mention <mentions...>", "filter by mention(s)")
     .option("-R, --raised", "filter for raised (^) waymarks")
     .option("-S, --starred", "filter for starred (*) waymarks")
+    .option("--tldr", "shorthand for --type tldr")
     .option("--map", "show file tree with TLDRs")
     .option("--graph", "show dependency graph")
     .option("--summary", "show summary footer (map mode)")
-    .option("--json", "output as JSON")
-    .option("--jsonl", "output as JSON Lines")
-    .option("--text", "output as human-readable formatted text")
-    .option(
-      "--pretty",
-      "(deprecated: use --text) output as pretty-printed JSON"
-    )
     .option("--long", "show detailed record information")
     .option("--tree", "group output by directory structure")
     .option("--flat", "show flat list (default)")
     .option("--compact", "compact output format")
-    .option("--no-color", "disable colored output")
     .option("--group <by>", "group by: file, dir, type")
     .option("--sort <by>", "sort by: file, line, type, modified")
     .option("-C, --context <n>", "show N lines of context", Number.parseInt)
@@ -1219,6 +1217,15 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("-B, --before <n>", "show N lines before match", Number.parseInt)
     .option("-n, --limit <n>", "limit number of results", Number.parseInt)
     .option("--page <n>", "page number (with --limit)", Number.parseInt)
+    .option("--interactive", "interactively select a waymark")
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
+    .option("--text", "output as human-readable formatted text")
+    .option(
+      "--pretty",
+      "(deprecated: use --text) output as pretty-printed JSON"
+    )
+    .option("--no-color", "disable colored output")
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("scan and filter waymarks in files or directories")
     .addHelpText(
@@ -1231,33 +1238,53 @@ Examples:
   $ wm find --graph --json                   # Export dependency graph as JSON
   $ wm find --starred --tag "#sec"           # Find high-priority security issues
   $ wm find src/ --type todo --type fix --raised --mention @agent
+  $ wm find --interactive                    # Interactively select a waymark
 
-Filter Behavior:
+Filter Options:
+  -t, --type <types...>       Filter by waymark type(s)
+  --tag <tags...>             Filter by tag(s)
+  --mention <mentions...>     Filter by mention(s)
+  -R, --raised                Filter for raised (^) waymarks
+  -S, --starred               Filter for starred (*) waymarks
+  --tldr                      Shorthand for --type tldr
+
   Multiple filters of the same type use OR logic:
     --type todo --type fix    → Shows todos OR fixes
 
   Different filter types use AND logic:
     --type todo --tag "#perf" → Shows todos AND tagged with #perf
 
-Output Modes:
-  --map               File tree with TLDR summaries
-  --graph             Dependency graph (canonicals and relations)
-  --json              Compact JSON array
-  --jsonl             Newline-delimited JSON (one record per line)
-  --text              Human-readable formatted text (default)
+Mode Options:
+  --map                       File tree with TLDR summaries
+  --graph                     Dependency graph (canonicals and relations)
+  --summary                   Show summary footer (map mode)
+  --interactive               Interactively select a waymark
 
 Display Options:
-  --long              Show detailed record information
-  --tree              Group output by directory structure
-  --flat              Show flat list (default)
-  --compact           Compact output format
-  --group <by>        Group by: file, dir, type
-  --sort <by>         Sort by: file, line, type, modified
+  --long                      Show detailed record information
+  --tree                      Group output by directory structure
+  --flat                      Show flat list (default)
+  --compact                   Compact output format
+  --no-color                  Disable colored output
+
+Grouping & Sorting:
+  --group <by>                Group by: file, dir, type
+  --sort <by>                 Sort by: file, line, type, modified
 
 Context Display:
-  -C, --context <n>   Show N lines of context around matches
-  -A, --after <n>     Show N lines after each match
-  -B, --before <n>    Show N lines before each match
+  -C, --context <n>           Show N lines of context around matches
+  -A, --after <n>             Show N lines after each match
+  -B, --before <n>            Show N lines before each match
+
+Pagination:
+  -n, --limit <n>             Limit number of results
+  --page <n>                  Page number (with --limit)
+
+Output Formats:
+  --json                      Compact JSON array
+  --jsonl                     Newline-delimited JSON (one record per line)
+  --text                      Human-readable formatted text (default)
+  --pretty                    (deprecated: use --text)
 
 See 'wm find --prompt' for agent-facing documentation.
     `
@@ -1274,34 +1301,6 @@ See 'wm find --prompt' for agent-facing documentation.
   // Default action - unified command (deprecated implicit behavior, use 'wm find' instead)
   program
     .argument("[paths...]", "files or directories to scan")
-    .option("-t, --type <types...>", "filter by waymark type(s)")
-    .option("--tag <tags...>", "filter by tag(s)")
-    .option("--mention <mentions...>", "filter by mention(s)")
-    .option("-R, --raised", "filter for raised (^) waymarks")
-    .option("-S, --starred", "filter for starred (*) waymarks")
-    .option("--map", "show file tree with TLDRs")
-    .option("--graph", "show dependency graph")
-    .option("--summary", "show summary footer (map mode)")
-    .option("--json", "output as JSON")
-    .option("--jsonl", "output as JSON Lines")
-    .option("--text", "output as human-readable formatted text")
-    .option(
-      "--pretty",
-      "output as pretty-printed JSON (deprecated - use --json)"
-    )
-    .option("--long", "show detailed record information")
-    .option("--tree", "group output by directory structure")
-    .option("--flat", "show flat list (default)")
-    .option("--compact", "compact output format")
-    .option("--no-color", "disable colored output")
-    .option("--group <by>", "group by: file, dir, type")
-    .option("--sort <by>", "sort by: file, line, type, modified")
-    .option("-C, --context <n>", "show N lines of context", Number.parseInt)
-    .option("-A, --after <n>", "show N lines after match", Number.parseInt)
-    .option("-B, --before <n>", "show N lines before match", Number.parseInt)
-    .option("-n, --limit <n>", "limit number of results", Number.parseInt)
-    .option("--page <n>", "page number (with --limit)", Number.parseInt)
-    .option("--prompt", "show agent-facing prompt instead of help")
     .addHelpText(
       "after",
       `
@@ -1309,22 +1308,14 @@ DEPRECATION NOTICE:
   The implicit scan syntax (e.g., 'wm src/') is deprecated.
   Use 'wm find [paths...]' instead. This will be removed in v2.0.
 
-Examples (use 'wm find' instead):
+Examples:
   $ wm find                                   # Scan current directory
   $ wm find src/ --type todo --mention @agent
   $ wm find --map docs/ --type tldr          # Map documentation with TLDRs only
   $ wm find --graph --json                   # Export dependency graph as JSON
   $ wm find --starred --tag "#sec"           # Find high-priority security issues
-  $ wm find src/ --type todo --type fix --raised --mention @agent
 
-Filter Behavior:
-  Multiple filters of the same type use OR logic:
-    --type todo --type fix    → Shows todos OR fixes
-
-  Different filter types use AND logic:
-    --type todo --tag "#perf" → Shows todos AND tagged with #perf
-
-See 'wm find --help' for comprehensive documentation.
+See 'wm find --help' for all available options and comprehensive documentation.
     `
     )
     .action(async (paths: string[], options: Record<string, unknown>) => {
