@@ -47,11 +47,11 @@ export function handleContextFlags(
     state.contextAround = parseNonNegativeInt(token, iterator);
     return true;
   }
-  if (token === "--before-context" || token === "-B") {
+  if (token === "--before-context" || token === "--before" || token === "-B") {
     state.contextBefore = parseNonNegativeInt(token, iterator);
     return true;
   }
-  if (token === "--after-context" || token === "-A") {
+  if (token === "--after-context" || token === "--after" || token === "-A") {
     state.contextAfter = parseNonNegativeInt(token, iterator);
     return true;
   }

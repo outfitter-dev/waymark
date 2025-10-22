@@ -595,6 +595,26 @@ describe("Unified command", () => {
     expect(options.mentions).toEqual(["@alice", "agent"]);
   });
 
+  test("parseUnifiedArgs accepts --after-context alias", () => {
+    const afterLines = 2;
+    const options = parseUnifiedArgs([
+      "--after-context",
+      String(afterLines),
+      "src/",
+    ]);
+    expect(options.contextAfter).toBe(afterLines);
+  });
+
+  test("parseUnifiedArgs accepts --before-context alias", () => {
+    const beforeLines = 3;
+    const options = parseUnifiedArgs([
+      "--before-context",
+      String(beforeLines),
+      "src/",
+    ]);
+    expect(options.contextBefore).toBe(beforeLines);
+  });
+
   test("parseUnifiedArgs detects raised signal filter", () => {
     const options = parseUnifiedArgs(["--raised", "src/"]);
     expect(options.raised).toBe(true);

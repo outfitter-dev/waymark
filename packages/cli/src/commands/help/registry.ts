@@ -103,14 +103,14 @@ const commonFlags = {
     alias: "A",
     type: "string",
     placeholder: "n",
-    description: "Show N lines after matches",
+    description: "Show N lines after matches (alias: --after-context)",
   },
   before: {
     name: "before",
     alias: "B",
     type: "string",
     placeholder: "n",
-    description: "Show N lines before matches",
+    description: "Show N lines before matches (alias: --before-context)",
   },
   limit: {
     name: "limit",

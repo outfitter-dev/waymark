@@ -779,6 +779,78 @@ function getVisibleCommands(commands: readonly Command[]): Command[] {
     .sort(compareCommandOrder);
 }
 
+type OptionSection = {
+  title: string;
+  longs: string[];
+};
+
+const ROOT_OPTION_SECTIONS: OptionSection[] = [
+  {
+    title: "Global Options",
+    longs: ["--help", "--version", "--prompt", "--scope"],
+  },
+  {
+    title: "Logging",
+    longs: ["--verbose", "--debug", "--quiet"],
+  },
+  {
+    title: "Output Formats",
+    longs: ["--json", "--jsonl", "--text"],
+  },
+  {
+    title: "Color",
+    longs: ["--no-color"],
+  },
+];
+
+function findOptionByLong(cmd: Command, longFlag: string): Option | undefined {
+  return cmd.options.find((opt) => opt.long === longFlag);
+}
+
+function renderOptionSection(
+  title: string,
+  options: Option[],
+  helper: ReturnType<Command["createHelp"]>,
+  termWidth: number
+): string {
+  if (options.length === 0) {
+    return "";
+  }
+  let section = `\n\n${title}:\n`;
+  for (const opt of options) {
+    section += `  ${helper.optionTerm(opt).padEnd(termWidth)}  ${helper.optionDescription(opt)}\n`;
+  }
+  return section;
+}
+
+function formatRootHelp(
+  cmd: Command,
+  helper: ReturnType<Command["createHelp"]>,
+  visibleCommands: Command[]
+): string {
+  const termWidth = helper.padWidth(cmd, helper);
+  let output = helper.commandUsage(cmd);
+  output += "\n";
+  output += helper.commandDescription(cmd);
+
+  for (const section of ROOT_OPTION_SECTIONS) {
+    const options = section.longs
+      .map((flag) => findOptionByLong(cmd, flag))
+      .filter((opt): opt is Option => Boolean(opt));
+    output += renderOptionSection(section.title, options, helper, termWidth);
+  }
+
+  if (visibleCommands.length > 0) {
+    output += "\n\nCommands:\n";
+    for (const c of visibleCommands) {
+      const name = c.name() + (c.alias() ? `|${c.alias()}` : "");
+      output += `  ${name.padEnd(termWidth)}  ${c.description()}\n`;
+    }
+  }
+
+  return `${output}\n`;
+}
+
 /**
  * Format help text for commander with custom command ordering.
  */
@@ -787,6 +859,10 @@ function formatCustomHelp(
   helper: ReturnType<Command["createHelp"]>,
   visibleCommands: Command[]
 ): string {
+  if (!cmd.parent) {
+    return formatRootHelp(cmd, helper, visibleCommands);
+  }
+
   const termWidth = helper.padWidth(cmd, helper);
 
   let output = helper.commandUsage(cmd);
@@ -889,6 +965,10 @@ export async function createProgram(): Promise<Command> {
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
+    .addOption(jsonOption)
+    .addOption(jsonlOption)
+    .addOption(textOption)
+    .option("--no-color", "disable ANSI colors")
     .addHelpText(
       "afterAll",
       "\nNote: Use --prompt flag with any command to see agent-facing documentation"
@@ -1326,19 +1406,23 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("--group <by>", "group by: file, dir, type")
     .option("--sort <by>", "sort by: file, line, type, modified")
     .option("--context <n>, -C", "show N lines of context", Number.parseInt)
-    .option("--after <n>, -A", "show N lines after match", Number.parseInt)
-    .option("--before <n>, -B", "show N lines before match", Number.parseInt)
+    .option(
+      "--after <n>, -A, --after-context <n>",
+      "show N lines after match",
+      Number.parseInt
+    )
+    .option(
+      "--before <n>, -B, --before-context <n>",
+      "show N lines before match",
+      Number.parseInt
+    )
     .option("--limit <n>, -n", "limit number of results", Number.parseInt)
     .option("--page <n>", "page number (with --limit)", Number.parseInt)
     .option("--interactive", "interactively select a waymark")
-    .option("--json", "output as JSON")
-    .option("--jsonl", "output as JSON Lines")
-    .option("--text", "output as human-readable formatted text")
     .option(
       "--pretty",
       "(deprecated: use --text) output as pretty-printed JSON"
     )
-    .option("--no-color", "disable colored output")
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("scan and filter waymarks in files or directories")
     .addHelpText(
@@ -1378,7 +1462,7 @@ Display Options:
   --tree                      Group output by directory structure
   --flat                      Show flat list (default)
   --compact                   Compact output format
-  --no-color                  Disable colored output
+  --no-color                  (global) Disable colored output
 
 Grouping & Sorting:
   --group <by>                Group by: file, dir, type
@@ -1386,17 +1470,19 @@ Grouping & Sorting:
 
 Context Display:
   -C, --context <n>           Show N lines of context around matches
-  -A, --after <n>             Show N lines after each match
-  -B, --before <n>            Show N lines before each match
+  -A, --after <n>, --after-context <n>
+                             Show N lines after each match
+  -B, --before <n>, --before-context <n>
+                             Show N lines before each match
 
 Pagination:
   -n, --limit <n>             Limit number of results
   --page <n>                  Page number (with --limit)
 
 Output Formats:
-  --json                      Compact JSON array
-  --jsonl                     Newline-delimited JSON (one record per line)
-  --text                      Human-readable formatted text (default)
+  --json                      (global) Compact JSON array
+  --jsonl                     (global) Newline-delimited JSON (one record per line)
+  --text                      (global) Human-readable formatted text (default)
   --pretty                    (deprecated: use --text)
 
 See 'wm find --prompt' for agent-facing documentation.
@@ -1405,13 +1491,13 @@ See 'wm find --prompt' for agent-facing documentation.
     .action(async function (
       this: Command,
       paths: string[],
-      _options: Record<string, unknown>
+      options: Record<string, unknown>
     ) {
       try {
         const mergedOptions =
           typeof this.optsWithGlobals === "function"
             ? this.optsWithGlobals()
-            : program.opts();
+            : { ...program.opts(), ...options };
         await handleUnifiedCommand(program, paths, mergedOptions);
       } catch (error) {
         writeStderr(error instanceof Error ? error.message : String(error));
@@ -1445,7 +1531,8 @@ See 'wm find --help' for all available options and comprehensive documentation.
         writeStderr(
           "Warning: Implicit command syntax is deprecated. Use 'wm find [paths...]' instead. This will be removed in v2.0"
         );
-        await handleUnifiedCommand(program, paths, options);
+        const mergedOptions = { ...program.opts(), ...options };
+        await handleUnifiedCommand(program, paths, mergedOptions);
       } catch (error) {
         writeStderr(error instanceof Error ? error.message : String(error));
         process.exit(1);
