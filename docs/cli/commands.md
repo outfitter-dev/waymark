@@ -28,7 +28,7 @@ wm format src/example.ts --write     # normalize waymark syntax
 wm lint src/                         # validate waymarks
 
 # Waymark management
-wm insert src/auth.ts:42 todo "add rate limiting" --write
+wm add src/auth.ts:42 todo "add rate limiting" --write
 wm remove src/auth.ts:42 --write
 wm modify src/auth.ts:42 --raise --write
 
@@ -394,7 +394,7 @@ For detailed documentation on waymark management commands, see [Waymark Editing 
 
 ```bash
 # Insert waymark
-wm insert src/auth.ts:42 todo "add rate limiting" --write
+wm add src/auth.ts:42 todo "add rate limiting" --write
 
 # Remove waymark
 wm remove src/auth.ts:42 --write
@@ -750,7 +750,7 @@ wm src/ --type todo --mention @agent
 Waymark IDs (`wm:abc123`) are opt-in. Enable them via:
 
 ```bash
-wm insert src/auth.ts:42 todo "fix bug" --id --write
+wm add src/auth.ts:42 todo "fix bug" --id --write
 ```
 
 IDs are tracked in `.waymark/index.json` (gitignored).

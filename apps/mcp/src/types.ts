@@ -19,7 +19,7 @@ export const graphInputSchema = configOptionsSchema.extend({
 
 export const mapInputSchema = graphInputSchema;
 
-export const insertWaymarkInputSchema = configOptionsSchema.extend({
+export const addWaymarkInputSchema = configOptionsSchema.extend({
   filePath: z.string().min(1),
   type: z.string().min(1),
   content: z.string().min(1),
@@ -31,6 +31,9 @@ export const insertWaymarkInputSchema = configOptionsSchema.extend({
     })
     .optional(),
 });
+
+// Deprecated alias for backward compatibility
+export const insertWaymarkInputSchema = addWaymarkInputSchema;
 
 export type ScanInput = z.infer<typeof scanInputSchema>;
 export type RenderFormat = ScanInput["format"];

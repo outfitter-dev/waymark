@@ -1,4 +1,4 @@
-// tldr ::: insert command implementation for wm CLI
+// tldr ::: add command implementation for wm CLI (formerly insert)
 
 import { readFile } from "node:fs/promises";
 
@@ -15,26 +15,26 @@ import { createIdManager } from "../utils/id-manager.ts";
 import { logger } from "../utils/logger.ts";
 import { readFromStdin } from "../utils/stdin.ts";
 
-export type InsertSummary = {
+export type AddSummary = {
   total: number;
   successful: number;
   failed: number;
   filesModified: number;
 };
 
-export type InsertCommandOptions = {
+export type AddCommandOptions = {
   write: boolean;
   json: boolean;
   jsonl: boolean;
   from?: string;
 };
 
-export type ParsedInsertArgs = {
+export type ParsedAddArgs = {
   specs: InsertionSpec[];
-  options: InsertCommandOptions;
+  options: AddCommandOptions;
 };
 
-export function parseInsertArgs(argv: string[]): ParsedInsertArgs {
+export function parseAddArgs(argv: string[]): ParsedAddArgs {
   const state: InsertParseState = {
     optionState: {
       write: false,
@@ -89,7 +89,7 @@ export function parseInsertArgs(argv: string[]): ParsedInsertArgs {
 }
 
 type InsertParseState = {
-  optionState: Omit<InsertCommandOptions, "from">;
+  optionState: Omit<AddCommandOptions, "from">;
   tags: string[];
   mentions: string[];
   continuations: string[];
@@ -236,7 +236,7 @@ function ensureRequiredFields(state: InsertParseState): {
   content: string;
 } {
   if (!state.fileLine) {
-    throw new Error("insert requires a FILE:LINE positional argument");
+    throw new Error("add requires a FILE:LINE positional argument");
   }
   if (!state.type) {
     throw new Error("--type is required when not using --from");
@@ -304,19 +304,19 @@ function buildInsertionSpec(state: InsertParseState): InsertionSpec {
   return spec;
 }
 
-function buildInsertOptions(state: InsertParseState): InsertCommandOptions {
+function buildInsertOptions(state: InsertParseState): AddCommandOptions {
   if (state.from !== undefined) {
     return { ...state.optionState, from: state.from };
   }
   return { ...state.optionState };
 }
 
-export async function runInsertCommand(
-  parsed: ParsedInsertArgs,
+export async function runAddCommand(
+  parsed: ParsedAddArgs,
   context: CommandContext
 ): Promise<{
   results: InsertionResult[];
-  summary: InsertSummary;
+  summary: AddSummary;
   output: string;
   exitCode: number;
 }> {
@@ -399,8 +399,8 @@ async function loadSpecsFromSource(path: string): Promise<InsertionSpec[]> {
   }
 }
 
-function summarize(results: InsertionResult[]): InsertSummary {
-  const summary: InsertSummary = {
+function summarize(results: InsertionResult[]): AddSummary {
+  const summary: AddSummary = {
     total: results.length,
     successful: 0,
     failed: 0,
@@ -424,8 +424,8 @@ function summarize(results: InsertionResult[]): InsertSummary {
 
 function formatOutput(
   results: InsertionResult[],
-  summary: InsertSummary,
-  options: InsertCommandOptions
+  summary: AddSummary,
+  options: AddCommandOptions
 ): string {
   if (options.json || options.jsonl) {
     return formatJsonOutput(results, summary, options);
@@ -435,8 +435,8 @@ function formatOutput(
 
 function formatJsonOutput(
   results: InsertionResult[],
-  summary: InsertSummary,
-  options: InsertCommandOptions
+  summary: AddSummary,
+  options: AddCommandOptions
 ): string {
   const payload = {
     results,
@@ -459,7 +459,7 @@ function formatJsonOutput(
 
 function formatTextOutput(
   results: InsertionResult[],
-  summary: InsertSummary,
+  summary: AddSummary,
   writeEnabled: boolean
 ): string {
   const successes = results.filter((result) => result.status === "success");
@@ -513,6 +513,6 @@ function buildFailureLines(failures: InsertionResult[]): string[] {
   return lines;
 }
 
-function buildSummaryLine(summary: InsertSummary): string {
+function buildSummaryLine(summary: AddSummary): string {
   return `Summary: ${summary.successful} successful, ${summary.failed} failed, ${summary.filesModified} files affected`;
 }

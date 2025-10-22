@@ -650,7 +650,7 @@ export function greet(name: string): string {
 EOF
 
 echo "3. Insert waymark"
-wm insert sample.ts:3 todo "add unit tests" --write
+wm add sample.ts:3 todo "add unit tests" --write
 
 echo "4. Scan waymarks"
 wm sample.ts --json
