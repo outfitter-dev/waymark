@@ -979,6 +979,7 @@ Notes:
 
   program
     .command("remove")
+    .alias("rm")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
     .option("--id <id>", "remove waymark by ID (wm:xxxxx)")
