@@ -147,7 +147,9 @@ export function buildFileBlocks(
     // Build directory structure
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
-      if (!part) continue;
+      if (!part) {
+        continue;
+      }
       if (!current.children.has(part)) {
         current.children.set(part, {
           name: part,
@@ -156,13 +158,17 @@ export function buildFileBlocks(
         });
       }
       const next = current.children.get(part);
-      if (!next) continue;
+      if (!next) {
+        continue;
+      }
       current = next;
     }
 
     // Add file
     const fileName = parts.at(-1);
-    if (!fileName) continue;
+    if (!fileName) {
+      continue;
+    }
     current.children.set(fileName, {
       name: fileName,
       type: "file",
@@ -196,7 +202,9 @@ function renderTree(options: RenderOptions): void {
 
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
-    if (!entry) continue;
+    if (!entry) {
+      continue;
+    }
     const [name, child] = entry;
     const isLast = i === entries.length - 1;
     const connector = isLast ? "└─" : "├─";
@@ -206,7 +214,12 @@ function renderTree(options: RenderOptions): void {
       // Directory header
       result.push([`${prefix}${connector} ${name}/`]);
       // Recurse into directory
-      renderTree({ node: child, prefix: prefix + childPrefix, result, typeFilter });
+      renderTree({
+        node: child,
+        prefix: prefix + childPrefix,
+        result,
+        typeFilter,
+      });
     } else if (child.summary) {
       // File with TLDR
       const lines = buildFileLines(
@@ -241,7 +254,7 @@ export function buildFileLines(
   // TLDR directly under file path with tree line
   const includeTldr = shouldIncludeTldr(summary, typeFilter);
   if (includeTldr && summary.tldr) {
-    lines.push(`${tldrPrefix} ${summary.tldr.contentText}`);
+    lines.push(`${tldrPrefix}${summary.tldr.contentText}`);
   }
 
   return lines;
