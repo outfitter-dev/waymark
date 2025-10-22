@@ -21,6 +21,7 @@ import {
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
 import { formatMapOutput, runCli, serializeMap } from "./index";
+>>>>>>> b013836 (test(cli): assert graph json flag wiring (WAY-50))
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
 
@@ -1050,6 +1051,9 @@ describe("Commander integration", () => {
         receivedOptions = options;
       }
     );
+=======
+    await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
+>>>>>>> d8c6284 (test(cli): assert graph json flag wiring (WAY-50))
 
     await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
       from: "user",
