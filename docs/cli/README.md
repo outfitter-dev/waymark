@@ -47,33 +47,33 @@ wm --version
 
 ## Shell Completions
 
-Use the built-in `wm complete` command to generate completions for your shell.
+Use the built-in `wm completions` command to generate completions for your shell.
 Each command below writes the script to a cache directory and references it from
 your shell profile:
 
 ```bash
 # Zsh
 mkdir -p ~/.local/share/waymark/completions
-wm complete zsh > ~/.local/share/waymark/completions/wm.zsh
+wm completions zsh > ~/.local/share/waymark/completions/wm.zsh
 echo 'source ~/.local/share/waymark/completions/wm.zsh' >> ~/.zshrc
 
 # Bash
 mkdir -p ~/.local/share/waymark/completions
-wm complete bash > ~/.local/share/waymark/completions/wm.bash
+wm completions bash > ~/.local/share/waymark/completions/wm.bash
 echo 'source ~/.local/share/waymark/completions/wm.bash' >> ~/.bashrc
 
 # Fish
 mkdir -p ~/.config/fish/completions
-wm complete fish > ~/.config/fish/completions/wm.fish
+wm completions fish > ~/.config/fish/completions/wm.fish
 
 # PowerShell
 mkdir -p ~/.config/waymark/completions
-wm complete powershell > ~/.config/waymark/completions/wm.ps1
+wm completions powershell > ~/.config/waymark/completions/wm.ps1
 Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 ```
 
-Run `wm complete` without arguments to list supported shells and debugging
-helpers.
+Run `wm completions` without arguments to list supported shells and debugging
+helpers. Note: `wm complete` is also supported as a backward-compatible alias.
 
 ---
 
