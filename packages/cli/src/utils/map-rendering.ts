@@ -248,11 +248,14 @@ export function buildFileLines(
   const fileName = summary.file.split("/").pop() || summary.file;
 
   // File path in blue with tree drawing prefix
-  const filePath = chalk.blue(fileName);
+  const includeTldr = shouldIncludeTldr(summary, typeFilter);
+  const fileDisplay = includeTldr && summary.tldr
+    ? `${fileName}:${summary.tldr.startLine}`
+    : fileName;
+  const filePath = chalk.blue(fileDisplay);
   lines.push(`${linePrefix} ${filePath}`);
 
   // TLDR directly under file path with tree line
-  const includeTldr = shouldIncludeTldr(summary, typeFilter);
   if (includeTldr && summary.tldr) {
     lines.push(`${tldrPrefix}${summary.tldr.contentText}`);
   }
