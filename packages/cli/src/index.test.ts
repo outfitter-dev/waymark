@@ -20,11 +20,7 @@ import {
 } from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
-<<<<<<< HEAD
 import { formatMapOutput, serializeMap } from "./index";
-=======
-import { __test, formatMapOutput, serializeMap } from "./index";
->>>>>>> d8c6284 (test(cli): assert graph json flag wiring (WAY-50))
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
 
@@ -1039,10 +1035,8 @@ describe("Commander integration", () => {
       }
     );
 
-<<<<<<< HEAD
-    const result = await runCliCaptured(["find", "--json"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
+    await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
+
     expect(receivedOptions?.json).toBe(true);
   });
 
@@ -1059,13 +1053,11 @@ describe("Commander integration", () => {
         receivedOptions = options;
       }
     );
-=======
-    await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
->>>>>>> d8c6284 (test(cli): assert graph json flag wiring (WAY-50))
 
-    const result = await runCliCaptured(["find", "--map", "--json"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
+    await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
+      from: "user",
+    });
+
     expect(receivedOptions?.json).toBe(true);
     expect(receivedOptions?.map).toBe(true);
   });
