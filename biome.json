@@ -9,5 +9,19 @@
       "allowComments": true,
       "allowTrailingCommas": true
     }
+  },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "useAwait": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "off"
+      },
+      "style": {
+        "noMagicNumbers": "warn",
+        "noNestedTernary": "warn"
+      }
+    }
   }
 }
