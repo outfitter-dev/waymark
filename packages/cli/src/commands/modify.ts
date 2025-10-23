@@ -670,6 +670,74 @@ type PromptOutcome =
   | { type: "back" }
   | { type: "cancel" };
 
+function getDefaultValueAsString(question: unknown): string {
+  if (
+    typeof question === "object" &&
+    question !== null &&
+    "default" in question
+  ) {
+    const defaultValue = (question as { default?: unknown }).default;
+    return typeof defaultValue === "string" ? defaultValue : "";
+  }
+  return "";
+}
+
+type KeypressState = {
+  buffer: string;
+  requestedBack: boolean;
+  requestedCancel: boolean;
+};
+
+function createKeypressHandler(
+  state: KeypressState,
+  isTextInput: boolean,
+  runner: { abortController: AbortController }
+) {
+  const appendIfPrintable = (key?: {
+    sequence?: string;
+    ctrl?: boolean;
+    meta?: boolean;
+  }) => {
+    if (!(isTextInput && key) || key.ctrl || key.meta) {
+      return;
+    }
+    const { sequence } = key;
+    if (!sequence || sequence.length === 0) {
+      return;
+    }
+    state.buffer += sequence;
+  };
+
+  return (
+    _chunk: string,
+    key?: { name?: string; sequence?: string; ctrl?: boolean; meta?: boolean }
+  ) => {
+    const keyName = key?.name;
+
+    if (keyName === "escape") {
+      state.requestedCancel = true;
+      runner.abortController.abort("cancelled");
+      return;
+    }
+    if (keyName === "backspace") {
+      if (!isTextInput || state.buffer.length === 0) {
+        state.requestedBack = true;
+        runner.abortController.abort("back");
+        return;
+      }
+      state.buffer = state.buffer.slice(0, -1);
+      return;
+    }
+    if (isTextInput && (keyName === "return" || keyName === "enter")) {
+      state.buffer = "";
+      return;
+    }
+
+    appendIfPrintable(key);
+  };
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Interactive prompt coordination requires managing keypress state, TTY setup, abort handling, and cleanup
 async function promptStep(
   promptModule: ReturnType<typeof inquirer.createPromptModule>,
   step: InteractiveStep,
@@ -684,60 +752,22 @@ async function promptStep(
     }
   ).ui;
 
-  let requestedBack = false;
-  let requestedCancel = false;
-  let buffer = "";
   const isTextInput =
     typeof question === "object" &&
     question !== null &&
     "type" in question &&
     question.type === "input";
 
+  // Initialize buffer with default value to allow editing pre-filled content
+  const state: KeypressState = {
+    buffer: isTextInput ? getDefaultValueAsString(question) : "",
+    requestedBack: false,
+    requestedCancel: false,
+  };
+
   const stdin = process.stdin;
   const hasTty = Boolean(stdin?.isTTY);
-
-  const appendIfPrintable = (key?: {
-    sequence?: string;
-    ctrl?: boolean;
-    meta?: boolean;
-  }) => {
-    if (!(isTextInput && key) || key.ctrl || key.meta) {
-      return;
-    }
-    const { sequence } = key;
-    if (!sequence || sequence.length === 0) {
-      return;
-    }
-    buffer += sequence;
-  };
-
-  const onKeypress = (
-    _chunk: string,
-    key?: { name?: string; sequence?: string; ctrl?: boolean; meta?: boolean }
-  ) => {
-    const keyName = key?.name;
-
-    if (keyName === "escape") {
-      requestedCancel = true;
-      runner.abortController.abort("cancelled");
-      return;
-    }
-    if (keyName === "backspace") {
-      if (!isTextInput || buffer.length === 0) {
-        requestedBack = true;
-        runner.abortController.abort("back");
-        return;
-      }
-      buffer = buffer.slice(0, -1);
-      return;
-    }
-    if (isTextInput && (keyName === "return" || keyName === "enter")) {
-      buffer = "";
-      return;
-    }
-
-    appendIfPrintable(key);
-  };
+  const onKeypress = createKeypressHandler(state, isTextInput, runner);
 
   if (hasTty) {
     stdin.on("keypress", onKeypress);
@@ -751,10 +781,10 @@ async function promptStep(
       error instanceof Error &&
       (error.name === "AbortPromptError" || error.name === "ExitPromptError")
     ) {
-      if (requestedCancel) {
+      if (state.requestedCancel) {
         return { type: "cancel" };
       }
-      if (requestedBack) {
+      if (state.requestedBack) {
         return { type: "back" };
       }
     }
