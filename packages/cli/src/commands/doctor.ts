@@ -186,7 +186,7 @@ async function checkConfiguration(
           "Cache directory does not exist (will be created on first scan)",
       });
     }
-  } catch (error) {
+  } catch (_error) {
     issues.push({
       severity: "warning",
       category: "configuration",
@@ -221,7 +221,7 @@ async function checkEnvironment(
         message: "Not in a git repository",
       });
     }
-  } catch (error) {
+  } catch (_error) {
     logger.debug("Git check failed");
   }
 
@@ -243,7 +243,7 @@ async function checkEnvironment(
         });
       }
     }
-  } catch (error) {
+  } catch (_error) {
     logger.debug("Index check failed");
   }
 
@@ -261,7 +261,7 @@ async function checkEnvironment(
         });
       }
     }
-  } catch (error) {
+  } catch (_error) {
     logger.debug("Gitignore check failed");
   }
 
@@ -349,7 +349,7 @@ async function checkWaymarkIntegrity(
   }
 
   // Check 2: Dangling relations
-  const graph = buildRelationGraph(allRecords);
+  const _graph = buildRelationGraph(allRecords);
   for (const record of allRecords) {
     for (const relation of record.relations || []) {
       if (CANONICAL_RELATIONS.includes(relation.kind)) {
@@ -530,7 +530,7 @@ async function checkPerformance(
         });
       }
     }
-  } catch (error) {
+  } catch (_error) {
     logger.debug("Performance check failed");
   }
 
