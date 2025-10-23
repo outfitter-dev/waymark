@@ -206,7 +206,7 @@ export function styleProperty(text: string): string {
  * Accepts either a number or a padded string to preserve alignment
  */
 export function styleLineNumber(num: number | string): string {
-  return chalk.dim(`${num}:`);
+  return chalk.dim(`${num}`);
 }
 
 /**
