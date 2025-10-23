@@ -36,7 +36,7 @@ Keep this log current while working. Recent activity only; historical logs archi
   - Files created/modified:
     - packages/cli/src/commands/doctor.ts (new file, 620 lines)
     - packages/cli/src/index.ts (added imports, handler function, command registration)
-
+>>>>>>> 6ade7d0 (docs(scratchpad): update WAY-33 completion status and details)
 - **WAY-33: Extract `wm map` as separate command** ✅ COMPLETE
   - ✅ Created new standalone `wm map` command in index.ts with TLDR-only output
   - ✅ Removed `--map` flag from find/unified command
@@ -56,7 +56,11 @@ Keep this log current while working. Recent activity only; historical logs archi
     - packages/cli/src/commands/unified/parser.ts (removed isMapMode parsing)
     - packages/cli/src/commands/unified/flag-handlers.ts (removed --map flag, removed isMapMode from ParseState)
     - packages/cli/src/index.test.ts (removed isMapMode test references)
+<<<<<<< HEAD
 >>>>>>> 514db86 (feat(cli): remove underline styling from filename headers)
+=======
+
+>>>>>>> 6ade7d0 (docs(scratchpad): update WAY-33 completion status and details)
 - **WAY-58: Remove underline styling from filename headers**
   - Modified `styleFilePath()` in `packages/cli/src/utils/display/formatters/styles.ts`
   - Removed `chalk.underline()` and replaced with `chalk.bold()` for lighter visual weight
