@@ -29,6 +29,6 @@ main().catch((error) => {
 
 // Re-export for tests
 // biome-ignore lint/performance/noBarrelFile: Intentional exports for testing
-export { handleInsert as handleInsertWaymark } from "./tools/insert";
+export { handleAddWaymark } from "./tools/add";
 export type { SignalFlags } from "./types";
 export { truncateSource } from "./utils/config";
