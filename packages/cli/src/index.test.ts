@@ -33,8 +33,8 @@ const __test = {
   },
 };
 
-function runCliCaptured(
-  _args: string[]
+async function runCliCaptured(
+  args: string[]
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
   const result = await runCli(args);
   return { exitCode: result.exitCode, stdout: "", stderr: "" };
