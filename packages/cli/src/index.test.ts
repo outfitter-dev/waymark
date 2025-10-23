@@ -1051,9 +1051,6 @@ describe("Commander integration", () => {
         receivedOptions = options;
       }
     );
-=======
-    await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
->>>>>>> d8c6284 (test(cli): assert graph json flag wiring (WAY-50))
 
     await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
       from: "user",
