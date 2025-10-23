@@ -5,7 +5,7 @@
 import { existsSync } from "node:fs";
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import { parseAddArgs, runAddCommand } from "./commands/add.ts";
 import { formatFile } from "./commands/fmt.ts";
@@ -833,7 +833,7 @@ function buildCustomHelpFormatter() {
   };
 }
 
-async function createProgram(): Promise<Command> {
+export async function createProgram(): Promise<Command> {
   // Read version from package.json
   const packageJsonPath = new URL("../package.json", import.meta.url);
   const packageJson = await import(packageJsonPath.href);
@@ -850,7 +850,7 @@ async function createProgram(): Promise<Command> {
   const jsonlOption = new Option(
     "--jsonl",
     "Output as JSON Lines (newline-delimited)"
-  ).conflicts(jsonOption);
+  );
   const textOption = new Option(
     "--text",
     "Output as human-readable formatted text"
@@ -858,6 +858,7 @@ async function createProgram(): Promise<Command> {
   jsonOption.conflicts("jsonl");
   jsonOption.conflicts("text");
   jsonlOption.conflicts("json");
+  jsonlOption.conflicts("text");
   textOption.conflicts("json");
   textOption.conflicts("jsonl");
 

@@ -1,16 +1,18 @@
 // tldr ::: smoke and snapshot tests for waymark CLI handlers
 
-import { describe, expect, mock, spyOn, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { resolveConfig } from "@waymarks/core";
+import type { Command } from "commander";
 import { findRecords } from "./commands/find";
 import { formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
 import { mapFiles, parseMapArgs } from "./commands/map";
 import { migrateFile, migrateLegacyWaymarks } from "./commands/migrate";
+import type { ModifyPayload } from "./commands/modify";
 import { parseScanArgs, scanRecords } from "./commands/scan";
 import {
   runUnifiedCommand,
@@ -30,11 +32,11 @@ const __test = {
   },
 };
 
-async function runCliCaptured(
-  args: string[]
+function runCliCaptured(
+  _args: string[]
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
   // TODO: Implement proper CLI capture for testing
-  return { exitCode: 0, stdout: "", stderr: "" };
+  return Promise.resolve({ exitCode: 0, stdout: "", stderr: "" });
 }
 
 const defaultContext: CommandContext = {
@@ -1021,7 +1023,9 @@ describe("Unified command", () => {
 describe("Commander integration", () => {
   test("find command receives --json flag from Commander", async () => {
     const program = await __test.createProgram();
-    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    const findCommand = program.commands.find(
+      (cmd: Command) => cmd.name() === "find"
+    );
     expect(findCommand).toBeDefined();
 
     let receivedOptions: Record<string, unknown> | undefined;
@@ -1039,7 +1043,9 @@ describe("Commander integration", () => {
 
   test("find command forwards --map with --json combination", async () => {
     const program = await __test.createProgram();
-    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    const findCommand = program.commands.find(
+      (cmd: Command) => cmd.name() === "find"
+    );
     expect(findCommand).toBeDefined();
 
     let receivedOptions: Record<string, unknown> | undefined;
@@ -1058,7 +1064,9 @@ describe("Commander integration", () => {
 
   test("find command forwards --graph with --json combination", async () => {
     const program = await __test.createProgram();
-    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    const findCommand = program.commands.find(
+      (cmd: Command) => cmd.name() === "find"
+    );
     expect(findCommand).toBeDefined();
 
     let receivedOptions: Record<string, unknown> | undefined;
@@ -1084,7 +1092,7 @@ describe("Commander integration", () => {
       summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
       output: "",
       exitCode: 0,
-    } as ReturnType<typeof addModule.runAddCommand>);
+    });
     const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
       defaultContext
     );
@@ -1114,11 +1122,31 @@ describe("Commander integration", () => {
   test("modify command forwards --json option", async () => {
     const modifyModule = await import("./commands/modify");
     const contextModule = await import("./utils/context");
+    const mockPayload: ModifyPayload = {
+      preview: false,
+      applied: true,
+      target: { file: "src/sample.ts", line: 1 },
+      modifications: {},
+      before: {
+        raw: "// todo ::: test",
+        type: "todo",
+        signals: { raised: false, important: false },
+        content: "test",
+      },
+      after: {
+        raw: "// todo ::: test",
+        type: "todo",
+        signals: { raised: false, important: false },
+        content: "test",
+      },
+      indexRefreshed: false,
+      noChange: false,
+    };
     const runSpy = spyOn(modifyModule, "runModifyCommand").mockResolvedValue({
       output: "",
-      payload: {} as unknown,
+      payload: mockPayload,
       exitCode: 0,
-    } as ReturnType<typeof modifyModule.runModifyCommand>);
+    });
     const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
       defaultContext
     );
@@ -1155,7 +1183,7 @@ describe("Commander integration", () => {
         confirm: false,
         yes: false,
       },
-    } as ReturnType<typeof removeModule.runRemoveCommand>);
+    });
     const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
       defaultContext
     );
