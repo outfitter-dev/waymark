@@ -62,7 +62,7 @@ Keep this log current while working. Recent activity only; historical logs archi
   - Removed `chalk.underline()` and replaced with `chalk.bold()` for lighter visual weight
   - Maintains clear file boundaries without heavy underline styling
   - All lint checks passing; no new type errors introduced
-
+>>>>>>> 14b94e2 (fix(grammar): reject properties with spaces after colon and mask backticks)
 - **WAY-56: Fix grammar-level property parsing to handle spaces and backticks**
   - Modified `PROPERTY_REGEX` in `packages/grammar/src/properties.ts` to reject unquoted properties with space after colon
   - Changed regex from `\s*:\s*` to `\s*:` (no space after colon for unquoted values)
@@ -70,7 +70,11 @@ Keep this log current while working. Recent activity only; historical logs archi
   - Updated `extractPropertiesAndRelations()` to mask backtick content before property matching
   - Added 7 comprehensive test cases covering space handling and backtick masking scenarios
   - All 23 grammar tests passing; no type errors introduced
+<<<<<<< HEAD
 >>>>>>> a9bb4e5 (feat(cli): replace underlines with background colors for signal indicators)
+=======
+
+>>>>>>> 14b94e2 (fix(grammar): reject properties with spaces after colon and mask backticks)
 - **WAY-55: Replace underlines with background colors for signal indicators**
   - Modified `styleType()` in `packages/cli/src/utils/display/formatters/styles.ts`
   - Replaced `chalk.bold.underline(color(type))` with `chalk.bgYellow(chalk.bold(color(signalStr + type)))`
