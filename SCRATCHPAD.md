@@ -17,6 +17,26 @@ Keep this log current while working. Recent activity only; historical logs archi
 
 ### 2025-10-23
 
+- **WAY-33: Extract `wm map` as separate command** ✅ COMPLETE
+  - ✅ Created new standalone `wm map` command in index.ts with TLDR-only output
+  - ✅ Removed `--map` flag from find/unified command
+  - ✅ Modified map-rendering.ts to support `tldrOnly` mode
+  - ✅ Implemented clean TLDR output (strips `// tldr :::` prefix, shows content only)
+  - ✅ Supports --json, --jsonl, --text output formats
+  - ✅ Only includes files that have TLDR waymarks
+  - ✅ Updated help text and examples
+  - ✅ Removed all isMapMode references from types and code
+  - ✅ Fixed all Biome lint errors (nested ternary, magic number, parameter count)
+  - ✅ Committed changes with `gt modify` (commit 120483b)
+  - Files modified:
+    - packages/cli/src/index.ts (added map command handler and registration)
+    - packages/cli/src/utils/map-rendering.ts (added tldrOnly support, refactored buildFileLines to options object, added FILE_PATH_PADDING_WIDTH constant)
+    - packages/cli/src/commands/unified/index.ts (removed isMapMode branch)
+    - packages/cli/src/commands/unified/types.ts (removed isMapMode field)
+    - packages/cli/src/commands/unified/parser.ts (removed isMapMode parsing)
+    - packages/cli/src/commands/unified/flag-handlers.ts (removed --map flag, removed isMapMode from ParseState)
+    - packages/cli/src/index.test.ts (removed isMapMode test references)
+
 - **WAY-58: Remove underline styling from filename headers**
   - Modified `styleFilePath()` in `packages/cli/src/utils/display/formatters/styles.ts`
   - Removed `chalk.underline()` and replaced with `chalk.bold()` for lighter visual weight

@@ -4,10 +4,8 @@ import type { WaymarkRecord } from "@waymarks/grammar";
 import chalk from "chalk";
 import type { CommandContext } from "../../types";
 import { formatRecords } from "../../utils/display";
-import { printMap, serializeMap } from "../../utils/map-rendering";
 import { renderRecords } from "../../utils/output";
 import { graphRecords } from "../graph";
-import { mapFiles } from "../map";
 import { scanRecords } from "../scan";
 import { applyFilters } from "./filters";
 import type { UnifiedCommandOptions } from "./types";
@@ -25,26 +23,11 @@ export async function runUnifiedCommand(
   options: UnifiedCommandOptions,
   context: CommandContext
 ): Promise<UnifiedCommandResult> {
-  const { filePaths, isMapMode, isGraphMode, json, summary, noColor } = options;
+  const { filePaths, isGraphMode, json, noColor } = options;
 
   // Disable chalk colors if --no-color flag is set
   if (noColor) {
     chalk.level = 0;
-  }
-
-  // Map mode: aggregate TLDRs and marker counts
-  if (isMapMode) {
-    const map = await mapFiles(filePaths, context.config);
-    const mapOptions = {
-      ...(options.types && { types: options.types }),
-      ...(summary !== undefined && { includeSummary: summary }),
-      ...(options.compact && { compact: options.compact }),
-    };
-    if (json) {
-      return { output: JSON.stringify(serializeMap(map, mapOptions)) };
-    }
-    printMap(map, mapOptions);
-    return { output: "" };
   }
 
   // Graph mode: extract relation edges
