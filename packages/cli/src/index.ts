@@ -8,6 +8,11 @@ import type { WaymarkConfig } from "@waymarks/core";
 import { Command, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import { parseAddArgs, runAddCommand } from "./commands/add.ts";
+import {
+  type DoctorCommandOptions,
+  formatDoctorReport,
+  runDoctorCommand,
+} from "./commands/doctor.ts";
 import { formatFile } from "./commands/fmt.ts";
 import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
@@ -692,6 +697,32 @@ function displaySelectedWaymark(
   }
 
   writeStdout(`\nRaw:\n${selected.raw}`);
+}
+
+// this ::: executes doctor diagnostics and outputs health report
+async function handleDoctorCommand(
+  program: Command,
+  options: DoctorCommandOptions
+): Promise<void> {
+  const scopeValue = program.opts().scope as string;
+  const globalOpts = { scope: normalizeScope(scopeValue) };
+  const context = await createContext(globalOpts);
+
+  const report = await runDoctorCommand(context, options);
+
+  // Output based on format (check both local and global options)
+  const globalOpts2 = program.opts();
+  if (options.json || globalOpts2.json) {
+    writeStdout(JSON.stringify(report, null, 2));
+  } else {
+    const formatted = formatDoctorReport(report);
+    writeStdout(formatted);
+  }
+
+  // Exit with appropriate code
+  if (!report.healthy) {
+    process.exit(1);
+  }
 }
 
 async function handleMapCommand(
@@ -1444,6 +1475,71 @@ See 'wm migrate --prompt' for agent-facing documentation.
         }
       }
     );
+
+  // Doctor command - health checks and diagnostics (WAY-47)
+  program
+    .command("doctor")
+    .argument("[paths...]", "files or directories to check")
+    .option("--strict", "fail on warnings (CI mode)", false)
+    .option("--fix", "attempt automatic repairs", false)
+    .option("--json", "output as JSON")
+    .description("run health checks and diagnostics")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm doctor                      # Check current directory
+  $ wm doctor src/                 # Check specific directory
+  $ wm doctor --strict             # CI mode (fail on warnings)
+  $ wm doctor --fix                # Auto-repair safe issues
+  $ wm doctor --json               # JSON output for tooling
+
+Health Checks:
+  Configuration:
+    - Config file exists and is valid
+    - Config values are within valid ranges
+    - Cache directory is writable
+    - Index files are valid JSON
+
+  Waymark Integrity:
+    - All waymarks parse correctly
+    - No duplicate canonical references
+    - No dangling relations (depends:, needs:, etc.)
+    - TLDRs are in correct positions
+    - Raised/starred signals on protected branches
+
+  Environment:
+    - Git repository detected
+    - Ignore patterns working correctly
+    - Index size is reasonable
+
+  Performance:
+    - Cache functioning correctly
+    - Index size warnings
+
+Auto-Fix Support (--fix):
+  - Rebuild corrupted cache/index files
+  - Remove duplicate canonicals (keeps first)
+  - Fix TLDR positioning issues
+  - Run formatter on waymarks with syntax issues
+  - Clear raised signals on protected branches (with confirmation)
+
+Exit Codes:
+  0  No errors (warnings only if not --strict)
+  1  Errors found or warnings in --strict mode
+  2  Internal/tooling error
+
+See 'wm doctor --prompt' for agent-facing documentation.
+    `
+    )
+    .action(async (paths: string[], options: DoctorCommandOptions) => {
+      try {
+        await handleDoctorCommand(program, { ...options, paths });
+      } catch (error) {
+        writeStderr(error instanceof Error ? error.message : String(error));
+        process.exit(2); // Internal error
+      }
+    });
 
   // Map command - file tree with TLDR summaries (WAY-33)
   program

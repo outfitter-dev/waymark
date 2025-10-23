@@ -17,6 +17,26 @@ Keep this log current while working. Recent activity only; historical logs archi
 
 ### 2025-10-23
 
+- **WAY-47: Add `wm doctor` command for health checks and diagnostics** ✅ COMPLETE
+  - ✅ Implemented comprehensive health check system with categories:
+    - Configuration health: config file validity, value ranges, cache directory access
+    - Waymark integrity: parsing validity, duplicate canonicals, dangling relations, TLDR coverage, marker validity
+    - Environment checks: git repository detection, index file integrity, gitignore patterns
+    - Performance checks: index file size monitoring
+  - ✅ Created `/packages/cli/src/commands/doctor.ts` with full diagnostic suite
+  - ✅ Integrated into CLI at `/packages/cli/src/index.ts` with command registration and handler
+  - ✅ Supports `--json` flag for machine-readable output
+  - ✅ Supports `--strict` flag for CI mode (fails on warnings)
+  - ✅ Exit codes: 0 = healthy, 1 = errors/warnings (in strict mode), 2 = internal error
+  - ✅ Comprehensive help text with examples and check descriptions
+  - ✅ Color-coded output: green ✓ for passed checks, red ✗ for failed, severity indicators (ERROR/WARN/INFO)
+  - ✅ Tested manually with multiple scenarios - all checks working correctly
+  - ✅ Fixed all type errors and linting issues
+  - Note: --fix flag implementation deferred (documented in help but not yet functional)
+  - Files created/modified:
+    - packages/cli/src/commands/doctor.ts (new file, 620 lines)
+    - packages/cli/src/index.ts (added imports, handler function, command registration)
+
 - **WAY-33: Extract `wm map` as separate command** ✅ COMPLETE
   - ✅ Created new standalone `wm map` command in index.ts with TLDR-only output
   - ✅ Removed `--map` flag from find/unified command
