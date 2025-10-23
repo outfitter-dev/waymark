@@ -33,6 +33,7 @@ export type ParseState = {
   page: number | undefined;
   compact: boolean;
   noColor: boolean;
+  noWrap: boolean;
 };
 
 /**
@@ -129,6 +130,10 @@ function handleFormattingFlags(token: string, state: ParseState): boolean {
   }
   if (token === "--no-color") {
     state.noColor = true;
+    return true;
+  }
+  if (token === "--no-wrap") {
+    state.noWrap = true;
     return true;
   }
   return false;

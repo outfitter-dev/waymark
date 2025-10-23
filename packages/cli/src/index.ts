@@ -638,6 +638,11 @@ function buildArgsFromOptions(
     }
   }
 
+  // Handle negatable flags explicitly
+  if (options.wrap === false) {
+    args.push("--no-wrap");
+  }
+
   for (const { key, flag } of STRING_OPTION_FLAGS) {
     const value = options[key];
     if (typeof value === "string" && value.length > 0) {
@@ -1390,6 +1395,7 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("--tree", "group output by directory structure")
     .option("--flat", "show flat list (default)")
     .option("--compact", "compact output format")
+    .option("--no-wrap", "disable line wrapping")
     .option("--group <by>", "group by: file, dir, type")
     .option("--sort <by>", "sort by: file, line, type, modified")
     .option("--context <n>, -C", "show N lines of context", Number.parseInt)

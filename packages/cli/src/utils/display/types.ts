@@ -15,6 +15,7 @@ export type DisplayOptions = Pick<
   | "page"
   | "compact"
   | "noColor"
+  | "noWrap"
 >;
 
 export const DEFAULT_PAGE_SIZE = 50;

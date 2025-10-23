@@ -52,6 +52,7 @@ export function createParseState(): ParseState {
     // Formatting
     compact: false,
     noColor: false,
+    noWrap: false,
   };
 }
 
@@ -223,6 +224,8 @@ export function buildOptions(state: ParseState): UnifiedCommandOptions {
   options.compact = state.compact;
   // Always pass noColor through (it's a boolean, not optional)
   options.noColor = state.noColor;
+  // Always pass noWrap through (it's a boolean, not optional)
+  options.noWrap = state.noWrap;
 
   return options;
 }

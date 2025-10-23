@@ -7,6 +7,8 @@ export type WaymarkFormatConfig = {
   spaceAroundSigil: boolean;
   normalizeCase: boolean;
   alignContinuations?: boolean;
+  wrapEnabled?: boolean;
+  wrapWidth?: number;
 };
 
 export type WaymarkLintConfig = {
