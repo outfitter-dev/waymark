@@ -70,7 +70,7 @@ Keep this log current while working. Recent activity only; historical logs archi
   - Updated `extractPropertiesAndRelations()` to mask backtick content before property matching
   - Added 7 comprehensive test cases covering space handling and backtick masking scenarios
   - All 23 grammar tests passing; no type errors introduced
-
+>>>>>>> a9bb4e5 (feat(cli): replace underlines with background colors for signal indicators)
 - **WAY-55: Replace underlines with background colors for signal indicators**
   - Modified `styleType()` in `packages/cli/src/utils/display/formatters/styles.ts`
   - Replaced `chalk.bold.underline(color(type))` with `chalk.bgYellow(chalk.bold(color(signalStr + type)))`
