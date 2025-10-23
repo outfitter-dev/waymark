@@ -56,13 +56,17 @@ Keep this log current while working. Recent activity only; historical logs archi
     - packages/cli/src/commands/unified/parser.ts (removed isMapMode parsing)
     - packages/cli/src/commands/unified/flag-handlers.ts (removed --map flag, removed isMapMode from ParseState)
     - packages/cli/src/index.test.ts (removed isMapMode test references)
-
+>>>>>>> 514db86 (feat(cli): remove underline styling from filename headers)
 - **WAY-58: Remove underline styling from filename headers**
   - Modified `styleFilePath()` in `packages/cli/src/utils/display/formatters/styles.ts`
   - Removed `chalk.underline()` and replaced with `chalk.bold()` for lighter visual weight
   - Maintains clear file boundaries without heavy underline styling
   - All lint checks passing; no new type errors introduced
+<<<<<<< HEAD
 >>>>>>> 14b94e2 (fix(grammar): reject properties with spaces after colon and mask backticks)
+=======
+
+>>>>>>> 514db86 (feat(cli): remove underline styling from filename headers)
 - **WAY-56: Fix grammar-level property parsing to handle spaces and backticks**
   - Modified `PROPERTY_REGEX` in `packages/grammar/src/properties.ts` to reject unquoted properties with space after colon
   - Changed regex from `\s*:\s*` to `\s*:` (no space after colon for unquoted values)
