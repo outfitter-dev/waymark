@@ -36,7 +36,7 @@ Keep this log current while working. Recent activity only; historical logs archi
   - Files created/modified:
     - packages/cli/src/commands/doctor.ts (new file, 620 lines)
     - packages/cli/src/index.ts (added imports, handler function, command registration)
->>>>>>> 6ade7d0 (docs(scratchpad): update WAY-33 completion status and details)
+>>>>>>> 6ade7d0 (docs(scratchpad): update WAY-33 completion status and details)>>>>>>> a1fed39 (feat(cli): add wm doctor command for health checks and diagnostics)
 - **WAY-33: Extract `wm map` as separate command** ✅ COMPLETE
   - ✅ Created new standalone `wm map` command in index.ts with TLDR-only output
   - ✅ Removed `--map` flag from find/unified command
