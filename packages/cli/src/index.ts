@@ -586,7 +586,7 @@ const BOOLEAN_OPTION_FLAGS = [
   { key: "json", flag: "--json" },
   { key: "jsonl", flag: "--jsonl" },
   { key: "text", flag: "--text" },
-  { key: "pretty", flag: "--pretty" }, // Deprecated alias for --text
+  { key: "pretty", flag: "--pretty" }, // Pretty-printed JSON (deprecated)
   { key: "long", flag: "--long" },
   { key: "tree", flag: "--tree" },
   { key: "flat", flag: "--flat" },
@@ -1179,7 +1179,7 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("--text", "output as human-readable formatted text")
     .option(
       "--pretty",
-      "(deprecated: use --text) output as pretty-printed JSON"
+      "output as pretty-printed JSON (deprecated - use --json)"
     )
     .option("--long", "show detailed record information")
     .option("--tree", "group output by directory structure")
