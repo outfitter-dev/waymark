@@ -20,7 +20,7 @@ import {
 } from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
-import { formatMapOutput, serializeMap } from "./index";
+import { formatMapOutput, runCli, serializeMap } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
 
@@ -32,11 +32,11 @@ const __test = {
   },
 };
 
-function runCliCaptured(
-  _args: string[]
+async function runCliCaptured(
+  args: string[]
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  // TODO: Implement proper CLI capture for testing
-  return Promise.resolve({ exitCode: 0, stdout: "", stderr: "" });
+  const result = await runCli(args);
+  return { exitCode: result.exitCode, stdout: "", stderr: "" };
 }
 
 const defaultContext: CommandContext = {
