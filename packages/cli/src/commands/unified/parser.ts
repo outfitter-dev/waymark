@@ -32,7 +32,6 @@ export function createParseState(): ParseState {
     excludeMentions: [] as string[],
     jsonState: { json: false },
     summaryState: { summary: false },
-    isMapMode: false,
     isGraphMode: false,
     raised: undefined as boolean | undefined,
     starred: undefined as boolean | undefined,
@@ -150,7 +149,6 @@ export function processToken(
 export function buildOptions(state: ParseState): UnifiedCommandOptions {
   const options: UnifiedCommandOptions = {
     filePaths: state.positional.length > 0 ? state.positional : ["."],
-    isMapMode: state.isMapMode,
     isGraphMode: state.isGraphMode,
     json: state.jsonState.json,
     summary: state.summaryState.summary,

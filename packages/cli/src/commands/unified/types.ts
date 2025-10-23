@@ -24,7 +24,6 @@ export type SortBy =
 export type UnifiedCommandOptions = {
   filePaths: string[];
   // Mode detection
-  isMapMode: boolean;
   isGraphMode: boolean;
   // Filters
   types?: string[];

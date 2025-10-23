@@ -13,11 +13,13 @@ export type MapRenderOptions = {
   types?: string[];
   includeSummary?: boolean;
   compact?: boolean;
+  tldrOnly?: boolean;
 };
 
 export type MapSerializeOptions = MapRenderOptions;
 
 const STDOUT = process.stdout;
+const FILE_PATH_PADDING_WIDTH = 20;
 
 /**
  * Print a formatted representation of the provided map to stdout.
@@ -66,6 +68,18 @@ export function formatMapOutput(
   map: WaymarkMap,
   options: MapRenderOptions = {}
 ): string {
+  // TLDR-only mode (WAY-33): force tree mode, no summaries or type counts
+  if (options.tldrOnly) {
+    const fileLines = buildFileBlocks(map, undefined, true);
+    const outputLines = fileLines.flat();
+
+    if (outputLines.length === 0) {
+      outputLines.push("No files with TLDR waymarks found.");
+    }
+
+    return outputLines.join("\n");
+  }
+
   const typeFilter = toTypeFilter(options.types);
 
   // Compact mode: one line per file
@@ -112,6 +126,19 @@ export function serializeMap(
     a[0].localeCompare(b[0])
   );
 
+  // TLDR-only mode (WAY-33): only show files with TLDRs, no type counts
+  if (options.tldrOnly) {
+    for (const [file, summary] of entries) {
+      if (summary.tldr && summary.tldr.contentText.trim().length > 0) {
+        result[file] = {
+          tldr: summary.tldr.contentText,
+        };
+      }
+    }
+    return result;
+  }
+
+  // Standard mode: include type counts
   for (const [file, summary] of entries) {
     const includeTldr = shouldIncludeTldr(summary, typeFilter);
     const markerCounts = collectMarkerCounts(summary, typeFilter);
@@ -163,7 +190,8 @@ type TreeNode = {
  */
 export function buildFileBlocks(
   map: WaymarkMap,
-  typeFilter?: Set<string>
+  typeFilter?: Set<string>,
+  tldrOnly?: boolean
 ): string[][] {
   const summaries = Array.from(map.files.values()).sort((a, b) =>
     a.file.localeCompare(b.file)
@@ -171,6 +199,10 @@ export function buildFileBlocks(
 
   // Filter summaries first
   const filtered = summaries.filter((summary) => {
+    // TLDR-only mode: only include files with TLDRs
+    if (tldrOnly) {
+      return summary.tldr && summary.tldr.contentText.trim().length > 0;
+    }
     const includeTldr = shouldIncludeTldr(summary, typeFilter);
     return !typeFilter || includeTldr;
   });
@@ -217,7 +249,7 @@ export function buildFileBlocks(
 
   // Render tree
   const result: string[][] = [];
-  renderTree({ node: root, prefix: "", result, typeFilter });
+  renderTree({ node: root, prefix: "", result, typeFilter, tldrOnly });
   return result;
 }
 
@@ -226,10 +258,11 @@ type RenderOptions = {
   prefix: string;
   result: string[][];
   typeFilter?: Set<string> | undefined;
+  tldrOnly?: boolean | undefined;
 };
 
 function renderTree(options: RenderOptions): void {
-  const { node, prefix, result, typeFilter } = options;
+  const { node, prefix, result, typeFilter, tldrOnly } = options;
   const entries = Array.from(node.children.entries()).sort((a, b) => {
     // Directories first, then files
     if (a[1].type !== b[1].type) {
@@ -257,15 +290,17 @@ function renderTree(options: RenderOptions): void {
         prefix: prefix + childPrefix,
         result,
         typeFilter,
+        tldrOnly,
       });
     } else if (child.summary) {
       // File with TLDR
-      const lines = buildFileLines(
-        child.summary,
-        prefix + connector,
-        prefix + childPrefix,
-        typeFilter
-      );
+      const lines = buildFileLines({
+        summary: child.summary,
+        linePrefix: prefix + connector,
+        tldrPrefix: prefix + childPrefix,
+        typeFilter,
+        tldrOnly,
+      });
       if (lines.length > 0) {
         result.push(lines);
       }
@@ -273,19 +308,37 @@ function renderTree(options: RenderOptions): void {
   }
 }
 
+type BuildFileLinesOptions = {
+  summary: FileSummary;
+  linePrefix: string;
+  tldrPrefix: string;
+  typeFilter?: Set<string> | undefined;
+  tldrOnly?: boolean | undefined;
+};
+
 /**
  * Format a single file summary into printable lines.
  */
-export function buildFileLines(
-  summary: FileSummary,
-  linePrefix: string,
-  tldrPrefix: string,
-  typeFilter?: Set<string>
-): string[] {
+export function buildFileLines(options: BuildFileLinesOptions): string[] {
+  const { summary, linePrefix, tldrPrefix, typeFilter, tldrOnly } = options;
   const lines: string[] = [];
   const fileName = summary.file.split("/").pop() || summary.file;
 
-  // File path in blue with tree drawing prefix
+  // TLDR-only mode (WAY-33): clean single-line format
+  if (tldrOnly && summary.tldr) {
+    const fileDisplay = `${fileName}:${summary.tldr.startLine}`;
+    const filePath = chalk.blue(fileDisplay);
+    // Calculate padding for alignment - match tree connector width
+    const padding = " ".repeat(
+      Math.max(0, FILE_PATH_PADDING_WIDTH - fileDisplay.length)
+    );
+    lines.push(
+      `${linePrefix} ${filePath}${padding}${summary.tldr.contentText}`
+    );
+    return lines;
+  }
+
+  // Standard mode: file path in blue with tree drawing prefix
   const includeTldr = shouldIncludeTldr(summary, typeFilter);
   const fileDisplay =
     includeTldr && summary.tldr
