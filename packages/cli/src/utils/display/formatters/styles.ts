@@ -152,8 +152,9 @@ export function styleType(
     (signals.raised ? "^" : "") + (signals.important ? "*" : "");
 
   if (signalStr) {
-    // Bold the signal and type with same color, underline only the type
-    return chalk.bold(color(signalStr)) + chalk.bold.underline(color(type));
+    // Bold the signal and type with same color, use background for emphasis
+    // Use bgYellow for a subtle amber/yellow background that works across themes
+    return chalk.bgYellow(chalk.bold(color(signalStr + type)));
   }
 
   return color(type);
