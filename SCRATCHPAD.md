@@ -17,6 +17,12 @@ Keep this log current while working. Recent activity only; historical logs archi
 
 ### 2025-10-23
 
+- **WAY-58: Remove underline styling from filename headers**
+  - Modified `styleFilePath()` in `packages/cli/src/utils/display/formatters/styles.ts`
+  - Removed `chalk.underline()` and replaced with `chalk.bold()` for lighter visual weight
+  - Maintains clear file boundaries without heavy underline styling
+  - All lint checks passing; no new type errors introduced
+
 - **WAY-56: Fix grammar-level property parsing to handle spaces and backticks**
   - Modified `PROPERTY_REGEX` in `packages/grammar/src/properties.ts` to reject unquoted properties with space after colon
   - Changed regex from `\s*:\s*` to `\s*:` (no space after colon for unquoted values)
