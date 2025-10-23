@@ -10,6 +10,7 @@ import {
   styleSigil,
   styleType,
 } from "./styles";
+import { wrapContent } from "./wrapping";
 
 // Regex patterns for continuation detection
 const CONTINUATION_CONTENT_PATTERN = /^.*?:::\s*/;
@@ -67,6 +68,57 @@ function getTypeWithSignal(record: WaymarkRecord): string {
 }
 
 /**
+ * Options for building wrapped lines
+ */
+type BuildWrappedLinesOptions = {
+  wrappedLines: string[];
+  lineNumStr: string;
+  typeStr: string;
+  sigilStr: string;
+  spacing: string;
+  indent: number;
+  compact: boolean;
+};
+
+/**
+ * Build multi-line output for wrapped content
+ */
+function buildWrappedLines(options: BuildWrappedLinesOptions): string[] {
+  const {
+    wrappedLines,
+    lineNumStr,
+    typeStr,
+    sigilStr,
+    spacing,
+    indent,
+    compact,
+  } = options;
+  const lines: string[] = [];
+  const continuationIndent = " ".repeat(indent);
+
+  for (let i = 0; i < wrappedLines.length; i++) {
+    const line = wrappedLines[i] ?? "";
+    const styledContent = styleContent(line);
+
+    if (i === 0) {
+      // First line with type and sigil
+      if (compact) {
+        lines.push(`${lineNumStr} ${typeStr}${sigilStr}${styledContent}`);
+      } else {
+        lines.push(
+          `${lineNumStr}${spacing}${typeStr}${sigilStr}${styledContent}`
+        );
+      }
+    } else {
+      // Continuation lines (no line number, just indented content)
+      lines.push(continuationIndent + styledContent);
+    }
+  }
+
+  return lines;
+}
+
+/**
  * Format a single waymark line with proper alignment and styling
  */
 function formatWaymarkLine(
@@ -74,7 +126,7 @@ function formatWaymarkLine(
   lineWidth: number,
   longestTypeLength: number,
   options: DisplayOptions
-): string {
+): string | string[] {
   const compact = options.compact ?? false;
 
   // Extract the waymark content (always strip comment markers)
@@ -96,19 +148,42 @@ function formatWaymarkLine(
     contentParts.length > 1
       ? contentParts.slice(1).join(" ::: ")
       : contentParts[0];
-  const styledContent = styleContent(waymarkContent || "");
+
+  // Calculate indent for wrapped lines
+  const spacing = " ".repeat(paddingSpaces);
+  const indent = compact
+    ? lineWidth + 1 + typeWithSignal.length + " ::: ".length
+    : lineWidth + 1 + paddingSpaces + typeWithSignal.length + " ::: ".length;
+
+  // Wrap content if needed
+  const wrappedLines = wrapContent(waymarkContent || "", {
+    noWrap: options.noWrap === true,
+    indent,
+  });
 
   // Format line number with padding
   const lineNum = String(record.startLine).padStart(lineWidth, " ");
   const lineNumStr = styleLineNumber(lineNum);
 
-  if (compact) {
-    return `${lineNumStr} ${typeStr}${sigilStr}${styledContent}`;
+  // If single line or no wrapping needed, return as before
+  if (wrappedLines.length === 1) {
+    const styledContent = styleContent(wrappedLines[0] ?? "");
+    if (compact) {
+      return `${lineNumStr} ${typeStr}${sigilStr}${styledContent}`;
+    }
+    return `${lineNumStr}${spacing}${typeStr}${sigilStr}${styledContent}`;
   }
 
-  // Build with proper spacing for alignment
-  const spacing = " ".repeat(paddingSpaces);
-  return `${lineNumStr}${spacing}${typeStr}${sigilStr}${styledContent}`;
+  // Multi-line wrapped output
+  return buildWrappedLines({
+    wrappedLines,
+    lineNumStr,
+    typeStr,
+    sigilStr,
+    spacing,
+    indent,
+    compact,
+  });
 }
 
 /**
@@ -211,9 +286,17 @@ function formatMultiLineWaymark(
 
   if (rawLines.length === 1) {
     // Single line waymark
-    lines.push(
-      formatWaymarkLine(record, lineWidth, longestTypeLength, options)
+    const formatted = formatWaymarkLine(
+      record,
+      lineWidth,
+      longestTypeLength,
+      options
     );
+    if (Array.isArray(formatted)) {
+      lines.push(...formatted);
+    } else {
+      lines.push(formatted);
+    }
     return lines;
   }
 
@@ -259,18 +342,48 @@ function formatMultiLineWaymark(
  */
 function formatCompactRecord(
   record: WaymarkRecord,
-  _options: DisplayOptions
-): string {
+  options: DisplayOptions
+): string | string[] {
   // In compact mode, use parsed contentText and collapse to single line
   const content = record.contentText.replace(/\n/g, " ");
 
   // Format: file:line  type ::: content
   const typeStr = styleType(record.type, record.signals);
   const sigilStr = styleSigil(" ::: ");
-  const styledContent = styleContent(content);
 
-  // In compact mode, don't underline file path and don't dim line number
-  return `${record.file}:${record.startLine}  ${typeStr}${sigilStr}${styledContent}`;
+  // Calculate prefix length for wrapping indent
+  const typeWithSignal = getTypeWithSignal(record);
+  const prefix = `${record.file}:${record.startLine}  `;
+  const indent = prefix.length + typeWithSignal.length + " ::: ".length;
+
+  // Wrap content if needed
+  const wrappedLines = wrapContent(content, {
+    noWrap: options.noWrap === true,
+    indent,
+  });
+
+  // If single line, return as before
+  if (wrappedLines.length === 1) {
+    const styledContent = styleContent(wrappedLines[0] ?? "");
+    return `${prefix}${typeStr}${sigilStr}${styledContent}`;
+  }
+
+  // Multi-line wrapped output
+  const lines: string[] = [];
+  const continuationIndent = " ".repeat(indent);
+
+  for (let i = 0; i < wrappedLines.length; i++) {
+    const line = wrappedLines[i] ?? "";
+    const styledContent = styleContent(line);
+
+    if (i === 0) {
+      lines.push(`${prefix}${typeStr}${sigilStr}${styledContent}`);
+    } else {
+      lines.push(continuationIndent + styledContent);
+    }
+  }
+
+  return lines;
 }
 
 /**
@@ -284,9 +397,16 @@ export function formatEnhanced(
 
   // Compact mode: one line per waymark, file:line prefix
   if (compact) {
-    return records
-      .map((record) => formatCompactRecord(record, options))
-      .join("\n");
+    const formattedLines: string[] = [];
+    for (const record of records) {
+      const formatted = formatCompactRecord(record, options);
+      if (Array.isArray(formatted)) {
+        formattedLines.push(...formatted);
+      } else {
+        formattedLines.push(formatted);
+      }
+    }
+    return formattedLines.join("\n");
   }
 
   // Regular mode: grouped by file with headers
