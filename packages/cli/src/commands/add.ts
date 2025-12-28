@@ -204,10 +204,19 @@ function handlePositionalToken(token: string, state: InsertParseState): void {
   if (state.from !== undefined) {
     throw new Error("Cannot mix positional arguments with --from");
   }
-  if (state.fileLine) {
-    throw new Error(`Unexpected positional argument: ${token}`);
+  if (!state.fileLine) {
+    state.fileLine = token;
+    return;
   }
-  state.fileLine = token;
+  if (!state.type) {
+    state.type = token;
+    return;
+  }
+  if (!state.content) {
+    state.content = token;
+    return;
+  }
+  throw new Error(`Unexpected positional argument: ${token}`);
 }
 
 function validateFromMode(state: InsertParseState): void {
