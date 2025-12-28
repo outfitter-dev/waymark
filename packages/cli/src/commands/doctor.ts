@@ -19,6 +19,7 @@ const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
   "rel",
 ];
 const TLDR_MAX_LINE = 20;
+// biome-ignore lint/style/noMagicNumbers: bytes per megabyte conversion
 const BYTES_PER_MB = 1024 * 1024;
 const LARGE_INDEX_MB = 10;
 
