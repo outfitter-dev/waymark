@@ -18,6 +18,9 @@ const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
   "dupeof",
   "rel",
 ];
+const TLDR_MAX_LINE = 20;
+const BYTES_PER_MB = 1024 * 1024;
+const LARGE_INDEX_MB = 10;
 
 // this ::: diagnostic issue severity and metadata structure
 export type DiagnosticIssue = {
@@ -407,7 +410,7 @@ async function checkWaymarkIntegrity(
 
     // Check if TLDR is reasonably near the top (within first 20 lines)
     for (const tldr of tldrs) {
-      if (tldr.startLine > 20) {
+      if (tldr.startLine > TLDR_MAX_LINE) {
         tldrIssues.push({
           severity: "warning",
           category: "integrity",
@@ -512,9 +515,9 @@ async function checkPerformance(
     const indexPath = join(context.workspaceRoot, ".waymark", "index.json");
     if (existsSync(indexPath)) {
       const stats = await stat(indexPath);
-      const sizeMb = stats.size / (1024 * 1024);
+      const sizeMb = stats.size / BYTES_PER_MB;
 
-      if (sizeMb > 10) {
+      if (sizeMb > LARGE_INDEX_MB) {
         issues.push({
           severity: "warning",
           category: "performance",
@@ -568,18 +571,19 @@ export function formatDoctorReport(report: DoctorReport): string {
 
       // Show issues
       for (const issue of check.issues) {
-        const severity =
-          issue.severity === "error"
-            ? chalk.red("ERROR")
-            : issue.severity === "warning"
-              ? chalk.yellow("WARN")
-              : chalk.blue("INFO");
+        let severity = chalk.blue("INFO");
+        if (issue.severity === "error") {
+          severity = chalk.red("ERROR");
+        } else if (issue.severity === "warning") {
+          severity = chalk.yellow("WARN");
+        }
 
-        const location = issue.file
-          ? issue.line
+        let location = "";
+        if (issue.file) {
+          location = issue.line
             ? ` (${issue.file}:${issue.line})`
-            : ` (${issue.file})`
-          : "";
+            : ` (${issue.file})`;
+        }
 
         lines.push(`  ${severity}: ${issue.message}${location}`);
 

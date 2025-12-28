@@ -43,7 +43,7 @@ export function parseScanArgs(argv: string[]): ParsedScanArgs {
     "--json": "json",
     "--jsonl": "jsonl",
     "--text": "text",
-    "--pretty": "pretty", // Pretty-printed JSON (deprecated - use --json with jq for formatting)
+    "--pretty": "json", // Pretty-printed JSON (deprecated - use --json with jq for formatting)
   };
 
   for (const arg of argv) {
