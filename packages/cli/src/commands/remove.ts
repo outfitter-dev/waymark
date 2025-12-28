@@ -406,7 +406,6 @@ type LoadedRemovePayload = {
   options?: Partial<RemoveCommandOptions>;
 };
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: JSON parsing requires branching
 async function loadSpecsFromSource(path: string): Promise<LoadedRemovePayload> {
   const source =
     path === "-" ? await readFromStdin() : await readFile(path, "utf8");

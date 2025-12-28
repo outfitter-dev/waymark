@@ -737,7 +737,6 @@ function createKeypressHandler(
   };
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Interactive prompt coordination requires managing keypress state, TTY setup, abort handling, and cleanup
 async function promptStep(
   promptModule: ReturnType<typeof inquirer.createPromptModule>,
   step: InteractiveStep,

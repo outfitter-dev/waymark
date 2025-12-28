@@ -146,7 +146,6 @@ export function processToken(
 /**
  * Build final options from parse state
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: option builder with many conditional fields
 export function buildOptions(state: ParseState): UnifiedCommandOptions {
   const options: UnifiedCommandOptions = {
     filePaths: state.positional.length > 0 ? state.positional : ["."],
