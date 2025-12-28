@@ -33,6 +33,7 @@ export function createParseState(): ParseState {
     jsonState: { json: false },
     summaryState: { summary: false },
     isGraphMode: false,
+    map: false,
     raised: undefined as boolean | undefined,
     starred: undefined as boolean | undefined,
     // Display modes
@@ -153,6 +154,9 @@ export function buildOptions(state: ParseState): UnifiedCommandOptions {
     json: state.jsonState.json,
     summary: state.summaryState.summary,
   };
+  if (state.map) {
+    options.map = true;
+  }
 
   // Filters
   if (state.types.length > 0) {
