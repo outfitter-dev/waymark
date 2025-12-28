@@ -131,7 +131,7 @@ When invoked, execute bash commands using the `wm` CLI tool.
 
 Waymarks use a special syntax starting with `:::`:
 
-```
+```text
 ::: todo This needs to be done #priority @agent
 ::: fix^ Bug that needs immediate attention
 ::: note* Important information to remember
