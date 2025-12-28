@@ -23,7 +23,9 @@ const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
   "rel",
 ];
 const TLDR_TOP_LINES_MAX = 20;
-const BYTES_PER_MB = 1024 * 1024;
+// biome-ignore lint/style/noMagicNumbers: base-2 kilobyte constant for MB conversion
+const KIBIBYTE = 1024;
+const BYTES_PER_MB = KIBIBYTE * KIBIBYTE;
 const MAX_INDEX_MB = 10;
 
 // this ::: diagnostic issue severity and metadata structure
@@ -579,11 +581,12 @@ export function formatDoctorReport(report: DoctorReport): string {
       for (const issue of check.issues) {
         const severity = formatSeverityLabel(issue.severity);
 
-        const location = issue.file
-          ? issue.line
+        let location = "";
+        if (issue.file) {
+          location = issue.line
             ? ` (${issue.file}:${issue.line})`
-            : ` (${issue.file})`
-          : "";
+            : ` (${issue.file})`;
+        }
 
         lines.push(`  ${severity}: ${issue.message}${location}`);
 
