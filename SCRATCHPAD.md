@@ -15,6 +15,16 @@ Keep this log current while working. Recent activity only; historical logs archi
 
 ## Recent Activity
 
+<<<<<<< ours
+
+### 2025-12-28
+
+- Drafted repo cleanup plan in `.agents/plans/repo-cleanup/PLAN.md`
+- Noted tracked test cache artifacts in `fixtures/test-cache.db*` and `test-cache/waymark.db*`
+
+||||||| ancestor
+=======
+
 ### 2025-10-23
 
 - **WAY-47: Add `wm doctor` command for health checks and diagnostics** ✅ COMPLETE
@@ -90,6 +100,8 @@ Keep this log current while working. Recent activity only; historical logs archi
   - Tested with `^todo`, `*fix`, `^wip`, and `^*todo` signal combinations
   - Visual output confirmed working across terminal themes
 
+>>>>>>> theirs
+>>>>>>>
 ### 2025-10-16
 
 - **WAY-20: HTML Property Continuation Formatting** (Lock down HTML closure)
