@@ -645,8 +645,9 @@ describe("Unified command", () => {
       map: true,
     });
 
-    expect(output).toContain("sample.ts");
-    expect(output).toContain("summary");
+    expect(output).toContain(file);
+    expect(output).toContain("tldr ::: summary");
+    expect(output).toContain("todo ::: work");
     await cleanup();
   });
 
@@ -661,11 +662,10 @@ describe("Unified command", () => {
       json: true,
     });
 
-    const parsed = JSON.parse(output) as Record<
-      string,
-      { tldr?: string; types: Record<string, number> }
-    >;
-    expect(parsed[file]?.types).toEqual({ tldr: 1, todo: 1 });
+    const parsed = JSON.parse(output) as Array<{ type: string; file: string }>;
+    expect(parsed).toHaveLength(2);
+    expect(parsed.map((record) => record.type)).toEqual(["tldr", "todo"]);
+    expect(parsed.every((record) => record.file === file)).toBe(true);
     await cleanup();
   });
 
@@ -1041,7 +1041,7 @@ describe("Commander integration", () => {
       receivedOptions =
         typeof this.optsWithGlobals === "function"
           ? this.optsWithGlobals()
-          : { ...program.opts(), ...options };
+          : options;
     });
 
     await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
@@ -1065,7 +1065,7 @@ describe("Commander integration", () => {
       receivedOptions =
         typeof this.optsWithGlobals === "function"
           ? this.optsWithGlobals()
-          : { ...program.opts(), ...options };
+          : options;
     });
 
     await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
