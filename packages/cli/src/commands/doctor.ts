@@ -22,6 +22,9 @@ const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
   "dupeof",
   "rel",
 ];
+const TLDR_TOP_LINES_MAX = 20;
+const BYTES_PER_MB = 1024 * 1024;
+const MAX_INDEX_MB = 10;
 
 // this ::: diagnostic issue severity and metadata structure
 export type DiagnosticIssue = {
@@ -409,9 +412,9 @@ async function checkWaymarkIntegrity(
       });
     }
 
-    // Check if TLDR is reasonably near the top (within first 20 lines)
+    // Check if TLDR is reasonably near the top (within first lines threshold)
     for (const tldr of tldrs) {
-      if (tldr.startLine > 20) {
+      if (tldr.startLine > TLDR_TOP_LINES_MAX) {
         tldrIssues.push({
           severity: "warning",
           category: "integrity",
@@ -518,9 +521,9 @@ async function checkPerformance(
       const stats = await import("node:fs/promises").then((fs) =>
         fs.stat(indexPath)
       );
-      const sizeMb = stats.size / (1024 * 1024);
+      const sizeMb = stats.size / BYTES_PER_MB;
 
-      if (sizeMb > 10) {
+      if (sizeMb > MAX_INDEX_MB) {
         issues.push({
           severity: "warning",
           category: "performance",
@@ -574,12 +577,7 @@ export function formatDoctorReport(report: DoctorReport): string {
 
       // Show issues
       for (const issue of check.issues) {
-        const severity =
-          issue.severity === "error"
-            ? chalk.red("ERROR")
-            : issue.severity === "warning"
-              ? chalk.yellow("WARN")
-              : chalk.blue("INFO");
+        const severity = formatSeverityLabel(issue.severity);
 
         const location = issue.file
           ? issue.line
@@ -617,4 +615,17 @@ export function formatDoctorReport(report: DoctorReport): string {
   }
 
   return lines.join("\n");
+}
+
+function formatSeverityLabel(severity: DiagnosticIssue["severity"]): string {
+  switch (severity) {
+    case "error":
+      return chalk.red("ERROR");
+    case "warning":
+      return chalk.yellow("WARN");
+    case "info":
+      return chalk.blue("INFO");
+    default:
+      return chalk.blue("INFO");
+  }
 }
