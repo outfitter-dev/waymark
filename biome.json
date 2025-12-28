@@ -12,16 +12,25 @@
   },
   "linter": {
     "rules": {
-      "suspicious": {
-        "useAwait": "off"
-      },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "off"
-      },
       "style": {
         "noMagicNumbers": "warn",
         "noNestedTernary": "warn"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/cli/src/commands/doctor.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "useAwait": "off"
+          },
+          "complexity": {
+            "noExcessiveCognitiveComplexity": "off"
+          }
+        }
+      }
+    }
+  ]
 }
