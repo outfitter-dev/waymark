@@ -44,11 +44,20 @@ export async function runUnifiedCommand(
 
   if (map) {
     const mapData = await mapFiles(filePaths, context.config);
-    const mapOptions = {
-      types: options.types,
-      includeSummary: summary,
-      compact,
-    };
+    const mapOptions: {
+      types?: string[];
+      includeSummary?: boolean;
+      compact?: boolean;
+    } = {};
+    if (options.types) {
+      mapOptions.types = options.types;
+    }
+    if (summary) {
+      mapOptions.includeSummary = true;
+    }
+    if (compact) {
+      mapOptions.compact = true;
+    }
 
     if (json) {
       return { output: JSON.stringify(serializeMap(mapData, mapOptions)) };
