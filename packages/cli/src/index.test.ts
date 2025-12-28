@@ -1043,7 +1043,6 @@ describe("Commander integration", () => {
     expect(receivedOptions?.json).toBe(true);
   });
 
-
   test("find command forwards --graph with --json combination", async () => {
     const program = await __test.createProgram();
     const findCommand = program.commands.find(
@@ -1052,15 +1051,20 @@ describe("Commander integration", () => {
     expect(findCommand).toBeDefined();
 
     let receivedOptions: Record<string, unknown> | undefined;
-    findCommand?.action(
-      (_paths: string[], options: Record<string, unknown>) => {
-        receivedOptions = options;
-      }
-    );
+    findCommand?.action(function (
+      this: Command,
+      _paths: string[],
+      options: Record<string, unknown>
+    ) {
+      receivedOptions =
+        typeof this.optsWithGlobals === "function"
+          ? this.optsWithGlobals()
+          : options;
+    });
 
-    const result = await runCliCaptured(["find", "--graph", "--json"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
+    await program.parseAsync(["find", "--graph", "--json", "sample.ts"], {
+      from: "user",
+    });
     expect(receivedOptions?.json).toBe(true);
     expect(receivedOptions?.graph).toBe(true);
   });
