@@ -145,14 +145,20 @@ async function handleLintCommand(
     writeStdout(JSON.stringify(report));
   } else {
     for (const issue of report.issues) {
-      writeStderr(`${issue.file}:${issue.line} invalid type "${issue.type}"`);
+      writeStderr(
+        `${issue.file}:${issue.line} ${issue.severity} ${issue.rule}: ${issue.message}`
+      );
     }
     if (report.issues.length === 0) {
       writeStdout("lint: no issues found");
     }
   }
 
-  if (report.issues.length > 0) {
+  const errorCount = report.issues.filter(
+    (issue) => issue.severity === "error"
+  ).length;
+
+  if (errorCount > 0) {
     process.exit(1);
   }
 }
@@ -1290,13 +1296,10 @@ Examples:
   $ git diff --name-only --cached | xargs wm lint    # Pre-commit hook
 
 Lint Rules:
-  WM001   Duplicate property key (warn)
-  WM010   Unknown marker (warn)
-  WM020   Unterminated multi-line block (error)
-  WM030   Multiple tldr in file (error)
-  WM040   Canonical collision (error)
-  WM041   Dangling relation (error)
-  WM050   Signal on protected branch (policy)
+  duplicate-property   Duplicate property key (warn)
+  unknown-marker       Unknown marker (warn)
+  multiple-tldr        Multiple tldr in file (error)
+  legacy-pattern       Legacy codetag pattern (warn)
 
 Exit Codes:
   0   No errors (warnings allowed)
@@ -1304,8 +1307,8 @@ Exit Codes:
   2   Internal/tooling error
 
 Example Output:
-  src/auth.ts:12:1 - error WM041: Dangling relation 'depends:#payments/core'
-  src/auth.ts:34:1 - warn WM001: Duplicate property key 'owner'
+  src/auth.ts:12:1 - error multiple-tldr: File already has tldr at line 1
+  src/auth.ts:34:1 - warn duplicate-property: Duplicate property key 'owner'
   ✖ 2 errors, 1 warning
 
 See 'wm lint --prompt' for agent-facing documentation.

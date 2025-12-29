@@ -16,13 +16,10 @@ OPTIONS
   --prompt                Show agent-focused usage guide
 
 LINT RULES
-  WM001   Duplicate property key (warn)
-  WM010   Unknown marker (warn)
-  WM020   Unterminated multi-line block (error)
-  WM030   Multiple tldr in file (error)
-  WM040   Canonical collision (error)
-  WM041   Dangling relation (error)
-  WM050   Signal on protected branch (policy)
+  duplicate-property   Duplicate property key (warn)
+  unknown-marker       Unknown marker (warn)
+  multiple-tldr        Multiple tldr in file (error)
+  legacy-pattern       Legacy codetag pattern (warn)
 
 EXIT CODES
   0   No errors (warnings allowed)
@@ -43,9 +40,8 @@ EXAMPLES
   git diff --name-only --cached | xargs wm lint
 
 EXAMPLE OUTPUT
-  src/auth.ts:12:1 - error WM041: Dangling relation 'depends:#payments/core'
-  src/auth.ts:34:1 - warn WM001: Duplicate property key 'owner'
-  src/payments.ts:5:1 - error WM030: Multiple tldr waymarks in file
+  src/auth.ts:12:1 - error multiple-tldr: File already has tldr at line 1
+  src/auth.ts:34:1 - warn duplicate-property: Duplicate property key 'owner'
 
   ✖ 2 errors, 1 warning
 
