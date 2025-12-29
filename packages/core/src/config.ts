@@ -19,8 +19,6 @@ import type {
 export const DEFAULT_CONFIG: WaymarkConfig = {
   typeCase: "lowercase",
   idScope: "repo",
-  protectedBranches: ["main", "release/*"],
-  signalsOnProtected: "strip",
   allowTypes: [],
   skipPaths: [
     "**/.git/**",
@@ -297,26 +295,6 @@ function assignScalarOptions(
   const idScope = readString(raw, ["idScope", "id_scope"]);
   if (idScope === "repo" || idScope === "file") {
     result.idScope = idScope;
-  }
-
-  const protectedBranches = readStringArray(raw, [
-    "protectedBranches",
-    "protected_branches",
-  ]);
-  if (protectedBranches) {
-    result.protectedBranches = protectedBranches;
-  }
-
-  const signalsOnProtected = readString(raw, [
-    "signalsOnProtected",
-    "signals_on_protected",
-  ]);
-  if (
-    signalsOnProtected === "strip" ||
-    signalsOnProtected === "fail" ||
-    signalsOnProtected === "allow"
-  ) {
-    result.signalsOnProtected = signalsOnProtected;
   }
 
   const allowTypes = readStringArray(raw, ["allowTypes", "allow_types"]);

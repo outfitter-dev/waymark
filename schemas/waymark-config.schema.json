@@ -17,20 +17,6 @@
       "default": "repo",
       "description": "Scope for canonical uniqueness"
     },
-    "protectedBranches": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "default": ["main", "release/*"],
-      "description": "Branch patterns considered protected"
-    },
-    "signalsOnProtected": {
-      "type": "string",
-      "enum": ["strip", "fail", "allow"],
-      "default": "strip",
-      "description": "How to handle * signals on protected branches"
-    },
     "allowTypes": {
       "type": "array",
       "items": {
@@ -43,8 +29,28 @@
       "items": {
         "type": "string"
       },
-      "default": ["**/dist/**", "**/.git/**", "**/node_modules/**"],
+      "default": [
+        "**/dist/**",
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/fixtures/**",
+        "**/__fixtures__/**",
+        "**/test-data/**",
+        "**/*.fixture.*",
+        "**/*.invalid.*"
+      ],
       "description": "Path patterns to skip when scanning"
+    },
+    "scan": {
+      "type": "object",
+      "properties": {
+        "includeCodetags": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include legacy TODO/FIXME/NOTE codetags in scan results"
+        }
+      },
+      "additionalProperties": false
     },
     "format": {
       "type": "object",

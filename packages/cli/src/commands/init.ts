@@ -182,12 +182,6 @@ type_case = "lowercase"
 # Canonical reference scope (repo | file)
 id_scope = "repo"
 
-# Protected branches where raised waymarks (^) are not allowed
-protected_branches = ["main", "release/*"]
-
-# Handling of signals on protected branches (strip | fail | allow)
-signals_on_protected = "strip"
-
 # Custom waymark types to allow (in addition to blessed types)
 allow_types = []
 
@@ -198,6 +192,11 @@ skip_paths = [
   "**/dist/**",
   "**/build/**",
   "**/.turbo/**",
+  "**/fixtures/**",
+  "**/__fixtures__/**",
+  "**/test-data/**",
+  "**/*.fixture.*",
+  "**/*.invalid.*",
 ]
 
 # Paths to explicitly include (overrides skip_paths)
@@ -239,12 +238,6 @@ function generateJsoncConfig(preset: ConfigPreset): string {
   // Canonical reference scope (repo | file)
   "idScope": "repo",
 
-  // Protected branches where raised waymarks (^) are not allowed
-  "protectedBranches": ["main", "release/*"],
-
-  // Handling of signals on protected branches (strip | fail | allow)
-  "signalsOnProtected": "strip",
-
   // Custom waymark types to allow (in addition to blessed types)
   "allowTypes": [],
 
@@ -254,7 +247,12 @@ function generateJsoncConfig(preset: ConfigPreset): string {
     "**/node_modules/**",
     "**/dist/**",
     "**/build/**",
-    "**/.turbo/**"
+    "**/.turbo/**",
+    "**/fixtures/**",
+    "**/__fixtures__/**",
+    "**/test-data/**",
+    "**/*.fixture.*",
+    "**/*.invalid.*"
   ],
 
   // Paths to explicitly include (overrides skipPaths)
@@ -298,14 +296,6 @@ type_case: lowercase
 # Canonical reference scope (repo | file)
 id_scope: repo
 
-# Protected branches where raised waymarks (^) are not allowed
-protected_branches:
-  - main
-  - release/*
-
-# Handling of signals on protected branches (strip | fail | allow)
-signals_on_protected: strip
-
 # Custom waymark types to allow (in addition to blessed types)
 allow_types: []
 
@@ -316,6 +306,11 @@ skip_paths:
   - "**/dist/**"
   - "**/build/**"
   - "**/.turbo/**"
+  - "**/fixtures/**"
+  - "**/__fixtures__/**"
+  - "**/test-data/**"
+  - "**/*.fixture.*"
+  - "**/*.invalid.*"
 
 # Paths to explicitly include (overrides skip_paths)
 include_paths: []
