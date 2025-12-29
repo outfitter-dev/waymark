@@ -179,7 +179,7 @@ After:  // todo ::: new content wm:a3k9m2p
 **Content Sources**:
 
 - `--content <text>` accepts inline strings as today
-- `--content -` reads the replacement text from STDIN (one shot), mirroring the `wm insert --from -` behavior
+- `--content -` reads the replacement text from STDIN (one shot), mirroring the `wm add --from -` behavior
 
 **Multi-line Handling**:
 
@@ -811,7 +811,7 @@ Examples:
 Notes:
   - Waymark IDs (wm:xxxxx) are preserved when modifying content
   - Multi-line waymarks are preserved (only first line content changes)
-  - Content can be supplied via stdin with --content - (mirrors wm insert)
+  - Content can be supplied via stdin with --content - (mirrors wm add)
   - Interactive mode still requires a target
   - Preview mode (default) shows changes without applying
   - Use --write flag to apply modifications

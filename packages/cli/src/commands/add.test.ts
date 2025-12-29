@@ -6,16 +6,16 @@ import { join } from "node:path";
 import { resolveConfig } from "@waymarks/core";
 
 import type { CommandContext } from "../types";
-import { parseInsertArgs, runInsertCommand } from "./insert";
+import { parseAddArgs, runAddCommand } from "./add";
 
 const SAMPLE_LINE = 42;
 const TODO_HANDLER_REGEX = /todo ::: document handler/;
 const ANY_ID_REGEX = /wm:/;
 const JSON_VALIDATION_ERROR_REGEX = /JSON validation failed/;
 
-describe("parseInsertArgs", () => {
+describe("parseAddArgs", () => {
   test("parses inline arguments", () => {
-    const parsed = parseInsertArgs([
+    const parsed = parseAddArgs([
       `src/auth.ts:${SAMPLE_LINE}`,
       "--type",
       "todo",
@@ -60,14 +60,14 @@ describe("parseInsertArgs", () => {
   });
 
   test("supports --from for batch insert", () => {
-    const parsed = parseInsertArgs(["--from", "batch.json", "--json"]);
+    const parsed = parseAddArgs(["--from", "batch.json", "--json"]);
     expect(parsed.options.from).toBe("batch.json");
     expect(parsed.options.json).toBe(true);
     expect(parsed.specs).toHaveLength(0);
   });
 });
 
-describe("runInsertCommand", () => {
+describe("runAddCommand", () => {
   let workspace: string;
 
   beforeEach(async () => {
@@ -86,7 +86,7 @@ describe("runInsertCommand", () => {
       encoding: "utf8",
     });
 
-    const parsed = parseInsertArgs([
+    const parsed = parseAddArgs([
       `${sourcePath}:1`,
       "--type",
       "todo",
@@ -95,7 +95,7 @@ describe("runInsertCommand", () => {
       "--write",
     ]);
 
-    // Ensure write flag set for runInsertCommand
+    // Ensure write flag set for runAddCommand
     parsed.options.write = true;
 
     const config = resolveConfig({ ids: { mode: "auto" } });
@@ -105,7 +105,7 @@ describe("runInsertCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runInsertCommand(parsed, context);
+    const result = await runAddCommand(parsed, context);
     expect(result.exitCode).toBe(0);
     expect(result.summary.successful).toBe(1);
 
@@ -134,7 +134,7 @@ describe("runInsertCommand", () => {
     });
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
-    const parsed = parseInsertArgs(["--from", invalidJsonPath]);
+    const parsed = parseAddArgs(["--from", invalidJsonPath]);
     const config = resolveConfig({});
     const context: CommandContext = {
       config,
@@ -142,7 +142,7 @@ describe("runInsertCommand", () => {
       globalOptions: {},
     };
 
-    await expect(runInsertCommand(parsed, context)).rejects.toThrow(
+    await expect(runAddCommand(parsed, context)).rejects.toThrow(
       JSON_VALIDATION_ERROR_REGEX
     );
 
@@ -163,7 +163,7 @@ describe("runInsertCommand", () => {
     });
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
-    const parsed = parseInsertArgs(["--from", invalidJsonPath]);
+    const parsed = parseAddArgs(["--from", invalidJsonPath]);
     const config = resolveConfig({});
     const context: CommandContext = {
       config,
@@ -171,7 +171,7 @@ describe("runInsertCommand", () => {
       globalOptions: {},
     };
 
-    await expect(runInsertCommand(parsed, context)).rejects.toThrow(
+    await expect(runAddCommand(parsed, context)).rejects.toThrow(
       JSON_VALIDATION_ERROR_REGEX
     );
 
@@ -207,12 +207,7 @@ describe("runInsertCommand", () => {
     });
     await writeFile(validJsonPath, validJson, "utf8");
 
-    const parsed = parseInsertArgs([
-      "--from",
-      validJsonPath,
-      "--write",
-      "--json",
-    ]);
+    const parsed = parseAddArgs(["--from", validJsonPath, "--write", "--json"]);
     const config = resolveConfig({});
     const context: CommandContext = {
       config,
@@ -220,7 +215,7 @@ describe("runInsertCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runInsertCommand(parsed, context);
+    const result = await runAddCommand(parsed, context);
     expect(result.exitCode).toBe(0);
     expect(result.summary.successful).toBe(1);
 
@@ -246,7 +241,7 @@ describe("runInsertCommand", () => {
     ]);
     await writeFile(batchJsonPath, batchJson, "utf8");
 
-    const parsed = parseInsertArgs(["--from", batchJsonPath, "--write"]);
+    const parsed = parseAddArgs(["--from", batchJsonPath, "--write"]);
     const config = resolveConfig({});
     const context: CommandContext = {
       config,
@@ -254,7 +249,7 @@ describe("runInsertCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runInsertCommand(parsed, context);
+    const result = await runAddCommand(parsed, context);
     expect(result.exitCode).toBe(0);
     expect(result.summary.successful).toBe(2);
     expect(result.summary.filesModified).toBe(1);
@@ -281,7 +276,7 @@ describe("runInsertCommand", () => {
     });
     await writeFile(wrapperJsonPath, wrapperJson, "utf8");
 
-    const parsed = parseInsertArgs(["--from", wrapperJsonPath, "--write"]);
+    const parsed = parseAddArgs(["--from", wrapperJsonPath, "--write"]);
     const config = resolveConfig({});
     const context: CommandContext = {
       config,
@@ -289,7 +284,7 @@ describe("runInsertCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runInsertCommand(parsed, context);
+    const result = await runAddCommand(parsed, context);
     expect(result.exitCode).toBe(0);
     expect(result.summary.successful).toBe(2);
     expect(result.summary.filesModified).toBe(1);
@@ -320,7 +315,7 @@ describe("runInsertCommand", () => {
     );
 
     try {
-      const parsed = parseInsertArgs(["--from", "-", "--write"]);
+      const parsed = parseAddArgs(["--from", "-", "--write"]);
       const config = resolveConfig({});
       const context: CommandContext = {
         config,
@@ -328,7 +323,7 @@ describe("runInsertCommand", () => {
         globalOptions: {},
       };
 
-      const result = await runInsertCommand(parsed, context);
+      const result = await runAddCommand(parsed, context);
       expect(result.exitCode).toBe(0);
       expect(result.summary.successful).toBe(2);
       expect(result.summary.filesModified).toBe(1);
