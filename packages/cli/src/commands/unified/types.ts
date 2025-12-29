@@ -53,7 +53,6 @@ export type UnifiedCommandOptions = {
   json?: boolean;
   summary?: boolean;
   // Formatting
-  keepCommentMarkers?: boolean;
   compact?: boolean;
   noColor?: boolean;
 };

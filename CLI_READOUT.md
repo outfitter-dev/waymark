@@ -7,8 +7,8 @@
 
 ## General thoughts
 
-- Let's adopt a cleaner output format for non-JSON output, unless --keep-comment-markers is flagged (or a config option is enabled)
-- Let's strip the comment artifacts (`//`, `<!-- ... -->`, etc.)
+- Let's adopt a cleaner output format for non-JSON output
+- Let's strip the comment artifacts (`//`, `<!-- ... -->`, etc.) - this is now the default behavior
 - Any content OUTSIDE of the comment markers should be stripped
   - e.g. `yaml_key: value # todo ::: fix this` would be reduced to `todo ::: fix this`
 - Let's ensure that any leading and trailing whitespace is removed from the output
