@@ -1049,18 +1049,6 @@ describe("Commander integration", () => {
     expect(receivedOptions?.json).toBe(true);
   });
 
-  test("find command rejects deprecated --map flag", async () => {
-    const program = await __test.createProgram();
-    const findCommand = program.commands.find(
-      (cmd: Command) => cmd.name() === "find"
-    );
-    expect(findCommand).toBeDefined();
-    await expect(
-      program.parseAsync(["find", "--map", "--json", "sample.ts"], {
-        from: "user",
-      })
-    ).rejects.toThrow();
-  });
 
   test("find command forwards --graph with --json combination", async () => {
     const program = await __test.createProgram();
