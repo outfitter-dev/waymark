@@ -257,8 +257,33 @@ function recordDuplicateProperty({
   seen.set(key, lineNumber);
 }
 
+const multipleTldrRule: LintRule = {
+  name: "multiple-tldr",
+  severity: "error",
+  checkFile: ({ filePath, records }) => {
+    const tldrs = records.filter(
+      (record) => record.type.toLowerCase() === "tldr"
+    );
+    if (tldrs.length <= 1) {
+      return [];
+    }
+    const first = tldrs.at(0);
+    if (!first) {
+      return [];
+    }
+    return tldrs.slice(1).map((record) => ({
+      file: filePath,
+      line: record.startLine,
+      rule: "multiple-tldr",
+      severity: "error",
+      message: `File already has tldr at line ${first.startLine}`,
+      type: record.type,
+    }));
+  },
+};
+
 function buildLintRules(): LintRule[] {
-  return [unknownMarkerRule, duplicatePropertyRule];
+  return [unknownMarkerRule, duplicatePropertyRule, multipleTldrRule];
 }
 
 export function parseLintArgs(argv: string[]): LintCommandOptions {
