@@ -5,7 +5,7 @@
 import { existsSync } from "node:fs";
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import { parseAddArgs, runAddCommand } from "./commands/add.ts";
 import { formatFile } from "./commands/fmt.ts";
@@ -735,7 +735,105 @@ async function handleUnifiedCommand(
   }
 }
 
-async function createProgram(): Promise<Command> {
+const _DEFAULT_HELP_WIDTH = 80;
+
+const COMMAND_ORDER = [
+  "find",
+  "add",
+  "modify",
+  "remove",
+  "init",
+  "migrate",
+  "completions",
+  "update",
+  "help",
+];
+
+const HIDDEN_COMMANDS = ["format", "lint"];
+
+/**
+ * Sort comparator for commands based on predefined order.
+ */
+function compareCommandOrder(a: Command, b: Command): number {
+  const aIndex = COMMAND_ORDER.indexOf(a.name());
+  const bIndex = COMMAND_ORDER.indexOf(b.name());
+  if (aIndex === -1 && bIndex === -1) {
+    return 0;
+  }
+  if (aIndex === -1) {
+    return 1;
+  }
+  if (bIndex === -1) {
+    return -1;
+  }
+  return aIndex - bIndex;
+}
+
+/**
+ * Filter and sort commands for help display.
+ */
+function getVisibleCommands(commands: readonly Command[]): Command[] {
+  return commands
+    .filter((c) => !HIDDEN_COMMANDS.includes(c.name()))
+    .sort(compareCommandOrder);
+}
+
+/**
+ * Format help text for commander with custom command ordering.
+ */
+function formatCustomHelp(
+  cmd: Command,
+  helper: ReturnType<Command["createHelp"]>,
+  visibleCommands: Command[]
+): string {
+  const termWidth = helper.padWidth(cmd, helper);
+
+  let output = helper.commandUsage(cmd);
+  output += "\n";
+  output += helper.commandDescription(cmd);
+
+  // Add arguments section
+  const argumentList = helper.visibleArguments(cmd);
+  if (argumentList.length > 0) {
+    output += "\n\nArguments:\n";
+    for (const arg of argumentList) {
+      output += `  ${helper.argumentTerm(arg).padEnd(termWidth)}  ${helper.argumentDescription(arg)}\n`;
+    }
+  }
+
+  // Add options section
+  const optionList = helper.visibleOptions(cmd);
+  if (optionList.length > 0) {
+    output += "\n\nOptions:\n";
+    for (const opt of optionList) {
+      output += `  ${helper.optionTerm(opt).padEnd(termWidth)}  ${helper.optionDescription(opt)}\n`;
+    }
+  }
+
+  // Add commands section
+  if (visibleCommands.length > 0) {
+    output += "\n\nCommands:\n";
+    for (const c of visibleCommands) {
+      const name = c.name() + (c.alias() ? `|${c.alias()}` : "");
+      output += `  ${name.padEnd(termWidth)}  ${c.description()}\n`;
+    }
+  }
+
+  return `${output}\n`;
+}
+
+/**
+ * Build custom help formatter for commander.
+ * Filters out soft-deprecated commands and reorders visible commands.
+ */
+function buildCustomHelpFormatter() {
+  return (cmd: Command, helper: ReturnType<Command["createHelp"]>) => {
+    const visibleCommands = getVisibleCommands(cmd.commands);
+    return formatCustomHelp(cmd, helper, visibleCommands);
+  };
+}
+
+export async function createProgram(): Promise<Command> {
   // Read version from package.json
   const packageJsonPath = new URL("../package.json", import.meta.url);
   const packageJson = await import(packageJsonPath.href);
@@ -748,6 +846,22 @@ async function createProgram(): Promise<Command> {
 
   const program = new Command();
 
+  const jsonOption = new Option("--json", "Output as JSON array");
+  const jsonlOption = new Option(
+    "--jsonl",
+    "Output as JSON Lines (newline-delimited)"
+  );
+  const textOption = new Option(
+    "--text",
+    "Output as human-readable formatted text"
+  );
+  jsonOption.conflicts("jsonl");
+  jsonOption.conflicts("text");
+  jsonlOption.conflicts("json");
+  jsonlOption.conflicts("text");
+  textOption.conflicts("json");
+  textOption.conflicts("jsonl");
+
   program
     .name("wm")
     .description(
@@ -759,17 +873,25 @@ async function createProgram(): Promise<Command> {
         "  wm format <file> --write  Format waymarks in file\n" +
         "  wm init                   Initialize waymark configuration"
     )
-    .version(version, "-v, --version", "output the current version")
+    .version(version, "--version, -v", "output the current version")
+    .helpOption("--help, -h", "display help for command")
+    .addHelpCommand(false) // Disable default help command, we'll add custom one
+    .configureHelp({
+      formatHelp: buildCustomHelpFormatter(),
+    })
     .option(
-      "-s, --scope <scope>",
+      "--scope <scope>, -s",
       "config scope (default|project|user)",
       "default"
     )
+    .option("--prompt", "show agent-facing documentation")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
-    .option("-q, --quiet", "only show errors")
-    .helpOption("-h, --help", "display help for command")
-    .addHelpCommand(false) // Disable default help command, we'll add custom one
+    .option("--quiet, -q", "only show errors")
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
+    .option("--text", "output as human-readable formatted text")
+    .option("--no-color", "disable colored output")
     .addHelpText(
       "afterAll",
       "\nNote: Use --prompt flag with any command to see agent-facing documentation"
@@ -820,7 +942,7 @@ async function createProgram(): Promise<Command> {
   program
     .command("format")
     .argument("[paths...]", "files or directories to format")
-    .option("-w, --write", "write changes to file", false)
+    .option("--write, -w", "write changes to file", false)
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("format and normalize waymark syntax in files")
     .addHelpText(
@@ -866,7 +988,6 @@ See 'wm format --prompt' for agent-facing documentation.
 
   program
     .command("add")
-    .alias("insert")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
     .option(
@@ -884,6 +1005,7 @@ See 'wm format --prompt' for agent-facing documentation.
     .option("--needs <token>", "add needs relation")
     .option("--blocks <token>", "add blocks relation")
     .option("--signal <signal>", "add signal: ^ (raised) or * (starred)")
+    .option("--write, -w", "apply changes to file (default: preview)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -915,7 +1037,6 @@ Types:
   Workflow:   blocked, needs
   Inquiry:    question
 
-Note: 'wm insert' is deprecated, use 'wm add' instead.
 See 'wm add --prompt' for agent-facing documentation.
     `
     )
@@ -940,7 +1061,7 @@ See 'wm add --prompt' for agent-facing documentation.
       "--content <text>",
       "replace waymark content (use '-' to read from stdin)"
     )
-    .option("-w, --write", "apply modifications (default: preview)", false)
+    .option("--write, -w", "apply modifications (default: preview)", false)
     .option(
       "--no-interactive",
       "skip interactive prompts when no target is provided"
@@ -996,8 +1117,8 @@ Notes:
       "read removal targets from JSON file (use - for stdin)"
     )
     .option("--criteria <query>", "remove waymarks matching filter criteria")
-    .option("-w, --write", "actually remove (default is preview)", false)
-    .option("-y, --yes", "skip confirmation prompt", false)
+    .option("--write, -w", "actually remove (default is preview)", false)
+    .option("--yes, -y", "skip confirmation prompt", false)
     .option("--confirm", "always show confirmation (even with --write)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
@@ -1045,9 +1166,9 @@ See 'wm remove --prompt' for agent-facing documentation.
   program
     .command("update")
     .description("check for and install CLI updates (npm global installs)")
-    .option("-n, --dry-run", "print the npm command without executing it")
-    .option("-f, --force", "run even if the install method cannot be detected")
-    .option("-y, --yes", "skip the confirmation prompt")
+    .option("--dry-run, -n", "print the npm command without executing it")
+    .option("--force, -f", "run even if the install method cannot be detected")
+    .option("--yes, -y", "skip the confirmation prompt")
     .option(
       "--command <command>",
       "override the underlying update command (defaults to npm)"
@@ -1111,7 +1232,7 @@ See 'wm lint --prompt' for agent-facing documentation.
   program
     .command("migrate")
     .argument("[paths...]", "files or directories to migrate")
-    .option("-w, --write", "write changes to file", false)
+    .option("--write, -w", "write changes to file", false)
     .option("--include-legacy", "also migrate non-standard patterns", false)
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("convert legacy comment patterns to waymark syntax")
@@ -1164,12 +1285,12 @@ See 'wm migrate --prompt' for agent-facing documentation.
   program
     .command("init")
     .option(
-      "-f, --format <format>",
+      "--format <format>, -f",
       "config format (toml|jsonc|yaml|yml)",
       "toml"
     )
-    .option("-p, --preset <preset>", "config preset (full|minimal)", "full")
-    .option("-s, --scope <scope>", "config scope (project|user)", "project")
+    .option("--preset <preset>, -p", "config preset (full|minimal)", "full")
+    .option("--scope <scope>, -s", "config scope (project|user)", "project")
     .option("--force", "overwrite existing config", false)
     .description("initialize waymark configuration")
     .action(
@@ -1192,14 +1313,27 @@ See 'wm migrate --prompt' for agent-facing documentation.
   program
     .command("find")
     .argument("[paths...]", "files or directories to scan")
-    .option("-t, --type <types...>", "filter by waymark type(s)")
+    .option("--type <types...>, -t", "filter by waymark type(s)")
     .option("--tag <tags...>", "filter by tag(s)")
     .option("--mention <mentions...>", "filter by mention(s)")
-    .option("-R, --raised", "filter for raised (^) waymarks")
-    .option("-S, --starred", "filter for starred (*) waymarks")
+    .option("--raised, -R", "filter for raised (^) waymarks")
+    .option("--starred, -S", "filter for starred (*) waymarks")
+    .option("--tldr", "shorthand for --type tldr")
     .option("--map", "show file tree with TLDRs")
     .option("--graph", "show dependency graph")
     .option("--summary", "show summary footer (map mode)")
+    .option("--long", "show detailed record information")
+    .option("--tree", "group output by directory structure")
+    .option("--flat", "show flat list (default)")
+    .option("--compact", "compact output format")
+    .option("--group <by>", "group by: file, dir, type")
+    .option("--sort <by>", "sort by: file, line, type, modified")
+    .option("--context <n>, -C", "show N lines of context", Number.parseInt)
+    .option("--after <n>, -A", "show N lines after match", Number.parseInt)
+    .option("--before <n>, -B", "show N lines before match", Number.parseInt)
+    .option("--limit <n>, -n", "limit number of results", Number.parseInt)
+    .option("--page <n>", "page number (with --limit)", Number.parseInt)
+    .option("--interactive", "interactively select a waymark")
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .option("--text", "output as human-readable formatted text")
@@ -1207,18 +1341,7 @@ See 'wm migrate --prompt' for agent-facing documentation.
       "--pretty",
       "(deprecated: use --text) output as pretty-printed JSON"
     )
-    .option("--long", "show detailed record information")
-    .option("--tree", "group output by directory structure")
-    .option("--flat", "show flat list (default)")
-    .option("--compact", "compact output format")
     .option("--no-color", "disable colored output")
-    .option("--group <by>", "group by: file, dir, type")
-    .option("--sort <by>", "sort by: file, line, type, modified")
-    .option("-C, --context <n>", "show N lines of context", Number.parseInt)
-    .option("-A, --after <n>", "show N lines after match", Number.parseInt)
-    .option("-B, --before <n>", "show N lines before match", Number.parseInt)
-    .option("-n, --limit <n>", "limit number of results", Number.parseInt)
-    .option("--page <n>", "page number (with --limit)", Number.parseInt)
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("scan and filter waymarks in files or directories")
     .addHelpText(
@@ -1231,40 +1354,68 @@ Examples:
   $ wm find --graph --json                   # Export dependency graph as JSON
   $ wm find --starred --tag "#sec"           # Find high-priority security issues
   $ wm find src/ --type todo --type fix --raised --mention @agent
+  $ wm find --interactive                    # Interactively select a waymark
 
-Filter Behavior:
+Filter Options:
+  -t, --type <types...>       Filter by waymark type(s)
+  --tag <tags...>             Filter by tag(s)
+  --mention <mentions...>     Filter by mention(s)
+  -R, --raised                Filter for raised (^) waymarks
+  -S, --starred               Filter for starred (*) waymarks
+  --tldr                      Shorthand for --type tldr
+
   Multiple filters of the same type use OR logic:
     --type todo --type fix    → Shows todos OR fixes
 
   Different filter types use AND logic:
     --type todo --tag "#perf" → Shows todos AND tagged with #perf
 
-Output Modes:
-  --map               File tree with TLDR summaries
-  --graph             Dependency graph (canonicals and relations)
-  --json              Compact JSON array
-  --jsonl             Newline-delimited JSON (one record per line)
-  --text              Human-readable formatted text (default)
+Mode Options:
+  --map                       File tree with TLDR summaries
+  --graph                     Dependency graph (canonicals and relations)
+  --summary                   Show summary footer (map mode)
+  --interactive               Interactively select a waymark
 
 Display Options:
-  --long              Show detailed record information
-  --tree              Group output by directory structure
-  --flat              Show flat list (default)
-  --compact           Compact output format
-  --group <by>        Group by: file, dir, type
-  --sort <by>         Sort by: file, line, type, modified
+  --long                      Show detailed record information
+  --tree                      Group output by directory structure
+  --flat                      Show flat list (default)
+  --compact                   Compact output format
+  --no-color                  Disable colored output
+
+Grouping & Sorting:
+  --group <by>                Group by: file, dir, type
+  --sort <by>                 Sort by: file, line, type, modified
 
 Context Display:
-  -C, --context <n>   Show N lines of context around matches
-  -A, --after <n>     Show N lines after each match
-  -B, --before <n>    Show N lines before each match
+  -C, --context <n>           Show N lines of context around matches
+  -A, --after <n>             Show N lines after each match
+  -B, --before <n>            Show N lines before each match
+
+Pagination:
+  -n, --limit <n>             Limit number of results
+  --page <n>                  Page number (with --limit)
+
+Output Formats:
+  --json                      Compact JSON array
+  --jsonl                     Newline-delimited JSON (one record per line)
+  --text                      Human-readable formatted text (default)
+  --pretty                    (deprecated: use --text)
 
 See 'wm find --prompt' for agent-facing documentation.
     `
     )
-    .action(async (paths: string[], options: Record<string, unknown>) => {
+    .action(async function (
+      this: Command,
+      paths: string[],
+      _options: Record<string, unknown>
+    ) {
       try {
-        await handleUnifiedCommand(program, paths, options);
+        const mergedOptions =
+          typeof this.optsWithGlobals === "function"
+            ? this.optsWithGlobals()
+            : program.opts();
+        await handleUnifiedCommand(program, paths, mergedOptions);
       } catch (error) {
         writeStderr(error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -1274,34 +1425,6 @@ See 'wm find --prompt' for agent-facing documentation.
   // Default action - unified command (deprecated implicit behavior, use 'wm find' instead)
   program
     .argument("[paths...]", "files or directories to scan")
-    .option("-t, --type <types...>", "filter by waymark type(s)")
-    .option("--tag <tags...>", "filter by tag(s)")
-    .option("--mention <mentions...>", "filter by mention(s)")
-    .option("-R, --raised", "filter for raised (^) waymarks")
-    .option("-S, --starred", "filter for starred (*) waymarks")
-    .option("--map", "show file tree with TLDRs")
-    .option("--graph", "show dependency graph")
-    .option("--summary", "show summary footer (map mode)")
-    .option("--json", "output as JSON")
-    .option("--jsonl", "output as JSON Lines")
-    .option("--text", "output as human-readable formatted text")
-    .option(
-      "--pretty",
-      "output as pretty-printed JSON (deprecated - use --json)"
-    )
-    .option("--long", "show detailed record information")
-    .option("--tree", "group output by directory structure")
-    .option("--flat", "show flat list (default)")
-    .option("--compact", "compact output format")
-    .option("--no-color", "disable colored output")
-    .option("--group <by>", "group by: file, dir, type")
-    .option("--sort <by>", "sort by: file, line, type, modified")
-    .option("-C, --context <n>", "show N lines of context", Number.parseInt)
-    .option("-A, --after <n>", "show N lines after match", Number.parseInt)
-    .option("-B, --before <n>", "show N lines before match", Number.parseInt)
-    .option("-n, --limit <n>", "limit number of results", Number.parseInt)
-    .option("--page <n>", "page number (with --limit)", Number.parseInt)
-    .option("--prompt", "show agent-facing prompt instead of help")
     .addHelpText(
       "after",
       `
@@ -1309,22 +1432,14 @@ DEPRECATION NOTICE:
   The implicit scan syntax (e.g., 'wm src/') is deprecated.
   Use 'wm find [paths...]' instead. This will be removed in v2.0.
 
-Examples (use 'wm find' instead):
+Examples:
   $ wm find                                   # Scan current directory
   $ wm find src/ --type todo --mention @agent
   $ wm find --map docs/ --type tldr          # Map documentation with TLDRs only
   $ wm find --graph --json                   # Export dependency graph as JSON
   $ wm find --starred --tag "#sec"           # Find high-priority security issues
-  $ wm find src/ --type todo --type fix --raised --mention @agent
 
-Filter Behavior:
-  Multiple filters of the same type use OR logic:
-    --type todo --type fix    → Shows todos OR fixes
-
-  Different filter types use AND logic:
-    --type todo --tag "#perf" → Shows todos AND tagged with #perf
-
-See 'wm find --help' for comprehensive documentation.
+See 'wm find --help' for all available options and comprehensive documentation.
     `
     )
     .action(async (paths: string[], options: Record<string, unknown>) => {
@@ -1342,16 +1457,15 @@ See 'wm find --help' for comprehensive documentation.
 
   tab(program);
 
-  // Rename 'complete' command to 'completions' with backward-compatible alias (WAY-32)
+  // Rename 'complete' command to 'completions' (WAY-32)
   // The tab library adds a 'complete' command automatically, but we want 'completions' as primary
   const completeCommand = program.commands.find(
     (cmd) => cmd.name() === "complete"
   );
   if (completeCommand) {
-    // Update the name to 'completions' and add 'complete' as an alias
+    // Update the name to 'completions' without backward-compatible alias
     // biome-ignore lint/suspicious/noExplicitAny: accessing internal Commander.js structure to rename command
     (completeCommand as any)._name = "completions";
-    completeCommand.alias("complete");
   }
 
   return program;
