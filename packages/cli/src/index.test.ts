@@ -105,6 +105,20 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
+  test("scan command includes legacy codetags when enabled", async () => {
+    const source = "// TODO: legacy task";
+    const { file, cleanup } = await withTempFile(source);
+    const records = await scanRecords([file], {
+      ...defaultContext.config,
+      scan: { ...defaultContext.config.scan, includeCodetags: true },
+    });
+    const legacy = records.find((record) => record.legacy);
+    expect(legacy).toBeDefined();
+    expect(legacy?.type).toBe("todo");
+    expect(legacy?.contentText).toBe("legacy task");
+    await cleanup();
+  });
+
   test("scan command parses directories recursively", async () => {
     const { dir, cleanup } = await withTempFile("// todo ::: root\n");
     const nested = join(dir, "nested");

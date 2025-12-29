@@ -82,6 +82,25 @@ test("default scope discovers .waymark/config.* file", async () => {
   });
 });
 
+test("loadConfigFromDisk parses scan include_codetags option", async () => {
+  await withTempDir("waymark-config-scan-", async (dir) => {
+    const configDir = join(dir, ".waymark");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(
+      join(configDir, "config.yaml"),
+      "scan:\n  include_codetags: true\n",
+      "utf8"
+    );
+
+    const config = await loadConfigFromDisk({
+      cwd: dir,
+      scope: "project",
+    });
+
+    expect(config.scan.includeCodetags).toBe(true);
+  });
+});
+
 test("user scope reads from XDG_CONFIG_HOME", async () => {
   await withTempDir("waymark-config-user-", async (dir) => {
     const configDir = join(dir, "waymark");

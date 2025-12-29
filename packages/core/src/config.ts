@@ -31,6 +31,9 @@ export const DEFAULT_CONFIG: WaymarkConfig = {
   ],
   includePaths: [],
   respectGitignore: true,
+  scan: {
+    includeCodetags: false,
+  },
   format: {
     spaceAroundSigil: true,
     normalizeCase: true,
@@ -268,6 +271,7 @@ function normalizeConfigShape(
   const result: Partial<WaymarkConfig> = {};
 
   assignScalarOptions(result, raw);
+  assignScanOptions(result, raw);
   assignFormatOptions(result, raw);
   assignLintOptions(result, raw);
   assignIdOptions(result, raw);
@@ -367,6 +371,27 @@ function assignFormatOptions(
   }
   if (Object.keys(format).length > 0) {
     result.format = format as WaymarkFormatConfig;
+  }
+}
+
+function assignScanOptions(
+  result: Partial<WaymarkConfig>,
+  raw: Record<string, unknown>
+): void {
+  const scanRaw = readObject(raw, "scan");
+  if (!scanRaw) {
+    return;
+  }
+
+  const includeCodetags = readBoolean(scanRaw, [
+    "includeCodetags",
+    "include_codetags",
+  ]);
+  if (typeof includeCodetags === "boolean") {
+    result.scan = {
+      ...(result.scan ?? DEFAULT_CONFIG.scan),
+      includeCodetags,
+    };
   }
 }
 
