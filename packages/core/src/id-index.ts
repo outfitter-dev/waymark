@@ -114,7 +114,7 @@ export class JsonIdIndex {
 
   async delete(
     id: string,
-    history?: Omit<HistoryEntry, "removedAt">
+    history?: Partial<Omit<HistoryEntry, "removedAt">>
   ): Promise<void> {
     await this.init();
     const existing = this.data.ids[id];

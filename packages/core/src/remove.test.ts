@@ -105,6 +105,55 @@ describe("removeWaymarks", () => {
     expect(contents).not.toContain("wm:test123");
   });
 
+  it("records removal reason in history when provided", async () => {
+    const filePath = join(workspace, "src/history.ts");
+    await ensureDir(dirname(filePath));
+    const waymarkLine = "// todo ::: cleanup wm:test456";
+    await writeFile(
+      filePath,
+      ["export const handler = () => {};", waymarkLine, ""].join("\n"),
+      "utf8"
+    );
+
+    const index = new JsonIdIndex({
+      workspaceRoot: workspace,
+      trackHistory: true,
+    });
+    const manager = new WaymarkIdManager(
+      { ...DEFAULT_CONFIG.ids, mode: "auto" },
+      index
+    );
+
+    await index.set({
+      id: "wm:test456",
+      file: filePath,
+      line: 2,
+      type: "todo",
+      content: waymarkLine,
+      contentHash: fingerprintContent(waymarkLine),
+      contextHash: fingerprintContext(`${filePath}:2`),
+      updatedAt: Date.now(),
+    });
+
+    const specs: RemovalSpec[] = [{ id: "wm:test456" }];
+    await removeWaymarks(specs, {
+      write: true,
+      idManager: manager,
+      reason: "cleanup-history-test",
+      removedBy: "cli-test",
+    });
+
+    const historyPath = join(workspace, ".waymark", "history.json");
+    const history = JSON.parse(await readFile(historyPath, "utf8")) as Array<{
+      reason?: string;
+      removedBy?: string;
+    }>;
+
+    expect(history).toHaveLength(1);
+    expect(history[0]?.reason).toBe("cleanup-history-test");
+    expect(history[0]?.removedBy).toBe("cli-test");
+  });
+
   it("removes waymarks matching criteria across files", async () => {
     const filePath = join(workspace, "src/module.ts");
     await ensureDir(dirname(filePath));
