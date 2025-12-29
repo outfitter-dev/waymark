@@ -3,7 +3,6 @@
 import addPrompt from "../commands/add.prompt.ts";
 import formatPrompt from "../commands/format.prompt.ts";
 import lintPrompt from "../commands/lint.prompt.ts";
-import migratePrompt from "../commands/migrate.prompt.ts";
 import modifyPrompt from "../commands/modify.prompt.ts";
 import removePrompt from "../commands/remove.prompt.ts";
 import unifiedPrompt from "../commands/unified/index.prompt.ts";
@@ -15,7 +14,6 @@ const promptRegistry: Record<string, string> = {
   insert: addPrompt, // deprecated alias
   modify: modifyPrompt,
   lint: lintPrompt,
-  migrate: migratePrompt,
   remove: removePrompt,
 };
 

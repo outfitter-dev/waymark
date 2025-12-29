@@ -16,7 +16,6 @@ import {
 import { formatFile } from "./commands/fmt.ts";
 import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
-import { migrateFile } from "./commands/migrate.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
 import {
   type ParsedRemoveArgs,
@@ -160,60 +159,6 @@ async function handleLintCommand(
 
   if (errorCount > 0) {
     process.exit(1);
-  }
-}
-
-async function handleMigrateCommand(
-  program: Command,
-  paths: string[],
-  options: { write?: boolean; prompt?: boolean }
-): Promise<void> {
-  if (options.prompt) {
-    const promptText = loadPrompt("migrate");
-    if (promptText) {
-      writeStdout(promptText);
-      return;
-    }
-    writeStderr("No agent prompt available for this command");
-    process.exit(1);
-  }
-
-  const scopeValue = program.opts().scope as string;
-  const globalOpts = { scope: normalizeScope(scopeValue) };
-  const context = await createContext(globalOpts);
-
-  // If no paths provided, default to current directory
-  const pathsToMigrate = paths.length > 0 ? paths : ["."];
-
-  for (const filePath of pathsToMigrate) {
-    ensureFileExists(filePath);
-
-    // First, migrate without writing to see what changes would be made
-    const result = await migrateFile({ filePath, write: false }, context);
-
-    if (!result.changed) {
-      writeStdout(`${filePath}: no changes`);
-      continue;
-    }
-
-    // If --write flag is set, confirm before writing
-    if (options.write) {
-      const shouldWrite = await confirmWrite({
-        filePath,
-        actionVerb: "migrate",
-      });
-
-      if (shouldWrite) {
-        // Actually write the changes
-        await migrateFile({ filePath, write: true }, context);
-        writeStdout(`${filePath}: migrated`);
-      } else {
-        writeStdout("Write cancelled");
-        process.exit(1);
-      }
-    } else {
-      writeStdout(result.output);
-    }
   }
 }
 
@@ -767,7 +712,6 @@ const COMMAND_ORDER = [
   "modify",
   "remove",
   "init",
-  "migrate",
   "completions",
   "update",
   "help",
@@ -1321,59 +1265,6 @@ See 'wm lint --prompt' for agent-facing documentation.
       ) => {
         try {
           await handleLintCommand(program, paths, options);
-        } catch (error) {
-          writeStderr(error instanceof Error ? error.message : String(error));
-          process.exit(1);
-        }
-      }
-    );
-
-  // Migrate command
-  program
-    .command("migrate")
-    .argument("[paths...]", "files or directories to migrate")
-    .option("--write, -w", "write changes to file", false)
-    .option("--include-legacy", "also migrate non-standard patterns", false)
-    .option("--prompt", "show agent-facing prompt instead of help")
-    .description("convert legacy comment patterns to waymark syntax")
-    .addHelpText(
-      "after",
-      `
-Examples:
-  $ wm migrate src/auth.ts                # Preview migration of single file
-  $ wm migrate src/auth.ts --write        # Apply migration to single file
-  $ wm migrate src/**/*.ts --write        # Migrate multiple files
-  $ wm migrate src/ --write               # Migrate directory
-  $ wm migrate src/auth.ts --include-legacy --write
-
-Supported Legacy Patterns:
-  TODO:           → todo :::
-  FIXME:          → fix :::
-  HACK:           → hack :::
-  NOTE:           → note :::
-  XXX:            → warn :::
-  @deprecated     → deprecated :::
-
-Before Migration:
-  // TODO: implement authentication
-  // FIXME: validate email format
-  /* XXX: this is a hack */
-
-After Migration:
-  // todo ::: implement authentication
-  // fix ::: validate email format
-  /* hack ::: this is a hack */
-
-See 'wm migrate --prompt' for agent-facing documentation.
-    `
-    )
-    .action(
-      async (
-        paths: string[],
-        options: { write?: boolean; prompt?: boolean }
-      ) => {
-        try {
-          await handleMigrateCommand(program, paths, options);
         } catch (error) {
           writeStderr(error instanceof Error ? error.message : String(error));
           process.exit(1);

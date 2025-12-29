@@ -169,22 +169,6 @@ export const commands: HelpRegistry = {
       "wm lint src/ --json                # Output results as JSON",
     ],
   },
-  migrate: {
-    name: "migrate",
-    usage: "wm migrate <file> [options]",
-    description: "Convert legacy TODO/FIXME/NOTE comments to waymark syntax.",
-    flags: [
-      commonFlags.write,
-      commonFlags.config,
-      commonFlags.prompt,
-      commonFlags.help,
-    ],
-    examples: [
-      "wm migrate src/legacy.ts           # Preview migration",
-      "wm migrate src/legacy.ts --write   # Apply migration",
-      "wm migrate src/ --write            # Migrate all files in directory",
-    ],
-  },
   help: {
     name: "help",
     usage: "wm help [command]",
