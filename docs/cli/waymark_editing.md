@@ -1361,19 +1361,11 @@ cat removals.json | wm remove --from - --write
 wm remove --from removals.json --confirm --write
 ```
 
-### Interactive Selection
+### Interactive Selection (Future)
 
-```bash
-# Show matching waymarks, prompt for confirmation
-wm remove --type todo --interactive
-
-# Shows:
-# Found 5 waymarks matching criteria:
-# 1. src/auth.ts:42 - todo ::: add rate limiting
-# 2. src/auth.ts:100 - todo ::: implement OAuth
-# ...
-# Remove all? [y/N]
-```
+Interactive removal prompts remain on the roadmap. For now, combine targeted
+filters (like `--type`, `--tag`, `--mention`) with `--confirm` or `--yes` to
+control bulk deletions.
 
 ### JSON Input Schema
 
@@ -2009,7 +2001,7 @@ The following design choices need to be finalized:
   - **Decision**: JSON-only multi-line via `continuations`
   - **Rationale**: Keeps CLI path simple while letting automation emit structured multi-line notes
 
-- [x] **Q6: Interactive Mode** - Add `--interactive` flag with prompts?
+- [x] **Q6: Interactive Mode** - Default to interactive prompts when no target is provided; add `--no-interactive` escape hatch.
   - **Decision**: Defer interactive mode until after core automation ships
   - **Rationale**: Prioritize API/automation pathways; add UX polish later
 

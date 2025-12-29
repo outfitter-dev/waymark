@@ -3,6 +3,7 @@
 // tldr ::: waymark CLI entry point using commander for command routing and parsing
 
 import { existsSync } from "node:fs";
+import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
 import { Command } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
@@ -392,7 +393,8 @@ async function resolveInteractiveTarget(
 
 function buildModifyOptions(
   resolvedId: string | undefined,
-  rawOptions: ModifyCliOptions
+  rawOptions: ModifyCliOptions,
+  interactiveOverride: boolean | undefined
 ): ModifyOptions {
   const options: ModifyOptions = {};
 
@@ -417,8 +419,8 @@ function buildModifyOptions(
   if (rawOptions.jsonl) {
     options.jsonl = rawOptions.jsonl;
   }
-  if (rawOptions.interactive) {
-    options.interactive = rawOptions.interactive;
+  if (interactiveOverride !== undefined) {
+    options.interactive = interactiveOverride;
   }
   if (rawOptions.raise) {
     options.raised = true;
@@ -430,8 +432,43 @@ function buildModifyOptions(
   return options;
 }
 
+function determineInteractiveOverride(
+  command: Command,
+  target: string | undefined,
+  rawOptions: ModifyCliOptions
+): boolean | undefined {
+  const source =
+    typeof command.getOptionValueSource === "function"
+      ? command.getOptionValueSource("interactive")
+      : undefined;
+  const interactiveUnset = source === undefined || source === "default";
+
+  if (!interactiveUnset) {
+    return rawOptions.interactive ?? undefined;
+  }
+
+  const noTarget = typeof target !== "string" || target.length === 0;
+  const noId = !rawOptions.id;
+  const hasMutationFlag = Boolean(
+    rawOptions.type ||
+      rawOptions.content ||
+      rawOptions.raise ||
+      rawOptions.markStarred ||
+      rawOptions.clearSignals
+  );
+  const hasOutputFlag = Boolean(rawOptions.json || rawOptions.jsonl);
+  const hasWriteFlag = Boolean(rawOptions.write);
+
+  if (noTarget && noId && !hasMutationFlag && !hasOutputFlag && !hasWriteFlag) {
+    return true;
+  }
+
+  return;
+}
+
 async function handleModifyCommand(
   program: Command,
+  command: Command,
   target: string | undefined,
   rawOptions: ModifyCliOptions
 ): Promise<void> {
@@ -444,19 +481,29 @@ async function handleModifyCommand(
   }
 
   const scopeValue = program.opts().scope as string;
+  const interactiveOverride = determineInteractiveOverride(
+    command,
+    target,
+    rawOptions
+  );
+
   const context = await createContext({ scope: normalizeScope(scopeValue) });
 
   let resolvedTarget = target;
   let resolvedId = rawOptions.id;
 
-  if (rawOptions.interactive && !resolvedTarget && !resolvedId) {
+  if (interactiveOverride === true && !resolvedTarget && !resolvedId) {
     const { target: interactiveTarget, id: interactiveId } =
       await resolveInteractiveTarget(context.workspaceRoot, context.config);
     resolvedTarget = interactiveTarget;
     resolvedId = interactiveId;
   }
 
-  const options = buildModifyOptions(resolvedId, rawOptions);
+  const options = buildModifyOptions(
+    resolvedId,
+    rawOptions,
+    interactiveOverride
+  );
 
   const result = await runModifyCommand(context, resolvedTarget, options, {
     stdin: process.stdin,
@@ -693,7 +740,11 @@ async function createProgram(): Promise<Command> {
     .name("wm")
     .description("Waymark CLI - scan, filter, format, and manage waymarks")
     .version(version, "-v, --version", "output the current version")
-    .option("--scope <scope>", "config scope (default|project|user)", "default")
+    .option(
+      "-s, --scope <scope>",
+      "config scope (default|project|user)",
+      "default"
+    )
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("-q, --quiet", "only show errors")
@@ -748,7 +799,6 @@ async function createProgram(): Promise<Command> {
   // Format command
   program
     .command("format")
-    .alias("fmt")
     .argument("<file>", "file to format")
     .option("-w, --write", "write changes to file", false)
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -868,7 +918,10 @@ See 'wm insert --prompt' for agent-facing documentation.
       "replace waymark content (use '-' to read from stdin)"
     )
     .option("-w, --write", "apply modifications (default: preview)", false)
-    .option("-i, --interactive", "prompt for modifications interactively")
+    .option(
+      "--no-interactive",
+      "skip interactive prompts when no target is provided"
+    )
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -885,17 +938,24 @@ Examples:
   $ wm modify src/auth.ts:42 --clear-signals --write       # Remove all signals
   $ wm modify src/auth.ts:42 --content "new text" --write
   $ printf "new text" | wm modify src/auth.ts:42 --content - --write
-  $ wm modify src/auth.ts:42 --interactive             # Guided workflow
+  $ wm modify                                          # Interactive workflow (default when no args)
+  $ wm modify --no-interactive                         # Skip prompts if default interactive would trigger
 
 Notes:
   - Provide either FILE:LINE or --id (not both)
   - Preview is default; add --write to apply
   - --content '-' reads replacement text from stdin (like wm insert)
+  - Running without arguments launches interactive mode automatically
+  - Use --no-interactive to print the preview without prompts
       `
     )
-    .action(async (target: string | undefined, options: ModifyCliOptions) => {
+    .action(async function (
+      this: Command,
+      target: string | undefined,
+      options: ModifyCliOptions
+    ) {
       try {
-        await handleModifyCommand(program, target, options);
+        await handleModifyCommand(program, this, target, options);
       } catch (error) {
         writeStderr(error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -913,7 +973,7 @@ Notes:
     )
     .option("--criteria <query>", "remove waymarks matching filter criteria")
     .option("-w, --write", "actually remove (default is preview)", false)
-    .option("--yes", "skip confirmation prompt", false)
+    .option("-y, --yes", "skip confirmation prompt", false)
     .option("--confirm", "always show confirmation (even with --write)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
@@ -961,9 +1021,9 @@ See 'wm remove --prompt' for agent-facing documentation.
   program
     .command("update")
     .description("check for and install CLI updates (npm global installs)")
-    .option("--dry-run", "print the npm command without executing it")
-    .option("--force", "run even if the install method cannot be detected")
-    .option("--yes", "skip the confirmation prompt")
+    .option("-n, --dry-run", "print the npm command without executing it")
+    .option("-f, --force", "run even if the install method cannot be detected")
+    .option("-y, --yes", "skip the confirmation prompt")
     .option(
       "--command <command>",
       "override the underlying update command (defaults to npm)"
@@ -1108,8 +1168,8 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("-t, --type <types...>", "filter by waymark type(s)")
     .option("--tag <tags...>", "filter by tag(s)")
     .option("--mention <mentions...>", "filter by mention(s)")
-    .option("-r, --raised", "filter for raised (^) waymarks")
-    .option("-s, --starred", "filter for starred (*) waymarks")
+    .option("-R, --raised", "filter for raised (^) waymarks")
+    .option("-S, --starred", "filter for starred (*) waymarks")
     .option("--map", "show file tree with TLDRs")
     .option("--graph", "show dependency graph")
     .option("--summary", "show summary footer (map mode)")
@@ -1127,7 +1187,7 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("-C, --context <n>", "show N lines of context", Number.parseInt)
     .option("-A, --after <n>", "show N lines after match", Number.parseInt)
     .option("-B, --before <n>", "show N lines before match", Number.parseInt)
-    .option("--limit <n>", "limit number of results", Number.parseInt)
+    .option("-n, --limit <n>", "limit number of results", Number.parseInt)
     .option("--page <n>", "page number (with --limit)", Number.parseInt)
     .option("--prompt", "show agent-facing prompt instead of help")
     .addHelpText(
@@ -1159,6 +1219,8 @@ See 'wm --prompt' for agent-facing documentation.
         process.exit(1);
       }
     });
+
+  tab(program);
 
   return program;
 }

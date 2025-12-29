@@ -109,7 +109,7 @@ export function handlePaginationFlags(
   iterator: ReturnType<typeof createArgIterator>,
   state: ParseState
 ): boolean {
-  if (token === "--limit") {
+  if (token === "--limit" || token === "-n") {
     state.limit = parsePositiveInt(token, iterator);
     return true;
   }
@@ -171,11 +171,11 @@ export function handleModeDisplayFlags(
   }
 
   // Signal filters
-  if (token === "--raised" || token === "-r") {
+  if (token === "--raised" || token === "-R") {
     state.raised = true;
     return true;
   }
-  if (token === "--starred" || token === "-s") {
+  if (token === "--starred" || token === "-S") {
     state.starred = true;
     return true;
   }

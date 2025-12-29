@@ -1,6 +1,7 @@
 // tldr ::: modify command implementation for wm CLI
 
 import { readFile, writeFile } from "node:fs/promises";
+import readline from "node:readline";
 
 import {
   fingerprintContent,
@@ -14,6 +15,7 @@ import {
 import inquirer from "inquirer";
 
 import type { CommandContext } from "../types.ts";
+import { logger } from "../utils/logger.ts";
 import { readStream } from "../utils/stdin.ts";
 
 export type ModifyOptions = {
@@ -83,6 +85,35 @@ const DEFAULT_IO: ModifyIo = {
   stdin: process.stdin,
 };
 
+if (process.stdin.isTTY) {
+  readline.emitKeypressEvents(process.stdin);
+}
+
+class InteractiveCancelError extends Error {
+  constructor() {
+    super("Interactive session cancelled");
+    this.name = "InteractiveCancelError";
+  }
+}
+
+type InteractiveAnswers = {
+  type?: string;
+  addRaised?: boolean;
+  addImportant?: boolean;
+  clearSignals?: boolean;
+  updateContent?: boolean;
+  content?: string;
+  apply?: boolean;
+};
+
+type StepName = keyof InteractiveAnswers;
+
+type InteractiveStep = {
+  name: StepName;
+  shouldSkip?: (state: InteractiveAnswers) => boolean;
+  build: (state: InteractiveAnswers) => Record<string, unknown>;
+};
+
 export async function runModifyCommand(
   context: CommandContext,
   targetArg: string | undefined,
@@ -102,12 +133,42 @@ export async function runModifyCommand(
   const wasInteractive = effectiveOptions.interactive;
 
   if (effectiveOptions.interactive) {
-    effectiveOptions = await runInteractiveSession(
-      context,
-      snapshot.record,
-      originalContent,
-      effectiveOptions
-    );
+    try {
+      effectiveOptions = await runInteractiveSession(
+        context,
+        snapshot.record,
+        originalContent,
+        effectiveOptions
+      );
+    } catch (error) {
+      if (error instanceof InteractiveCancelError) {
+        return {
+          output: "Modify cancelled.",
+          payload: {
+            preview: true,
+            applied: false,
+            target,
+            modifications: {},
+            before: {
+              raw: originalFirstLine,
+              type: snapshot.record.type,
+              signals: { ...snapshot.record.signals },
+              content: originalContent,
+            },
+            after: {
+              raw: originalFirstLine,
+              type: snapshot.record.type,
+              signals: { ...snapshot.record.signals },
+              content: originalContent,
+            },
+            indexRefreshed: false,
+            noChange: true,
+          },
+          exitCode: 1,
+        };
+      }
+      throw error;
+    }
   }
 
   // Skip modification check if interactive (user already chose what to modify)
@@ -432,100 +493,307 @@ async function runInteractiveSession(
   baseContent: string,
   options: ModifyOptions
 ): Promise<ModifyOptions> {
-  const markers = resolveMarkerChoices(context.config, record.type);
-  const questions = [
-    {
-      type: "list",
-      name: "type",
-      message: "Waymark type",
-      choices: markers.map((marker) => ({
-        name: marker,
-        value: marker,
-        short: marker,
-      })),
-      default: record.type,
-    },
-    {
-      type: "confirm",
-      name: "addRaised",
-      message: "Add raised signal (^) ?",
-      default: record.signals.raised,
-    },
-    {
-      type: "confirm",
-      name: "addImportant",
-      message: "Add starred signal (*) to mark as important/valuable?",
-      default: record.signals.important,
-    },
-    {
-      type: "confirm",
-      name: "clearSignals",
-      message: "Remove all signals?",
-      default: false,
-    },
-    {
-      type: "confirm",
-      name: "updateContent",
-      message: "Update content text?",
-      default: false,
-    },
-    {
-      type: "input",
-      name: "content",
-      message: "New content (leave blank to read from stdin)",
-      default: stripTrailingId(baseContent),
-      when: (promptAnswers: { updateContent?: boolean }) =>
-        Boolean(promptAnswers.updateContent),
-    },
-    {
-      type: "confirm",
-      name: "apply",
-      message: "Apply modifications (write to file)?",
-      default: Boolean(options.write),
-    },
-  ];
+  logger.info(
+    "Interactive mode: Backspace on an empty input to go back. Press Esc to cancel."
+  );
 
-  // biome-ignore lint/suspicious/noExplicitAny: inquirer types require workaround
-  const answers = (await inquirer.prompt(questions as any)) as {
-    type: string;
-    addRaised: boolean;
-    addImportant: boolean;
-    clearSignals: boolean;
-    updateContent: boolean;
-    content?: string;
-    apply: boolean;
-  };
+  const markers = resolveMarkerChoices(context.config, record.type);
+  const prompt = inquirer.createPromptModule();
+  const answers: InteractiveAnswers = {};
+  const steps = buildInteractiveSteps({
+    answers,
+    baseContent,
+    markers,
+    options,
+    record,
+  });
+  await runInteractiveWizard(prompt, steps, answers);
 
   const nextOptions: ModifyOptions = {
     ...options,
     interactive: false,
   };
+  const {
+    type,
+    clearSignals,
+    addRaised,
+    addImportant,
+    updateContent,
+    content,
+    apply,
+  } = answers;
 
-  if (answers.type && answers.type !== record.type) {
-    nextOptions.type = answers.type;
+  if (type && type !== record.type) {
+    nextOptions.type = type;
   }
 
-  if (answers.clearSignals) {
+  if (clearSignals) {
     nextOptions.noSignal = true;
   } else {
-    if (answers.addRaised && !record.signals.raised) {
+    if (addRaised && !record.signals.raised) {
       nextOptions.raised = true;
     }
-    if (answers.addImportant && !record.signals.important) {
+    if (addImportant && !record.signals.important) {
       nextOptions.starred = true;
     }
   }
 
-  if (answers.updateContent) {
-    const provided = answers.content ?? "";
+  if (updateContent) {
+    const provided = content ?? "";
     nextOptions.content = provided.length === 0 ? "-" : provided;
   }
 
-  if (answers.apply) {
+  if (apply) {
     nextOptions.write = true;
   }
 
   return nextOptions;
+}
+
+function buildInteractiveSteps(args: {
+  answers: InteractiveAnswers;
+  baseContent: string;
+  markers: string[];
+  options: ModifyOptions;
+  record: WaymarkRecord;
+}): InteractiveStep[] {
+  const { answers, baseContent, markers, options, record } = args;
+  return [
+    {
+      name: "type",
+      build: () => ({
+        type: "list",
+        name: "type",
+        message: "Waymark type",
+        choices: markers.map((marker) => ({
+          name: marker,
+          value: marker,
+          short: marker,
+        })),
+        default: answers.type ?? record.type,
+      }),
+    },
+    {
+      name: "addRaised",
+      build: () => ({
+        type: "confirm",
+        name: "addRaised",
+        message: "Add raised signal (^) ?",
+        default:
+          answers.addRaised ?? record.signals.raised ?? options.raised ?? false,
+      }),
+    },
+    {
+      name: "addImportant",
+      build: () => ({
+        type: "confirm",
+        name: "addImportant",
+        message: "Add starred signal (*) to mark as important/valuable?",
+        default:
+          answers.addImportant ??
+          record.signals.important ??
+          options.starred ??
+          false,
+      }),
+    },
+    {
+      name: "clearSignals",
+      build: () => ({
+        type: "confirm",
+        name: "clearSignals",
+        message: "Remove all signals?",
+        default: answers.clearSignals ?? false,
+      }),
+    },
+    {
+      name: "updateContent",
+      build: () => ({
+        type: "confirm",
+        name: "updateContent",
+        message: "Update content text?",
+        default: answers.updateContent ?? false,
+      }),
+    },
+    {
+      name: "content",
+      shouldSkip: (state) => !state.updateContent,
+      build: () => ({
+        type: "input",
+        name: "content",
+        message: "New content (leave blank to read from stdin)",
+        default: answers.content ?? stripTrailingId(baseContent),
+      }),
+    },
+    {
+      name: "apply",
+      build: () => ({
+        type: "confirm",
+        name: "apply",
+        message: "Apply modifications (write to file)?",
+        default: answers.apply ?? Boolean(options.write),
+      }),
+    },
+  ];
+}
+
+async function runInteractiveWizard(
+  promptModule: ReturnType<typeof inquirer.createPromptModule>,
+  steps: InteractiveStep[],
+  answers: InteractiveAnswers
+): Promise<void> {
+  let index = 0;
+  while (index < steps.length) {
+    const step = steps[index];
+    if (!step) {
+      break;
+    }
+    if (step.shouldSkip?.(answers)) {
+      index += 1;
+      continue;
+    }
+
+    const outcome = await promptStep(promptModule, step, answers);
+    if (outcome.type === "cancel") {
+      throw new InteractiveCancelError();
+    }
+    if (outcome.type === "back") {
+      index = Math.max(index - 1, 0);
+      continue;
+    }
+    Object.assign(answers, outcome.value);
+    index += 1;
+  }
+}
+
+type PromptOutcome =
+  | { type: "answered"; value: Record<string, unknown> }
+  | { type: "back" }
+  | { type: "cancel" };
+
+function getDefaultValueAsString(question: unknown): string {
+  if (
+    typeof question === "object" &&
+    question !== null &&
+    "default" in question
+  ) {
+    const defaultValue = (question as { default?: unknown }).default;
+    return typeof defaultValue === "string" ? defaultValue : "";
+  }
+  return "";
+}
+
+type KeypressState = {
+  buffer: string;
+  requestedBack: boolean;
+  requestedCancel: boolean;
+};
+
+function createKeypressHandler(
+  state: KeypressState,
+  isTextInput: boolean,
+  runner: { abortController: AbortController }
+) {
+  const appendIfPrintable = (key?: {
+    sequence?: string;
+    ctrl?: boolean;
+    meta?: boolean;
+  }) => {
+    if (!(isTextInput && key) || key.ctrl || key.meta) {
+      return;
+    }
+    const { sequence } = key;
+    if (!sequence || sequence.length === 0) {
+      return;
+    }
+    state.buffer += sequence;
+  };
+
+  return (
+    _chunk: string,
+    key?: { name?: string; sequence?: string; ctrl?: boolean; meta?: boolean }
+  ) => {
+    const keyName = key?.name;
+
+    if (keyName === "escape") {
+      state.requestedCancel = true;
+      runner.abortController.abort("cancelled");
+      return;
+    }
+    if (keyName === "backspace") {
+      if (!isTextInput || state.buffer.length === 0) {
+        state.requestedBack = true;
+        runner.abortController.abort("back");
+        return;
+      }
+      state.buffer = state.buffer.slice(0, -1);
+      return;
+    }
+    if (isTextInput && (keyName === "return" || keyName === "enter")) {
+      state.buffer = "";
+      return;
+    }
+
+    appendIfPrintable(key);
+  };
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Interactive prompt coordination requires managing keypress state, TTY setup, abort handling, and cleanup
+async function promptStep(
+  promptModule: ReturnType<typeof inquirer.createPromptModule>,
+  step: InteractiveStep,
+  answers: InteractiveAnswers
+): Promise<PromptOutcome> {
+  const question = step.build(answers);
+  // biome-ignore lint/suspicious/noExplicitAny: prompt typing requires cast
+  const ticket = promptModule([question as any], answers);
+  const runner = (
+    ticket as unknown as {
+      ui: { abortController: AbortController };
+    }
+  ).ui;
+
+  const isTextInput =
+    typeof question === "object" &&
+    question !== null &&
+    "type" in question &&
+    question.type === "input";
+
+  // Initialize buffer with default value to allow editing pre-filled content
+  const state: KeypressState = {
+    buffer: isTextInput ? getDefaultValueAsString(question) : "",
+    requestedBack: false,
+    requestedCancel: false,
+  };
+
+  const stdin = process.stdin;
+  const hasTty = Boolean(stdin?.isTTY);
+  const onKeypress = createKeypressHandler(state, isTextInput, runner);
+
+  if (hasTty) {
+    stdin.on("keypress", onKeypress);
+  }
+
+  try {
+    const result = await ticket;
+    return { type: "answered", value: result };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.name === "AbortPromptError" || error.name === "ExitPromptError")
+    ) {
+      if (state.requestedCancel) {
+        return { type: "cancel" };
+      }
+      if (state.requestedBack) {
+        return { type: "back" };
+      }
+    }
+    throw error;
+  } finally {
+    if (hasTty) {
+      stdin.removeListener("keypress", onKeypress);
+    }
+  }
 }
 
 function resolveMarkerChoices(
@@ -568,7 +836,7 @@ function ensureModificationsSpecified(options: ModifyOptions): void {
 
   if (!(hasType || hasSignals || hasContent)) {
     throw new Error(
-      "No modifications specified. Use --type, --raise, --mark-starred, --clear-signals, --content, or --interactive."
+      "No modifications specified. Use --type, --raise, --mark-starred, --clear-signals, --content, or run without arguments for interactive prompts."
     );
   }
 }
