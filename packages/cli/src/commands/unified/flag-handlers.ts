@@ -16,7 +16,7 @@ export type ParseState = {
   excludeTypes: string[];
   excludeTags: string[];
   excludeMentions: string[];
-  jsonState: { json: boolean };
+  jsonState: { outputFormat: "json" | "jsonl" | null };
   isGraphMode: boolean;
   raised: boolean | undefined;
   starred: boolean | undefined;

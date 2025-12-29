@@ -35,37 +35,6 @@ export type ParsedQuery = {
  *   "fix !@alice" → types: [fix], exclusions.mentions: [@alice]
  *   "owner:@alice" → properties: { owner: "@alice" }
  */
-function applyToken(token: QueryToken, result: ParsedQuery): void {
-  switch (token.type) {
-    case "exclusion":
-      classifyExclusion(token.value, result);
-      return;
-    case "type":
-      result.types.push(token.value);
-      return;
-    case "mention":
-      result.mentions.push(token.value);
-      return;
-    case "tag":
-      result.tags.push(token.value);
-      return;
-    case "property": {
-      const [key, value] = token.value.split(":", 2);
-      if (key && value) {
-        result.properties.set(key, value);
-      } else if (key) {
-        result.properties.set(key, true);
-      }
-      return;
-    }
-    case "text":
-      result.textTerms.push(token.value);
-      return;
-    default:
-      return;
-  }
-}
-
 export function parseQuery(query: string): ParsedQuery {
   const tokens = tokenize(query);
   const result: ParsedQuery = {
@@ -88,103 +57,149 @@ export function parseQuery(query: string): ParsedQuery {
   return result;
 }
 
+function applyToken(token: QueryToken, result: ParsedQuery): void {
+  switch (token.type) {
+    case "exclusion":
+      classifyExclusion(token.value, result);
+      return;
+    case "type":
+      result.types.push(token.value);
+      return;
+    case "mention":
+      result.mentions.push(token.value);
+      return;
+    case "tag":
+      result.tags.push(token.value);
+      return;
+    case "property":
+      applyPropertyToken(token.value, result);
+      return;
+    case "text":
+      result.textTerms.push(token.value);
+      return;
+    default:
+      return;
+  }
+}
+
+function applyPropertyToken(value: string, result: ParsedQuery): void {
+  const [key, propertyValue] = value.split(":", 2);
+  if (key && propertyValue) {
+    result.properties.set(key, propertyValue);
+  } else if (key) {
+    result.properties.set(key, true);
+  }
+}
+
 /**
  * Tokenize a query string into individual tokens
  */
-type TokenizeState = {
-  tokens: QueryToken[];
-  current: string;
-  inQuotes: boolean;
-  index: number;
-};
-
-function pushTextToken(tokens: QueryToken[], value: string, raw: string): void {
-  tokens.push({
-    type: "text",
-    value,
-    raw,
-  });
-}
-
-function handleQuote(state: TokenizeState, char: string): boolean {
-  if (char !== '"') {
-    return false;
-  }
-
-  if (state.inQuotes) {
-    if (state.current) {
-      pushTextToken(state.tokens, state.current, `"${state.current}"`);
-      state.current = "";
-    }
-    state.inQuotes = false;
-  } else {
-    if (state.current) {
-      emitToken(state.current, state.tokens);
-      state.current = "";
-    }
-    state.inQuotes = true;
-  }
-  state.index += 1;
-  return true;
-}
-
-function handleQuotedChar(state: TokenizeState, char: string): boolean {
-  if (!state.inQuotes) {
-    return false;
-  }
-  state.current += char;
-  state.index += 1;
-  return true;
-}
-
-function handleWhitespace(state: TokenizeState, char: string): boolean {
-  if (char !== " " && char !== "\t") {
-    return false;
-  }
-  if (state.current) {
-    emitToken(state.current, state.tokens);
-    state.current = "";
-  }
-  state.index += 1;
-  return true;
-}
-
 function tokenize(query: string): QueryToken[] {
-  const state: TokenizeState = {
-    tokens: [],
+  const tokens: QueryToken[] = [];
+  const state = {
     current: "",
     inQuotes: false,
-    index: 0,
   };
+  let i = 0;
 
-  while (state.index < query.length) {
-    const char = query[state.index] ?? "";
+  while (i < query.length) {
+    const char = query[i] ?? "";
 
-    if (handleQuote(state, char)) {
+    if (handleQuote(char, state, tokens)) {
+      i += 1;
       continue;
     }
-    if (handleQuotedChar(state, char)) {
+
+    if (state.inQuotes) {
+      state.current += char;
+      i += 1;
       continue;
     }
-    if (handleWhitespace(state, char)) {
+
+    if (handleWhitespace(char, state, tokens)) {
+      i += 1;
       continue;
     }
 
     state.current += char;
-    state.index += 1;
+    i += 1;
   }
 
   // Emit final token
-  if (state.current) {
-    if (state.inQuotes) {
-      // Unclosed quote - treat as text
-      pushTextToken(state.tokens, state.current, `"${state.current}`);
-    } else {
-      emitToken(state.current, state.tokens);
-    }
-  }
+  flushFinalToken(state, tokens);
 
-  return state.tokens;
+  return tokens;
+}
+
+type TokenizeState = {
+  current: string;
+  inQuotes: boolean;
+};
+
+function handleQuote(
+  char: string,
+  state: TokenizeState,
+  tokens: QueryToken[]
+): boolean {
+  if (char !== '"') {
+    return false;
+  }
+  if (state.inQuotes) {
+    emitQuotedToken(state, tokens);
+    state.inQuotes = false;
+  } else {
+    flushCurrentToken(state, tokens);
+    state.inQuotes = true;
+  }
+  return true;
+}
+
+function handleWhitespace(
+  char: string,
+  state: TokenizeState,
+  tokens: QueryToken[]
+): boolean {
+  if (char !== " " && char !== "\t") {
+    return false;
+  }
+  flushCurrentToken(state, tokens);
+  return true;
+}
+
+function flushCurrentToken(state: TokenizeState, tokens: QueryToken[]): void {
+  if (!state.current) {
+    return;
+  }
+  emitToken(state.current, tokens);
+  state.current = "";
+}
+
+function emitQuotedToken(state: TokenizeState, tokens: QueryToken[]): void {
+  if (!state.current) {
+    return;
+  }
+  tokens.push({
+    type: "text",
+    value: state.current,
+    raw: `"${state.current}"`,
+  });
+  state.current = "";
+}
+
+function flushFinalToken(state: TokenizeState, tokens: QueryToken[]): void {
+  if (!state.current) {
+    return;
+  }
+  if (state.inQuotes) {
+    tokens.push({
+      type: "text",
+      value: state.current,
+      raw: `"${state.current}`,
+    });
+  } else {
+    emitToken(state.current, tokens);
+  }
+  state.current = "";
 }
 
 /**
