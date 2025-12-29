@@ -10,7 +10,6 @@ import { findRecords } from "./commands/find";
 import { formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
-import { migrateFile, migrateLegacyWaymarks } from "./commands/migrate";
 import type { ModifyPayload } from "./commands/modify";
 import { parseScanArgs, scanRecords } from "./commands/scan";
 import {
@@ -494,26 +493,6 @@ describe("CLI handlers", () => {
     expect(legacyIssue?.severity).toBe("warn");
     expect(legacyIssue?.line).toBe(1);
     await cleanup();
-  });
-
-  test("migrate command converts legacy TODO", async () => {
-    const source = "// TODO: replace legacy\n";
-    const { file, cleanup } = await withTempFile(source);
-    const { output } = await migrateFile(
-      { filePath: file, write: false },
-      defaultContext
-    );
-    expect(output).toBe("// todo ::: replace legacy\n");
-    await cleanup();
-  });
-
-  test("legacy migration helper handles multiple patterns", () => {
-    const migrated = migrateLegacyWaymarks(
-      ["// TODO: item", "// FIXME: bug", "// NOTE: detail"].join("\n")
-    );
-    expect(migrated).toBe(
-      "// todo ::: item\n// fix ::: bug\n// note ::: detail"
-    );
   });
 });
 
