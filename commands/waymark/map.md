@@ -1,6 +1,6 @@
 ---
 description: Inject all waymarks as JSON for full codebase context
-allowed-tools: Bash(wm:*, rg:*), Read, Grep
+allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 ---
 
 Gather all waymarks from the codebase as structured JSON for comprehensive context.
@@ -10,6 +10,8 @@ Gather all waymarks from the codebase as structured JSON for comprehensive conte
 All waymarks: !`wm find . --json 2>/dev/null || rg ':::' --json`
 
 ## Instructions
+
+Load the `find-waymarks` skill for waymark discovery and filtering.
 
 1. Parse the injected JSON waymark data above
 2. Summarize the waymark landscape:

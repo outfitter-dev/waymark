@@ -248,6 +248,7 @@ grep -rE 'todo\s*:::' .
 ```
 
 **Ripgrep advantages:**
+
 - Faster on large codebases
 - Respects `.gitignore` by default
 - Better default behavior
@@ -255,6 +256,7 @@ grep -rE 'todo\s*:::' .
 ## When to Use
 
 Use ripgrep patterns when:
+
 - `wm` CLI is not installed
 - Working in environment without waymark tooling
 - Need quick one-off searches

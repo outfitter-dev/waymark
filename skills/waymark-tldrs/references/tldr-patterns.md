@@ -11,6 +11,7 @@ Extended patterns for writing effective TLDR waymarks.
 ```
 
 Examples:
+
 - `manages user sessions with Redis caching`
 - `processes payments using Stripe API`
 - `validates input with JSON schema`
@@ -22,6 +23,7 @@ Examples:
 ```
 
 Examples:
+
 - `CLI entry parsing arguments and dispatching commands`
 - `server entry wiring Express middleware and routes`
 - `application bootstrap configuring dependency injection`
@@ -33,6 +35,7 @@ Examples:
 ```
 
 Examples:
+
 - `renders user profile card with avatar`
 - `displays analytics dashboard with charts`
 - `renders form with validation feedback`
@@ -44,6 +47,7 @@ Examples:
 ```
 
 Examples:
+
 - `hook exposing authentication state and methods`
 - `hooks managing form state with validation`
 - `hook providing theme context to components`
@@ -55,6 +59,7 @@ Examples:
 ```
 
 Examples:
+
 - `string manipulation utilities for formatting`
 - `date handling helpers with timezone support`
 - `validation utilities for common patterns`
@@ -66,6 +71,7 @@ Examples:
 ```
 
 Examples:
+
 - `middleware validating JWT tokens for protected routes`
 - `handler logging requests with structured format`
 - `middleware rate limiting by IP address`
@@ -77,6 +83,7 @@ Examples:
 ```
 
 Examples:
+
 - `TypeScript configuration with strict mode enabled`
 - `ESLint configuration extending Ultracite rules`
 - `Vite configuration with code splitting`
@@ -88,6 +95,7 @@ Examples:
 ```
 
 Examples:
+
 - `unit tests for authentication service`
 - `integration tests covering payment flows`
 - `E2E tests validating checkout process`
@@ -99,6 +107,7 @@ Examples:
 ```
 
 Examples:
+
 - `API reference documenting authentication endpoints`
 - `guide explaining deployment to Kubernetes`
 - `quickstart showing first API request`
@@ -110,6 +119,7 @@ Examples:
 ```
 
 Examples:
+
 - `deployment script for production Kubernetes`
 - `migration script for database schema updates`
 - `build script generating production assets`
@@ -127,6 +137,7 @@ Choose verbs that convey action:
 | Exposing | `exposes`, `provides`, `exports`, `surfaces` |
 
 **Avoid weak verbs:**
+
 - "contains" (everything contains something)
 - "does" (too vague)
 - "is" (not action-oriented)
@@ -135,16 +146,19 @@ Choose verbs that convey action:
 ## Tag Conventions
 
 ### Domain Tags
+
 - `#auth`, `#payments`, `#users`, `#billing`
 - `#api`, `#frontend`, `#backend`, `#infra`
 
 ### Document Tags
+
 - `#docs` - Required for all documentation
 - `#docs/guide` - How-to guides
 - `#docs/reference` - API/technical reference
 - `#docs/tutorial` - Step-by-step tutorials
 
 ### Technical Tags
+
 - `#perf` - Performance-related
 - `#sec` - Security-related
 - `#test` - Test files

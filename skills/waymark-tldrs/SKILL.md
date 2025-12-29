@@ -58,6 +58,7 @@ Write one sentence, 8-14 words, active voice:
 | `[capability] for [purpose]` | `rate limiting middleware for API endpoints` |
 
 **Good examples:**
+
 ```javascript
 // tldr ::: Stripe webhook handler verifying signatures and queuing retries
 // tldr ::: React hooks exposing BetterAuth session state
@@ -66,6 +67,7 @@ Write one sentence, 8-14 words, active voice:
 ```
 
 **Avoid:**
+
 - "This file contains..." (implicit)
 - "Utilities for..." (vague)
 - "Module that handles..." (filler)
@@ -81,6 +83,7 @@ Use `*tldr` for critical files that must be read first:
 ```
 
 **Reserve for:**
+
 - Entry points
 - Core infrastructure
 - Security-critical modules
@@ -105,6 +108,7 @@ Add hashtags for categorization:
 ```
 
 **Common namespaces:**
+
 - `#docs`, `#docs/guide`, `#docs/reference`
 - `#perf`, `#perf:hotpath`
 - `#sec`, `#sec:boundary`
@@ -119,6 +123,7 @@ Declare the file's canonical anchor with `ref:#token`:
 ```
 
 **Token patterns:**
+
 - Match directory structure: `ref:#payments/stripe-webhook`
 - Use lowercase with slashes: `ref:#auth/session`
 - Check for duplicates before creating: `rg 'ref:#payments/gateway'`
@@ -184,6 +189,7 @@ Before committing a TLDR:
 ## Examples Gallery
 
 **Backend services:**
+
 ```javascript
 // tldr ::: user registration service with email verification
 // tldr ::: order processing pipeline with inventory checks
@@ -191,6 +197,7 @@ Before committing a TLDR:
 ```
 
 **Frontend:**
+
 ```typescript
 // tldr ::: dashboard page displaying analytics charts #frontend
 // tldr ::: form component with validation and submission #ui
@@ -198,18 +205,21 @@ Before committing a TLDR:
 ```
 
 **CLI tools:**
+
 ```typescript
 // tldr ::: CLI entry point dispatching subcommands #cli
 // tldr ::: argument parser with validation and help text
 ```
 
 **Configuration:**
+
 ```javascript
 // tldr ::: ESLint configuration extending Ultracite rules
 // tldr ::: Vite build configuration with code splitting
 ```
 
 **Documentation:**
+
 ```markdown
 <!-- tldr ::: API quickstart guide with curl examples #docs/guide -->
 <!-- tldr ::: deployment runbook for production releases #docs/ops -->

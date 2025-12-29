@@ -5,6 +5,7 @@ Complete list of blessed markers with usage guidance.
 ## Work / Action Markers
 
 ### `todo`
+
 Tasks to complete.
 
 ```javascript
@@ -16,6 +17,7 @@ Tasks to complete.
 **When to use:** New features, improvements, follow-up work.
 
 ### `fix`
+
 Bugs or issues to address.
 
 ```javascript
@@ -27,6 +29,7 @@ Bugs or issues to address.
 **When to use:** Known bugs, incorrect behavior, regressions.
 
 ### `wip`
+
 Work in progress.
 
 ```javascript
@@ -37,6 +40,7 @@ Work in progress.
 **When to use:** Partially complete work, ongoing changes. Clear before merging.
 
 ### `done`
+
 Completed work (temporary marker).
 
 ```javascript
@@ -47,6 +51,7 @@ Completed work (temporary marker).
 **When to use:** Short-lived handoff signal. Remove after verification.
 
 ### `review`
+
 Needs human review.
 
 ```javascript
@@ -57,6 +62,7 @@ Needs human review.
 **When to use:** Code needing human judgment, security-sensitive changes.
 
 ### `test`
+
 Test-related annotations.
 
 ```javascript
@@ -67,6 +73,7 @@ Test-related annotations.
 **When to use:** Test coverage gaps, test issues, test requirements.
 
 ### `check`
+
 Verification needed.
 
 ```javascript
@@ -79,6 +86,7 @@ Verification needed.
 ## Information Markers
 
 ### `note`
+
 General information or context.
 
 ```javascript
@@ -89,6 +97,7 @@ General information or context.
 **When to use:** Important context, non-obvious behavior, assumptions.
 
 ### `context`
+
 Background and reasoning.
 
 ```javascript
@@ -99,6 +108,7 @@ Background and reasoning.
 **When to use:** Why decisions were made, external references.
 
 ### `tldr`
+
 File-level summary (one per file).
 
 ```javascript
@@ -108,6 +118,7 @@ File-level summary (one per file).
 **When to use:** First waymark in file, summarizes file purpose. See `waymark-tldrs` skill.
 
 ### `this`
+
 Section or construct summary.
 
 ```javascript
@@ -118,6 +129,7 @@ export function verifyWebhook() {}
 **When to use:** Above classes/functions/blocks to describe scope. See references.
 
 ### `example`
+
 Usage examples.
 
 ```javascript
@@ -127,6 +139,7 @@ Usage examples.
 **When to use:** API usage, pattern demonstrations.
 
 ### `idea`
+
 Potential improvements.
 
 ```javascript
@@ -137,6 +150,7 @@ Potential improvements.
 **When to use:** Future possibilities, optimizations to consider.
 
 ### `comment`
+
 General commentary.
 
 ```javascript
@@ -148,6 +162,7 @@ General commentary.
 ## Caution / Quality Markers
 
 ### `warn`
+
 Warning about behavior.
 
 ```javascript
@@ -158,6 +173,7 @@ Warning about behavior.
 **When to use:** Potential gotchas, side effects, constraints.
 
 ### `alert`
+
 Critical attention needed.
 
 ```javascript
@@ -168,6 +184,7 @@ Critical attention needed.
 **When to use:** High-risk code, security concerns.
 
 ### `deprecated`
+
 Outdated code.
 
 ```javascript
@@ -178,6 +195,7 @@ Outdated code.
 **When to use:** Code scheduled for removal, superseded functionality.
 
 ### `temp`
+
 Temporary code.
 
 ```javascript
@@ -188,6 +206,7 @@ Temporary code.
 **When to use:** Short-term solutions, code to remove soon.
 
 ### `hack`
+
 Workarounds.
 
 ```javascript
@@ -200,6 +219,7 @@ Workarounds.
 ## Workflow Markers
 
 ### `blocked`
+
 Cannot proceed.
 
 ```javascript
@@ -210,6 +230,7 @@ Cannot proceed.
 **When to use:** External dependencies, blockers.
 
 ### `needs`
+
 Dependency required.
 
 ```javascript
@@ -222,6 +243,7 @@ Dependency required.
 ## Inquiry Markers
 
 ### `question`
+
 Needs clarification.
 
 ```javascript

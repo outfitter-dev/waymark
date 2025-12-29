@@ -1,6 +1,6 @@
 ---
 description: Show starred (high-priority) waymarks
-allowed-tools: Bash(wm:*, rg:*), Read, Grep
+allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 ---
 
 Gather all starred (`*`) waymarks which indicate high-priority items requiring attention.
@@ -10,6 +10,8 @@ Gather all starred (`*`) waymarks which indicate high-priority items requiring a
 Starred items: !`wm find . --starred --text 2>/dev/null || rg '\*\w+\s*:::' -n`
 
 ## Instructions
+
+Load the `find-waymarks` skill for waymark discovery and filtering.
 
 1. Parse the injected starred waymark data above
 2. Categorize by marker type:

@@ -1,7 +1,7 @@
 ---
 description: Initialize waymarks in a project with guided setup
 argument-hint: [--plan] [--execute]
-allowed-tools: Bash(wm:*, rg:*, git:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Task
+allowed-tools: AskUserQuestion, Edit, Glob, Grep, Read, Task, Write, Bash(wm:*, rg:*, git:*)
 ---
 
 Initialize waymarks in the current project through guided setup.
@@ -10,6 +10,11 @@ Initialize waymarks in the current project through guided setup.
 
 - `--plan` - Skip questions, generate plan document only
 - `--execute` - Skip questions, execute immediately with detected defaults
+
+## Context Injection
+
+Existing config: !`cat .waymark/config.jsonc 2>/dev/null || echo "Not configured"`
+Source files: !`git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' '*.rb' | head -20`
 
 ## Instructions
 
@@ -20,11 +25,13 @@ Load the `waymark-authoring` skill for grammar and marker guidance.
 Before asking questions, gather context:
 
 1. **Check existing waymark setup**:
+
    ```bash
    ls -la .waymark/ 2>/dev/null
    ```
 
 2. **Detect agent configurations**:
+
    ```bash
    # Claude
    [ -f "CLAUDE.md" ] && echo "@claude"
@@ -37,11 +44,13 @@ Before asking questions, gather context:
    ```
 
 3. **Scan source file types**:
+
    ```bash
    git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' '*.rb' | head -100
    ```
 
 4. **Count files in scope**:
+
    ```bash
    git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' '*.rb' | wc -l
    ```
@@ -53,6 +62,7 @@ Store detected agents and file count for later questions.
 Use AskUserQuestion to gather preferences:
 
 **Q1: Strategy Tier**
+
 ```
 Question: "What level of waymark coverage do you want?"
 Options:
@@ -62,6 +72,7 @@ Options:
 ```
 
 **Q2: Agent Behavior** (only ask if Comprehensive selected)
+
 ```
 Question: "How should waymarks be added?"
 Options:
@@ -71,6 +82,7 @@ Options:
 ```
 
 **Q3: File Patterns**
+
 ```
 Question: "Which files should be in scope?"
 (Show detected patterns, allow customization)
@@ -80,6 +92,7 @@ Options:
 ```
 
 **Q4: Tag Namespaces**
+
 ```
 Question: "Which tag namespaces do you want to use?"
 (Multi-select, suggest based on strategy)
@@ -93,6 +106,7 @@ Options:
 ```
 
 **Q5: Actor Conventions**
+
 ```
 Question: "How should agent mentions work?"
 (Show detected agents)
@@ -105,6 +119,7 @@ Options:
 ### Phase 3: Config Generation
 
 Create `.waymark/` directory if needed:
+
 ```bash
 mkdir -p .waymark
 ```
@@ -161,6 +176,7 @@ Based on selected mode:
 4. Report progress as agents complete
 
 Example Task invocation:
+
 ```
 Task(
   subagent_type: "waymarker",
@@ -177,9 +193,11 @@ Task(
    - Identify sections that need `this :::` markers
    - Identify obvious work items for `todo :::` markers
 3. Generate placeholder waymarks with IDs:
+
    ```ts
    // tldr ::: [pending] wm:init-a3k9
    ```
+
 4. Write `.waymark/plan.md` with YAML blocks:
 
 ```markdown
@@ -211,6 +229,7 @@ Strategy: comprehensive
 
 Review suggestions above, then run `/waymark:apply` to apply them.
 Edit this file to modify suggestions before applying.
+
 ```
 
 5. Instruct user to review and run `/waymark:apply`
@@ -221,6 +240,7 @@ Report what was done:
 
 **Execute Mode:**
 ```
+
 Waymark initialization complete!
 
 Config: .waymark/config.jsonc
@@ -231,10 +251,12 @@ Work markers added: 15
 
 Run `wm find .` to see all waymarks.
 Run `/waymark:audit` to check coverage.
+
 ```
 
 **Plan Mode:**
 ```
+
 Waymark initialization plan created!
 
 Config: .waymark/config.jsonc
@@ -244,6 +266,7 @@ Files analyzed: 47
 Suggestions generated: 82
 
 Review .waymark/plan.md and run `/waymark:apply` to apply suggestions.
+
 ```
 
 ## Strategy → Markers Mapping

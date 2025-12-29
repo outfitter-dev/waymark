@@ -36,6 +36,7 @@ Only the star (`*`) signal is valid:
 ```
 
 **Invalid signals:**
+
 - `^` (deprecated - was "raised")
 - `!`, `!!`, `?` (never valid)
 - `**` (double star invalid)
@@ -43,6 +44,7 @@ Only the star (`*`) signal is valid:
 ## Marker Validation
 
 Markers must be:
+
 - Lowercase only
 - From the blessed list (or custom-configured)
 - Single word, no spaces
@@ -70,6 +72,7 @@ quoted   = '"' ([^"\\] | '\\' .)* '"'
 ```
 
 **Examples:**
+
 ```javascript
 // todo ::: priority:high implement feature
 // note ::: owner:@alice since:2025-01-01
@@ -83,12 +86,14 @@ hashtag = "#" [A-Za-z0-9._/:%-]+
 ```
 
 **Valid hashtags:**
+
 - `#perf` - Simple tag
 - `#perf:hotpath` - Namespaced
 - `#docs/guide/auth` - Path-style
 - `#v1.2.3` - Version tag
 
 **Invalid hashtags:**
+
 - `#123` - Numeric only (conflicts with issues)
 - `# tag` - Space after hash
 
@@ -99,6 +104,7 @@ mention = "@" [A-Za-z][A-Za-z0-9_-]*
 ```
 
 **Examples:**
+
 - `@agent` - Any AI assistant
 - `@claude` - Specific assistant
 - `@alice` - Human assignee
@@ -134,11 +140,13 @@ Alignment of `:::` is optional but improves readability.
 ## Nesting Rules
 
 Waymarks cannot be nested inside:
+
 - String literals
 - Docstrings (JSDoc, TSDoc, Python triple quotes)
 - Rendered documentation sections
 
 **Correct (adjacent to docstring):**
+
 ```typescript
 /**
  * Authenticates the user.
@@ -148,6 +156,7 @@ function authenticate() {}
 ```
 
 **Incorrect (inside docstring):**
+
 ```typescript
 /**
  * Authenticates the user.

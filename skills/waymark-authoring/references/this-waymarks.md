@@ -24,6 +24,7 @@ class ConnectionPool:
 Focus on the upcoming section only - do not restate file-level TLDR:
 
 **Good (section-specific):**
+
 ```typescript
 // tldr ::: user authentication service
 // ...
@@ -36,6 +37,7 @@ function hashPassword(password: string) {}
 ```
 
 **Bad (restates file purpose):**
+
 ```typescript
 // this ::: handles user authentication  // too broad, same as tldr
 function validatePassword(password: string) {}

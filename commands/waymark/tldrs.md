@@ -1,6 +1,6 @@
 ---
 description: Show file-level TLDR waymarks across the codebase
-allowed-tools: Bash(wm:*, rg:*), Read, Grep
+allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 ---
 
 Gather all `tldr :::` waymarks to provide a high-level overview of the codebase structure.
@@ -10,6 +10,8 @@ Gather all `tldr :::` waymarks to provide a high-level overview of the codebase 
 File summaries: !`wm find . --type tldr --text 2>/dev/null || rg 'tldr\s*:::' -n`
 
 ## Instructions
+
+Load the `find-waymarks` skill for waymark discovery and filtering.
 
 1. Parse the injected TLDR data above
 2. Organize by directory structure for navigation clarity
