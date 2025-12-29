@@ -994,6 +994,9 @@ Examples:
   $ wm format src/**/*.ts --write      # Format multiple files
   $ wm format src/ --write             # Format all files in directory
 
+Notes:
+  - Files beginning with a \`waymark-ignore-file\` comment are skipped
+
 Formatting Rules:
   - Exactly one space before and after ::: sigil
   - Marker case normalized (default: lowercase)
@@ -1184,6 +1187,7 @@ Examples:
   $ wm remove --id wm:a3k9m2p --write         # Remove by ID
   $ wm remove --criteria "type:todo mention:@agent" src/ --write
   $ wm remove --from removals.json --write
+  $ wm remove src/auth.ts:42 --write --reason "cleanup"
 
 Filter Criteria Syntax:
   type:<marker>         Match waymark type (todo, fix, note, etc.)
@@ -1198,7 +1202,7 @@ Safety Features:
   - --write flag required for actual removal
   - Confirmation prompt before removing (unless --yes)
   - Multi-line waymarks removed atomically
-  - Removed waymarks tracked in .waymark/history.json
+  - Removed waymarks tracked in .waymark/history.json (with optional --reason)
 
 See 'wm remove --prompt' for agent-facing documentation.
     `
