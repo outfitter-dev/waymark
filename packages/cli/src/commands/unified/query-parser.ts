@@ -35,7 +35,6 @@ export type ParsedQuery = {
  *   "fix !@alice" → types: [fix], exclusions.mentions: [@alice]
  *   "owner:@alice" → properties: { owner: "@alice" }
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token classification requires multiple branches
 export function parseQuery(query: string): ParsedQuery {
   const tokens = tokenize(query);
   const result: ParsedQuery = {
@@ -78,7 +77,6 @@ export function parseQuery(query: string): ParsedQuery {
 /**
  * Tokenize a query string into individual tokens
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: quote handling and state machine requires complex branching
 function tokenize(query: string): QueryToken[] {
   const tokens: QueryToken[] = [];
   let current = "";

@@ -57,7 +57,6 @@ function getTerminalWidth(): number {
 /**
  * Tokenize content into breakable chunks
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: tokenization requires conditional branching
 function tokenize(content: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
@@ -243,7 +242,6 @@ function tokenize(content: string): Token[] {
  * @param config - Wrapping configuration
  * @returns Array of wrapped lines
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: wrapping algorithm requires complex conditional logic
 export function wrapContent(content: string, config: WrapConfig): string[] {
   // Handle empty/whitespace-only content early
   if (content.trim() === "") {
