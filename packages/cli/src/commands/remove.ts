@@ -14,7 +14,6 @@ import type { CommandContext } from "../types.ts";
 import { expandInputPaths } from "../utils/fs.ts";
 import { createIdManager } from "../utils/id-manager.ts";
 import { logger } from "../utils/logger.ts";
-import { confirm } from "../utils/prompts.ts";
 import { readFromStdin } from "../utils/stdin.ts";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
@@ -31,8 +30,6 @@ export type RemoveCommandOptions = {
   json: boolean;
   jsonl: boolean;
   from?: string;
-  confirm: boolean;
-  yes: boolean;
 };
 
 export type ParsedRemoveArgs = {
@@ -67,9 +64,6 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
     "--write": (state) => {
       state.optionState.write = true;
     },
-    "-y": (state) => {
-      state.optionState.yes = true;
-    },
     "--json": (state) => {
       if (state.optionState.jsonl) {
         throw new Error("--json and --jsonl are mutually exclusive");
@@ -81,12 +75,6 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
         throw new Error("--json and --jsonl are mutually exclusive");
       }
       state.optionState.jsonl = true;
-    },
-    "--confirm": (state) => {
-      state.optionState.confirm = true;
-    },
-    "--yes": (state) => {
-      state.optionState.yes = true;
     },
     "-R": (state) => {
       state.criteria.signals.raised = true;
@@ -160,8 +148,6 @@ function createInitialState(): RemoveParseState {
       write: false,
       json: false,
       jsonl: false,
-      confirm: false,
-      yes: false,
     },
   };
 }
@@ -501,26 +487,6 @@ function formatOutput(
     return formatJsonOutput(results, summary, options);
   }
   return formatTextOutput(results, summary, options.dryRun);
-}
-
-export async function maybeConfirmRemoval(
-  summary: RemoveSummary,
-  options: { yes?: boolean; confirm?: boolean }
-): Promise<boolean> {
-  const shouldPrompt =
-    !options.yes &&
-    typeof process.stdout.isTTY === "boolean" &&
-    process.stdout.isTTY &&
-    (options.confirm || summary.successful >= 10);
-
-  if (!shouldPrompt) {
-    return true;
-  }
-
-  return await confirm({
-    message: `Remove ${summary.successful} waymark${summary.successful === 1 ? "" : "s"}?`,
-    default: false,
-  });
 }
 
 function formatJsonOutput(

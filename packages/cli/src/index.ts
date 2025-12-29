@@ -14,7 +14,6 @@ import { lintFiles as runLint } from "./commands/lint.ts";
 import { migrateFile } from "./commands/migrate.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
 import {
-  maybeConfirmRemoval,
   type ParsedRemoveArgs,
   parseRemoveArgs,
   runRemoveCommand,
@@ -331,18 +330,6 @@ async function executeRemovalWriteFlow(
   const structuredOutput = preview.options.json || preview.options.jsonl;
   if (!structuredOutput && preview.output.length > 0) {
     writeStdout(preview.output);
-  }
-
-  const confirmed = structuredOutput
-    ? true
-    : await maybeConfirmRemoval(preview.summary, {
-        yes: preview.options.yes,
-        confirm: preview.options.confirm,
-      });
-
-  if (!confirmed) {
-    writeStdout("Removal cancelled");
-    process.exit(1);
   }
 
   const actual = await runRemoveCommand(parsedArgs, context, {
