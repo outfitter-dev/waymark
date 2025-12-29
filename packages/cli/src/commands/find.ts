@@ -6,6 +6,7 @@ import { createArgIterator } from "../utils/flags/iterator";
 import { handleJsonFlag } from "../utils/flags/json";
 import { handleMentionFlag } from "../utils/flags/mention";
 import { handleTagFlag } from "../utils/flags/tag";
+import { handleTldrFlag } from "../utils/flags/tldr";
 import { handleTypeFlag } from "../utils/flags/type";
 import { scanRecords } from "./scan";
 
@@ -61,6 +62,7 @@ export function parseFindArgs(
   while (iterator.hasNext()) {
     const token = iterator.next();
     handleJsonFlag(token, jsonState);
+    handleTldrFlag(token, types);
     handleTypeFlag(token, iterator, types);
     handleTagFlag(token, iterator, tags);
     handleMentionFlag(token, iterator, mentions);
