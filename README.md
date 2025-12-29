@@ -14,6 +14,30 @@ Waymark defines and maintains the `:::` comment sigil plus supporting tooling so
 
 Read the full background in [Historical Priors for Waymark-Style Anchors](docs/about/priors.md).
 
+### Waymarks Are Not Docstrings
+
+Waymarks **complement** docstrings; they never replace them.
+
+| Purpose | Use |
+| --- | --- |
+| Public API contracts | Docstrings (JSDoc/TSDoc/docstrings) |
+| Internal intent + ownership | Waymarks |
+
+Place waymarks adjacent to docstrings, never inside them:
+
+```typescript
+/**
+ * Authenticates a user and returns a session token.
+ * @param request - User login credentials
+ * @returns Session token or throws AuthError
+ */
+// this ::: orchestrates OAuth flow with PKCE #auth/login
+// todo ::: @agent add rate limiting #sec:boundary
+export async function authenticate(request: AuthRequest) {
+  // ...
+}
+```
+
 ### Waymarks in Practice
 
 ```typescript
@@ -26,11 +50,13 @@ export async function authenticate(request: AuthRequest) {
   const user = await fetchUser(request.email)
   // question ::: should we allow social login here? @product
 
-  /* ^todo ::: @agent implement refresh token rotation once backend ships */
+  // ^todo ::: @agent implement refresh token rotation once backend ships
   return issueSession(user, request) // note ::: returns JWT signed with HS256
 }
 
 Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) prefix are valid. Raised waymarks (`^todo`) mark work-in-progress that must clear before merging; starred waymarks (`*fix`) mark high-priority items. Combining them (`^*todo`) is fine, while doubling (`**fix`) is not.
+
+Line comments are preferred for waymarks. Use block comments only in languages without line-comment support (for example, CSS).
 ```
 
 ## Start Here

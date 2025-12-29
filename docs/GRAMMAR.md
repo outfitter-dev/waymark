@@ -72,6 +72,28 @@ A waymark is a structured comment that embeds machine-readable context directly 
 
 **Core principle**: Everything after the `:::` sigil is free-form content, but we extract structured data (properties, tags, mentions) using simple token patterns.
 
+## Waymarks Are Not Docstrings
+
+Waymarks **complement** docstrings; they never replace them. Docstrings describe public APIs for external consumers, while waymarks capture internal intent, ownership, and next steps.
+
+- **Docstrings**: API contracts, parameters, return values, examples.
+- **Waymarks**: why/ownership/next steps, operational notes, migration cues.
+
+Place waymarks adjacent to docstrings, never inside them:
+
+```typescript
+/**
+ * Authenticates a user and returns a session token.
+ * @param request - User login credentials
+ * @returns Session token or throws AuthError
+ */
+// this ::: orchestrates OAuth flow with PKCE #auth/login
+// todo ::: @agent add rate limiting #sec:boundary
+export async function authenticate(request: AuthRequest) {
+  // ...
+}
+```
+
 ---
 
 ## Basic Syntax
@@ -112,9 +134,10 @@ Waymarks work with any comment syntax:
 | Python, Ruby, Shell, YAML | `#` | `# note ::: assumes UTC` |
 | SQL | `--` | `-- fix ::: escape quotes` |
 | HTML, XML, Markdown | `<!-- -->` | `<!-- tldr ::: API guide -->` |
-| CSS, C-style | `/* */` | `/* warn ::: deprecated */` |
+| CSS (and other languages without line comments) | `/* */` | `/* warn ::: deprecated */` |
 
-**Block comments**: Allowed for waymarks when not rendered as documentation. Avoid placing waymarks inside docstrings.
+**Block comments**: Allowed for waymarks only in languages without line-comment support. Avoid placing waymarks inside docstrings.
+Line comments are preferred whenever available.
 
 ### The `:::` Sigil
 

@@ -27,6 +27,8 @@ A waymark is a single comment line (or continuation block) built from the follow
 
 Multi-line waymarks use markerless `:::` continuation lines, with optional alignment to the parent waymark's `:::` position for improved readability.
 
+Line comments are preferred whenever the language supports them. Use block comments only in languages without line-comment support (for example, CSS).
+
 ## 2. Blessed Markers
 
 Only the following markers are considered first-class by the toolchain. Custom markers are possible but require explicit configuration and may trigger lint warnings.
