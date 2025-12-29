@@ -359,13 +359,13 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
-  test("renderRecords pretty prints json", async () => {
+  test("renderRecords formats text output with indentation", async () => {
     const source = "// todo ::: detailed task";
     const { file, cleanup } = await withTempFile(source);
     const records = await scanRecords([file], defaultContext.config);
-    const pretty = renderRecords(records, "pretty");
-    expect(pretty).toContain("\n  {");
-    expect(() => JSON.parse(pretty)).not.toThrow();
+    const text = renderRecords(records, "text");
+    expect(text).toContain("\n  {");
+    expect(() => JSON.parse(text)).not.toThrow();
     await cleanup();
   });
 
