@@ -771,11 +771,7 @@ async function promptStep(
     }
   ).ui;
 
-  const isTextInput =
-    typeof question === "object" &&
-    question !== null &&
-    "type" in question &&
-    question.type === "input";
+  const isTextInput = isInputQuestion(question);
 
   // Initialize buffer with default value to allow editing pre-filled content
   const state: KeypressState = {
@@ -806,6 +802,34 @@ async function promptStep(
       stdin.removeListener("keypress", onKeypress);
     }
   }
+}
+
+function isInputQuestion(question: unknown): boolean {
+  return (
+    typeof question === "object" &&
+    question !== null &&
+    "type" in question &&
+    question.type === "input"
+  );
+}
+
+function resolvePromptAbort(
+  error: unknown,
+  state: KeypressState
+): PromptOutcome | null {
+  if (
+    !(error instanceof Error) ||
+    (error.name !== "AbortPromptError" && error.name !== "ExitPromptError")
+  ) {
+    return null;
+  }
+  if (state.requestedCancel) {
+    return { type: "cancel" };
+  }
+  if (state.requestedBack) {
+    return { type: "back" };
+  }
+  return null;
 }
 
 function resolveMarkerChoices(

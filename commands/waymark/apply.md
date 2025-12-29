@@ -1,7 +1,7 @@
 ---
 description: Apply waymarks from a plan document
 argument-hint: [--all] [--interactive]
-allowed-tools: AskUserQuestion, Edit, Glob, Grep, Read, Write, Bash(wm:*)
+allowed-tools: Bash(wm:*), Read, Write, Edit, Grep, Glob, AskUserQuestion
 ---
 
 <!-- tldr ::: apply pending waymarks from plan document with interactive review -->

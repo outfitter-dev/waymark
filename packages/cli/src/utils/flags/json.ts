@@ -2,20 +2,26 @@
 
 import { matchesFlag } from "./iterator";
 
+export type OutputFormat = "json" | "jsonl";
+
 export type JsonFlagState = {
-  json: boolean;
+  outputFormat: OutputFormat | null;
 };
 
 /**
- * Toggle JSON output mode when the `--json` flag is encountered.
+ * Toggle JSON output mode when the `--json` or `--jsonl` flag is encountered.
  */
 export function handleJsonFlag(
   token: string | undefined,
   state: JsonFlagState
 ): boolean {
-  if (!matchesFlag(token, ["--json"])) {
-    return false;
+  if (matchesFlag(token, ["--json"])) {
+    state.outputFormat = "json";
+    return true;
   }
-  state.json = true;
-  return true;
+  if (matchesFlag(token, ["--jsonl"])) {
+    state.outputFormat = "jsonl";
+    return true;
+  }
+  return false;
 }

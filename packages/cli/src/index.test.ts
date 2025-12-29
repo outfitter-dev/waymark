@@ -485,6 +485,16 @@ describe("Unified command", () => {
     expect(options.mentions).toEqual(["@alice", "agent"]);
   });
 
+  test("parseUnifiedArgs detects json output format", () => {
+    const options = parseUnifiedArgs(["--json", "src/"]);
+    expect(options.outputFormat).toBe("json");
+  });
+
+  test("parseUnifiedArgs detects jsonl output format", () => {
+    const options = parseUnifiedArgs(["--jsonl", "src/"]);
+    expect(options.outputFormat).toBe("jsonl");
+  });
+
   test("parseUnifiedArgs accepts --after-context alias", () => {
     const afterLines = 2;
     const options = parseUnifiedArgs([
@@ -554,7 +564,7 @@ describe("Unified command", () => {
       filePaths: [file],
       isGraphMode: false,
       types: ["todo"],
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{ type: string }>;
@@ -573,7 +583,7 @@ describe("Unified command", () => {
       filePaths: [file],
       isGraphMode: false,
       raised: true,
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{
@@ -594,7 +604,7 @@ describe("Unified command", () => {
       filePaths: [file],
       isGraphMode: false,
       starred: true,
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{
@@ -621,7 +631,7 @@ describe("Unified command", () => {
       raised: true,
       starred: true,
       tags: ["#perf"],
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{
