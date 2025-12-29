@@ -172,15 +172,7 @@ Marks work-in-progress waymarks that are branch-scoped.
 **Semantics**:
 
 - Indicates active development
-- Must be cleared before merging to protected branches
 - Use for temporary/branch-specific annotations
-
-**Enforcement**: Configure policy in `.waymark/config.*`:
-
-```toml
-protected_branches = ["main", "release/*"]
-signals_on_protected = "strip"  # strip | fail | allow
-```
 
 ### Starred (`*`)
 
@@ -702,11 +694,10 @@ Parsers must:
 
 **Linter validation**: Linters enforce stricter rules:
 
-- Unknown types → warning
-- Duplicate properties → warning
-- Dangling relations → error
-- Duplicate canonicals → error
-- Signals on protected branches → error/warning (configurable)
+- Unknown markers → warning (`unknown-marker`)
+- Duplicate properties → warning (`duplicate-property`)
+- Multiple TLDRs in a file → error (`multiple-tldr`)
+- Legacy codetag patterns → warning (`legacy-pattern`)
 
 ---
 
@@ -951,5 +942,5 @@ If you used earlier waymark syntax:
 
 - [CLI Reference](./cli/README.md) - Command-line tools
 - [How-To Guides](howto/README.md) - Practical usage examples
-- [PRD](../PRD.md) - Product requirements and roadmap
+- [Waymark Specification](waymark/SPEC.md) - Product requirements and roadmap
 - [JSON Schema](../schemas/waymark-record.schema.json) - Record schema
