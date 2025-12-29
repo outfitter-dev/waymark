@@ -34,7 +34,6 @@ bun add @waymarks/core
 
 ### Analysis & Aggregation
 
-- `buildWaymarkMap()` - Generate file tree with TLDR summaries
 - `buildRelationGraph()` - Extract dependency graphs from relations
 - `searchRecords()` - Filter waymarks with complex queries
 

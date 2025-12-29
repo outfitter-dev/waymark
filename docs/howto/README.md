@@ -220,7 +220,6 @@ wm src/ --mention @claude
 **Agent can now**:
 
 - `waymark.scan` - Read all waymarks
-- `waymark.map` - Get file summaries
 - `waymark.insert` - Add new waymarks
 - `waymark.graph` - Analyze dependencies
 

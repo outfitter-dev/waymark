@@ -347,7 +347,7 @@ The CLI is a thin wrapper over a reusable TypeScript package (`@waymarks/core`) 
 - **Scan/index (`@waymarks/core/scan`):** `scan(paths, config)` yields async iterators of records, applying caching/index strategies identical to the CLI.
 - **Formatting (`@waymarks/core/format`):** `format(record|text, config)` returns normalized strings; `applyFormatting` operates on files.
 - **Search helpers (`@waymarks/core/search`):** `filter(records, query)` and higher-level `find` builders (markers, signals, tags, actor groups, relations).
-- **Graph/map generation (`@waymarks/core/graph`, `@waymarks/core/map`):** `buildGraph(records)` and `buildMap(records)` expose the structures used for `waymark graph` and `waymark map`.
+- **Graph generation (`@waymarks/core/graph`):** `buildGraph(records)` exposes the relation graph structure used for `waymark graph`.
 - **Config loading (`@waymarks/core/config`):** `loadConfig({ scope })` resolves `.waymark/config.*`, local overrides, and XDG config using the precedence rules above.
 - **Plugin hooks (`@waymarks/plugins`):** Optional package consumed by core tooling. Exposes `registerMarker`, `registerRelationKind`, `registerGroupProvider` so extensions can augment parsing or actor groups without modifying the core package.
 

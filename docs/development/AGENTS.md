@@ -104,15 +104,11 @@ pre-commit:
   commands:
     format:
       run: bun run format
-
-    waymark-map:
-      run: bun run check:waymarks || true  # Non-blocking
 ```
 
 **Philosophy:**
 
 - Only block on formatting (deterministic, auto-fixable)
-- Waymark map generation runs but doesn't block
 - Keep commits fast to maintain flow
 
 ### Pre-Push Hooks
@@ -126,9 +122,6 @@ pre-push:
   commands:
     quality-gates:
       run: bun run lint && bun run typecheck && bun run test
-
-    waymark-map:
-      run: bun run check:waymarks || true  # Non-blocking
 ```
 
 **Philosophy:**

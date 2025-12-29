@@ -29,14 +29,12 @@ The server communicates over stdio and implements the Model Context Protocol, al
 ### Tools
 
 - `waymark.scan` - Parse files/directories and return waymark records (supports text, json, jsonl, pretty formats)
-- `waymark.map` - Generate file tree with TLDR summaries
 - `waymark.graph` - Extract dependency graph from relations
 - `waymark.add` - Add formatted waymarks into files
 - `waymark.insert` - (deprecated, use `waymark.add` instead)
 
 ### Resources
 
-- `waymark://map` - Repository-wide summary of TLDRs and marker counts
 - `waymark://todos` - Filtered list of all TODO waymarks
 
 ### Prompts

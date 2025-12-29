@@ -133,11 +133,9 @@ The server advertises a compact surface area:
 
 - **Tools**
   - `waymark.scan` – parse files/directories and return waymark records in `text`, `json`, `jsonl`, or `pretty` formats.
-  - `waymark.map` – produce the TLDR/marker summary JSON that powers the CLI map.
   - `waymark.graph` – emit relation edges (ref/depends/needs/etc.).
   - `waymark.insert` – insert any waymark (including `tldr`, `this`, `todo`, or custom markers) into a file, normalize it with the formatter, and return the inserted record metadata.
 - **Resources**
-  - `waymark://map` – repository-wide summary of TLDRs and marker counts.
   - `waymark://todos` – filtered list of every `todo` waymark detected.
 - **Prompts**
   - `waymark.tldr` – drafts a TLDR sentence for a file given an optional snippet window.

@@ -65,7 +65,7 @@ When working on this project:
 
 ### MCP Server Expectations
 
-- Use `waymark-mcp` when an agent needs to interact with waymarks programmatically. The server exposes `waymark.scan`, `waymark.map`, `waymark.graph`, and `waymark.insert`, plus TLDR/TODO drafting prompts and map/todo resources.
+- Use `waymark-mcp` when an agent needs to interact with waymarks programmatically. The server exposes `waymark.scan`, `waymark.graph`, and `waymark.insert`, plus TLDR/TODO drafting prompts and a todos resource.
 - Commands accept `configPath` and `scope` options; always pass repository-specific settings so behavior matches the CLI.
 - `waymark.insert` formats the target file automatically—run the server tool instead of writing raw strings when adding waymarks.
 - Treat MCP responses as the source of truth for agent-visible state; avoid duplicating parsing logic outside of `@waymarks/core`.
