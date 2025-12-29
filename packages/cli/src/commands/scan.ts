@@ -42,7 +42,8 @@ export function parseScanArgs(argv: string[]): ParsedScanArgs {
   const formatFlags: Record<string, ScanOutputFormat> = {
     "--json": "json",
     "--jsonl": "jsonl",
-    "--pretty": "pretty",
+    "--text": "text",
+    "--pretty": "pretty", // Pretty-printed JSON (deprecated - use --json with jq for formatting)
   };
 
   for (const arg of argv) {
