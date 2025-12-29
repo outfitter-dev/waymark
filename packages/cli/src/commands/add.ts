@@ -216,9 +216,7 @@ function handlePositionalToken(token: string, state: InsertParseState): void {
     state.content = token;
     return;
   }
-  if (state.fileLine) {
-    throw new Error(`Unexpected positional argument: ${token}`);
-  }
+  throw new Error(`Unexpected positional argument: ${token}`);
 }
 
 function validateFromMode(state: InsertParseState): void {
