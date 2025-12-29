@@ -487,6 +487,23 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
+  test("lint command detects legacy codetags", async () => {
+    const source = ["// TODO: legacy task", "// note ::: ok"].join("\n");
+    const { file, cleanup } = await withTempFile(source);
+    const report = await lintFiles(
+      [file],
+      defaultContext.config.allowTypes,
+      defaultContext.config
+    );
+    const legacyIssue = report.issues.find(
+      (issue) => issue.rule === "legacy-pattern"
+    );
+    expect(legacyIssue).toBeDefined();
+    expect(legacyIssue?.severity).toBe("warn");
+    expect(legacyIssue?.line).toBe(1);
+    await cleanup();
+  });
+
   test("migrate command converts legacy TODO", async () => {
     const source = "// TODO: replace legacy\n";
     const { file, cleanup } = await withTempFile(source);
