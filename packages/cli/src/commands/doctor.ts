@@ -1,14 +1,10 @@
 // tldr ::: health check diagnostics validating config integrity and waymark structure #cli
 
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import { join } from "node:path";
-import {
-  buildRelationGraph,
-  isValidType,
-  parse,
-  type WaymarkRecord,
-} from "@waymarks/core";
+import { isValidType, parse, type WaymarkRecord } from "@waymarks/core";
 import chalk from "chalk";
 import type { CommandContext } from "../types";
 import { expandInputPaths } from "../utils/fs";
@@ -181,7 +177,8 @@ async function checkConfiguration(
 
   // Check 3: Cache directory writable
   try {
-    const cacheDir = join(context.workspaceRoot, "cache");
+    const cacheHome = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
+    const cacheDir = join(cacheHome, "waymark");
     if (!existsSync(cacheDir)) {
       issues.push({
         severity: "info",
@@ -217,7 +214,7 @@ async function checkEnvironment(
 
   // Check 1: Git repository
   try {
-    const gitDir = join(process.cwd(), ".git");
+    const gitDir = join(context.workspaceRoot, ".git");
     if (!existsSync(gitDir)) {
       issues.push({
         severity: "info",
@@ -231,7 +228,7 @@ async function checkEnvironment(
 
   // Check 2: Index files
   try {
-    const indexPath = join(context.workspaceRoot, "index.json");
+    const indexPath = join(context.workspaceRoot, ".waymark", "index.json");
     if (existsSync(indexPath)) {
       const indexContent = await readFile(indexPath, "utf-8");
       try {
@@ -253,7 +250,7 @@ async function checkEnvironment(
 
   // Check 3: Gitignore patterns
   try {
-    const gitignorePath = join(process.cwd(), ".gitignore");
+    const gitignorePath = join(context.workspaceRoot, ".gitignore");
     if (existsSync(gitignorePath)) {
       const gitignoreContent = await readFile(gitignorePath, "utf-8");
       if (!gitignoreContent.includes(".waymark/index.json")) {
@@ -353,7 +350,6 @@ async function checkWaymarkIntegrity(
   }
 
   // Check 2: Dangling relations
-  const _graph = buildRelationGraph(allRecords);
   for (const record of allRecords) {
     for (const relation of record.relations || []) {
       if (CANONICAL_RELATIONS.includes(relation.kind)) {
@@ -517,11 +513,9 @@ async function checkPerformance(
   const issues: DiagnosticIssue[] = [];
 
   try {
-    const indexPath = join(context.workspaceRoot, "index.json");
+    const indexPath = join(context.workspaceRoot, ".waymark", "index.json");
     if (existsSync(indexPath)) {
-      const stats = await import("node:fs/promises").then((fs) =>
-        fs.stat(indexPath)
-      );
+      const stats = await stat(indexPath);
       const sizeMb = stats.size / BYTES_PER_MB;
 
       if (sizeMb > MAX_INDEX_MB) {

@@ -704,15 +704,14 @@ async function handleDoctorCommand(
   program: Command,
   options: DoctorCommandOptions
 ): Promise<void> {
-  const scopeValue = program.opts().scope as string;
-  const globalOpts = { scope: normalizeScope(scopeValue) };
+  const programOpts = program.opts();
+  const globalOpts = { scope: normalizeScope(programOpts.scope as string) };
   const context = await createContext(globalOpts);
 
   const report = await runDoctorCommand(context, options);
 
   // Output based on format (check both local and global options)
-  const globalOpts2 = program.opts();
-  if (options.json || globalOpts2.json) {
+  if (options.json || programOpts.json) {
     writeStdout(JSON.stringify(report, null, 2));
   } else {
     const formatted = formatDoctorReport(report);
