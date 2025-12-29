@@ -77,9 +77,11 @@ rg "\/\*.*:::" --type ts --type js  # Should be empty or intentional CSS-like fi
 - [ ] `docs/GRAMMAR.md` continuation examples work
 - [ ] `.waymark/rules/WAYMARKS.md` examples are correct
 
-### 1.3 Remove `wm map` Command Entirely
+### 1.3 Remove `wm map` Command Entirely ✅ COMPLETED (2025-12-29)
 
 **Rationale:** The `wm map` command is no longer needed. Codebase overview functionality is handled through other means.
+
+**Status:** All map functionality removed across CLI, MCP server, core package, and documentation. Commits: 49c64e5 (code removal), a867253 (doc cleanup).
 
 **Files to modify:**
 
@@ -702,14 +704,14 @@ The docstring serves TypeScript tooling and API consumers. The waymarks serve yo
 - [ ] Update block comment examples to clarify CSS-only usage
 - [ ] Add "Waymarks Are Not Docstrings" section
 - [ ] Update CLI usage to reflect changes
-- [ ] Remove `wm map` examples and references
+- [x] Remove `wm map` examples and references ✅ (2025-12-29)
 - [ ] Remove `wm migrate` references (or update if aliased)
 - [ ] Add `include_codetags` config mention
 
 ### 8.2 Update PRD.md
 
 - [ ] Clarify block comment policy (CSS-only, not full deprecation)
-- [ ] Remove `wm map` from CLI specification
+- [x] Remove `wm map` from CLI specification ✅ (2025-12-29)
 - [ ] Update lint rules section (named-only scheme)
 - [ ] Remove protected branch policy
 - [ ] Update config example
@@ -726,7 +728,7 @@ The docstring serves TypeScript tooling and API consumers. The waymarks serve yo
 
 **File:** `packages/cli/src/index.ts`
 
-- [ ] Remove `wm map` from help and command list
+- [x] Remove `wm map` from help and command list ✅ (2025-12-29)
 - [ ] Update `wm lint` help with new rule names
 - [ ] Remove `wm migrate` (or update)
 - [ ] Update `wm format` examples to show directory usage
