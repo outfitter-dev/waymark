@@ -55,4 +55,5 @@ export type UnifiedCommandOptions = {
   // Formatting
   compact?: boolean;
   noColor?: boolean;
+  noWrap?: boolean;
 };
