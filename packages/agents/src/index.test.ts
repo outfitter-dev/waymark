@@ -15,8 +15,8 @@ const MALFORMED_SOURCE = `//todo:::needs spacing
 // *fix ::: priority item`;
 
 const EXPECTED_SAMPLE_RECORD_COUNT = 3;
-const EXPECTED_MAP_FILE_COUNT = 2;
-const EXPECTED_MAP_TYPE_COUNT = 2;
+const EXPECTED_SCANNED_RECORD_COUNT = 4;
+const EXPECTED_FILE_RECORD_COUNT = 2;
 
 describe("createAgentToolkit", () => {
   test("returns toolkit with correct version", () => {
@@ -103,7 +103,7 @@ describe("toolkit.scan", () => {
     await rm(workspace, { recursive: true, force: true });
   });
 
-  test("scans files and builds map", async () => {
+  test("scans files and returns records", async () => {
     const sourceDir = join(workspace, "src");
     await mkdir(sourceDir, { recursive: true });
 
@@ -126,20 +126,19 @@ export const y = 2;`,
     );
 
     const toolkit = createAgentToolkit();
-    const map = await toolkit.scan([file1, file2]);
+    const records = await toolkit.scan([file1, file2]);
 
-    expect(map.files.size).toBe(EXPECTED_MAP_FILE_COUNT);
-    const file1Summary = map.files.get(file1);
-    const file2Summary = map.files.get(file2);
-    expect(file1Summary?.tldr).toBeDefined();
-    expect(file2Summary?.tldr).toBeDefined();
+    expect(records).toHaveLength(EXPECTED_SCANNED_RECORD_COUNT);
+    expect(records.filter((r) => r.file === file1)).toHaveLength(2);
+    expect(records.filter((r) => r.file === file2)).toHaveLength(2);
+    expect(records.some((r) => r.type === "tldr")).toBe(true);
   });
 
-  test("returns empty map for non-existent paths", async () => {
+  test("returns empty array for non-existent paths", async () => {
     const toolkit = createAgentToolkit();
-    const map = await toolkit.scan([join(workspace, "nonexistent.ts")]);
+    const records = await toolkit.scan([join(workspace, "nonexistent.ts")]);
 
-    expect(map.files.size).toBe(0);
+    expect(records).toHaveLength(0);
   });
 
   test("parses all waymarks when scanning", async () => {
@@ -157,13 +156,11 @@ export const y = 2;`,
     const toolkit = createAgentToolkit({
       config: { typeCase: "lowercase" },
     });
-    const map = await toolkit.scan([file]);
+    const records = await toolkit.scan([file]);
 
-    expect(map.files.size).toBe(1);
-    const fileSummary = map.files.get(file);
-    expect(fileSummary?.tldr).toBeDefined();
-    // Should have both tldr and todo types
-    expect(fileSummary?.types.size).toBe(EXPECTED_MAP_TYPE_COUNT);
+    expect(records).toHaveLength(EXPECTED_FILE_RECORD_COUNT);
+    expect(records.some((r) => r.type === "tldr")).toBe(true);
+    expect(records.some((r) => r.type === "todo")).toBe(true);
   });
 });
 

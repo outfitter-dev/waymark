@@ -2,12 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 
-import {
-  buildWaymarkMap,
-  formatText,
-  parse,
-  resolveConfig,
-} from "@waymarks/core";
+import { formatText, parse, resolveConfig } from "@waymarks/core";
 import packageJson from "../package.json" with { type: "json" };
 
 export type { ParseOptions, WaymarkRecord } from "@waymarks/core";
@@ -28,7 +23,7 @@ export type AgentToolkitOptions = {
  * const toolkit = createAgentToolkit({ config: { typeCase: 'lowercase' } });
  * const records = toolkit.parse('// todo ::: fix bug');
  * const formatted = toolkit.format('//todo:::fix bug');
- * const map = await toolkit.scan(['src/**\/*.ts']);
+ * const scanned = await toolkit.scan(['src/index.ts', 'src/utils.ts']);
  * ```
  */
 export function createAgentToolkit(options: AgentToolkitOptions = {}) {
@@ -59,12 +54,14 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
       formatText(source, { config }).formattedText,
 
     /**
-     * Scan files and build a waymark map with TLDR summaries and marker counts.
+     * Scan files and return parsed waymark records.
      *
      * @param filePaths - Array of file paths to scan
-     * @returns Promise resolving to waymark map with file summaries
+     * @returns Promise resolving to array of waymark records
      */
-    scan: async (filePaths: string[]) => {
+    scan: async (
+      filePaths: string[]
+    ): Promise<import("@waymarks/core").WaymarkRecord[]> => {
       const records: import("@waymarks/core").WaymarkRecord[] = [];
 
       for (const filePath of filePaths) {
@@ -82,7 +79,7 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
         records.push(...parse(source, { file: filePath }));
       }
 
-      return buildWaymarkMap(records);
+      return records;
     },
   };
 }

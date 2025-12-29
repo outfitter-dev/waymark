@@ -17,8 +17,6 @@ export const graphInputSchema = configOptionsSchema.extend({
   paths: z.array(z.string().min(1)).nonempty(),
 });
 
-export const mapInputSchema = graphInputSchema;
-
 export const addWaymarkInputSchema = configOptionsSchema.extend({
   filePath: z.string().min(1),
   type: z.string().min(1),
@@ -55,7 +53,6 @@ export type ExpandedConfig = {
   explicitPath?: string;
 };
 
-export const MAP_RESOURCE_URI = "waymark://map";
 export const TODOS_RESOURCE_URI = "waymark://todos";
 export const DEFAULT_TLDR_PROMPT_LINES = 200;
 export const MAX_TLDR_PROMPT_LINES = 2000;

@@ -36,8 +36,6 @@ export {
 } from "./ids";
 export type { InsertionResult, InsertionSpec, InsertOptions } from "./insert";
 export { InsertionSpecSchema, insertWaymarks } from "./insert";
-export type { FileSummary, MarkerSummary, WaymarkMap } from "./map";
-export { buildWaymarkMap, summarizeMarkerTotals } from "./map";
 export type {
   NormalizeRecordOptions,
   NormalizeTypeOptions,
