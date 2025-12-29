@@ -49,6 +49,7 @@ temp/
 .waymark/index/
 .waymark/index.json
 .waymark/history.json
+.waymark/map.md
 
 # Test cache databases (SQLite artifacts from test runs)
 packages/core/fixtures/test-cache.db*
@@ -60,3 +61,6 @@ packages/core/test-cache/waymark.db*
 # Agent archives (historical docs)
 .agents/.archive/
 SCRATCHPAD.md
+
+# Local Claude settings
+.claude/settings.local.json

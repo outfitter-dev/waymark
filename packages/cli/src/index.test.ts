@@ -21,6 +21,7 @@ import {
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
 import { formatMapOutput, runCli, serializeMap } from "./index";
+>>>>>>> b013836 (test(cli): assert graph json flag wiring (WAY-50))
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
 
