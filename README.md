@@ -53,16 +53,16 @@ export async function authenticate(request: AuthRequest) {
   // ^todo ::: @agent implement refresh token rotation once backend ships
   return issueSession(user, request) // note ::: returns JWT signed with HS256
 }
+```
 
 Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) prefix are valid. Raised waymarks (`^todo`) mark work-in-progress that must clear before merging; starred waymarks (`*fix`) mark high-priority items. Combining them (`^*todo`) is fine, while doubling (`**fix`) is not.
 
 Line comments are preferred for waymarks. Use block comments only in languages without line-comment support (for example, CSS).
-```
 
 ## Start Here
 
-1. **Product Requirements**: [PRD.md](PRD.md) defines the v1 grammar, tooling scope, and roadmap.
-2. **Specification**: [Waymark Specification](docs/GRAMMAR.md) mirrors the grammar in the PRD for quick reference.
+1. **Specification**: [Waymark Specification](docs/waymark/SPEC.md) defines the grammar, tooling scope, and roadmap.
+2. **Grammar Reference**: [Waymark Grammar](docs/GRAMMAR.md) mirrors the specification for quick lookup.
 3. **Agent Guidelines**: [AGENTS.md](AGENTS.md) covers collaboration expectations for human and AI contributors.
 
 ### Quick Demo: Find TLDRs
@@ -109,13 +109,20 @@ wm find src/ --jsonl                      # newline-delimited JSON
 wm find src/ --text                       # human-readable formatted text
 
 # Standalone commands
-wm format src/example.ts --write     # format a file
+wm format src/ --write               # format waymarks in a directory
 wm lint src/ --json                  # validate waymark types
-wm migrate legacy.ts --write         # convert legacy comments
+wm remove src/auth.ts:42 --write     # remove a waymark
 wm modify src/auth.ts:42 --raise --write # adjust an existing waymark
 ```
 
-The CLI relies on the core formatter, parser, and map helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
+To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
+
+```toml
+[scan]
+include_codetags = true
+```
+
+The CLI relies on the core formatter and parser helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
 
 #### Shell Completions
 
@@ -182,15 +189,15 @@ The project is mid-rebuild: we are prioritizing documentation, search patterns, 
 
 ## Repository Map
 
-- `PRD.md` – Source of truth for grammar, tooling, and packaging
-- `docs/` – Published documentation, including historical context (`docs/about`) and the specification (`docs/GRAMMAR.md`)
+- `docs/waymark/SPEC.md` – Source of truth for grammar, tooling, and packaging
+- `docs/` – Published documentation, including historical context (`docs/about`) and the grammar reference (`docs/GRAMMAR.md`)
 - `.waymark/` – Project-specific waymark rules and conventions (`.waymark/rules/`)
 - `.agents/` – General agent rules plus symlinks into `.waymark/rules/`
 - `.migrate/` – Archived v1 content retained for research and migration notes
 
 ## Contributing
 
-We follow conventional commits, short-lived branches, and Graphite-managed stacks. Review `.agents/rules/CORE.md` plus the waymark-specific guidance in `.waymark/rules/waymarks/WAYMARKS.md` and `.waymark/rules/conventions.md` before sending patches. When adding docs, include a `<!-- tldr ::: ... -->` preamble and verify new waymarks with `rg ':::'`.
+We follow conventional commits, short-lived branches, and Graphite-managed stacks. Review `.agents/rules/CORE.md` plus the waymark-specific guidance in `.waymark/rules/WAYMARKS.md` and `.waymark/rules/CONVENTIONS.md` before sending patches. When adding docs, include a `<!-- tldr ::: ... -->` preamble and verify new waymarks with `rg ':::'`.
 
 ## Questions?
 
