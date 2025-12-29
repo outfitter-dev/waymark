@@ -362,4 +362,87 @@ describe("parse", () => {
       owner: "@bob",
     });
   });
+
+  test("rejects properties with space after colon (unquoted values)", () => {
+    // this ::: properties require no space after colon for unquoted values
+    const record = parseLine(
+      "// note ::: content: value with space should not be property",
+      LINE_ONE,
+      { file: "src/test.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.properties).toEqual({});
+    expect(record?.contentText).toBe(
+      "content: value with space should not be property"
+    );
+  });
+
+  test("accepts properties without space after colon", () => {
+    const record = parseLine(
+      "// note ::: owner:@alice status:active",
+      LINE_ONE,
+      { file: "src/test.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.properties).toEqual({
+      owner: "@alice",
+      status: "active",
+    });
+  });
+
+  test("ignores property-like patterns inside backticks", () => {
+    const record = parseLine(
+      "// note ::: use `key:value` syntax for properties",
+      LINE_ONE,
+      { file: "src/test.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.properties).toEqual({});
+    expect(record?.contentText).toBe("use `key:value` syntax for properties");
+  });
+
+  test("ignores multiple property patterns inside backticks", () => {
+    const record = parseLine(
+      "// note ::: example `owner:@bob` and `status:pending` in code",
+      LINE_ONE,
+      { file: "src/test.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.properties).toEqual({});
+    expect(record?.contentText).toContain("`owner:@bob`");
+    expect(record?.contentText).toContain("`status:pending`");
+  });
+
+  test("parses properties outside backticks but not inside", () => {
+    const record = parseLine(
+      "// note ::: status:active see `example:value` for syntax",
+      LINE_ONE,
+      { file: "src/test.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.properties).toEqual({
+      status: "active",
+    });
+    expect(record?.contentText).toContain("`example:value`");
+  });
+
+  test("allows quoted properties with spaces after colon", () => {
+    // this ::: quoted values can have spaces anywhere
+    const record = parseLine(
+      '// note ::: message:"hello world" owner:@alice',
+      LINE_ONE,
+      { file: "src/test.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.properties).toEqual({
+      message: "hello world",
+      owner: "@alice",
+    });
+  });
 });

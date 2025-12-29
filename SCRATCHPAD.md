@@ -17,6 +17,14 @@ Keep this log current while working. Recent activity only; historical logs archi
 
 ### 2025-10-23
 
+- **WAY-56: Fix grammar-level property parsing to handle spaces and backticks**
+  - Modified `PROPERTY_REGEX` in `packages/grammar/src/properties.ts` to reject unquoted properties with space after colon
+  - Changed regex from `\s*:\s*` to `\s*:` (no space after colon for unquoted values)
+  - Added `maskBackticks()` and `unmaskBackticks()` functions to prevent property extraction inside inline code
+  - Updated `extractPropertiesAndRelations()` to mask backtick content before property matching
+  - Added 7 comprehensive test cases covering space handling and backtick masking scenarios
+  - All 23 grammar tests passing; no type errors introduced
+
 - **WAY-55: Replace underlines with background colors for signal indicators**
   - Modified `styleType()` in `packages/cli/src/utils/display/formatters/styles.ts`
   - Replaced `chalk.bold.underline(color(type))` with `chalk.bgYellow(chalk.bold(color(signalStr + type)))`
