@@ -2,7 +2,6 @@
 
 // tldr ::: waymark CLI entry point using commander for command routing and parsing
 
-import { existsSync } from "node:fs";
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
 import { Command, Option } from "commander";
@@ -13,7 +12,7 @@ import {
   formatDoctorReport,
   runDoctorCommand,
 } from "./commands/doctor.ts";
-import { formatFile } from "./commands/fmt.ts";
+import { expandFormatPaths, formatFile } from "./commands/fmt.ts";
 import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
@@ -47,12 +46,6 @@ function writeStderr(message: string): void {
   STDERR.write(`${message}\n`);
 }
 
-function ensureFileExists(path: string): void {
-  if (!existsSync(path)) {
-    throw new Error(`File not found: ${path}`);
-  }
-}
-
 // Command handlers extracted for complexity management
 async function handleFormatCommand(
   program: Command,
@@ -75,10 +68,14 @@ async function handleFormatCommand(
 
   // If no paths provided, default to current directory
   const pathsToFormat = paths.length > 0 ? paths : ["."];
+  const expandedPaths = await expandFormatPaths(pathsToFormat, context.config);
 
-  for (const filePath of pathsToFormat) {
-    ensureFileExists(filePath);
+  if (expandedPaths.length === 0) {
+    writeStdout("format: no waymarks found");
+    return;
+  }
 
+  for (const filePath of expandedPaths) {
     // First, format without writing to see what changes would be made
     const { formattedText, edits } = await formatFile(
       { filePath, write: false },
