@@ -617,19 +617,9 @@ queries, filtering by type/tag/mention, and multiple output formats.
       description: "Show only starred (*) waymarks (important/valuable)",
     },
     {
-      name: "map",
-      type: "boolean",
-      description: "Display as file tree with TLDR summaries",
-    },
-    {
       name: "graph",
       type: "boolean",
       description: "Display as relation graph",
-    },
-    {
-      name: "summary",
-      type: "boolean",
-      description: "Include summary footer (with --map)",
     },
     commonFlags.json,
     commonFlags.jsonl,
@@ -660,7 +650,6 @@ queries, filtering by type/tag/mention, and multiple output formats.
     "wm --type todo --raised            # Show raised TODOs (^todo)",
     "wm --mention @alice                # Show waymarks mentioning @alice",
     "wm --tag perf                      # Show waymarks tagged #perf",
-    "wm --map                           # Show file tree with TLDRs",
     "wm --graph                         # Show relation graph",
     "wm src/ --json                     # Output as JSON",
   ],

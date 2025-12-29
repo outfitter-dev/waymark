@@ -20,9 +20,7 @@ OPTIONS
     -s, --starred           Show only important (*) waymarks
 
   Display Modes:
-    --map                   File tree with TLDR summaries
     --graph                 Dependency relations graph
-    --summary               Add summary footer (with --map)
 
   Output Formats:
     --json                  JSON array
@@ -40,9 +38,6 @@ EXAMPLES
 
   # Find todos assigned to @agent
   wm src/ --type todo --mention @agent
-
-  # Map documentation with TLDRs only
-  wm --map docs/ --type tldr
 
   # Export dependency graph as JSON
   wm --graph --json

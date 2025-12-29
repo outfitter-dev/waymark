@@ -105,14 +105,14 @@ pre-commit:
     format:
       run: bun run format
 
-    waymark-map:
-      run: bun run waymark:map || true  # Non-blocking
+    waymark-check:
+      run: bun run check:waymarks || true  # Non-blocking
 ```
 
 **Philosophy:**
 
 - Only block on formatting (deterministic, auto-fixable)
-- Waymark map generation runs but doesn't block
+- Waymark validation runs but doesn't block
 - Keep commits fast to maintain flow
 
 ### Pre-Push Hooks
@@ -127,8 +127,8 @@ pre-push:
     quality-gates:
       run: bun run lint && bun run typecheck && bun run test
 
-    waymark-map:
-      run: bun run waymark:map || true  # Non-blocking
+    waymark-check:
+      run: bun run check:waymarks || true  # Non-blocking
 ```
 
 **Philosophy:**
@@ -529,7 +529,7 @@ gt modify -acm "message"   # Amend with message
 gt submit                  # Submit stack to remote
 
 # Waymarks
-bun run waymark:map        # Generate waymark map
+bun run check:waymarks     # Validate waymarks
 rg ":::"                   # Find all waymarks
 waymark find --type todo # Find specific types
 ```

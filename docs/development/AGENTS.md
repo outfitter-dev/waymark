@@ -529,7 +529,7 @@ gt modify -acm "message"   # Amend with message
 gt submit                  # Submit stack to remote
 
 # Waymarks
-bun run check:waymarks     # Generate waymark map
+bun run check:waymarks     # Validate waymarks
 rg ":::"                   # Find all waymarks
 waymark find --type todo # Find specific types
 ```

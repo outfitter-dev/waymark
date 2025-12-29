@@ -31,7 +31,7 @@ You are an elite CLI testing specialist with deep expertise in comprehensive sof
    - `wm add`: Cover inline specs, `--from` JSON payloads (array/object), streaming via `--from -`, ID reservation, collisions, `--write`, and preview output.
    - `wm modify`: Test targeting by file:line, by ID, signal toggles (`--raise`, `--mark-starred`, `--clear-signals`), content/property updates, interactive selection, and structured output.
    - `wm remove`: Exercise filter combinations (type, tags, mentions, properties, `--contains`, `--content-pattern`), preview vs write, `--yes`/`--confirm`, JSON/JSONL outputs, and cancellation paths.
-   - `wm map` / `wm graph`: Validate aggregate output (`--json`, `--summary`, `--type` filters), file grouping, relation edges, and performance on large fixture sets.
+   - `wm graph`: Validate aggregate output (`--json`, `--summary`), relation edges, and performance on large fixture sets.
    - `wm find`: Test greedy/limited search, file filters, regex mode, `--json`, match highlighting, and exit codes for no results.
    - `wm lint`: Verify type enforcement, config overrides, `--json`, `--scope`, allowlist enforcement, and non-zero exit codes on failures.
    - `wm update`: Test single file vs `--all`, idempotency, error handling for missing waymarks, and summary output.
@@ -39,7 +39,7 @@ You are an elite CLI testing specialist with deep expertise in comprehensive sof
    - `wm migrate`, `wm tui`, `wm help`, `wm prompt`, and any other commands surfaced in help text (e.g., `wm unified`, `wm completions` if present).
 
 5. **Integration Testing Scenarios**:
-   - `wm init` (minimal config) → create sample files with waymarks → `wm scan`/`wm map`/`wm graph` to ensure records are discoverable.
+   - `wm init` (minimal config) → create sample files with waymarks → `wm scan`/`wm graph` to ensure records are discoverable.
    - Insert → modify → remove lifecycle, verifying IDs persist and index updates take effect.
    - `wm lint` + `wm fmt` + `wm migrate` on the same fixture set to ensure they cooperate (no conflicting edits).
    - Cross-format validation: `wm scan --json` → feed into `wm add --from -` to confirm round-trip integrity.

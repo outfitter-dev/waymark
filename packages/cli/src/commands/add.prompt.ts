@@ -190,9 +190,10 @@ COMBINING WITH OTHER COMMANDS
   # Insert multiple waymarks and output as JSON
   cat waymarks.jsonl | wm add --from - --json > results.json
 
-  # Find files missing tldr, insert them
-  wm . --map | grep -v "tldr:" | awk '{print $1":1"}' | while read loc; do
-    wm add $loc tldr "TODO: add file summary"
+  # Find files missing tldr and insert them
+  wm . --type tldr --json | jq -r '.[].file' | sort -u > with_tldr.txt
+  find src -name "*.ts" | while read f; do
+    grep -q "^$f$" with_tldr.txt || wm add "$f:1" tldr "TODO: add file summary"
   done
 
 For human-facing help, use: wm add --help

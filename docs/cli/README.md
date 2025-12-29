@@ -86,10 +86,6 @@ wm src/ --type todo                  # filter by type
 wm src/ --raised                     # only ^ (WIP)
 wm src/ --starred                    # only * (priority)
 
-# Map mode: file tree with TLDRs
-wm src/ --map                        # show file tree
-wm src/ --map --summary              # with summary footer
-
 # Graph mode: relation edges
 wm src/ --graph                      # dependency graph
 wm src/ --graph --json               # JSON output
@@ -142,9 +138,6 @@ wm src/
 ### 3. Explore the Codebase
 
 ```bash
-# Show file summaries
-wm src/ --map
-
 # Find all TODOs
 wm src/ --type todo
 

@@ -393,7 +393,6 @@ The CLI is a thin wrapper over a reusable TypeScript package (`@waymarks/core`) 
 
   - Examples: `waymark find todo`, `waymark find --ref #payments/core`, `waymark find --depends #auth/jwt`, `waymark find --json`
 
-- `waymark map` — File tree with `tldr` summaries and nearest `this` entries; `--json` for structured output.
 - `waymark fmt [--write] [path ...]` — Normalize spacing/case, property ordering; enforce policy.
 - `waymark lint [path ...]` — Validate structure/rules; non‑zero exit on errors.
 - `waymark graph [path ...]` — Emit dependency graph from relation properties.

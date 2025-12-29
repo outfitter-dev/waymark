@@ -39,26 +39,27 @@ Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) pref
 2. **Specification**: [Waymark Specification](docs/GRAMMAR.md) mirrors the grammar in the PRD for quick reference.
 3. **Agent Guidelines**: [AGENTS.md](AGENTS.md) covers collaboration expectations for human and AI contributors.
 
-### Quick Demo: `waymark map`
+### Quick Demo: Find TLDRs
 
-Get an instant overview of your entire codebase with file-level `tldr` summaries:
+Get an instant overview of your codebase with file-level `tldr` summaries:
 
 ```bash
-$ waymark map
+$ wm find src/ --type tldr
 
-src/
-├── auth.ts         // tldr ::: handles user authentication and JWT tokens
-├── database.ts     // tldr ::: postgres connection and query builders
-├── routes/
-│   ├── users.ts    // tldr ::: user CRUD endpoints
-│   └── admin.ts    // tldr ::: admin-only route handlers
-├── utils/
-│   ├── cache.ts    // tldr ::: Redis caching layer with TTL support
-│   └── logger.ts   // tldr ::: structured logging with context
-└── index.ts        // tldr ::: Express server initialization
+src/auth.ts:1
+  tldr ::: handles user authentication and JWT tokens
+
+src/database.ts:1
+  tldr ::: postgres connection and query builders
+
+src/routes/users.ts:1
+  tldr ::: user CRUD endpoints
+
+src/utils/cache.ts:1
+  tldr ::: Redis caching layer with TTL support
 ```
 
-This tree view instantly tells you what every file does - perfect for onboarding developers or giving AI agents context about your codebase architecture.
+TLDR waymarks instantly tell you what every file does - perfect for onboarding developers or giving AI agents context about your codebase architecture.
 
 ### CLI Usage
 
@@ -71,10 +72,6 @@ wm find src/ --type todo                  # filter by waymark type
 wm find src/ --raised                     # show only raised (^) waymarks (work-in-progress)
 wm find src/ --starred                    # show only starred (*) waymarks (high-priority)
 wm find src/ --type todo --mention @agent # combine filters
-
-# Map mode: file tree with TLDRs
-wm find src/ --map                        # show file tree with TLDR summaries
-wm find docs/ --map --type todo --summary # focus on types with summary footer
 
 # Graph mode: relation edges
 wm find src/ --graph                      # extract dependency relations

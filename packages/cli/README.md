@@ -35,9 +35,6 @@ wm src/
 # Filter by type, tags, mentions
 wm src/ --type todo --mention @agent --tag "#perf"
 
-# Map mode: file tree with TLDRs
-wm src/ --map
-
 # Graph mode: dependency relations
 wm src/ --graph
 

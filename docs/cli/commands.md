@@ -15,10 +15,6 @@ wm src/ --type todo                  # filter by type
 wm src/ --raised                     # only ^ (work-in-progress)
 wm src/ --starred                    # only * (high-priority)
 
-# Map mode: file tree with TLDRs
-wm src/ --map                        # show file tree with summaries
-wm docs/ --map --type tldr           # focus on TLDR waymarks
-
 # Graph mode: relation edges
 wm src/ --graph                      # extract dependencies
 wm src/ --graph --json               # JSON output
@@ -217,24 +213,6 @@ wm src/ --mention @alice
 
 # Combine filters (AND logic)
 wm src/ --type todo --mention @agent --tag perf
-```
-
-#### Map Mode
-
-Display file tree with TLDR summaries:
-
-```bash
-# Basic map
-wm src/ --map
-
-# Filter map by type
-wm src/ --map --type tldr
-
-# Show summary footer
-wm src/ --map --summary
-
-# JSON output
-wm src/ --map --json
 ```
 
 #### Graph Mode
@@ -730,7 +708,7 @@ wm src/ --graph
 List all file TLDRs:
 
 ```bash
-wm src/ --map --type tldr
+wm src/ --type tldr
 ```
 
 ### Agent Task List

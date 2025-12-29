@@ -25,7 +25,6 @@ export type UnifiedCommandOptions = {
   filePaths: string[];
   // Mode detection
   isGraphMode: boolean;
-  map?: boolean;
   // Filters
   types?: string[];
   tags?: string[];
@@ -51,7 +50,6 @@ export type UnifiedCommandOptions = {
   page?: number;
   // Output
   json?: boolean;
-  summary?: boolean;
   // Formatting
   compact?: boolean;
   noColor?: boolean;

@@ -104,10 +104,6 @@ wm src/ --mention @agent
 wm src/ --raised       # Only ^ waymarks
 wm src/ --starred      # Only * waymarks
 
-# Map mode: file tree with TLDRs
-wm src/ --map
-wm src/ --map --summary
-
 # Graph mode: relation edges
 wm src/ --graph
 wm src/ --graph --json
@@ -127,7 +123,6 @@ wm add <file:line> <type> <content> --write
 wm modify <file:line> --type fix --raise --write
 wm remove <file:line> --write
 wm update           # metadata refresh / migrations
-wm map <path> --summary
 wm graph <path> --json
 ```
 

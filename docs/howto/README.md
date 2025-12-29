@@ -39,7 +39,7 @@ wm src/
 **Tips**:
 
 - Start with TLDRs on key files only
-- Use `wm --map` to visualize coverage
+- Use `wm src/ --type tldr` to see all file summaries
 - Commit `.waymark/config.toml` to share team settings
 - Add `.waymark/index.json` to `.gitignore`
 
@@ -345,8 +345,8 @@ wm docs/ --tag "#docs/api"
 **Goal**: Help new developers understand the codebase quickly.
 
 ```bash
-# 1. Show project structure
-wm src/ --map
+# 1. Find file summaries
+wm src/ --type tldr
 
 # 2. Find key entry points
 wm src/ --type tldr --tag "#arch/entrypoint"
@@ -414,7 +414,6 @@ Add to `.bashrc` / `.zshrc`:
 ```bash
 alias wmt='wm src/ --type todo'
 alias wmr='wm src/ --raised'
-alias wmm='wm src/ --map'
 alias wml='wm lint src/'
 ```
 
@@ -451,9 +450,9 @@ Add to `.vscode/tasks.json`:
       "problemMatcher": []
     },
     {
-      "label": "Waymark: Map",
+      "label": "Waymark: TLDRs",
       "type": "shell",
-      "command": "wm src/ --map",
+      "command": "wm src/ --type tldr",
       "problemMatcher": []
     }
   ]

@@ -86,14 +86,6 @@ Common patterns:
 - "Find high priority items" → `wm --starred --json`
 - "Find work in progress" → `wm --raised --json`
 
-### Show waymark map
-
-Display a tree view of files with their TLDR summaries:
-
-```bash
-wm --map
-```
-
 ### Show dependency graph
 
 Display relationship graph between waymarks:
@@ -106,7 +98,7 @@ wm --graph --json
 
 1. Always use `--json` for programmatic parsing
 2. Combine filters to narrow results (e.g., `--type todo --mention @agent`)
-3. Use `--map` to get a quick overview of the codebase
+3. Use `--type tldr` to list all file summaries
 4. Check for raised waymarks (`--raised`) before merging to ensure work-in-progress is cleared
 5. Use `--starred` to find high-priority items that need attention
 

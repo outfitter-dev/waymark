@@ -46,7 +46,6 @@ FILTERING OPTIONS
 
 DISPLAY MODES
   (default)           List view - shows all matching waymarks
-  --map               Tree view - file structure with TLDRs
   --graph             Relations - dependency edges (ref/depends/needs)
 
 OUTPUT FORMATS
@@ -70,27 +69,23 @@ FILTER BEHAVIOR
 
 AGENT WORKFLOWS
 
-  1. Understand codebase structure:
-     wm --map src/ --type tldr --json
-     → Get file tree with purpose summaries
-
-  2. Find actionable work:
+  1. Find actionable work:
      wm --type todo --mention @agent --json
      → List all todos assigned to @agent
 
-  3. Identify dependencies:
+  2. Identify dependencies:
      wm --graph --json
      → Extract ref/depends/needs relations
 
-  4. Audit specific concerns:
+  3. Audit specific concerns:
      wm --tag "#sec" --starred --json
      → High-priority security items
 
-  5. Find in-progress work:
+  4. Find in-progress work:
      wm --raised --json
      → Everything marked with ^ signal
 
-  6. Review recent changes:
+  5. Review recent changes:
      wm src/auth/ --type todo --type fix --json
      → Outstanding work in auth module
 
@@ -110,13 +105,6 @@ EXAMPLE OUTPUTS
     }
   ]
 
-  $ wm --map src/ --type tldr
-  src/
-  ├── auth.ts         // tldr ::: user authentication service
-  ├── payments.ts     // tldr ::: Stripe payment processing
-  └── utils/
-      └── cache.ts    // tldr ::: Redis caching layer
-
   $ wm --graph --json
   {
     "nodes": [
@@ -134,7 +122,6 @@ EXAMPLE OUTPUTS
 TIPS FOR AGENTS
   ✓ Always use --json for programmatic parsing
   ✓ Combine filters for precision (type + mention + tag)
-  ✓ Use --map first to understand file structure
   ✓ Use --graph to understand dependencies before refactoring
   ✓ Check --raised before merging to ensure no WIP remains
   ✓ Use --starred to prioritize high-importance items
@@ -147,9 +134,6 @@ INTEGRATION PATTERNS
 
   # Check for blocking work before merge
   wm --raised --json | jq 'length' # Should be 0
-
-  # Generate work report
-  wm --map --type todo --summary > work-report.txt
 
   # Extract dependency graph for visualization
   wm --graph --json > deps.json

@@ -10,7 +10,6 @@ import { findRecords } from "./commands/find";
 import { formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
-import { mapFiles, parseMapArgs } from "./commands/map";
 import { migrateFile, migrateLegacyWaymarks } from "./commands/migrate";
 import type { ModifyPayload } from "./commands/modify";
 import { parseScanArgs, scanRecords } from "./commands/scan";
@@ -20,7 +19,7 @@ import {
 } from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
-import { formatMapOutput, runCli, serializeMap } from "./index";
+import { runCli } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
 
@@ -390,111 +389,6 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
-  test("map command summarizes files", async () => {
-    const source = ["// tldr ::: summary", "// todo ::: work"].join("\n");
-    const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file], defaultContext.config);
-    const [summary] = Array.from(map.files.values());
-    expect(summary?.tldr?.contentText).toBe("summary");
-    expect(summary?.types.get("todo")?.entries).toHaveLength(1);
-    await cleanup();
-  });
-
-  test("map command walks directories", async () => {
-    const { dir, cleanup } = await withTempFile("// tldr ::: root summary\n");
-    const nested = join(dir, "docs");
-    await mkdir(nested);
-    await writeFile(join(nested, "note.ts"), "// todo ::: nested", "utf8");
-
-    const map = await mapFiles([dir], defaultContext.config);
-    expect(map.files.size).toBeGreaterThan(0);
-    const entries = Array.from(map.files.values()).flatMap((summary) =>
-      Array.from(summary.types.values()).flatMap(
-        (markerSummary) => markerSummary.entries
-      )
-    );
-    expect(entries.some((record) => record.type === "todo")).toBe(true);
-    await cleanup();
-  });
-
-  test("parseMapArgs supports type filters and summary flag", () => {
-    const parsed = parseMapArgs([
-      "--type",
-      "todo",
-      "-t",
-      "fix",
-      "--summary",
-      "docs/file.ts",
-    ]);
-    expect(parsed.filePaths).toEqual(["docs/file.ts"]);
-    expect(parsed.types).toEqual(["todo", "fix"]);
-    expect(parsed.summary).toBe(true);
-  });
-
-  test("parseMapArgs throws when type flag lacks value", () => {
-    expect(() => parseMapArgs(["--type"])).toThrow("--type requires a value");
-  });
-
-  test("serializeMap filters types and adds summary when requested", async () => {
-    const source = [
-      "// tldr ::: summary",
-      "// todo ::: first",
-      "// fix ::: patch",
-    ].join("\n");
-    const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file], defaultContext.config);
-
-    const serialized = serializeMap(map, {
-      types: ["todo"],
-      includeSummary: true,
-    });
-
-    const fileEntry = serialized[file] as {
-      tldr?: string;
-      types: Record<string, number>;
-    };
-    expect(fileEntry.tldr).toBeUndefined();
-    expect(fileEntry.types).toEqual({ todo: 1 });
-
-    const summary = serialized._summary as { types: Record<string, number> };
-    expect(summary.types).toEqual({ todo: 1 });
-
-    await cleanup();
-  });
-
-  test("formatMapOutput renders summary footer when requested", async () => {
-    const source = [
-      "// tldr ::: overview",
-      "// todo ::: remaining work",
-      "// note ::: context",
-    ].join("\n");
-    const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file], defaultContext.config);
-
-    const output = formatMapOutput(map, { includeSummary: true });
-    const lines = output.split("\n");
-
-    expect(lines).toContain("Summary:");
-    expect(lines.some((line) => line.trim() === "todo: 1")).toBe(true);
-    expect(lines.some((line) => line.trim() === "note: 1")).toBe(true);
-
-    await cleanup();
-  });
-
-  test("formatMapOutput reports when no types match filters", async () => {
-    const source = ["// tldr ::: overview", "// todo ::: remaining work"].join(
-      "\n"
-    );
-    const { file, cleanup } = await withTempFile(source);
-    const map = await mapFiles([file], defaultContext.config);
-
-    const output = formatMapOutput(map, { types: ["fix"] });
-
-    expect(output).toBe("No matching waymarks.");
-
-    await cleanup();
-  });
-
   test("graph command captures relations", async () => {
     const source = [
       "// tldr ::: root ref:#docs/root",
@@ -633,40 +527,6 @@ describe("Unified command", () => {
     expect(options.types).toEqual(["todo"]);
     expect(options.raised).toBe(true);
     expect(options.tags).toEqual(["perf"]);
-  });
-
-  test("runUnifiedCommand handles map mode", async () => {
-    const source = ["// tldr ::: summary", "// todo ::: work"].join("\n");
-    const { file, cleanup } = await withTempFile(source);
-
-    const output = await runUnifiedOutput({
-      filePaths: [file],
-      isGraphMode: false,
-      map: true,
-    });
-
-    expect(output).toContain(file);
-    expect(output).toContain("tldr ::: summary");
-    expect(output).toContain("todo ::: work");
-    await cleanup();
-  });
-
-  test("runUnifiedCommand handles map mode with JSON", async () => {
-    const source = ["// tldr ::: summary", "// todo ::: work"].join("\n");
-    const { file, cleanup } = await withTempFile(source);
-
-    const output = await runUnifiedOutput({
-      filePaths: [file],
-      isGraphMode: false,
-      map: true,
-      json: true,
-    });
-
-    const parsed = JSON.parse(output) as Array<{ type: string; file: string }>;
-    expect(parsed).toHaveLength(2);
-    expect(parsed.map((record) => record.type)).toEqual(["tldr", "todo"]);
-    expect(parsed.every((record) => record.file === file)).toBe(true);
-    await cleanup();
   });
 
   test("runUnifiedCommand handles graph mode", async () => {
@@ -1244,26 +1104,6 @@ describe("Commander integration", () => {
     } finally {
       await cleanup();
     }
-  });
-
-  test("find command forwards --map with --json combination", async () => {
-    const program = await __test.createProgram();
-    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
-    expect(findCommand).toBeDefined();
-
-    let receivedOptions: Record<string, unknown> | undefined;
-    findCommand?.action(
-      (_paths: string[], options: Record<string, unknown>) => {
-        receivedOptions = options;
-      }
-    );
-
-    await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
-      from: "user",
-    });
-
-    expect(receivedOptions?.json).toBe(true);
-    expect(receivedOptions?.map).toBe(true);
   });
 
   test("find command forwards --graph with --json combination", async () => {

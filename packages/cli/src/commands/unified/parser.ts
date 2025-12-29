@@ -4,7 +4,6 @@ import { existsSync } from "node:fs";
 import { createArgIterator } from "../../utils/flags/iterator";
 import { handleJsonFlag } from "../../utils/flags/json";
 import { handleMentionFlag } from "../../utils/flags/mention";
-import { handleSummaryFlag } from "../../utils/flags/summary";
 import { handleTagFlag } from "../../utils/flags/tag";
 import { handleTldrFlag } from "../../utils/flags/tldr";
 import { handleTypeFlag } from "../../utils/flags/type";
@@ -31,9 +30,7 @@ export function createParseState(): ParseState {
     excludeTags: [] as string[],
     excludeMentions: [] as string[],
     jsonState: { json: false },
-    summaryState: { summary: false },
     isGraphMode: false,
-    map: false,
     raised: undefined as boolean | undefined,
     starred: undefined as boolean | undefined,
     // Display modes
@@ -112,7 +109,6 @@ export function processToken(
 
   // Standard filters
   handleJsonFlag(token, state.jsonState);
-  handleSummaryFlag(token, state.summaryState);
   handleTldrFlag(token, state.types);
   handleTypeFlag(token, iterator, state.types);
   handleTagFlag(token, iterator, state.tags);
@@ -151,11 +147,7 @@ export function buildOptions(state: ParseState): UnifiedCommandOptions {
     filePaths: state.positional.length > 0 ? state.positional : ["."],
     isGraphMode: state.isGraphMode,
     json: state.jsonState.json,
-    summary: state.summaryState.summary,
   };
-  if (state.map) {
-    options.map = true;
-  }
 
   // Filters
   if (state.types.length > 0) {
