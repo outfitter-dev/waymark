@@ -446,8 +446,9 @@ describe("CLI handlers", () => {
       defaultContext.config.allowTypes,
       defaultContext.config
     );
-    const issue = report.issues.find((i) => i.rule === "unknown-marker");
-    expect(issue).toBeDefined();
+    expect(report.issues).toHaveLength(1);
+    const issue = report.issues[0];
+    expect(issue?.rule).toBe("unknown-marker");
     expect(issue?.severity).toBe("warn");
     expect(issue?.type).toBe("todooo");
     await cleanup();
