@@ -470,6 +470,22 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
+  test("migrate command converts legacy TODO", async () => {
+    const source = "// TODO: replace legacy\n";
+    const { file, cleanup } = await withTempFile(source);
+    const report = await lintFiles(
+      [file],
+      defaultContext.config.allowTypes,
+      defaultContext.config
+    );
+    const duplicateIssue = report.issues.find(
+      (issue) => issue.rule === "duplicate-property"
+    );
+    expect(duplicateIssue).toBeDefined();
+    expect(duplicateIssue?.line).toBe(1);
+    await cleanup();
+  });
+
   test("lint command detects multiple tldr waymarks", async () => {
     const source = ["// tldr ::: one", "// tldr ::: two"].join("\n");
     const { file, cleanup } = await withTempFile(source);
