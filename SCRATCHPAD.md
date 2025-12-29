@@ -15,6 +15,15 @@ Keep this log current while working. Recent activity only; historical logs archi
 
 ## Recent Activity
 
+### 2025-10-23
+
+- **WAY-55: Replace underlines with background colors for signal indicators**
+  - Modified `styleType()` in `packages/cli/src/utils/display/formatters/styles.ts`
+  - Replaced `chalk.bold.underline(color(type))` with `chalk.bgYellow(chalk.bold(color(signalStr + type)))`
+  - Background colors provide better visual weight and hierarchy without cluttering output
+  - Tested with `^todo`, `*fix`, `^wip`, and `^*todo` signal combinations
+  - Visual output confirmed working across terminal themes
+
 ### 2025-10-16
 
 - **WAY-20: HTML Property Continuation Formatting** (Lock down HTML closure)
