@@ -1049,7 +1049,6 @@ describe("Commander integration", () => {
     expect(receivedOptions?.json).toBe(true);
   });
 
-
   test("find command forwards --graph with --json combination", async () => {
     const program = await __test.createProgram();
     const findCommand = program.commands.find(
@@ -1066,7 +1065,7 @@ describe("Commander integration", () => {
       receivedOptions =
         typeof this.optsWithGlobals === "function"
           ? this.optsWithGlobals()
-          : { ...program.opts(), ...options };
+          : options;
     });
 
     await program.parseAsync(["find", "--graph", "--json", "sample.ts"], {
