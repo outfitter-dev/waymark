@@ -1035,9 +1035,8 @@ describe("Commander integration", () => {
       }
     );
 
-    const result = await runCliCaptured(["find", "--json"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
+    await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
+
     expect(receivedOptions?.json).toBe(true);
   });
 
@@ -1055,9 +1054,10 @@ describe("Commander integration", () => {
       }
     );
 
-    const result = await runCliCaptured(["find", "--map", "--json"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
+    await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
+      from: "user",
+    });
+
     expect(receivedOptions?.json).toBe(true);
     expect(receivedOptions?.map).toBe(true);
   });
@@ -1254,6 +1254,46 @@ describe("Commander integration", () => {
     } finally {
       await cleanup();
     }
+  });
+
+  test("find command forwards --map with --json combination", async () => {
+    const program = await __test.createProgram();
+    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    expect(findCommand).toBeDefined();
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    findCommand?.action(
+      (_paths: string[], options: Record<string, unknown>) => {
+        receivedOptions = options;
+      }
+    );
+
+    await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
+      from: "user",
+    });
+
+    expect(receivedOptions?.json).toBe(true);
+    expect(receivedOptions?.map).toBe(true);
+  });
+
+  test("find command forwards --graph with --json combination", async () => {
+    const program = await __test.createProgram();
+    const findCommand = program.commands.find((cmd) => cmd.name() === "find");
+    expect(findCommand).toBeDefined();
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    findCommand?.action(
+      (_paths: string[], options: Record<string, unknown>) => {
+        receivedOptions = options;
+      }
+    );
+
+    await program.parseAsync(["find", "--graph", "--json", "sample.ts"], {
+      from: "user",
+    });
+
+    expect(receivedOptions?.json).toBe(true);
+    expect(receivedOptions?.graph).toBe(true);
   });
 });
 

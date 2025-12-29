@@ -49,7 +49,9 @@ export function formatMapCompact(
   return summaries
     .map((summary) => {
       const tldr = summary.tldr;
-      if (!tldr) return "";
+      if (!tldr) {
+        return "";
+      }
       const filePath = chalk.blue(`${summary.file}:${tldr.startLine}`);
       return `${filePath} ${tldr.contentText}`;
     })

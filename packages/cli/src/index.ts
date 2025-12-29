@@ -888,10 +888,6 @@ export async function createProgram(): Promise<Command> {
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
-    .option("--json", "output as JSON")
-    .option("--jsonl", "output as JSON Lines")
-    .option("--text", "output as human-readable formatted text")
-    .option("--no-color", "disable colored output")
     .addHelpText(
       "afterAll",
       "\nNote: Use --prompt flag with any command to see agent-facing documentation"
@@ -1482,12 +1478,21 @@ if (import.meta.main) {
 
 // For testing
 export async function runCli(argv: string[]): Promise<{ exitCode: number }> {
+  const previousArgv = [...process.argv];
+  const cliArgv = ["node", "wm", ...argv];
+  process.argv = [...cliArgv];
+
   try {
     const program = await createProgram();
-    // Parse without executing (for testing)
-    await program.parseAsync(["node", "wm", ...argv]);
+    await program.parseAsync(cliArgv);
     return { exitCode: 0 };
   } catch (_error) {
     return { exitCode: 1 };
+  } finally {
+    process.argv = previousArgv;
   }
 }
+
+export const __test = {
+  createProgram,
+};
