@@ -18,7 +18,6 @@ export type ParseState = {
   excludeMentions: string[];
   jsonState: { json: boolean };
   summaryState: { summary: boolean };
-  isMapMode: boolean;
   isGraphMode: boolean;
   raised: boolean | undefined;
   starred: boolean | undefined;
@@ -147,10 +146,6 @@ export function handleModeDisplayFlags(
   state: ParseState
 ): boolean {
   // Mode flags
-  if (token === "--map") {
-    state.isMapMode = true;
-    return true;
-  }
   if (token === "--graph" || token === "-g") {
     state.isGraphMode = true;
     return true;

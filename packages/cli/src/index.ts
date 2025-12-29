@@ -694,6 +694,72 @@ function displaySelectedWaymark(
   writeStdout(`\nRaw:\n${selected.raw}`);
 }
 
+async function handleMapCommand(
+  program: Command,
+  paths: string[],
+  options: Record<string, unknown>
+): Promise<void> {
+  if (options.prompt) {
+    const promptText = loadPrompt("map");
+    if (promptText) {
+      writeStdout(promptText);
+      return;
+    }
+    writeStderr("No agent prompt available for this command");
+    process.exit(1);
+  }
+
+  const scopeValue = program.opts().scope as string;
+  const globalOpts = { scope: normalizeScope(scopeValue) };
+  const context = await createContext(globalOpts);
+
+  // Default to current directory if no paths provided
+  const filePaths = paths.length > 0 ? paths : [process.cwd()];
+
+  // Import map functions
+  const { mapFiles } = await import("./commands/map.ts");
+  const { formatMapOutput, serializeMap } = await import(
+    "./utils/map-rendering.ts"
+  );
+
+  // Build the map
+  const map = await mapFiles(filePaths, context.config);
+
+  // Determine output format from global options
+  const mergedOptions = {
+    ...program.opts(),
+    ...options,
+  };
+
+  // Determine output format
+  let format = "text";
+  if (mergedOptions.json) {
+    format = "json";
+  } else if (mergedOptions.jsonl) {
+    format = "jsonl";
+  }
+
+  if (format === "json") {
+    // JSON output: only include files with TLDRs, clean format
+    const output = serializeMap(map, { tldrOnly: true });
+    writeStdout(JSON.stringify(output, null, 2));
+  } else if (format === "jsonl") {
+    // JSONL output: one file per line
+    const output = serializeMap(map, { tldrOnly: true });
+    for (const [file, data] of Object.entries(output)) {
+      if (file !== "_summary") {
+        writeStdout(
+          JSON.stringify({ file, ...(data as Record<string, unknown>) })
+        );
+      }
+    }
+  } else {
+    // Text output: tree format with clean TLDRs
+    const output = formatMapOutput(map, { tldrOnly: true });
+    writeStdout(output);
+  }
+}
+
 async function handleUnifiedCommand(
   program: Command,
   paths: string[],
@@ -732,6 +798,7 @@ const _DEFAULT_HELP_WIDTH = 80;
 
 const COMMAND_ORDER = [
   "find",
+  "map",
   "add",
   "modify",
   "remove",
@@ -1378,6 +1445,56 @@ See 'wm migrate --prompt' for agent-facing documentation.
       }
     );
 
+  // Map command - file tree with TLDR summaries (WAY-33)
+  program
+    .command("map")
+    .argument("[paths...]", "files or directories to map")
+    .option("--prompt", "show agent-facing prompt instead of help")
+    .description("show file tree with TLDR summaries only")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm map                    # Map current directory
+  $ wm map src/               # Map src directory
+  $ wm map docs/ --json       # JSON output
+
+Output:
+  Text mode shows a clean file tree with TLDR summaries:
+    src/
+    ├─ auth.ts:1        handles user authentication and JWT tokens
+    ├─ database.ts:5    postgres connection and query builders
+    └─ routes/
+       ├─ users.ts:3    user CRUD endpoints
+       └─ admin.ts:2    admin-only route handlers
+
+  Files without TLDR waymarks are omitted from the map.
+
+Output Formats:
+  --json    (global) Structured JSON with file paths and TLDRs
+  --jsonl   (global) Newline-delimited JSON (one file per line)
+  --text    (global) Human-readable tree format (default)
+
+See 'wm map --prompt' for agent-facing documentation.
+    `
+    )
+    .action(async function (
+      this: Command,
+      paths: string[],
+      options: Record<string, unknown>
+    ) {
+      try {
+        const mergedOptions =
+          typeof this.optsWithGlobals === "function"
+            ? this.optsWithGlobals()
+            : { ...program.opts(), ...options };
+        await handleMapCommand(program, paths, mergedOptions);
+      } catch (error) {
+        writeStderr(error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
+    });
+
   // Find command - explicit scan and filter (WAY-31)
   program
     .command("find")
@@ -1388,9 +1505,7 @@ See 'wm migrate --prompt' for agent-facing documentation.
     .option("--raised, -R", "filter for raised (^) waymarks")
     .option("--starred, -S", "filter for starred (*) waymarks")
     .option("--tldr", "shorthand for --type tldr")
-    .option("--map", "show file tree with TLDRs")
     .option("--graph", "show dependency graph")
-    .option("--summary", "show summary footer (map mode)")
     .option("--long", "show detailed record information")
     .option("--tree", "group output by directory structure")
     .option("--flat", "show flat list (default)")
@@ -1424,7 +1539,6 @@ See 'wm migrate --prompt' for agent-facing documentation.
 Examples:
   $ wm find                                   # Scan current directory
   $ wm find src/ --type todo --mention @agent
-  $ wm find --map docs/ --type tldr          # Map documentation with TLDRs only
   $ wm find --graph --json                   # Export dependency graph as JSON
   $ wm find --starred --tag "#sec"           # Find high-priority security issues
   $ wm find src/ --type todo --type fix --raised --mention @agent
@@ -1445,9 +1559,7 @@ Filter Options:
     --type todo --tag "#perf" → Shows todos AND tagged with #perf
 
 Mode Options:
-  --map                       File tree with TLDR summaries
   --graph                     Dependency graph (canonicals and relations)
-  --summary                   Show summary footer (map mode)
   --interactive               Interactively select a waymark
 
 Display Options:
@@ -1511,7 +1623,7 @@ DEPRECATION NOTICE:
 Examples:
   $ wm find                                   # Scan current directory
   $ wm find src/ --type todo --mention @agent
-  $ wm find --map docs/ --type tldr          # Map documentation with TLDRs only
+  $ wm map docs/                             # Show file tree with TLDR summaries
   $ wm find --graph --json                   # Export dependency graph as JSON
   $ wm find --starred --tag "#sec"           # Find high-priority security issues
 

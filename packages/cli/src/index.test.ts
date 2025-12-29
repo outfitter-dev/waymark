@@ -553,16 +553,8 @@ describe("CLI handlers", () => {
 });
 
 describe("Unified command", () => {
-  test("parseUnifiedArgs detects map mode", () => {
-    const options = parseUnifiedArgs(["--map", "src/"]);
-    expect(options.isMapMode).toBe(true);
-    expect(options.isGraphMode).toBe(false);
-    expect(options.filePaths).toEqual(["src/"]);
-  });
-
   test("parseUnifiedArgs detects graph mode", () => {
     const options = parseUnifiedArgs(["--graph", "src/"]);
-    expect(options.isMapMode).toBe(false);
     expect(options.isGraphMode).toBe(true);
     expect(options.filePaths).toEqual(["src/"]);
   });
@@ -645,7 +637,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: true,
       isGraphMode: false,
     });
 
@@ -659,7 +650,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: true,
       isGraphMode: false,
       json: true,
     });
@@ -681,7 +671,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: true,
     });
 
@@ -696,7 +685,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       types: ["todo"],
       json: true,
@@ -716,7 +704,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       raised: true,
       json: true,
@@ -738,7 +725,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       starred: true,
       json: true,
@@ -763,7 +749,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       types: ["todo"],
       raised: true,
@@ -789,7 +774,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       displayMode: "long",
     });
@@ -808,7 +792,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       displayMode: "tree",
     });
@@ -825,7 +808,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       displayMode: "flat",
     });
@@ -848,7 +830,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       contextAround: 1,
     });
@@ -866,7 +847,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       groupBy: "type",
     });
@@ -887,7 +867,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [dir],
-      isMapMode: false,
       isGraphMode: false,
       sortBy: "file",
     });
@@ -913,7 +892,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       limit: 2,
     });
@@ -936,7 +914,6 @@ describe("Unified command", () => {
 
     const output = await runUnifiedOutput({
       filePaths: [file],
-      isMapMode: false,
       isGraphMode: false,
       types: ["todo"],
       groupBy: "type",
