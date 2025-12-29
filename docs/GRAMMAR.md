@@ -942,5 +942,5 @@ If you used earlier waymark syntax:
 
 - [CLI Reference](./cli/README.md) - Command-line tools
 - [How-To Guides](howto/README.md) - Practical usage examples
-- [Waymark Specification](waymark/SPEC.md) - Canonical v1 grammar specification
+- [Waymark Specification](waymark/SPEC.md) - Product requirements and roadmap
 - [JSON Schema](../schemas/waymark-record.schema.json) - Record schema
