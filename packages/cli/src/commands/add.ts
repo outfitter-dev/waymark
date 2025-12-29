@@ -357,35 +357,14 @@ export async function runAddCommand(
   return { results, summary, output, exitCode };
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: JSON parsing requires branching
 async function loadSpecsFromSource(path: string): Promise<InsertionSpec[]> {
   const source =
     path === "-" ? await readFromStdin() : await readFile(path, "utf8");
 
   try {
     const parsed = JSON.parse(source);
-
-    // Support both array format and object format with insertions field
-    if (Array.isArray(parsed)) {
-      return z.array(InsertionSpecSchema).parse(parsed);
-    }
-
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      Array.isArray(parsed.insertions)
-    ) {
-      return z.array(InsertionSpecSchema).parse(parsed.insertions);
-    }
-
-    if (typeof parsed === "object" && parsed !== null) {
-      // Single spec object
-      return [InsertionSpecSchema.parse(parsed)];
-    }
-
-    throw new Error(
-      "Invalid JSON: expected InsertionSpec, InsertionSpec[], or { insertions: InsertionSpec[] }"
-    );
+    const candidates = normalizeInsertionSpecs(parsed);
+    return z.array(InsertionSpecSchema).parse(candidates);
   } catch (error) {
     if (error instanceof ZodError) {
       logger.error("JSON validation failed");
@@ -397,6 +376,24 @@ async function loadSpecsFromSource(path: string): Promise<InsertionSpec[]> {
     }
     throw error;
   }
+}
+
+function normalizeInsertionSpecs(parsed: unknown): unknown {
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  if (parsed && typeof parsed === "object") {
+    const record = parsed as { insertions?: unknown };
+    if (Array.isArray(record.insertions)) {
+      return record.insertions;
+    }
+    return [parsed];
+  }
+
+  throw new Error(
+    "Invalid JSON: expected InsertionSpec, InsertionSpec[], or { insertions: InsertionSpec[] }"
+  );
 }
 
 function summarize(results: InsertionResult[]): AddSummary {
