@@ -1268,7 +1268,11 @@ Notes:
       options: ModifyCliOptions
     ) {
       try {
-        await handleModifyCommand(program, this, target, options);
+        const mergedOptions =
+          typeof this.optsWithGlobals === "function"
+            ? this.optsWithGlobals()
+            : { ...program.opts(), ...options };
+        await handleModifyCommand(program, this, target, mergedOptions);
       } catch (error) {
         writeStderr(error instanceof Error ? error.message : String(error));
         process.exit(1);
