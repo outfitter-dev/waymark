@@ -211,10 +211,10 @@ export function styleLineNumber(num: number | string): string {
 }
 
 /**
- * Style a file path (underline)
+ * Style a file path (bold, no underline)
  */
 export function styleFilePath(path: string): string {
-  return chalk.underline(path);
+  return chalk.bold(path);
 }
 
 /**
