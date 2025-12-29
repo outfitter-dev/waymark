@@ -7,10 +7,12 @@ import {
   type WaymarkMap,
 } from "@waymarks/core";
 import { MARKERS } from "@waymarks/grammar";
+import chalk from "chalk";
 
 export type MapRenderOptions = {
   types?: string[];
   includeSummary?: boolean;
+  compact?: boolean;
 };
 
 export type MapSerializeOptions = MapRenderOptions;
@@ -28,6 +30,34 @@ export function printMap(
 }
 
 /**
+ * Format a waymark map in compact mode (one line per file).
+ */
+export function formatMapCompact(
+  map: WaymarkMap,
+  typeFilter?: Set<string>
+): string {
+  const summaries = Array.from(map.files.values())
+    .filter((summary) => shouldIncludeTldr(summary, typeFilter))
+    .sort((a, b) => a.file.localeCompare(b.file));
+
+  if (summaries.length === 0) {
+    return typeFilter && typeFilter.size > 0
+      ? "No matching waymarks."
+      : "No waymarks found.";
+  }
+
+  return summaries
+    .map((summary) => {
+      const tldr = summary.tldr;
+      if (!tldr) return "";
+      const filePath = chalk.blue(`${summary.file}:${tldr.startLine}`);
+      return `${filePath} ${tldr.contentText}`;
+    })
+    .filter((line) => line.length > 0)
+    .join("\n");
+}
+
+/**
  * Format a waymark map for human-friendly CLI output.
  */
 export function formatMapOutput(
@@ -35,6 +65,13 @@ export function formatMapOutput(
   options: MapRenderOptions = {}
 ): string {
   const typeFilter = toTypeFilter(options.types);
+
+  // Compact mode: one line per file
+  if (options.compact) {
+    return formatMapCompact(map, typeFilter);
+  }
+
+  // Tree mode: hierarchical structure
   const fileLines = buildFileBlocks(map, typeFilter);
   const outputLines = fileLines.flat();
 
@@ -112,6 +149,13 @@ export function toTypeFilter(types?: string[]): Set<string> | undefined {
   return new Set(types.map((type) => type.toLowerCase()));
 }
 
+type TreeNode = {
+  name: string;
+  type: "file" | "directory";
+  summary?: FileSummary;
+  children: Map<string, TreeNode>;
+};
+
 /**
  * Build the set of formatted lines for each file in the map.
  */
@@ -122,9 +166,109 @@ export function buildFileBlocks(
   const summaries = Array.from(map.files.values()).sort((a, b) =>
     a.file.localeCompare(b.file)
   );
-  return summaries
-    .map((summary) => buildFileLines(summary, typeFilter))
-    .filter((lines) => lines.length > 0);
+
+  // Filter summaries first
+  const filtered = summaries.filter((summary) => {
+    const includeTldr = shouldIncludeTldr(summary, typeFilter);
+    return !typeFilter || includeTldr;
+  });
+
+  // Build directory tree
+  const root: TreeNode = { name: "", type: "directory", children: new Map() };
+
+  for (const summary of filtered) {
+    const parts = summary.file.split("/");
+    let current = root;
+
+    // Build directory structure
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      if (!part) {
+        continue;
+      }
+      if (!current.children.has(part)) {
+        current.children.set(part, {
+          name: part,
+          type: "directory",
+          children: new Map(),
+        });
+      }
+      const next = current.children.get(part);
+      if (!next) {
+        continue;
+      }
+      current = next;
+    }
+
+    // Add file
+    const fileName = parts.at(-1);
+    if (!fileName) {
+      continue;
+    }
+    current.children.set(fileName, {
+      name: fileName,
+      type: "file",
+      summary,
+      children: new Map(),
+    });
+  }
+
+  // Render tree
+  const result: string[][] = [];
+  renderTree({ node: root, prefix: "", result, typeFilter });
+  return result;
+}
+
+type RenderOptions = {
+  node: TreeNode;
+  prefix: string;
+  result: string[][];
+  typeFilter?: Set<string> | undefined;
+};
+
+function renderTree(options: RenderOptions): void {
+  const { node, prefix, result, typeFilter } = options;
+  const entries = Array.from(node.children.entries()).sort((a, b) => {
+    // Directories first, then files
+    if (a[1].type !== b[1].type) {
+      return a[1].type === "directory" ? -1 : 1;
+    }
+    return a[0].localeCompare(b[0]);
+  });
+
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    if (!entry) {
+      continue;
+    }
+    const [name, child] = entry;
+    const isLast = i === entries.length - 1;
+    const connector = isLast ? "└─" : "├─";
+    const childPrefix = isLast ? "   " : "│  ";
+
+    if (child.type === "directory") {
+      // Directory header
+      result.push([`${prefix}${connector} ${name}/`]);
+      // Recurse into directory
+      renderTree({
+        node: child,
+        prefix: prefix + childPrefix,
+        result,
+        typeFilter,
+      });
+    } else if (child.summary) {
+      // File with TLDR
+      const lines = buildFileLines(
+        child.summary,
+        prefix + connector,
+        prefix + childPrefix,
+        typeFilter
+      );
+      if (lines.length > 0) {
+        result.push(lines);
+      }
+    }
+  }
 }
 
 /**
@@ -132,23 +276,27 @@ export function buildFileBlocks(
  */
 export function buildFileLines(
   summary: FileSummary,
+  linePrefix: string,
+  tldrPrefix: string,
   typeFilter?: Set<string>
 ): string[] {
+  const lines: string[] = [];
+  const fileName = summary.file.split("/").pop() || summary.file;
+
+  // File path in blue with tree drawing prefix
   const includeTldr = shouldIncludeTldr(summary, typeFilter);
-  const markerCounts = collectMarkerCounts(summary, typeFilter);
+  const fileDisplay =
+    includeTldr && summary.tldr
+      ? `${fileName}:${summary.tldr.startLine}`
+      : fileName;
+  const filePath = chalk.blue(fileDisplay);
+  lines.push(`${linePrefix} ${filePath}`);
 
-  if (!includeTldr && markerCounts.length === 0 && typeFilter) {
-    return [];
-  }
-
-  const lines = [summary.file];
+  // TLDR directly under file path with tree line
   if (includeTldr && summary.tldr) {
-    lines.push(`  tldr: ${summary.tldr.contentText}`);
+    lines.push(`${tldrPrefix}${summary.tldr.contentText}`);
   }
-  for (const { type, count } of markerCounts) {
-    lines.push(`  ${type}: ${count}`);
-  }
-  lines.push("");
+
   return lines;
 }
 

@@ -38,6 +38,7 @@ export async function runUnifiedCommand(
     const mapOptions = {
       ...(options.types && { types: options.types }),
       ...(summary !== undefined && { includeSummary: summary }),
+      ...(options.compact && { compact: options.compact }),
     };
     if (json) {
       return { output: JSON.stringify(serializeMap(map, mapOptions)) };
