@@ -2,19 +2,19 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 
-import type { FormatResult } from "@waymarks/core";
+import type { FormatResult, WaymarkConfig } from "@waymarks/core";
 import { formatText } from "@waymarks/core";
 
 import type { CommandContext } from "../types";
-import { ensureFileExists } from "../utils/fs";
+import { ensureFileExists, expandInputPaths } from "../utils/fs";
 
 export type FormatCommandOptions = {
-  filePath: string;
+  filePaths: string[];
   write: boolean;
 };
 
 export async function formatFile(
-  options: FormatCommandOptions,
+  options: { filePath: string; write: boolean },
   context: CommandContext
 ): Promise<FormatResult> {
   const { filePath, write } = options;
@@ -32,6 +32,28 @@ export async function formatFile(
   return result;
 }
 
+async function filterFilesWithWaymarks(paths: string[]): Promise<string[]> {
+  const results: string[] = [];
+  for (const path of paths) {
+    const source = await readFile(path, "utf8").catch(() => null);
+    if (typeof source !== "string") {
+      continue;
+    }
+    if (source.includes(":::")) {
+      results.push(path);
+    }
+  }
+  return results;
+}
+
+export async function expandFormatPaths(
+  inputs: string[],
+  config: WaymarkConfig
+): Promise<string[]> {
+  const expanded = await expandInputPaths(inputs, config);
+  return await filterFilesWithWaymarks(expanded);
+}
+
 export function parseFormatArgs(argv: string[]): FormatCommandOptions {
   if (argv.length === 0) {
     throw new Error("fmt requires a file path");
@@ -39,14 +61,14 @@ export function parseFormatArgs(argv: string[]): FormatCommandOptions {
 
   const write = argv.includes("--write") || argv.includes("-w");
   const remaining = argv.filter((arg) => !arg.startsWith("-"));
-  const filePath = remaining[0];
+  const filePaths = remaining.filter((path) => path.length > 0);
 
-  if (typeof filePath !== "string" || filePath.length === 0) {
+  if (filePaths.length === 0) {
     throw new Error("fmt requires a file path");
   }
 
   return {
-    filePath,
+    filePaths,
     write,
   };
 }
