@@ -25,8 +25,6 @@ export type WaymarkScanConfig = {
 export type WaymarkConfig = {
   typeCase: "lowercase" | "uppercase";
   idScope: "repo" | "file";
-  protectedBranches: string[];
-  signalsOnProtected: "strip" | "fail" | "allow";
   allowTypes: string[];
   skipPaths: string[];
   includePaths: string[];
@@ -42,8 +40,6 @@ export type WaymarkConfig = {
 export type PartialWaymarkConfig = {
   typeCase?: "lowercase" | "uppercase";
   idScope?: "repo" | "file";
-  protectedBranches?: string[];
-  signalsOnProtected?: "strip" | "fail" | "allow";
   allowTypes?: string[];
   skipPaths?: string[];
   includePaths?: string[];

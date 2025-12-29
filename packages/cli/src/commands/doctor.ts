@@ -147,7 +147,7 @@ async function checkConfiguration(
 
   // Check 2: Validate config values
   if (context.config) {
-    const { typeCase, idScope, protectedBranches } = context.config;
+    const { typeCase, idScope } = context.config;
 
     if (!["lowercase", "uppercase"].includes(typeCase)) {
       issues.push({
@@ -162,15 +162,6 @@ async function checkConfiguration(
         severity: "error",
         category: "configuration",
         message: `Invalid idScope: "${idScope}" (must be "repo" or "file")`,
-      });
-    }
-
-    if (protectedBranches.length === 0) {
-      issues.push({
-        severity: "info",
-        category: "configuration",
-        message: "No protected branches configured",
-        suggestion: 'Consider adding ["main", "master"] to protectedBranches',
       });
     }
   }
@@ -287,7 +278,6 @@ async function checkWaymarkIntegrity(
   const relationIssues: DiagnosticIssue[] = [];
   const markerIssues: DiagnosticIssue[] = [];
   const tldrIssues: DiagnosticIssue[] = [];
-  const signalIssues: DiagnosticIssue[] = [];
 
   // Expand input paths
   const inputPaths = paths && paths.length > 0 ? paths : ["."];
@@ -423,42 +413,6 @@ async function checkWaymarkIntegrity(
     }
   }
 
-  // Check 5: Protected branch signals
-  try {
-    const { execSync } = await import("node:child_process");
-    const branch = execSync("git branch --show-current", {
-      encoding: "utf-8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-
-    const isProtected = context.config.protectedBranches.some(
-      (pattern: string) => {
-        if (pattern.includes("*")) {
-          const regex = new RegExp(`^${pattern.replace(/\*/g, ".*")}$`);
-          return regex.test(branch);
-        }
-        return pattern === branch;
-      }
-    );
-
-    if (isProtected) {
-      const raisedWaymarks = allRecords.filter(
-        (r) => r.signals?.raised || r.signals?.important
-      );
-      if (raisedWaymarks.length > 0) {
-        signalIssues.push({
-          severity: "warning",
-          category: "integrity",
-          message: `Found ${raisedWaymarks.length} raised/starred waymarks on protected branch "${branch}"`,
-          suggestion: "Clear signals before merging",
-        });
-      }
-    }
-  } catch {
-    // Not in git repo or git not available
-    logger.debug("Could not check git branch");
-  }
-
   // Add all check results
   results.push({
     category: "integrity",
@@ -493,13 +447,6 @@ async function checkWaymarkIntegrity(
     name: "TLDR Coverage",
     passed: tldrIssues.length === 0,
     issues: tldrIssues,
-  });
-
-  results.push({
-    category: "integrity",
-    name: "Protected Branch Signals",
-    passed: signalIssues.length === 0,
-    issues: signalIssues,
   });
 
   return results;

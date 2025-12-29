@@ -10,11 +10,9 @@
     "raisedWaymarks": {
       "logLevel": {
         "preCommit": "info",
-        "prePush": "warn",
-        "targetingProtectedBranch": "error"
+        "prePush": "warn"
       }
-    },
-    "protectedBranches": ["main", "release/*"]
+    }
   },
   "canonicalRefs": {
     "scope": "repo"

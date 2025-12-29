@@ -2,8 +2,6 @@
   // tldr ::: consolidated waymark configuration with repo-specific ignore patterns
   "typeCase": "lowercase",
   "idScope": "repo",
-  "protectedBranches": ["main", "release/*"],
-  "signalsOnProtected": "strip",
   "allowTypes": ["idea", "example"],
   "skipPaths": [
     "**/.git/**",
@@ -23,9 +21,9 @@
   },
   "lint": {
     "unknownMarker": "warn",
-    "duplicateProperty": "warn", // ask ::: @agent what what this intended to do?
-    "danglingRelation": "error", // todo ::: @agent this shouldn't be user-configuraable
-    "duplicateCanonical": "error" // todo ::: @agent this shouldn't be user-configuraable
+    "duplicateProperty": "warn",
+    "danglingRelation": "error",
+    "duplicateCanonical": "error"
   },
   // note ::: keepMarkers retained here for future map integration once CLI supports it directly
   "map": {
