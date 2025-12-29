@@ -15,12 +15,10 @@ Keep this log current while working. Recent activity only; historical logs archi
 
 ## Recent Activity
 
-
 ### 2025-12-28
 
 - Drafted repo cleanup plan in `.agents/plans/repo-cleanup/PLAN.md`
 - Noted tracked test cache artifacts in `fixtures/test-cache.db*` and `test-cache/waymark.db*`
-
 
 ### 2025-10-23
 
@@ -44,7 +42,6 @@ Keep this log current while working. Recent activity only; historical logs archi
     - packages/cli/src/commands/doctor.ts (new file, 620 lines)
     - packages/cli/src/index.ts (added imports, handler function, command registration)
 
-
 - **WAY-33: Extract `wm map` as separate command** ✅ COMPLETE
   - ✅ Created new standalone `wm map` command in index.ts with TLDR-only output
   - ✅ Removed `--map` flag from find/unified command
@@ -65,15 +62,11 @@ Keep this log current while working. Recent activity only; historical logs archi
     - packages/cli/src/commands/unified/flag-handlers.ts (removed --map flag, removed isMapMode from ParseState)
     - packages/cli/src/index.test.ts (removed isMapMode test references)
 
-
-
 - **WAY-58: Remove underline styling from filename headers**
   - Modified `styleFilePath()` in `packages/cli/src/utils/display/formatters/styles.ts`
   - Removed `chalk.underline()` and replaced with `chalk.bold()` for lighter visual weight
   - Maintains clear file boundaries without heavy underline styling
   - All lint checks passing; no new type errors introduced
-
-
 
 - **WAY-56: Fix grammar-level property parsing to handle spaces and backticks**
   - Modified `PROPERTY_REGEX` in `packages/grammar/src/properties.ts` to reject unquoted properties with space after colon
@@ -82,8 +75,6 @@ Keep this log current while working. Recent activity only; historical logs archi
   - Updated `extractPropertiesAndRelations()` to mask backtick content before property matching
   - Added 7 comprehensive test cases covering space handling and backtick masking scenarios
   - All 23 grammar tests passing; no type errors introduced
-
-
 
 - **WAY-55: Replace underlines with background colors for signal indicators**
   - Modified `styleType()` in `packages/cli/src/utils/display/formatters/styles.ts`
