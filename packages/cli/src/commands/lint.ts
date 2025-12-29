@@ -282,8 +282,52 @@ const multipleTldrRule: LintRule = {
   },
 };
 
+const CODETAG_PATTERNS = [
+  { regex: /\/\/\s*TODO\s*:/i, leader: "//", marker: "todo" },
+  { regex: /\/\/\s*FIXME\s*:/i, leader: "//", marker: "fix" },
+  { regex: /\/\/\s*NOTE\s*:/i, leader: "//", marker: "note" },
+  { regex: /\/\/\s*HACK\s*:/i, leader: "//", marker: "hack" },
+  { regex: /\/\/\s*XXX\s*:/i, leader: "//", marker: "fix" },
+  { regex: /#\s*TODO\s*:/i, leader: "#", marker: "todo" },
+  { regex: /#\s*FIXME\s*:/i, leader: "#", marker: "fix" },
+  { regex: /#\s*NOTE\s*:/i, leader: "#", marker: "note" },
+  { regex: /--\s*TODO\s*:/i, leader: "--", marker: "todo" },
+  { regex: /--\s*FIXME\s*:/i, leader: "--", marker: "fix" },
+];
+
+const legacyPatternRule: LintRule = {
+  name: "legacy-pattern",
+  severity: "warn",
+  checkFile: ({ filePath, source }) => {
+    const issues: LintIssue[] = [];
+    const lines = source.split("\n");
+
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index] ?? "";
+      for (const pattern of CODETAG_PATTERNS) {
+        if (pattern.regex.test(line)) {
+          issues.push({
+            file: filePath,
+            line: index + 1,
+            rule: "legacy-pattern",
+            severity: "warn",
+            message: `Legacy codetag found. Consider: "${pattern.leader} ${pattern.marker} :::"`,
+          });
+        }
+      }
+    }
+
+    return issues;
+  },
+};
+
 function buildLintRules(): LintRule[] {
-  return [unknownMarkerRule, duplicatePropertyRule, multipleTldrRule];
+  return [
+    unknownMarkerRule,
+    duplicatePropertyRule,
+    multipleTldrRule,
+    legacyPatternRule,
+  ];
 }
 
 export function parseLintArgs(argv: string[]): LintCommandOptions {
