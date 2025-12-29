@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { resolveConfig } from "@waymarks/core";
 import type { Command } from "commander";
 import { findRecords } from "./commands/find";
-import { formatFile } from "./commands/fmt";
+import { expandFormatPaths, formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
 import type { ModifyPayload } from "./commands/modify";
@@ -90,6 +90,15 @@ describe("CLI handlers", () => {
     );
     expect(formattedText).toBe("// todo ::: needs cleanup\n");
     expect(edits).toHaveLength(1);
+    await cleanup();
+  });
+
+  test("format path expansion skips waymark-ignore-file", async () => {
+    const { file, cleanup } = await withTempFile(
+      "// waymark-ignore-file\n// todo ::: ignore this\n"
+    );
+    const paths = await expandFormatPaths([file], defaultContext.config);
+    expect(paths).toEqual([]);
     await cleanup();
   });
 
