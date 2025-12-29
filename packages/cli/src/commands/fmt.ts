@@ -35,35 +35,11 @@ export async function formatFile(
   return result;
 }
 
-function hasIgnoreMarker(source: string): boolean {
-  const lines = source.split("\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#!")) {
-      continue;
-    }
-    if (IGNORE_FILE_MARKER_PATTERN.test(line)) {
-      return true;
-    }
-    const startsWithComment =
-      trimmed.startsWith("//") ||
-      trimmed.startsWith("#") ||
-      trimmed.startsWith("--") ||
-      trimmed.startsWith("<!--");
-    if (!startsWithComment) {
-      break;
-    }
-  }
-  return false;
-}
 async function filterFilesWithWaymarks(paths: string[]): Promise<string[]> {
   const results: string[] = [];
   for (const path of paths) {
     const source = await readFile(path, "utf8").catch(() => null);
     if (typeof source !== "string") {
-      continue;
-    }
-    if (hasIgnoreMarker(source)) {
       continue;
     }
     if (source.includes(":::")) {
@@ -91,7 +67,7 @@ export function parseFormatArgs(argv: string[]): FormatCommandOptions {
   const filePaths = remaining.filter((path) => path.length > 0);
 
   if (filePaths.length === 0) {
-    throw new Error("fmt requires at least one file path");
+    throw new Error("fmt requires a file path");
   }
 
   return {
