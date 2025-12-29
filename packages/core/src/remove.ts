@@ -92,6 +92,8 @@ export type RemoveOptions = {
   config?: WaymarkConfig;
   idManager?: WaymarkIdManager;
   logger?: CoreLogger;
+  reason?: string;
+  removedBy?: string;
 };
 
 type FileContext = {
@@ -422,7 +424,15 @@ async function removeRecordMatch(
 
   const ids = extractIds(record.raw);
   for (const id of ids) {
-    await state.options.idManager.remove(id);
+    const reason = state.options.reason ?? match.reason;
+    const removeOptions: { reason?: string; removedBy?: string } = {};
+    if (reason !== undefined) {
+      removeOptions.reason = reason;
+    }
+    if (state.options.removedBy !== undefined) {
+      removeOptions.removedBy = state.options.removedBy;
+    }
+    await state.options.idManager.remove(id, removeOptions);
   }
 }
 

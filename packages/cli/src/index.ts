@@ -1160,6 +1160,7 @@ Notes:
       "--from <file>",
       "read removal targets from JSON file (use - for stdin)"
     )
+    .option("--reason <text>", "record a removal reason in history")
     .option("--criteria <query>", "remove waymarks matching filter criteria")
     .option("--write, -w", "actually remove (default is preview)", false)
     .option("--yes, -y", "skip confirmation prompt", false)

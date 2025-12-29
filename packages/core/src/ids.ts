@@ -90,9 +90,18 @@ export class WaymarkIdManager {
     );
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(
+    id: string,
+    options?: { reason?: string; removedBy?: string }
+  ): Promise<void> {
     const normalized = this.normalizeId(id);
-    await this.index.delete(normalized);
+    const history: { removedBy: string; reason?: string } = {
+      removedBy: options?.removedBy ?? "cli",
+    };
+    if (options?.reason !== undefined) {
+      history.reason = options.reason;
+    }
+    await this.index.delete(normalized, history);
   }
 
   get(id: string): Promise<IdIndexEntry | null> {
