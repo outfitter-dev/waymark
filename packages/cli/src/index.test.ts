@@ -1049,31 +1049,17 @@ describe("Commander integration", () => {
     expect(receivedOptions?.json).toBe(true);
   });
 
-  test("find command forwards --map with --json combination", async () => {
+  test("find command rejects deprecated --map flag", async () => {
     const program = await __test.createProgram();
     const findCommand = program.commands.find(
       (cmd: Command) => cmd.name() === "find"
     );
     expect(findCommand).toBeDefined();
-
-    let receivedOptions: Record<string, unknown> | undefined;
-    findCommand?.action(function (
-      this: Command,
-      _paths: string[],
-      options: Record<string, unknown>
-    ) {
-      receivedOptions =
-        typeof this.optsWithGlobals === "function"
-          ? this.optsWithGlobals()
-          : options;
-    });
-
-    await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
-      from: "user",
-    });
-
-    expect(receivedOptions?.json).toBe(true);
-    expect(receivedOptions?.map).toBe(true);
+    await expect(
+      program.parseAsync(["find", "--map", "--json", "sample.ts"], {
+        from: "user",
+      })
+    ).rejects.toThrow();
   });
 
   test("find command forwards --graph with --json combination", async () => {
