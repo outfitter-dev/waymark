@@ -7,7 +7,7 @@ PURPOSE
   Normalize waymark syntax to ensure consistent formatting across files.
 
 COMMAND SYNTAX
-  wm format <file> [--write]
+  wm format <paths...> [--write]
 
 MODES
   Default (dry-run):  Preview changes without modifying files
@@ -51,6 +51,10 @@ AGENT WORKFLOWS
   3. Format multiple files:
      wm format src/**/*.ts --write
      → Batch format all TypeScript files
+
+  3b. Format an entire directory:
+     wm format src/ --write
+     → Format all waymark files under src/
 
   4. Integrate with pre-commit hooks:
      git diff --name-only | grep '\\.ts$' | xargs wm format --write
@@ -105,6 +109,7 @@ TIPS FOR AGENTS
   ✓ Integrate into pre-commit hooks for consistency
   ✓ Use with lint to ensure both syntax and structure correctness
   ✓ Format before submitting PRs to avoid style conflicts
+  ✓ Add \`// waymark-ignore-file\` at the top to skip a file
 
 COMBINING WITH OTHER COMMANDS
 

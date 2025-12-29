@@ -2,7 +2,7 @@
 
 export default `
 USAGE
-  wm format <file> [options]
+  wm format <paths...> [options]
 
 DESCRIPTION
   Format and normalize waymark syntax in files.
@@ -29,8 +29,12 @@ EXAMPLES
   # Apply formatting changes
   wm format src/auth.ts --write
 
-  # Format multiple files
+  # Format multiple files or directories
   wm format src/**/*.ts --write
+  wm format src/ --write
+
+NOTES
+  Files beginning with a \`waymark-ignore-file\` comment are skipped.
 
 BEFORE FORMATTING
   //todo:::implement auth

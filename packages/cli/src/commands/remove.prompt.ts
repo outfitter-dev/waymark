@@ -11,6 +11,7 @@ COMMAND SYNTAX
   wm remove --id <wm-id> [--write]
   wm remove --from <json-file> [--write]
   wm remove --criteria <filter-query> <paths> [--write]
+  wm remove <file:line> --write --reason "<text>"
 
 REMOVAL MODES
 
@@ -27,6 +28,7 @@ SAFETY MODEL
   Two-step process:
   1. Preview → Inspect what will be removed
   2. Execute → Add --write to apply changes
+  Use --reason to store an audit note in history.json
 
 INPUT METHODS
 
@@ -92,6 +94,9 @@ EXAMPLES
 
   7. Remove deprecated waymarks:
      wm remove --criteria "type:deprecated" --write
+
+  8. Record a removal reason:
+     wm remove src/auth.ts:42 --write --reason "obsolete"
 
 AGENT WORKFLOWS
 
