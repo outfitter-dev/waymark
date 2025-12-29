@@ -4,8 +4,10 @@ import type { WaymarkRecord } from "@waymarks/grammar";
 import chalk from "chalk";
 import type { CommandContext } from "../../types";
 import { formatRecords } from "../../utils/display";
+import { formatMapOutput, serializeMap } from "../../utils/map-rendering";
 import { renderRecords } from "../../utils/output";
 import { graphRecords } from "../graph";
+import { mapFiles } from "../map";
 import { scanRecords } from "../scan";
 import { applyFilters } from "./filters";
 import type { UnifiedCommandOptions } from "./types";
@@ -23,7 +25,8 @@ export async function runUnifiedCommand(
   options: UnifiedCommandOptions,
   context: CommandContext
 ): Promise<UnifiedCommandResult> {
-  const { filePaths, isGraphMode, json, noColor } = options;
+  const { filePaths, isGraphMode, json, map, summary, compact, noColor } =
+    options;
 
   // Disable chalk colors if --no-color flag is set
   if (noColor) {
@@ -37,6 +40,21 @@ export async function runUnifiedCommand(
       return { output: JSON.stringify(edges) };
     }
     return { output: edges.map((edge) => JSON.stringify(edge)).join("\n") };
+  }
+
+  if (map) {
+    const mapData = await mapFiles(filePaths, context.config);
+    const mapOptions = {
+      types: options.types,
+      includeSummary: summary,
+      compact,
+    };
+
+    if (json) {
+      return { output: JSON.stringify(serializeMap(mapData, mapOptions)) };
+    }
+
+    return { output: formatMapOutput(mapData, mapOptions) };
   }
 
   // Scan + filter mode (find behavior)

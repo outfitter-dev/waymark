@@ -1055,6 +1055,8 @@ export async function createProgram(): Promise<Command> {
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
+    .option("--map", "show file tree with TLDR summaries")
+    .option("--summary", "include summary footer for map output")
     .addOption(jsonOption)
     .addOption(jsonlOption)
     .addOption(textOption)

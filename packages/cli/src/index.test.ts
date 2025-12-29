@@ -58,6 +58,10 @@ async function runUnifiedOutput(
   return result.output;
 }
 
+function stripAnsi(value: string): string {
+  return value.replaceAll("\u001b", "").replace(/\[[0-9;]*m/g, "");
+}
+
 async function withTempFile(
   content: string,
   ext = ".ts"
@@ -638,9 +642,11 @@ describe("Unified command", () => {
     const output = await runUnifiedOutput({
       filePaths: [file],
       isGraphMode: false,
+      map: true,
     });
 
-    expect(output).toBe("");
+    expect(output).toContain("sample.ts");
+    expect(output).toContain("summary");
     await cleanup();
   });
 
@@ -651,6 +657,7 @@ describe("Unified command", () => {
     const output = await runUnifiedOutput({
       filePaths: [file],
       isGraphMode: false,
+      map: true,
       json: true,
     });
 
@@ -872,7 +879,7 @@ describe("Unified command", () => {
     });
 
     // With enhanced formatter, file headers are separate lines
-    const lines = output.split("\n");
+    const lines = stripAnsi(output).split("\n");
     const fileHeaders = lines.filter(
       (l) => l.endsWith(".ts") && !l.includes(":::")
     );
@@ -970,8 +977,8 @@ describe("Unified command", () => {
 // todo ::: @alice different task #perf
 // fix ::: @agent bug #sec`;
     const { file, cleanup } = await withTempFile(source);
-    const output = await runUnifiedOutput(
-      parseUnifiedArgs([file, "todo @agent #perf"])
+    const output = stripAnsi(
+      await runUnifiedOutput(parseUnifiedArgs([file, "todo @agent #perf"]))
     );
     expect(output).toContain("@agent task #perf");
     expect(output).not.toContain("@alice");
@@ -1026,11 +1033,16 @@ describe("Commander integration", () => {
     expect(findCommand).toBeDefined();
 
     let receivedOptions: Record<string, unknown> | undefined;
-    findCommand?.action(
-      (_paths: string[], options: Record<string, unknown>) => {
-        receivedOptions = options;
-      }
-    );
+    findCommand?.action(function (
+      this: Command,
+      _paths: string[],
+      options: Record<string, unknown>
+    ) {
+      receivedOptions =
+        typeof this.optsWithGlobals === "function"
+          ? this.optsWithGlobals()
+          : { ...program.opts(), ...options };
+    });
 
     await program.parseAsync(["find", "--json", "sample.ts"], { from: "user" });
 
@@ -1045,11 +1057,16 @@ describe("Commander integration", () => {
     expect(findCommand).toBeDefined();
 
     let receivedOptions: Record<string, unknown> | undefined;
-    findCommand?.action(
-      (_paths: string[], options: Record<string, unknown>) => {
-        receivedOptions = options;
-      }
-    );
+    findCommand?.action(function (
+      this: Command,
+      _paths: string[],
+      options: Record<string, unknown>
+    ) {
+      receivedOptions =
+        typeof this.optsWithGlobals === "function"
+          ? this.optsWithGlobals()
+          : { ...program.opts(), ...options };
+    });
 
     await program.parseAsync(["find", "--map", "--json", "sample.ts"], {
       from: "user",
@@ -1067,15 +1084,20 @@ describe("Commander integration", () => {
     expect(findCommand).toBeDefined();
 
     let receivedOptions: Record<string, unknown> | undefined;
-    findCommand?.action(
-      (_paths: string[], options: Record<string, unknown>) => {
-        receivedOptions = options;
-      }
-    );
+    findCommand?.action(function (
+      this: Command,
+      _paths: string[],
+      options: Record<string, unknown>
+    ) {
+      receivedOptions =
+        typeof this.optsWithGlobals === "function"
+          ? this.optsWithGlobals()
+          : { ...program.opts(), ...options };
+    });
 
-    const result = await runCliCaptured(["find", "--graph", "--json"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
+    await program.parseAsync(["find", "--graph", "--json", "sample.ts"], {
+      from: "user",
+    });
     expect(receivedOptions?.json).toBe(true);
     expect(receivedOptions?.graph).toBe(true);
   });

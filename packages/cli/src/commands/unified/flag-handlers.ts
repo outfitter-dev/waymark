@@ -19,6 +19,7 @@ export type ParseState = {
   jsonState: { json: boolean };
   summaryState: { summary: boolean };
   isGraphMode: boolean;
+  map: boolean;
   raised: boolean | undefined;
   starred: boolean | undefined;
   displayMode: "text" | "long" | "tree" | "flat" | "graph" | undefined;
@@ -148,6 +149,10 @@ export function handleModeDisplayFlags(
   // Mode flags
   if (token === "--graph" || token === "-g") {
     state.isGraphMode = true;
+    return true;
+  }
+  if (token === "--map") {
+    state.map = true;
     return true;
   }
 

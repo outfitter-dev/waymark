@@ -25,6 +25,7 @@ export type UnifiedCommandOptions = {
   filePaths: string[];
   // Mode detection
   isGraphMode: boolean;
+  map?: boolean;
   // Filters
   types?: string[];
   tags?: string[];
