@@ -65,25 +65,25 @@ This tree view instantly tells you what every file does - perfect for onboarding
 The `wm` command provides a unified interface for all waymark operations:
 
 ```bash
-# Basic scanning and filtering (default mode)
-wm src/                              # scan and display all waymarks
-wm src/ --type todo                  # filter by waymark type
-wm src/ --raised                     # show only raised (^) waymarks (work-in-progress)
-wm src/ --starred                    # show only starred (*) waymarks (high-priority)
-wm src/ --type todo --mention @agent # combine filters
+# Basic scanning and filtering
+wm find src/                              # scan and display all waymarks
+wm find src/ --type todo                  # filter by waymark type
+wm find src/ --raised                     # show only raised (^) waymarks (work-in-progress)
+wm find src/ --starred                    # show only starred (*) waymarks (high-priority)
+wm find src/ --type todo --mention @agent # combine filters
 
 # Map mode: file tree with TLDRs
-wm src/ --map                        # show file tree with TLDR summaries
-wm docs/ --map --type todo --summary # focus on types with summary footer
+wm find src/ --map                        # show file tree with TLDR summaries
+wm find docs/ --map --type todo --summary # focus on types with summary footer
 
 # Graph mode: relation edges
-wm src/ --graph                      # extract dependency relations
-wm src/ --graph --json               # JSON output for tooling
+wm find src/ --graph                      # extract dependency relations
+wm find src/ --graph --json               # JSON output for tooling
 
 # Output formats
-wm src/ --json                       # compact JSON array
-wm src/ --jsonl                      # newline-delimited JSON
-wm src/ --text                       # human-readable formatted text
+wm find src/ --json                       # compact JSON array
+wm find src/ --jsonl                      # newline-delimited JSON
+wm find src/ --text                       # human-readable formatted text
 
 # Standalone commands
 wm format src/example.ts --write     # format a file
