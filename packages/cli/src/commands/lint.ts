@@ -2,7 +2,14 @@
 
 import { readFile } from "node:fs/promises";
 
-import { isValidType, parse, type WaymarkConfig } from "@waymarks/core";
+import {
+  isValidType,
+  parse,
+  SIGIL,
+  type WaymarkConfig,
+  type WaymarkRecord,
+} from "@waymarks/core";
+import { PROPERTY_KEYS, PROPERTY_REGEX } from "@waymarks/grammar";
 
 import { expandInputPaths } from "../utils/fs";
 
@@ -29,7 +36,7 @@ export type LintReport = {
 type LintRuleContext = {
   filePath: string;
   source: string;
-  records: ReturnType<typeof parse>;
+  records: WaymarkRecord[];
   allowList: Set<string>;
   config: WaymarkConfig;
 };
@@ -63,8 +70,199 @@ const unknownMarkerRule: LintRule = {
   },
 };
 
+function stripInlineCode(text: string): string {
+  let result = "";
+  let inBacktick = false;
+  for (const char of text) {
+    if (char === "`") {
+      inBacktick = !inBacktick;
+      result += " ";
+      continue;
+    }
+    result += inBacktick ? " " : char;
+  }
+  return result;
+}
+
+function findContinuationPropertyKey(
+  line: string,
+  commentLeader: string | null
+): string | null {
+  if (!commentLeader) {
+    return null;
+  }
+  const trimmed = line.trimStart();
+  if (!trimmed.startsWith(commentLeader)) {
+    return null;
+  }
+  const afterLeader = trimmed.slice(commentLeader.length);
+  const sigilIndex = afterLeader.indexOf(SIGIL);
+  if (sigilIndex === -1) {
+    return null;
+  }
+  const beforeSigil = afterLeader.slice(0, sigilIndex).trim();
+  if (beforeSigil.length === 0 || beforeSigil.includes(" ")) {
+    return null;
+  }
+  const key = beforeSigil.toLowerCase();
+  if (!PROPERTY_KEYS.has(key)) {
+    return null;
+  }
+  return key;
+}
+
+const duplicatePropertyRule: LintRule = {
+  name: "duplicate-property",
+  severity: "warn",
+  checkFile: ({ filePath, records }) => {
+    const issues: LintIssue[] = [];
+    for (const record of records) {
+      issues.push(...findDuplicatePropertyIssues(filePath, record));
+    }
+    return issues;
+  },
+};
+
+function findDuplicatePropertyIssues(
+  filePath: string,
+  record: WaymarkRecord
+): LintIssue[] {
+  const issues: LintIssue[] = [];
+  const seen = new Map<string, number>();
+  const rawLines = record.raw.split("\n");
+  const propertyRegex = new RegExp(PROPERTY_REGEX.source, PROPERTY_REGEX.flags);
+
+  for (let index = 0; index < rawLines.length; index += 1) {
+    const line = rawLines[index] ?? "";
+    const lineNumber = record.startLine + index;
+    const normalizedLine = stripInlineCode(line);
+
+    addInlinePropertyIssues({
+      issues,
+      seen,
+      filePath,
+      lineNumber,
+      recordType: record.type,
+      normalizedLine,
+      propertyRegex,
+    });
+
+    if (index > 0) {
+      addContinuationPropertyIssue({
+        issues,
+        seen,
+        filePath,
+        lineNumber,
+        recordType: record.type,
+        line,
+        commentLeader: record.commentLeader,
+      });
+    }
+  }
+
+  return issues;
+}
+
+type DuplicatePropertyContext = {
+  issues: LintIssue[];
+  seen: Map<string, number>;
+  filePath: string;
+  lineNumber: number;
+  recordType: string;
+};
+
+type InlinePropertyContext = DuplicatePropertyContext & {
+  normalizedLine: string;
+  propertyRegex: RegExp;
+};
+
+type ContinuationPropertyContext = DuplicatePropertyContext & {
+  line: string;
+  commentLeader: string | null;
+};
+
+function addInlinePropertyIssues({
+  issues,
+  seen,
+  filePath,
+  lineNumber,
+  recordType,
+  normalizedLine,
+  propertyRegex,
+}: InlinePropertyContext): void {
+  for (const match of normalizedLine.matchAll(propertyRegex)) {
+    const keyRaw = match[1];
+    if (!keyRaw) {
+      continue;
+    }
+    recordDuplicateProperty({
+      issues,
+      seen,
+      filePath,
+      lineNumber,
+      key: keyRaw.toLowerCase(),
+      recordType,
+    });
+  }
+}
+
+function addContinuationPropertyIssue({
+  issues,
+  seen,
+  filePath,
+  lineNumber,
+  recordType,
+  line,
+  commentLeader,
+}: ContinuationPropertyContext): void {
+  const continuationKey = findContinuationPropertyKey(line, commentLeader);
+  if (!continuationKey) {
+    return;
+  }
+  recordDuplicateProperty({
+    issues,
+    seen,
+    filePath,
+    lineNumber,
+    key: continuationKey,
+    recordType,
+  });
+}
+
+type RecordDuplicatePropertyInput = {
+  issues: LintIssue[];
+  seen: Map<string, number>;
+  filePath: string;
+  lineNumber: number;
+  key: string;
+  recordType: string;
+};
+
+function recordDuplicateProperty({
+  issues,
+  seen,
+  filePath,
+  lineNumber,
+  key,
+  recordType,
+}: RecordDuplicatePropertyInput): void {
+  const existing = seen.get(key);
+  if (existing !== undefined) {
+    issues.push({
+      file: filePath,
+      line: lineNumber,
+      rule: "duplicate-property",
+      severity: "warn",
+      message: `Duplicate property key "${key}" (first at line ${existing})`,
+      type: recordType,
+    });
+    return;
+  }
+  seen.set(key, lineNumber);
+}
+
 function buildLintRules(): LintRule[] {
-  return [unknownMarkerRule];
+  return [unknownMarkerRule, duplicatePropertyRule];
 }
 
 export function parseLintArgs(argv: string[]): LintCommandOptions {
