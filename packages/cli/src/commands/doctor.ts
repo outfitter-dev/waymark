@@ -23,7 +23,6 @@ const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
   "rel",
 ];
 const TLDR_TOP_LINES_MAX = 20;
-// biome-ignore lint/style/noMagicNumbers: base-2 kilobyte constant for MB conversion
 const KIBIBYTE = 1024;
 const BYTES_PER_MB = KIBIBYTE * KIBIBYTE;
 const MAX_INDEX_MB = 10;
