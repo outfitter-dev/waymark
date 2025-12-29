@@ -1,5 +1,8 @@
 <!-- tldr ::: comprehensive Waymark repo audit findings, mismatches, and next-step questions for handoff -->
 
+> **Legacy Document**: This planning document references archived materials in `.agents/.archive/`.
+> The project has moved to skill-based configuration. See `CLAUDE.md` for current guidance.
+
 # Waymark Repo Audit (2025-12-29)
 
 This note captures a comprehensive review of the Waymark repo across concept, code, CLI ergonomics, and docs. It’s written for handoff — assume the next agent has **no prior context**.
@@ -11,6 +14,7 @@ This note captures a comprehensive review of the Waymark repo across concept, co
 - Current prerelease advertised: **v1.0.0-beta.1** (README + CHANGELOG).
 
 High-level architecture (as of now):
+
 - `packages/grammar` → parser/tokenizer, content/relations extraction
 - `packages/core` → format, insert, remove, map, graph, config
 - `packages/cli` → commander CLI (`wm`, `waymark`) + output formatting
@@ -115,6 +119,7 @@ This is a key product positioning issue. Right now the only clear guidance is **
   - `README.md` even shows a block comment waymark example, which visually resembles doc-comments.
 
 **Recommendation:**
+
 - Add a short “Waymarks are NOT docstrings” section in `README.md` + `docs/GRAMMAR.md`.
 - Explicitly say: “Do not place waymarks inside JSDoc/TSDoc/Python docstrings/Go doc comments. They are adjacent, not inside.”
 - Decide whether to support `/* */` and if so, explicitly ban `/** */` in lint + docs.

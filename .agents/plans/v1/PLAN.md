@@ -1,5 +1,8 @@
 <!-- tldr ::: comprehensive v1.0 release plan aligning docs, CLI, and implementation -->
 
+> **Legacy Document**: This planning document references archived materials in `.agents/.archive/`.
+> The project has moved to skill-based configuration. See `CLAUDE.md` for current guidance.
+
 # Waymark v1.0 Release Plan
 
 **Created:** 2025-12-29
@@ -42,23 +45,27 @@ This plan addresses the gaps identified in the [v1 Audit](./AUDIT.md). The core 
 **Policy:** Line comments are the **preferred** form. Block comments (`/* */`) are allowed **only** for languages that lack line comments (e.g., CSS).
 
 **Files to modify:**
+
 - `README.md` — Update examples to use line comments; add note about CSS exception
 - `docs/GRAMMAR.md` — Update comment leader table to mark `/* */` as "CSS/languages without line comments only"
 - `PRD.md` — Clarify block comment restriction in grammar section
 - `.waymark/rules/WAYMARKS.md` — Add explicit guidance on when block comments are acceptable
 
 **Documentation updates needed:**
+
 - Add explicit callout: "Line comments (`//`, `#`, `--`) are preferred. Block comments (`/* */`) should only be used in languages that lack line comments (CSS, legacy XML)."
 - Add lint guidance: Using block comments in JS/TS when line comments are available may trigger a warning
 - CSS example: `/* tldr ::: stylesheet for login form #ui/auth */`
 
 **Verification:**
+
 ```bash
 # Check that JS/TS examples don't use block comments for waymarks
 rg "\/\*.*:::" --type ts --type js  # Should be empty or intentional CSS-like files only
 ```
 
 **Notes:**
+
 - Continuation syntax (`// ::: continued`) handles multi-line needs for languages with line comments
 - Parser already supports block comments; this is about documentation and lint guidance
 - CSS files legitimately need block comments since CSS has no line comment syntax
@@ -68,11 +75,13 @@ rg "\/\*.*:::" --type ts --type js  # Should be empty or intentional CSS-like fi
 **Status:** Already implemented (confirmed by audit)
 
 **Verification tasks:**
+
 - [ ] Run existing continuation tests: `bun test packages/grammar/src/parser.test.ts`
 - [ ] Run formatter continuation tests: `bun test packages/core/src/format.test.ts`
 - [ ] Manually verify examples in docs match actual behavior
 
 **Documentation check:**
+
 - [ ] `PRD.md` multi-line section is accurate
 - [ ] `docs/GRAMMAR.md` continuation examples work
 - [ ] `.waymark/rules/WAYMARKS.md` examples are correct
@@ -112,6 +121,7 @@ rg "\/\*.*:::" --type ts --type js  # Should be empty or intentional CSS-like fi
    - `docs/` — Remove any map-specific documentation
 
 **Verification:**
+
 ```bash
 # Ensure no map references remain in CLI
 rg "map" packages/cli/src/ --type ts -l  # Review each match
@@ -123,6 +133,7 @@ wm map     # Should show "unknown command" error
 ```
 
 **Notes:**
+
 - The `--prompt` flag that was documented but never implemented is also removed with this change
 - Any map-related utilities in `@waymarks/core` should be audited for removal too
 
@@ -177,12 +188,14 @@ wm map     # Should show "unknown command" error
    - Pass `outputFormat` to `renderRecords()` instead of hardcoded `"json"`
 
 **Tests to add:**
+
 - `packages/cli/src/commands/unified/index.test.ts`:
   - Test `--json` produces JSON array
   - Test `--jsonl` produces newline-delimited JSON
   - Test default produces text
 
 **Verification:**
+
 ```bash
 wm find src/ --json | head -1   # Should start with [
 wm find src/ --jsonl | head -1  # Should be single JSON object
@@ -221,6 +234,7 @@ wm find src/ | head -1          # Should be formatted text
 ### 3.2 Implement `duplicate-property` Rule
 
 **Logic:**
+
 - Parse waymark content for properties
 - Track property keys per waymark
 - Flag duplicates (last wins, but warn)
@@ -254,6 +268,7 @@ const duplicatePropertyRule: LintRule = {
 ### 3.3 Implement `multiple-tldr` Rule
 
 **Logic:**
+
 - Group records by file
 - Count `tldr` markers per file
 - Flag files with > 1 tldr
@@ -297,6 +312,7 @@ const multipleTldrRule: LintRule = {
 ### 3.4 Implement `legacy-pattern` Rule
 
 **Logic:**
+
 - Scan for codetag patterns: `TODO:`, `FIXME:`, `NOTE:`, `HACK:`, `XXX:`
 - Support multiple comment leaders: `//`, `#`, `--`
 - Report location and suggest waymark equivalent
@@ -365,6 +381,7 @@ const legacyPatternRule: LintRule = {
 
 1. **`packages/core/src/types.ts`**
    - Add to `WaymarkConfig`:
+
    ```typescript
    scan?: {
      include_codetags?: boolean;
@@ -382,6 +399,7 @@ const legacyPatternRule: LintRule = {
    - Add `legacy?: boolean` to `WaymarkRecord`
 
 **Record shape when legacy:**
+
 ```json
 {
   "file": "src/auth.ts",
@@ -396,6 +414,7 @@ const legacyPatternRule: LintRule = {
 ### 3.6 Remove Migrate Command (or Repurpose)
 
 **Option A: Remove entirely**
+
 - Delete `packages/cli/src/commands/migrate.ts`
 - Delete `packages/cli/src/commands/migrate.help.ts`
 - Delete `packages/cli/src/commands/migrate.prompt.ts`
@@ -403,6 +422,7 @@ const legacyPatternRule: LintRule = {
 - Update docs to remove `wm migrate` references
 
 **Option B: Repurpose as alias**
+
 - `wm migrate` becomes `wm lint --rule legacy-pattern`
 - Keep for discoverability
 - Update help text
@@ -414,6 +434,7 @@ const legacyPatternRule: LintRule = {
 **Purpose:** Warn when block comments are used for waymarks in languages that have line comments available.
 
 **Logic:**
+
 - Check if waymark uses `/* */` comment leader
 - Check if file extension indicates a language with line comments (js, ts, jsx, tsx, go, rust, etc.)
 - If both true, emit warning suggesting line comment form
@@ -513,6 +534,7 @@ async function filterFilesWithWaymarks(paths: string[]): Promise<string[]> {
 
 1. **`packages/core/src/config.ts`**
    - Extend default `skip_paths`:
+
    ```typescript
    skip_paths: [
      "**/dist/**",
@@ -570,6 +592,7 @@ async function hasIgnoreMarker(filePath: string): Promise<boolean> {
 
 1. **`packages/core/src/ids.ts`**
    - Update `remove()` to accept and pass history metadata:
+
    ```typescript
    async remove(id: string, options?: { reason?: string }): Promise<void> {
      const normalized = this.normalizeId(id);
@@ -593,6 +616,7 @@ async function hasIgnoreMarker(filePath: string): Promise<boolean> {
    - Test history.json is created and populated
 
 **Tests to add:**
+
 - Remove a waymark with `--reason`
 - Verify history.json contains the entry
 - Verify entry has `removedAt`, `removedBy`, `reason`, original data
@@ -600,6 +624,7 @@ async function hasIgnoreMarker(filePath: string): Promise<boolean> {
 ### 5.2 Document History Behavior
 
 **Files to update:**
+
 - `README.md` — Brief mention of history tracking
 - `PRD.md` — Update "Repository Artifacts" section
 - CLI help text — Document `--reason` flag
@@ -670,6 +695,7 @@ export async function authenticate(credentials: Credentials): Promise<Session> {
 ```
 
 The docstring serves TypeScript tooling and API consumers. The waymarks serve you, your team, and your agents.
+
 ```
 
 ### 7.2 Add GRAMMAR.md Section
@@ -811,6 +837,7 @@ Before tagging release:
 ## References
 
 - [v1 Audit](./AUDIT.md) — Original findings document
-- [PRD.md](/PRD.md) — Product requirements (to be updated)
-- [PLAN.md](/PLAN.md) — Project-level plan (historical context)
-- [IMPROVEMENTS.md](/IMPROVEMENTS.md) — Previous CLI improvements (archived)
+- [PRD.md](/.agents/.archive/PRD.md) — Product requirements (archived)
+- [PLAN.md](/.agents/.archive/PLAN.md) — Project-level plan (archived)
+- [IMPROVEMENTS.md](/.agents/.archive/IMPROVEMENTS.md) — Previous CLI improvements (archived)
+- [SCRATCHPAD.md](/.agents/.archive/SCRATCHPAD.md) — Historical worklog (archived)
