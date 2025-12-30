@@ -103,7 +103,7 @@ function tokenize(query: string): QueryToken[] {
   let i = 0;
 
   while (i < query.length) {
-    const char = query[i] ?? "";
+    const char = query.charAt(i);
 
     if (handleQuote(char, state, tokens)) {
       i += 1;
