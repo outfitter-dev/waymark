@@ -51,7 +51,6 @@ wm init --format toml --scope project
   - [Unified Command (Default)](#unified-command-default)
   - [Format](#format)
   - [Lint](#lint)
-  - [Migrate](#migrate)
   - [Init](#init)
   - [Insert/Remove/Modify](#insertremovemodify)
   - [Help](#help)
@@ -83,7 +82,7 @@ Examples:
 ```typescript
 // todo ::: implement rate limiting
 // *fix ::: validate email format
-/* ^wip ::: refactoring auth flow */
+// ^wip ::: refactoring auth flow
 // note ::: assumes UTC timezone
 ```
 
@@ -184,7 +183,7 @@ Properties are `key:value` pairs in the content:
 
 ### Unified Command (Default)
 
-The default `wm` command intelligently handles scanning, filtering, mapping, and graphing based on flags.
+The default `wm` command intelligently handles scanning, filtering, and graphing based on flags.
 
 #### Basic Usage
 
@@ -279,6 +278,9 @@ wm format src/example.ts --write
 # Format multiple files
 wm format src/**/*.ts --write
 
+# Format directories (filters to files containing :::)
+wm format src/ --write
+
 # Format with specific config
 wm format src/ --write --config-path .waymark/config.toml
 ```
@@ -289,7 +291,7 @@ wm format src/ --write --config-path .waymark/config.toml
 - Lowercases types
 - Aligns multi-line continuations
 - Orders properties consistently
-- Strips signals on protected branches (if configured)
+- Skips ignored paths and files that include a `waymark-ignore-file` marker
 
 ### Lint
 
@@ -308,33 +310,10 @@ wm lint src/ --config-path .waymark/config.toml
 
 **What it checks:**
 
-- Valid type names
-- Duplicate properties
-- Unknown types (unless allowlisted)
-- Dangling relations (references to non-existent canonicals)
-- Duplicate canonical tokens
-- Signals on protected branches
-
-### Migrate
-
-Convert legacy TODO/FIXME comments to waymark syntax:
-
-```bash
-# Preview migration
-wm migrate src/legacy.ts
-
-# Apply migration
-wm migrate src/legacy.ts --write
-
-# Migrate with custom mapping
-wm migrate src/ --write --include-legacy
-```
-
-**Converts:**
-
-- `// TODO: fix bug` → `// todo ::: fix bug`
-- `# FIXME: memory leak` → `# fix ::: memory leak`
-- `<!-- NOTE: deprecated -->` → `<!-- note ::: deprecated -->`
+- Unknown markers (unless allowlisted)
+- Duplicate properties (including continuation properties)
+- Multiple `tldr` waymarks in a single file
+- Legacy codetag patterns (`TODO:`, `FIXME:`, `NOTE:`), with suggested replacements
 
 ### Init
 
@@ -376,6 +355,7 @@ wm add src/auth.ts:42 todo "add rate limiting" --write
 
 # Remove waymark
 wm remove src/auth.ts:42 --write              # or: wm rm src/auth.ts:42 --write
+wm remove src/auth.ts:42 --reason "cleanup" --write
 
 # Modify waymark signals
 wm modify src/auth.ts:42 --raise --write
@@ -444,8 +424,6 @@ Example TOML config:
 ```toml
 type_case = "lowercase"              # lowercase | uppercase
 id_scope = "repo"                    # repo | file
-protected_branches = ["main", "release/*"]
-signals_on_protected = "strip"       # strip | fail | allow
 
 allow_types = [
   "todo", "fix", "wip", "done",
@@ -459,6 +437,12 @@ skip_paths = [
   "**/node_modules/**"
 ]
 
+include_paths = []
+respect_gitignore = true
+
+[scan]
+include_codetags = false
+
 [format]
 space_around_sigil = true
 normalize_case = true
@@ -467,8 +451,17 @@ align_continuations = true
 [lint]
 duplicate_property = "warn"          # warn | error | ignore
 unknown_marker = "warn"
-dangling_relation = "error"
-duplicate_canonical = "error"
+
+[ids]
+mode = "prompt"                      # auto | prompt | off | manual
+length = 8
+remember_user_choice = true
+track_history = true
+assign_on_refresh = false
+
+[index]
+refresh_triggers = ["manual"]
+auto_refresh_after_minutes = 10
 
 [groups]
 agents = [
@@ -733,7 +726,7 @@ wm add src/auth.ts:42 todo "fix bug" --id --write
 
 IDs are tracked in `.waymark/index.json` (gitignored).
 
-For removed waymarks, history is optionally stored in `.waymark/history.json`.
+For removed waymarks, history is optionally stored in `.waymark/history.json` with `removedAt`, `removedBy`, and optional `reason` metadata.
 
 See [Waymark Editing Guide](./waymark_editing.md) for details.
 
@@ -746,19 +739,6 @@ allow_types = ["todo", "fix", "custom", "mytodo"]
 ```
 
 Without allowlisting, custom types trigger lint warnings.
-
-### Protected Branch Policy
-
-Enforce signal policies on protected branches:
-
-```toml
-protected_branches = ["main", "release/*"]
-signals_on_protected = "strip"       # strip | fail | allow
-```
-
-- `strip` — Automatically remove signals when formatting
-- `fail` — Fail lint on protected branches with signals
-- `allow` — Allow signals (no enforcement)
 
 ### Actor Groups
 
@@ -798,8 +778,9 @@ wm src/ --mention @agents             # matches all agent handles
 **Common issues**:
 
 - Unknown types: Add to `allow_types` in config
-- Duplicate canonicals: Search with `rg 'ref:#token'`
-- Dangling relations: Ensure canonical exists with `rg 'ref:#token'`
+- Duplicate properties: Remove duplicates or move to a continuation property line
+- Multiple TLDRs: Keep a single `tldr` per file
+- Legacy codetags: Replace `TODO:`/`FIXME:`/`NOTE:` with `todo :::`/`fix :::`/`note :::`
 
 ### Format Not Working
 

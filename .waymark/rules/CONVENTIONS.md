@@ -6,13 +6,13 @@
 
 - Follow the instructions in the @./.agents/rules/waymarks/WAYMARKS.md file and the TLDR-specific rules in @./.agents/rules/waymarks/tldrs.md.
 - Keep this document current—if you introduce a new convention (tag namespace, canonical token pattern, etc.) add it here **before** merging.
-- Reference @PRD.md for the canonical grammar and @PLAN.md for any in-flight decisions that might alter conventions.
+- Reference @docs/waymark/SPEC.md for the canonical grammar and @./.agents/plans/v1/PLAN.md for any in-flight decisions that might alter conventions.
 
 ## General Rules
 
 - ALWAYS include only one `tldr :::` waymark in each file, near the top (accounting for language-specific preambles, shebangs, front matter, etc.).
 - ONLY use the v1 signals: `^` (raised) and a single `*` (starred). No `!`, `!!`, `?`, or other legacy signals anywhere in the repo.
-- CLEAR all `^` waymarks before merging to protected branches (`rg '\\^\\w+\\s*:::'`).
+- CLEAR all `^` waymarks before merging (`rg '\\^\\w+\\s*:::'`).
 - When adding a new waymark, search for precedent first (e.g., `rg ":::\s.*#<fragment>"`) to avoid proliferating one-off patterns.
 
 ## Project Hashtags

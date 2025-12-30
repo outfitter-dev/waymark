@@ -182,7 +182,7 @@ waymark find --file-category docs --type tldr
 - Do not place waymarks inside rendered documentation sections (e.g., Markdown body). Use HTML comments instead.
 - Avoid numeric-only hashtags, which collide with issue references.
 - Do not hand-edit generated caches; they will be overwritten by tooling.
-- Legacy patterns (`TODO:`, `fix:`, `priority:high`, `#owner:@alice`, etc.) should be migrated to the new grammar via `waymark migrate`.
+- Legacy patterns (`TODO:`, `fix:`, `priority:high`, `#owner:@alice`, etc.) should be migrated to the new grammar. Use the `legacy-pattern` lint rule or enable `scan.include_codetags` to surface them.
 
 ## 11. Reference Examples
 
@@ -208,7 +208,7 @@ waymark find --file-category docs --type tldr
 ```
 
 ```md
-<!-- tldr ::: Bun-based CLI PRD defining v1.0 scope and requirements #docs/prd -->
+<!-- tldr ::: Waymark CLI spec defining v1 scope and requirements #docs/spec -->
 <!-- note ::: See #docs/plan for execution plan references -->
 ```
 

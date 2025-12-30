@@ -61,8 +61,7 @@ wm lint src/
 - `wm add <file:line> <type> <content>` - Insert waymarks into files
 - `wm modify <file:line>` - Modify existing waymarks
 - `wm remove <file:line>` - Remove waymarks from files
-- `wm lint [paths...]` - Validate waymark structure
-- `wm migrate [paths...]` - Convert legacy patterns to waymark syntax
+- `wm lint [paths...]` - Validate waymark structure and surface legacy codetags
 - `wm init` - Initialize waymark configuration
 - `wm update` - Check for and install CLI updates
 
