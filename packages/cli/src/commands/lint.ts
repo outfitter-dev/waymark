@@ -267,16 +267,13 @@ const multipleTldrRule: LintRule = {
     if (tldrs.length <= 1) {
       return [];
     }
-    const first = tldrs.at(0);
-    if (!first) {
-      return [];
-    }
+    const firstLine = tldrs[0]?.startLine ?? 1;
     return tldrs.slice(1).map((record) => ({
       file: filePath,
       line: record.startLine,
       rule: "multiple-tldr",
       severity: "error",
-      message: `File already has tldr at line ${first.startLine}`,
+      message: `File already has tldr at line ${firstLine}`,
       type: record.type,
     }));
   },
