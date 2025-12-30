@@ -14,6 +14,7 @@
     "typecheck": "turbo run typecheck",
     "format": "bunx ultracite fix --unsafe && bun run format:md",
     "format:md": "bunx markdownlint-cli2 --fix \"**/*.md\" \"!**/.bun/**\"",
+    "format:staged": "bun scripts/format-staged.ts",
     "format:prettier": "bunx prettier --write .",
     "lint": "turbo run lint && bun run lint:md",
     "lint:biome": "bunx ultracite check",
