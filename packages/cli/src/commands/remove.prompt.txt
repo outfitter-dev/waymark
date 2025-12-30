@@ -9,7 +9,7 @@ COMMAND SYNTAX
   wm remove --id <wm-id> [--write]
   wm remove --from <json-file> [--write]
   wm remove --criteria <filter-query> <paths> [--write]
-  wm remove <file:line> --write --reason "<text>"
+  wm remove <file:line> [--write] [--reason "<text>"]
 
 REMOVAL MODES
 
