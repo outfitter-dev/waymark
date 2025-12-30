@@ -40,7 +40,7 @@ BEFORE FORMATTING
 
 AFTER FORMATTING
   // todo ::: implement auth
-  // *fix ::: validate input
+  // * fix ::: validate input
   // tldr ::: payment processor
   //      ::: handles Stripe webhooks
 

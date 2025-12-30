@@ -65,7 +65,7 @@ EXAMPLE OUTPUT (dry-run)
   + // todo ::: implement OAuth
 
   - // *  fix  ::: validate input
-  + // *fix ::: validate input
+  + // * fix ::: validate input
 
   Would format 2 waymarks. Use --write to apply changes.
 
