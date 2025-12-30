@@ -67,7 +67,7 @@ export function parseFormatArgs(argv: string[]): FormatCommandOptions {
   const filePaths = remaining.filter((path) => path.length > 0);
 
   if (filePaths.length === 0) {
-    throw new Error("fmt requires a file path");
+    throw new Error("fmt requires at least one file path");
   }
 
   return {
