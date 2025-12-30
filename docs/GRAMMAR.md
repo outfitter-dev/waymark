@@ -906,7 +906,7 @@ rg 'ref:#auth'  # See what exists first
 + <!-- note ::: deprecated API -->
 ```
 
-Use `wm migrate` command for automated conversion.
+Use the `legacy-pattern` lint rule or enable `scan.include_codetags` to surface legacy codetags before converting them.
 
 ### From v1 Early Drafts
 

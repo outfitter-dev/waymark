@@ -55,7 +55,7 @@ Example:
 
 ```text
 .waymark/rules/WAYMARKS.md
-209:  tldr ::: Bun-based CLI PRD defining v1.0 scope and requirements #docs/prd
+209:  tldr ::: Waymark CLI spec defining v1 scope and requirements #docs/spec
 
 packages/grammar/src/parser.test.ts
 15:   todo ::: implement cache invalidation #arch/state

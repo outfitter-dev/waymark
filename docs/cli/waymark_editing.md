@@ -354,7 +354,7 @@ Track active IDs in a lightweight `.waymark/index.json` file that stays in sync 
 
 - Repo-local JSON keeps dependencies simple and diffable.
 - Automatic writes occur after each CLI insert/remove so hot paths stay in sync without rescanning.
-- Optional `.waymark/history.json` captures tombstoned waymarks for undo, storing the same payload plus `removedAt`/`removedBy` metadata.
+- Optional `.waymark/history.json` captures tombstoned waymarks for undo, storing the same payload plus `removedAt`/`removedBy` and optional `reason` metadata.
 - The files stay gitignored by default, but history can be committed for shared undo if a team wants it.
 - Run `wm index --refresh` to crawl the repo on demand (CI, pre-commit, manual). The refresher hashes files so unchanged paths are skipped; a `--changed-since <ref>` flag scopes even tighter.
 - Optional hook helpers (`wm hook install`) can wire refreshes into git events such as `pre-commit`, `pre-push`, or `post-checkout`; triggers are controlled through config (see `[index].refresh_triggers`).
@@ -1322,6 +1322,9 @@ wm remove src/auth.ts --line 42
 # Remove from multiple files
 wm remove src/auth.ts --line 42 src/db.ts --line 15 --write
 
+# Remove with an audit reason (stored in history when enabled)
+wm remove src/auth.ts --line 42 --reason "cleanup obsolete marker" --write
+
 # Dry run (default - shows what would be removed)
 wm remove src/auth.ts --line 42
 ```
@@ -1392,7 +1395,8 @@ control bulk deletions.
   ],
   "options": {
     "write": true,
-    "cleanup_whitespace": false
+    "cleanup_whitespace": false,
+    "reason": "cleanup deprecated waymarks"
   }
 }
 ```
@@ -1434,6 +1438,8 @@ control bulk deletions.
 | `criteria.files` | string[] | File patterns (glob support) |
 | `criteria.content_pattern` | string | Regex pattern to match content |
 | `criteria.signals` | object | Signal flags to match |
+
+Optional batch `options` can include a `reason` string. When history tracking is enabled, the reason is stored alongside the removal entry.
 
 ### Output Format
 
@@ -1534,6 +1540,8 @@ export interface RemoveOptions {
   write?: boolean;
   cleanup_whitespace?: boolean;
   config?: WaymarkConfig;
+  reason?: string;
+  removedBy?: string;
 }
 
 export async function removeWaymarks(
@@ -1893,7 +1901,8 @@ export async function runRemoveCommand(args: string[]): Promise<void> {
   const results = await removeWaymarks(specs, {
     write: parsed.write,
     cleanup_whitespace: parsed.cleanup_whitespace,
-    config: await loadConfig()
+    config: await loadConfig(),
+    reason: parsed.reason
   });
 
   // Format output
@@ -2223,7 +2232,7 @@ jobs:
 ### Phase 5: Documentation & Release
 
 1. **Create JSON schemas** in `schemas/` directory
-2. **Document in PRD** and update PLAN.md
+2. **Document in SPEC** and update PLAN.md
 3. **Add examples** to README and usage guides
 4. **Write integration guides** for GitHub Actions, pre-commit hooks, etc.
 

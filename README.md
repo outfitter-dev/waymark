@@ -122,6 +122,8 @@ To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
 include_codetags = true
 ```
 
+When ID history tracking is enabled (`ids.track_history = true`), removals are recorded in `.waymark/history.json` with `removedAt`, `removedBy`, and optional `reason` metadata (via `wm remove --reason`).
+
 The CLI relies on the core formatter and parser helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
 
 #### Shell Completions

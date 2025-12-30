@@ -185,7 +185,7 @@ Waymark documentation follows these conventions:
 
 | Document | Update Trigger | Owner |
 | ---------- | --------------- | ------- |
-| GRAMMAR.md | Grammar changes in PRD | Maintainers |
+| GRAMMAR.md | Grammar changes in SPEC | Maintainers |
 | cli/README.md | CLI command changes | Maintainers |
 | howto/README.md | New workflow patterns | Contributors |
 | ARCHITECTURE.md | Architectural decisions | Maintainers |
@@ -196,7 +196,7 @@ Waymark documentation follows these conventions:
 ## External Resources
 
 - [Project README](../README.md) - Project overview and quick start
-- [PRD](../PRD.md) - Product requirements and roadmap
-- [PLAN](../PLAN.md) - Execution plan and decision log
+- [Specification](./waymark/SPEC.md) - Canonical grammar and tooling scope
+- [Release Plan](../.agents/plans/v1/PLAN.md) - Execution plan and decision log
 - GitHub repository (internal: outfitter-dev/waymark) - Source code
 - [npm Package](https://www.npmjs.com/package/@waymarks/cli) - CLI installation
