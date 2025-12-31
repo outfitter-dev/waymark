@@ -4,6 +4,8 @@ argument-hint: [--plan] [--execute]
 allowed-tools: AskUserQuestion, Edit, Glob, Grep, Read, Task, Write, Bash(wm:*, rg:*, git:*)
 ---
 
+# Initialize Waymarks Command
+
 Initialize waymarks in the current project through guided setup.
 
 ## Arguments
@@ -63,7 +65,7 @@ Use AskUserQuestion to gather preferences:
 
 **Q1: Strategy Tier**
 
-```
+```text
 Question: "What level of waymark coverage do you want?"
 Options:
 - Minimal: TLDRs only - one summary per file
@@ -73,7 +75,7 @@ Options:
 
 **Q2: Agent Behavior** (only ask if Comprehensive selected)
 
-```
+```text
 Question: "How should waymarks be added?"
 Options:
 - Execute now: Add all waymarks immediately via background agents
@@ -83,7 +85,7 @@ Options:
 
 **Q3: File Patterns**
 
-```
+```text
 Question: "Which files should be in scope?"
 (Show detected patterns, allow customization)
 Options:
@@ -93,7 +95,7 @@ Options:
 
 **Q4: Tag Namespaces**
 
-```
+```text
 Question: "Which tag namespaces do you want to use?"
 (Multi-select, suggest based on strategy)
 Options:
@@ -107,7 +109,7 @@ Options:
 
 **Q5: Actor Conventions**
 
-```
+```text
 Question: "How should agent mentions work?"
 (Show detected agents)
 Options:
@@ -177,7 +179,7 @@ Based on selected mode:
 
 Example Task invocation:
 
-```
+```text
 Task(
   subagent_type: "waymarker",
   prompt: "Add waymarks to files in src/auth/. Strategy: standard. Add tldr to each file, add todo/fix markers where obvious work items exist. Use IDs.",
@@ -230,7 +232,7 @@ Strategy: comprehensive
 Review suggestions above, then run `/waymark:apply` to apply them.
 Edit this file to modify suggestions before applying.
 
-```
+```text
 
 5. Instruct user to review and run `/waymark:apply`
 
@@ -239,7 +241,7 @@ Edit this file to modify suggestions before applying.
 Report what was done:
 
 **Execute Mode:**
-```
+```text
 
 Waymark initialization complete!
 
@@ -255,7 +257,8 @@ Run `/waymark:audit` to check coverage.
 ```
 
 **Plan Mode:**
-```
+
+```text
 
 Waymark initialization plan created!
 
@@ -271,11 +274,11 @@ Review .waymark/plan.md and run `/waymark:apply` to apply suggestions.
 
 ## Strategy → Markers Mapping
 
-| Strategy      | Markers Enabled                                          |
-|---------------|----------------------------------------------------------|
-| Minimal       | tldr                                                     |
-| Standard      | tldr, todo, fix, wip, done, review                       |
-| Comprehensive | tldr, todo, fix, wip, done, review, this, note, context, warn, hack, temp |
+| Strategy      | Markers Enabled                                                               |
+| ------------- | ----------------------------------------------------------------------------- |
+| Minimal       | tldr                                                                          |
+| Standard      | tldr, todo, fix, wip, done, review                                            |
+| Comprehensive | tldr, todo, fix, wip, done, review, this, note, context, warn, hack, temp     |
 
 ## Error Handling
 

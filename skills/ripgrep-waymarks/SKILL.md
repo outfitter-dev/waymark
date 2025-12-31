@@ -226,14 +226,14 @@ echo "TLDRs: $(rg -c 'tldr\s*:::' | awk -F: '{sum+=$2}END{print sum}')"
 ## Pattern Reference
 
 | Purpose | Pattern |
-|---------|---------|
+| --------- | --------- |
 | All waymarks | `:::` |
 | Specific marker | `marker\s*:::` |
 | Starred | `\*\w+\s*:::` |
 | Mentions | `:::\s*@\w+` |
 | Tags | `:::.+#\w+` |
 | Canonicals | `ref:#\w+` |
-| Relations | `(depends|needs|fixes):#` |
+| Relations | `(depends\|needs\|fixes):#` |
 
 ## Grep vs Ripgrep
 

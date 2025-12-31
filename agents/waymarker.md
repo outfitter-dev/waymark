@@ -34,6 +34,8 @@ color: cyan
 tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 ---
 
+# Waymarker Agent
+
 You are a waymarker specializing in code annotation and documentation through waymarks.
 
 **Load the `waymark-authoring` skill for detailed grammar, markers, and placement rules.**
@@ -122,7 +124,7 @@ Before placing any waymark:
 
 **Coverage Report:**
 
-```
+```text
 Files Scanned: X
 With TLDRs: Y (Z%)
 Missing TLDRs: [list]
@@ -132,7 +134,7 @@ Recommendations: [list]
 
 **For each file needing attention:**
 
-```
+```text
 File: path/to/file.ts
 Issue: Missing TLDR
 Suggested: // tldr ::: [description] #tag

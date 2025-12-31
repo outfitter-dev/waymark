@@ -17,7 +17,7 @@ Following a comprehensive code review, we have identified 7 discrete work items 
 ## Work Items Overview
 
 | # | Item | Type | Priority | Est. Time | Agent |
-|---|------|------|----------|-----------|-------|
+| --- | ------ | ------ | ---------- | ----------- | ------- |
 | 1 | Package READMEs | Documentation | 🔴 Blocker | 30min | senior-engineer |
 | 2 | Bun.hash.wyhash() | Performance | 🟡 High | 15min | senior-engineer |
 | 3 | Zod Validation | Type Safety | 🟡 High | 45min | type-safety-enforcer |

@@ -107,7 +107,7 @@ A waymark is a structured comment that embeds machine-readable context directly 
 Waymarks work with any comment syntax:
 
 | Language | Leader | Example |
-|----------|--------|---------|
+| ---------- | -------- | --------- |
 | TypeScript, JavaScript, Rust, Go | `//` | `// todo ::: fix bug` |
 | Python, Ruby, Shell, YAML | `#` | `# note ::: assumes UTC` |
 | SQL | `--` | `-- fix ::: escape quotes` |
@@ -519,7 +519,7 @@ Use namespaces for organization:
 ### Common Tag Patterns
 
 | Purpose | Pattern | Example |
-|---------|---------|---------|
+| --------- | --------- | --------- |
 | Documentation | `#docs/*` | `#docs/api`, `#docs/guide` |
 | Performance | `#perf:*` | `#perf:hotpath`, `#perf:slow` |
 | Security | `#sec:*` | `#sec:boundary`, `#sec:auth` |

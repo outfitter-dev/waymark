@@ -3,6 +3,8 @@ description: Show starred (high-priority) waymarks
 allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 ---
 
+# Priority Waymarks Command
+
 Gather all starred (`*`) waymarks which indicate high-priority items requiring attention.
 
 ## Context Injection

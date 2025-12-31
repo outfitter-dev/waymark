@@ -48,7 +48,7 @@ function validatePassword(password: string) {}
 Write short, active-voice sentences (6-12 words):
 
 | Construct | Pattern | Example |
-|-----------|---------|---------|
+| ----------- | --------- | --------- |
 | Class | "encapsulates/manages [domain] [state/behavior]" | `encapsulates session lifecycle state` |
 | Function | "validates/transforms/fetches [input] [action]" | `validates webhook signatures before processing` |
 | Component | "renders [element] with [feature]" | `renders account overview with metrics` |

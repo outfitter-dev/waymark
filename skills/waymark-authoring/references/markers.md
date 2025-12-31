@@ -256,7 +256,7 @@ Needs clarification.
 ## Marker Selection Guide
 
 | Situation | Marker |
-|-----------|--------|
+| ----------- | -------- |
 | New feature to build | `todo` |
 | Bug to fix | `fix` |
 | Code under development | `wip` |

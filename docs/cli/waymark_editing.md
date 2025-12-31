@@ -162,7 +162,7 @@ wm add --from batch.json --jsonl
 ### Field Definitions
 
 | Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
+| ----- | ---- | -------- | ------- | ----------- |
 | `file` | string | ✅ | - | File path (relative or absolute) |
 | `line` | number | ✅ | - | Line number for insertion (1-indexed) |
 | `position` | "before" \| "after" | ❌ | "after" | Insert before or after target line |
@@ -1425,7 +1425,7 @@ control bulk deletions.
 ### Field Definitions
 
 | Field | Type | Description |
-|-------|------|-------------|
+| ----- | ---- | ----------- |
 | `file` | string | Specific file path |
 | `line` | number | Exact line number (1-indexed) |
 | `criteria.type` | string | Waymark type to match |
@@ -2039,7 +2039,7 @@ The following design choices need to be finalized:
 **Insert Command:**
 
 | Question | Status | Decision | Notes |
-|----------|--------|----------|-------|
+| -------- | ------ | -------- | ----- |
 | Q1: Atomic ops | ✅ Finalized | Option A (best-effort) | Detailed error reporting per insertion |
 | Q2: Formatting | ✅ Finalized | Option A (always format) | Ensures consistency for programmatic insertions |
 | Q3: Dry-run | ✅ Finalized | Dry-run default + config | Can configure default to write, `--dry-run` to preview |
@@ -2056,7 +2056,7 @@ The following design choices need to be finalized:
 **Remove Command:**
 
 | Question | Status | Decision | Notes |
-|----------|--------|----------|-------|
+| ---------- | -------- | ---------- | ------- |
 | R1: Blank lines | ✅ Finalized | Option A (leave) | Only remove waymark line; optional cleanup flag later |
 | R2: Confirmation | ✅ Finalized | Option B (auto-prompt) | Prompt at N=10, `--yes` to skip |
 | R3: Multi-line | ✅ Finalized | Option A (atomic) | Track parent-child in DB, prevent orphans |
@@ -2202,30 +2202,30 @@ jobs:
 
 ### Phase 2: Core Implementation
 
-5. **Implement core insert logic** in `@waymarks/core/src/insert.ts`
-6. **Implement core remove logic** in `@waymarks/core/src/remove.ts`
-7. **Add comprehensive unit tests** for both modules
-8. **Create shared utilities** (file I/O, glob expansion, criteria matching)
+1. **Implement core insert logic** in `@waymarks/core/src/insert.ts`
+2. **Implement core remove logic** in `@waymarks/core/src/remove.ts`
+3. **Add comprehensive unit tests** for both modules
+4. **Create shared utilities** (file I/O, glob expansion, criteria matching)
 
 ### Phase 3: CLI Integration
 
-9. **Add `wm add` command** in `packages/cli/src/commands/insert.ts`
-10. **Add `wm remove` command** in `packages/cli/src/commands/remove.ts`
-11. **Add CLI integration tests** covering all usage modes
-12. **Update CLI help** and usage documentation
+1. **Add `wm add` command** in `packages/cli/src/commands/insert.ts`
+2. **Add `wm remove` command** in `packages/cli/src/commands/remove.ts`
+3. **Add CLI integration tests** covering all usage modes
+4. **Update CLI help** and usage documentation
 
 ### Phase 4: MCP Extension
 
-13. **Extend MCP server** with `waymark.insert` tool
-14. **Add `waymark.remove` tool** to MCP server
-15. **Test MCP integration** with Claude Code and other agents
+1. **Extend MCP server** with `waymark.insert` tool
+2. **Add `waymark.remove` tool** to MCP server
+3. **Test MCP integration** with Claude Code and other agents
 
 ### Phase 5: Documentation & Release
 
-16. **Create JSON schemas** in `schemas/` directory
-17. **Document in PRD** and update PLAN.md
-18. **Add examples** to README and usage guides
-19. **Write integration guides** for GitHub Actions, pre-commit hooks, etc.
+1. **Create JSON schemas** in `schemas/` directory
+2. **Document in PRD** and update PLAN.md
+3. **Add examples** to README and usage guides
+4. **Write integration guides** for GitHub Actions, pre-commit hooks, etc.
 
 ## Feedback Needed
 

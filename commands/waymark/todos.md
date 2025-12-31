@@ -5,6 +5,8 @@ allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 
 <!-- tldr ::: gather and display all todo waymarks for task tracking #docs -->
 
+# TODO Waymarks Command
+
 Gather all `todo :::` waymarks from the codebase and present them to the user.
 
 ## Context Injection

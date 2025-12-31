@@ -33,7 +33,7 @@ This approach is chosen because:
 
 | Version | Date       | Changes                                     |
 | ------- | ---------- | ------------------------------------------- |
-| 1       | 2025-09-30 | Initial schema with `marker` column        |
+| 1       | 2025-09-30 | Initial schema with `marker` column         |
 | 2       | 2025-10-07 | Renamed `marker` → `type` column            |
 
 ## Implementation

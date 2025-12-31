@@ -737,6 +737,26 @@ function createKeypressHandler(
   };
 }
 
+function resolvePromptAbortOutcome(
+  error: unknown,
+  state: KeypressState
+): PromptOutcome | undefined {
+  if (
+    !(error instanceof Error) ||
+    (error.name !== "AbortPromptError" && error.name !== "ExitPromptError")
+  ) {
+    return;
+  }
+
+  if (state.requestedCancel) {
+    return { type: "cancel" };
+  }
+  if (state.requestedBack) {
+    return { type: "back" };
+  }
+  return;
+}
+
 async function promptStep(
   promptModule: ReturnType<typeof inquirer.createPromptModule>,
   step: InteractiveStep,
@@ -776,16 +796,9 @@ async function promptStep(
     const result = await ticket;
     return { type: "answered", value: result };
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (error.name === "AbortPromptError" || error.name === "ExitPromptError")
-    ) {
-      if (state.requestedCancel) {
-        return { type: "cancel" };
-      }
-      if (state.requestedBack) {
-        return { type: "back" };
-      }
+    const outcome = resolvePromptAbortOutcome(error, state);
+    if (outcome) {
+      return outcome;
     }
     throw error;
   } finally {

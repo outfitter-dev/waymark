@@ -21,6 +21,5 @@ Load one or more of the following skills depending upon your task:
 - **Research**
   - `research-and-report` — technical research with citations and recommendations
 
-
 <!-- DO NOT REMOVE: LOADS AGENTS.md -->
 @AGENTS.md

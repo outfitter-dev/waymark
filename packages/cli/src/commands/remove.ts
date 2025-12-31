@@ -406,46 +406,55 @@ type LoadedRemovePayload = {
   options?: Partial<RemoveCommandOptions>;
 };
 
+type JsonRecord = Record<string, unknown>;
+
+function isJsonRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null;
+}
+
+function logZodValidationErrors(error: ZodError): void {
+  logger.error("JSON validation failed");
+  for (const issue of error.issues) {
+    const issuePath = issue.path.length > 0 ? issue.path.join(".") : "root";
+    logger.error(`  - ${issuePath}: ${issue.message}`);
+  }
+}
+
+function parseRemovalPayload(parsed: unknown): LoadedRemovePayload {
+  // Support both array format and object format with removals field
+  if (Array.isArray(parsed)) {
+    return { specs: z.array(RemovalSpecSchema).parse(parsed) };
+  }
+
+  if (isJsonRecord(parsed) && Array.isArray(parsed.removals)) {
+    const specs = z.array(RemovalSpecSchema).parse(parsed.removals);
+    const result: LoadedRemovePayload = { specs };
+    if (parsed.options) {
+      result.options = parsed.options as Partial<RemoveCommandOptions>;
+    }
+    return result;
+  }
+
+  if (isJsonRecord(parsed)) {
+    // Single spec object
+    return { specs: [RemovalSpecSchema.parse(parsed)] };
+  }
+
+  throw new Error(
+    "Invalid JSON: expected RemovalSpec, RemovalSpec[], or { removals: RemovalSpec[] }"
+  );
+}
+
 async function loadSpecsFromSource(path: string): Promise<LoadedRemovePayload> {
   const source =
     path === "-" ? await readFromStdin() : await readFile(path, "utf8");
 
   try {
     const parsed = JSON.parse(source);
-
-    // Support both array format and object format with removals field
-    if (Array.isArray(parsed)) {
-      return { specs: z.array(RemovalSpecSchema).parse(parsed) };
-    }
-
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      Array.isArray(parsed.removals)
-    ) {
-      const specs = z.array(RemovalSpecSchema).parse(parsed.removals);
-      const result: LoadedRemovePayload = { specs };
-      if (parsed.options) {
-        result.options = parsed.options;
-      }
-      return result;
-    }
-
-    if (typeof parsed === "object" && parsed !== null) {
-      // Single spec object
-      return { specs: [RemovalSpecSchema.parse(parsed)] };
-    }
-
-    throw new Error(
-      "Invalid JSON: expected RemovalSpec, RemovalSpec[], or { removals: RemovalSpec[] }"
-    );
+    return parseRemovalPayload(parsed);
   } catch (error) {
     if (error instanceof ZodError) {
-      logger.error("JSON validation failed");
-      for (const issue of error.issues) {
-        const issuePath = issue.path.length > 0 ? issue.path.join(".") : "root";
-        logger.error(`  - ${issuePath}: ${issue.message}`);
-      }
+      logZodValidationErrors(error);
       throw new Error("JSON validation failed");
     }
     throw error;

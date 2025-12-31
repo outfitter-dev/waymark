@@ -52,7 +52,7 @@ title: API Guide
 Write one sentence, 8-14 words, active voice:
 
 | Pattern | Example |
-|---------|---------|
+| --------- | --------- |
 | `[verb] [domain] [via/using/with] [technology]` | `validates payment webhooks using Stripe signature verification` |
 | `[component] [action] [scope]` | `React hooks exposing authentication state and methods` |
 | `[capability] for [purpose]` | `rate limiting middleware for API endpoints` |

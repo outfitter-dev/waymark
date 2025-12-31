@@ -101,7 +101,7 @@ rg ':::' --json > waymarks.jsonl
 For each waymark found, verify:
 
 | Marker | Quality Check |
-|--------|---------------|
+| -------- | --------------- |
 | `tldr` | Active voice, 8-14 words, matches file purpose |
 | `this` | Describes following section accurately |
 | `todo` | Still relevant, not stale |
@@ -229,7 +229,7 @@ git diff --cached --name-only | xargs -I{} sh -c \
 
 ### Missing TLDR
 
-```
+```text
 File: src/auth/service.ts
 Issue: Missing TLDR waymark
 Suggested: // tldr ::: handles user authentication and session management #auth
@@ -237,7 +237,7 @@ Suggested: // tldr ::: handles user authentication and session management #auth
 
 ### Stale Todo
 
-```
+```text
 File: src/payments/stripe.ts:45
 Marker: // todo ::: implement retry logic
 Issue: Todo exists since 2024-03-01 (>90 days)
@@ -246,7 +246,7 @@ Action: Complete, remove, or add timeline
 
 ### Inaccurate Description
 
-```
+```text
 File: src/utils/format.ts:1
 Marker: // tldr ::: date formatting utilities
 Issue: File now includes number and currency formatting

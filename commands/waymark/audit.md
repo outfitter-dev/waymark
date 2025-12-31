@@ -4,6 +4,8 @@ argument-hint: [path] [--all] [--tldr]
 allowed-tools: Glob, Grep, Read, Task, Bash(wm:*, rg:*, git:*)
 ---
 
+# Audit Waymarks Command
+
 Audit waymarks for coverage, accuracy, and quality.
 
 ## Arguments

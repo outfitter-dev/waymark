@@ -3,6 +3,8 @@ description: Show file-level TLDR waymarks across the codebase
 allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 ---
 
+# TLDR Waymarks Command
+
 Gather all `tldr :::` waymarks to provide a high-level overview of the codebase structure.
 
 ## Context Injection

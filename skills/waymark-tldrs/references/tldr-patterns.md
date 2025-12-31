@@ -6,7 +6,7 @@ Extended patterns for writing effective TLDR waymarks.
 
 ### Services / Classes
 
-```
+```text
 [verb] [domain] [with/using/via] [key feature]
 ```
 
@@ -18,7 +18,7 @@ Examples:
 
 ### Entry Points
 
-```
+```text
 [component] entry [wiring/configuring] [framework] [features]
 ```
 
@@ -30,7 +30,7 @@ Examples:
 
 ### React Components
 
-```
+```text
 [renders/displays] [element] [with/for] [feature]
 ```
 
@@ -42,7 +42,7 @@ Examples:
 
 ### React Hooks
 
-```
+```text
 [hook/hooks] [exposing/managing] [state/behavior] [context]
 ```
 
@@ -54,7 +54,7 @@ Examples:
 
 ### Utilities / Helpers
 
-```
+```text
 [capability] utilities for [domain/purpose]
 ```
 
@@ -66,7 +66,7 @@ Examples:
 
 ### Middleware
 
-```
+```text
 [middleware/handler] [doing what] [for/with] [scope]
 ```
 
@@ -78,7 +78,7 @@ Examples:
 
 ### Configuration
 
-```
+```text
 [tool] configuration [for/with] [feature]
 ```
 
@@ -90,7 +90,7 @@ Examples:
 
 ### Tests
 
-```
+```text
 [test type] tests for [feature] [coverage scope]
 ```
 
@@ -102,7 +102,7 @@ Examples:
 
 ### Documentation
 
-```
+```text
 [doc type] [describing/explaining] [topic] [context]
 ```
 
@@ -114,7 +114,7 @@ Examples:
 
 ### Scripts
 
-```
+```text
 [script purpose] [for/targeting] [environment/scope]
 ```
 
@@ -129,7 +129,7 @@ Examples:
 Choose verbs that convey action:
 
 | Category | Strong Verbs |
-|----------|--------------|
+| -------- | ------------ |
 | Processing | `validates`, `transforms`, `processes`, `parses` |
 | Managing | `manages`, `orchestrates`, `coordinates`, `handles` |
 | Creating | `generates`, `builds`, `creates`, `renders` |
@@ -166,7 +166,7 @@ Choose verbs that convey action:
 ## Anti-patterns
 
 | Pattern | Problem | Better |
-|---------|---------|--------|
+| ------- | ------- | ------ |
 | "This file contains utilities" | Vague, contains is weak | "String formatting utilities for display" |
 | "Module for handling stuff" | "stuff" meaningless | "Handles webhook event routing" |
 | "Important authentication code" | "Important" doesn't describe | "Validates OAuth tokens against provider" |

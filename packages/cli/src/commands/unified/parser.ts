@@ -142,83 +142,72 @@ export function processToken(
 /**
  * Build final options from parse state
  */
+function assignIfDefined<T, K extends keyof T>(
+  target: T,
+  key: K,
+  value: T[K] | undefined
+): void {
+  if (value !== undefined) {
+    target[key] = value;
+  }
+}
+
+function assignIfNonEmpty(
+  target: UnifiedCommandOptions,
+  key:
+    | "types"
+    | "tags"
+    | "mentions"
+    | "excludeTypes"
+    | "excludeTags"
+    | "excludeMentions",
+  value: string[]
+): void {
+  if (value.length > 0) {
+    target[key] = value;
+  }
+}
+
 export function buildOptions(state: ParseState): UnifiedCommandOptions {
   const options: UnifiedCommandOptions = {
     filePaths: state.positional.length > 0 ? state.positional : ["."],
     isGraphMode: state.isGraphMode,
     json: state.jsonState.json,
+    compact: state.compact,
+    noColor: state.noColor,
+    noWrap: state.noWrap,
   };
 
   // Filters
-  if (state.types.length > 0) {
-    options.types = state.types;
-  }
-  if (state.tags.length > 0) {
-    options.tags = state.tags;
-  }
-  if (state.mentions.length > 0) {
-    options.mentions = state.mentions;
-  }
-  if (state.raised !== undefined) {
-    options.raised = state.raised;
-  }
-  if (state.starred !== undefined) {
-    options.starred = state.starred;
-  }
+  assignIfNonEmpty(options, "types", state.types);
+  assignIfNonEmpty(options, "tags", state.tags);
+  assignIfNonEmpty(options, "mentions", state.mentions);
+  assignIfDefined(options, "raised", state.raised);
+  assignIfDefined(options, "starred", state.starred);
 
   // Exclusions
-  if (state.excludeTypes.length > 0) {
-    options.excludeTypes = state.excludeTypes;
-  }
-  if (state.excludeTags.length > 0) {
-    options.excludeTags = state.excludeTags;
-  }
-  if (state.excludeMentions.length > 0) {
-    options.excludeMentions = state.excludeMentions;
-  }
+  assignIfNonEmpty(options, "excludeTypes", state.excludeTypes);
+  assignIfNonEmpty(options, "excludeTags", state.excludeTags);
+  assignIfNonEmpty(options, "excludeMentions", state.excludeMentions);
 
   // Display mode
-  if (state.displayMode !== undefined) {
-    options.displayMode = state.displayMode;
-  }
+  assignIfDefined(options, "displayMode", state.displayMode);
 
   // Context display
-  if (state.contextAround !== undefined) {
-    options.contextAround = state.contextAround;
-  }
-  if (state.contextBefore !== undefined) {
-    options.contextBefore = state.contextBefore;
-  }
-  if (state.contextAfter !== undefined) {
-    options.contextAfter = state.contextAfter;
-  }
+  assignIfDefined(options, "contextAround", state.contextAround);
+  assignIfDefined(options, "contextBefore", state.contextBefore);
+  assignIfDefined(options, "contextAfter", state.contextAfter);
 
   // Grouping & sorting
-  if (state.groupBy !== undefined) {
-    options.groupBy = state.groupBy;
-  }
-  if (state.sortBy !== undefined) {
-    options.sortBy = state.sortBy;
-  }
+  assignIfDefined(options, "groupBy", state.groupBy);
+  assignIfDefined(options, "sortBy", state.sortBy);
   if (state.reverse) {
-    options.reverse = state.reverse;
+    options.reverse = true;
   }
 
   // Pagination
-  if (state.limit !== undefined) {
-    options.limit = state.limit;
-  }
-  if (state.page !== undefined) {
-    options.page = state.page;
-  }
-
-  // Formatting
-  // Always pass compact through (it's a boolean, not optional)
-  options.compact = state.compact;
-  // Always pass noColor through (it's a boolean, not optional)
-  options.noColor = state.noColor;
-  // Always pass noWrap through (it's a boolean, not optional)
-  options.noWrap = state.noWrap;
+  assignIfDefined(options, "limit", state.limit);
+  assignIfDefined(options, "page", state.page);
 
   return options;
 }

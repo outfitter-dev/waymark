@@ -16,7 +16,7 @@ content     = text (property | hashtag | mention)*
 ## Comment Leaders by Language
 
 | Language | Leader | Example |
-|----------|--------|---------|
+| ---------- | -------- | --------- |
 | JavaScript/TypeScript | `//` | `// todo ::: implement` |
 | Python/Ruby/Shell | `#` | `# todo ::: implement` |
 | HTML/Markdown | `<!--` | `<!-- todo ::: implement -->` |
@@ -115,7 +115,7 @@ mention = "@" [A-Za-z][A-Za-z0-9_-]*
 Special properties for linking waymarks:
 
 | Property | Purpose | Example |
-|----------|---------|---------|
+| ---------- | --------- | --------- |
 | `ref:` | Declare anchor | `ref:#payments/core` |
 | `depends:` | Requires | `depends:#auth/session` |
 | `needs:` | Requires | `needs:#db/migration` |
@@ -178,7 +178,7 @@ No escaping is needed in waymark content. The parser reads until end of comment.
 Common validation errors from `wm lint`:
 
 | Error | Cause | Fix |
-|-------|-------|-----|
+| ------- | ------- | ----- |
 | Unknown marker | Marker not in allowed list | Use blessed marker or configure |
 | Invalid signal | Signal other than `*` | Remove or use `*` only |
 | Duplicate ref | Same `ref:#token` twice | Choose unique token |
