@@ -39,7 +39,15 @@ export async function runUnifiedCommand(
     if (outputFormat === "jsonl") {
       return { output: edges.map((edge) => JSON.stringify(edge)).join("\n") };
     }
-    return { output: edges.map((edge) => JSON.stringify(edge)).join("\n") };
+    // Default: human-readable text output
+    return {
+      output: edges
+        .map(
+          (e) =>
+            `${e.from.file}:${e.from.startLine} -[${e.relation}]-> ${e.toCanonical}`
+        )
+        .join("\n"),
+    };
   }
 
   // Scan + filter mode (find behavior)

@@ -291,48 +291,65 @@ export function wrapContent(content: string, config: WrapConfig): string[] {
   return lines;
 }
 
+type WrapState = {
+  lines: string[];
+  currentLine: string;
+};
+
+function handleSplitToken(
+  split: { lines: string[]; remainder: string; flushCurrentLine: boolean },
+  state: WrapState
+): void {
+  if (split.flushCurrentLine && state.currentLine.trim().length > 0) {
+    state.lines.push(state.currentLine.trim());
+  }
+  state.lines.push(...split.lines);
+  state.currentLine = split.remainder;
+}
+
 function wrapTokens(tokens: Token[], availableWidth: number): string[] {
-  const lines: string[] = [];
-  let currentLine = "";
+  const state: WrapState = { lines: [], currentLine: "" };
 
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
     if (!token) {
       continue;
     }
+
     const nextToken = tokens[i + 1];
     const prevToken = i > 0 ? tokens[i - 1] : undefined;
-
     const canBreakHere = shouldBreakBefore(token, prevToken);
-    const split = splitLongToken(token, availableWidth, currentLine);
+
+    const split = splitLongToken(token, availableWidth, state.currentLine);
     if (split) {
-      lines.push(...split.lines);
-      currentLine = split.remainder;
+      handleSplitToken(split, state);
       continue;
     }
 
     const appended = appendTokenToLine(
-      currentLine,
+      state.currentLine,
       token,
       availableWidth,
       canBreakHere
     );
     if (appended.lineToPush) {
-      lines.push(appended.lineToPush);
+      state.lines.push(appended.lineToPush);
     }
-    currentLine = appended.nextLine;
+    state.currentLine = appended.nextLine;
 
-    if (shouldBreakAfterSpace(token, nextToken, currentLine, availableWidth)) {
-      lines.push(currentLine.trim());
-      currentLine = "";
+    if (
+      shouldBreakAfterSpace(token, nextToken, state.currentLine, availableWidth)
+    ) {
+      state.lines.push(state.currentLine.trim());
+      state.currentLine = "";
     }
   }
 
-  if (currentLine.trim().length > 0) {
-    lines.push(currentLine.trim());
+  if (state.currentLine.trim().length > 0) {
+    state.lines.push(state.currentLine.trim());
   }
 
-  return lines;
+  return state.lines;
 }
 
 function shouldBreakBefore(token: Token, prevToken?: Token): boolean {
@@ -346,17 +363,20 @@ function splitLongToken(
   token: Token,
   availableWidth: number,
   currentLine: string
-): { lines: string[]; remainder: string } | null {
-  if (token.value.length <= availableWidth || currentLine.length > 0) {
+): { lines: string[]; remainder: string; flushCurrentLine: boolean } | null {
+  if (token.value.length <= availableWidth) {
     return null;
   }
+  // Token is longer than availableWidth and needs splitting
   const lines: string[] = [];
   let remaining = token.value;
+  // If currentLine has content, signal caller to flush it first
+  const flushCurrentLine = currentLine.length > 0;
   while (remaining.length > availableWidth) {
     lines.push(remaining.slice(0, availableWidth));
     remaining = remaining.slice(availableWidth);
   }
-  return { lines, remainder: remaining };
+  return { lines, remainder: remaining, flushCurrentLine };
 }
 
 function appendTokenToLine(
