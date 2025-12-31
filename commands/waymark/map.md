@@ -3,6 +3,8 @@ description: Inject all waymarks as JSON for full codebase context
 allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 ---
 
+<!-- tldr ::: gather all waymarks as JSON for comprehensive codebase context -->
+
 # Map Waymarks Command
 
 Gather all waymarks from the codebase as structured JSON for comprehensive context.

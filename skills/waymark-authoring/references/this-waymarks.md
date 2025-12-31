@@ -1,3 +1,5 @@
+<!-- tldr ::: guidance for writing clear this waymarks above code constructs -->
+
 # Writing `this :::` Waymarks
 
 `this :::` markers describe the code section immediately following them. They provide quick breadcrumbs for classes, functions, and major blocks.

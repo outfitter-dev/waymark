@@ -705,12 +705,14 @@ The docstring serves TypeScript tooling and API consumers. The waymarks serve yo
 ### 7.3 Audit Existing Examples
 
 **Task:** Review all examples in docs to ensure:
+
 - [ ] No waymark content duplicates what a docstring should say
 - [ ] Examples show waymarks adjacent to (not inside) doc-comments
 - [ ] Block comment examples are removed
 - [ ] Continuation examples use line comments only
 
 **Files to audit:**
+
 - `README.md`
 - `PRD.md`
 - `docs/GRAMMAR.md`

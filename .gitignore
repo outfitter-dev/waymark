@@ -72,3 +72,6 @@ SCRATCHPAD.md
 
 # Local Claude settings
 .claude/settings.local.json
+
+# Trail logs (logbooks output)
+.trail/

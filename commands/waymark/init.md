@@ -1,8 +1,10 @@
 ---
 description: Initialize waymarks in a project with guided setup
 argument-hint: [--plan] [--execute]
-allowed-tools: AskUserQuestion, Edit, Glob, Grep, Read, Task, Write, Bash(wm:*, rg:*, git:*)
+allowed-tools: AskUserQuestion, Edit, Glob, Grep, Read, Task, Write, Bash(wm:*, rg:*, git:*, ls:*, head:*, wc:*, mkdir:*)
 ---
+
+<!-- tldr ::: guided project initialization for waymark setup with strategy selection -->
 
 # Initialize Waymarks Command
 

@@ -1,3 +1,5 @@
+<!-- tldr ::: complete grammar reference for waymark syntax and validation rules -->
+
 # Waymark Grammar Specification
 
 Complete grammar reference for waymark syntax.
@@ -82,8 +84,10 @@ quoted   = '"' ([^"\\] | '\\' .)* '"'
 ## Hashtag Syntax
 
 ```text
-hashtag = "#" [A-Za-z0-9._/:%-]+
+hashtag = "#" [A-Za-z][A-Za-z0-9._/:%-]*
 ```
+
+Hashtags must start with a letter to avoid conflicts with issue references.
 
 **Valid hashtags:**
 
