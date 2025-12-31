@@ -62,7 +62,13 @@ packages/core/test-cache/waymark.db*
 .agents/.archive/
 .scratch/
 SCRATCHPAD.md
-.beads/
+
+# Beads local state (issues.jsonl is tracked)
+.beads/*.db
+.beads/*.db-*
+.beads/daemon.*
+.beads/bd.sock
+.beads/metadata.json
 
 # Beads local state (issues.jsonl is tracked)
 .beads/*.db
