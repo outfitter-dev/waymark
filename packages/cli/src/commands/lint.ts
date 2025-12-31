@@ -130,7 +130,6 @@ function findDuplicatePropertyIssues(
   const issues: LintIssue[] = [];
   const seen = new Map<string, number>();
   const rawLines = record.raw.split("\n");
-  const propertyRegex = new RegExp(PROPERTY_REGEX.source, PROPERTY_REGEX.flags);
 
   for (let index = 0; index < rawLines.length; index += 1) {
     const line = rawLines[index] ?? "";
@@ -144,7 +143,6 @@ function findDuplicatePropertyIssues(
       lineNumber,
       recordType: record.type,
       normalizedLine,
-      propertyRegex,
     });
 
     if (index > 0) {
@@ -173,7 +171,6 @@ type DuplicatePropertyContext = {
 
 type InlinePropertyContext = DuplicatePropertyContext & {
   normalizedLine: string;
-  propertyRegex: RegExp;
 };
 
 type ContinuationPropertyContext = DuplicatePropertyContext & {
@@ -188,9 +185,8 @@ function addInlinePropertyIssues({
   lineNumber,
   recordType,
   normalizedLine,
-  propertyRegex,
 }: InlinePropertyContext): void {
-  for (const match of normalizedLine.matchAll(propertyRegex)) {
+  for (const match of normalizedLine.matchAll(PROPERTY_REGEX)) {
     const keyRaw = match[1];
     if (!keyRaw) {
       continue;
