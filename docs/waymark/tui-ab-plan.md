@@ -41,7 +41,7 @@ We want a terminal-first experience that makes Waymark data scannable without le
 | Day | Activities |
 | --- | --- |
 | Day 0 | Align on scope, prep skeleton branches (`feat/tui-opentui`, `feat/tui-ink`), document baseline requirements. |
-| Day 1 | Build opentui spike: bootstrap layout, wire data loaders, capture notes in SCRATCHPAD. |
+| Day 1 | Build opentui spike: bootstrap layout, wire data loaders, capture notes inline. |
 | Day 2 | Build React Ink spike: mirror features, capture DX/perf observations. |
 | Day 3 | Synthesize findings, run comparison rubric, draft recommendation, update PLAN decisions log. |
 
@@ -72,7 +72,7 @@ We want a terminal-first experience that makes Waymark data scannable without le
 ### DX Notes
 
 - [ ] Author wrote setup instructions (bullets) in this doc.
-- [ ] Pain points recorded in SCRATCHPAD.
+- [ ] Pain points recorded in this doc.
 - [ ] Integration friction with MCP/CLI noted.
 
 ### Performance

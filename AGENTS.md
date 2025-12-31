@@ -4,31 +4,13 @@
 
 This file provides guidance to agents working in this repository.
 
-> **Active Collaboration**: Follow @./PLAN.md for sequencing and jot transient notes in @SCRATCHPAD.md.
-> **Authoritative Spec**: @./PRD.md is the single source of truth for the v1 grammar and tooling scope.
+## Skills & Conventions
 
-## 🚧 Project Rebuild Notice
+Use your skills for development methodology (TDD, debugging, architecture, code review). Refer to project documentation in `.agents/rules/` and `.waymark/rules/` for project-specific conventions.
 
-**This project is currently being rebuilt from the bottom up.** We're starting fresh with documentation and simple grep-based usage before reintroducing any complex tooling.
-
-For now we will be working exclusively from the `gt/v1.0/rewrite` branch.
-
-### Old Project References
-
-- **Local**: `~/Developer/outfitter/waymark-old`
-- **GitHub**: outfitter-dev/waymark-old (retired; see `archive/pre-rebuild-2025-01` branch)
-- **Archive Branch**: `archive/pre-rebuild-2025-01` contains all previous implementation work
-
-The rebuild focuses on clarity, simplicity, and progressive enhancement of the waymark pattern.
-
-## IMPORTANT
+## Key References
 
 - @README.md
-- @PRD.md
-- @PLAN.md
-- @SCRATCHPAD.md
-- @./.agents/rules/CORE.md
-- @./.agents/rules/IMPORTANT.md
 - @./.waymark/rules/WAYMARKS.md
 
 ## Project Overview
@@ -60,8 +42,6 @@ When working on this project:
 4. Focus on simplicity and grep-ability
 5. Use ripgrep to verify waymark patterns before commits
 6. Follow the `:::` sigil syntax (space before when prefix present)
-7. Update @SCRATCHPAD.md with a dated bullet log of anything you touch.
-8. Update @./PLAN.md and note material changes in the Decisions Log when making project-level adjustments
 
 ### MCP Server Expectations
 

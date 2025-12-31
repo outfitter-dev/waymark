@@ -60,6 +60,7 @@ packages/core/test-cache/waymark.db*
 
 # Agent archives (historical docs)
 .agents/.archive/
+.scratch/
 SCRATCHPAD.md
 
 # Local Claude settings
