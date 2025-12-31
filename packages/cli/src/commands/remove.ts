@@ -32,6 +32,15 @@ export type RemoveCommandOptions = {
   from?: string;
 };
 
+const RemoveCommandOptionsSchema = z
+  .object({
+    write: z.boolean(),
+    json: z.boolean(),
+    jsonl: z.boolean(),
+    from: z.string(),
+  })
+  .partial();
+
 export type ParsedRemoveArgs = {
   specs: RemovalSpec[];
   options: RemoveCommandOptions;
@@ -420,6 +429,30 @@ function logZodValidationErrors(error: ZodError): void {
   }
 }
 
+function parsePayloadOptions(
+  options: unknown
+): Partial<RemoveCommandOptions> | undefined {
+  const result = RemoveCommandOptionsSchema.safeParse(options);
+  if (!result.success) {
+    return;
+  }
+  // Filter out undefined values to satisfy exactOptionalPropertyTypes
+  const validated: Partial<RemoveCommandOptions> = {};
+  if (result.data.write !== undefined) {
+    validated.write = result.data.write;
+  }
+  if (result.data.json !== undefined) {
+    validated.json = result.data.json;
+  }
+  if (result.data.jsonl !== undefined) {
+    validated.jsonl = result.data.jsonl;
+  }
+  if (result.data.from !== undefined) {
+    validated.from = result.data.from;
+  }
+  return validated;
+}
+
 function parseRemovalPayload(parsed: unknown): LoadedRemovePayload {
   // Support both array format and object format with removals field
   if (Array.isArray(parsed)) {
@@ -430,7 +463,10 @@ function parseRemovalPayload(parsed: unknown): LoadedRemovePayload {
     const specs = z.array(RemovalSpecSchema).parse(parsed.removals);
     const result: LoadedRemovePayload = { specs };
     if (parsed.options) {
-      result.options = parsed.options as Partial<RemoveCommandOptions>;
+      const validatedOptions = parsePayloadOptions(parsed.options);
+      if (validatedOptions) {
+        result.options = validatedOptions;
+      }
     }
     return result;
   }

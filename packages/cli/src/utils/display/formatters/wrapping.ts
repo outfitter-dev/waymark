@@ -119,6 +119,8 @@ type PropertyKeyRead = {
 type PropertyValueRead = {
   value: string;
   nextIndex: number;
+  /** True if a quoted string was not properly terminated */
+  unterminated?: boolean;
 };
 
 function readPropertyKey(
@@ -154,6 +156,7 @@ function readQuotedPropertyValue(
 ): PropertyValueRead {
   let value = '"';
   let j = index + 1;
+  let terminated = false;
 
   while (j < content.length) {
     const c = content[j] ?? "";
@@ -168,12 +171,13 @@ function readQuotedPropertyValue(
     }
     if (c === '"') {
       j += 1;
+      terminated = true;
       break;
     }
     j += 1;
   }
 
-  return { value, nextIndex: j };
+  return { value, nextIndex: j, unterminated: !terminated };
 }
 
 function readUnquotedPropertyValue(
