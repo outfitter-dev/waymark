@@ -813,25 +813,6 @@ function isInputQuestion(question: unknown): boolean {
   );
 }
 
-function resolvePromptAbort(
-  error: unknown,
-  state: KeypressState
-): PromptOutcome | null {
-  if (
-    !(error instanceof Error) ||
-    (error.name !== "AbortPromptError" && error.name !== "ExitPromptError")
-  ) {
-    return null;
-  }
-  if (state.requestedCancel) {
-    return { type: "cancel" };
-  }
-  if (state.requestedBack) {
-    return { type: "back" };
-  }
-  return null;
-}
-
 function resolveMarkerChoices(
   config: WaymarkConfig,
   currentType: string
