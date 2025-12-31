@@ -315,6 +315,7 @@ function wrapTokens(tokens: Token[], availableWidth: number): string[] {
     if (!token) {
       continue;
     }
+
     const nextToken = tokens[i + 1];
     const prevToken = i > 0 ? tokens[i - 1] : undefined;
     const canBreakHere = shouldBreakBefore(token, prevToken);
