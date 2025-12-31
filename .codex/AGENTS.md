@@ -8,7 +8,6 @@ Refer to these documentation files for project-specific conventions:
 
 - `.agents/rules/ARCHITECTURE.md` — TypeScript config, Biome/Ultracite setup
 - `.agents/rules/MONOREPO.md` — Bun workspaces, Turbo pipelines, package structure
-<<<<<<< HEAD
 - `.agents/rules/MCP.md` — Available MCP servers (context7, GitHub, sequential-thinking)
 - `.agents/rules/API.md` — API design conventions
 - `.agents/rules/DATA.md` — Data handling patterns
