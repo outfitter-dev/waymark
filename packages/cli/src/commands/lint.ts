@@ -261,9 +261,16 @@ const multipleTldrRule: LintRule = {
   name: "multiple-tldr",
   severity: "error",
   checkFile: ({ filePath, records }) => {
-    const tldrs = records.filter(
-      (record) => record.type.toLowerCase() === "tldr"
-    );
+    const tldrs = records.filter((record) => {
+      if (record.type.toLowerCase() !== "tldr") {
+        return false;
+      }
+      // For docs, only count HTML comment TLDRs (not code examples)
+      if (record.fileCategory === "docs") {
+        return record.commentLeader === "<!--";
+      }
+      return true;
+    });
     if (tldrs.length <= 1) {
       return [];
     }
@@ -273,23 +280,23 @@ const multipleTldrRule: LintRule = {
       line: record.startLine,
       rule: "multiple-tldr",
       severity: "error",
-      message: `File already has tldr at line ${firstLine}`,
+      message: `File already has ${record.type} at line ${firstLine}`,
       type: record.type,
     }));
   },
 };
 
 const CODETAG_PATTERNS = [
-  { regex: /\/\/\s*TODO\s*:/i, leader: "//", marker: "todo" },
-  { regex: /\/\/\s*FIXME\s*:/i, leader: "//", marker: "fix" },
-  { regex: /\/\/\s*NOTE\s*:/i, leader: "//", marker: "note" },
-  { regex: /\/\/\s*HACK\s*:/i, leader: "//", marker: "hack" },
-  { regex: /\/\/\s*XXX\s*:/i, leader: "//", marker: "fix" },
-  { regex: /#\s*TODO\s*:/i, leader: "#", marker: "todo" },
-  { regex: /#\s*FIXME\s*:/i, leader: "#", marker: "fix" },
-  { regex: /#\s*NOTE\s*:/i, leader: "#", marker: "note" },
-  { regex: /--\s*TODO\s*:/i, leader: "--", marker: "todo" },
-  { regex: /--\s*FIXME\s*:/i, leader: "--", marker: "fix" },
+  { regex: /^\s*\/\/\s*TODO\s*:/i, leader: "//", marker: "todo" },
+  { regex: /^\s*\/\/\s*FIXME\s*:/i, leader: "//", marker: "fix" },
+  { regex: /^\s*\/\/\s*NOTE\s*:/i, leader: "//", marker: "note" },
+  { regex: /^\s*\/\/\s*HACK\s*:/i, leader: "//", marker: "hack" },
+  { regex: /^\s*\/\/\s*XXX\s*:/i, leader: "//", marker: "fix" },
+  { regex: /^\s*#\s*TODO\s*:/i, leader: "#", marker: "todo" },
+  { regex: /^\s*#\s*FIXME\s*:/i, leader: "#", marker: "fix" },
+  { regex: /^\s*#\s*NOTE\s*:/i, leader: "#", marker: "note" },
+  { regex: /^\s*--\s*TODO\s*:/i, leader: "--", marker: "todo" },
+  { regex: /^\s*--\s*FIXME\s*:/i, leader: "--", marker: "fix" },
 ];
 
 const legacyPatternRule: LintRule = {

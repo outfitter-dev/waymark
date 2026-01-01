@@ -116,10 +116,10 @@ CONFIGURATION
   {
     "allowTypes": ["todo", "fix", "note", "tldr", "custom"],
     "lint": {
-      "duplicate-property": "warn",   // or "error" or "off"
-      "unknown-marker": "warn",
-      "multiple-tldr": "error",
-      "legacy-pattern": "warn"
+      "duplicateProperty": "warn",   // or "error" or "off"
+      "unknownMarker": "warn",
+      "multipleTldr": "error",
+      "legacyPattern": "warn"
     }
   }
 

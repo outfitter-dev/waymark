@@ -2,7 +2,7 @@
 
 # Waymark Specification (v1)
 
-Waymark is a lightweight, comment-based grammar for embedding code-adjacent context beside implementation. This document is the canonical definition for v1; the archived PRD lives in `.agents/.archive/PRD.md` for historical context.
+Waymark is a lightweight, comment-based grammar for embedding code-adjacent context beside implementation. This document is the canonical definition for v1.
 
 ## 1. Line Form
 
