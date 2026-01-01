@@ -115,6 +115,10 @@
     "raw": {
       "type": "string",
       "description": "Raw source text of the waymark"
+    },
+    "legacy": {
+      "type": "boolean",
+      "description": "Whether this record was parsed from a legacy codetag pattern"
     }
   },
   "additionalProperties": false

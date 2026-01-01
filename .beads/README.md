@@ -1,3 +1,5 @@
+<!-- tldr ::: Beads git-native issue tracking for AI-assisted development workflows -->
+
 # Beads - AI-Native Issue Tracking
 
 Welcome to Beads! This repository uses **Beads** for issue tracking - a modern, AI-native tool designed to live directly in your codebase alongside your code.
