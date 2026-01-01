@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for expanding default skip paths in configuration -->
+
 # PR #105: chore: expand default skip paths
 
 **Branch:** chore-expand-default-skip-paths  

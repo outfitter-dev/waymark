@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for adding legacy-pattern lint rule detection -->
+
 # PR #101: feat: add legacy-pattern lint rule
 
 **Branch:** feat-add-legacy-pattern-lint-rule  

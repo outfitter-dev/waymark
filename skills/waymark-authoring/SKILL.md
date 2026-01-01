@@ -4,6 +4,8 @@ description: This skill should be used when the user asks to "add waymarks", "wr
 version: 0.1.0
 ---
 
+<!-- tldr ::: waymark grammar markers and structured annotation authoring patterns -->
+
 # Waymark Authoring
 
 Waymarks are structured code annotations using the `:::` sigil that enable humans and AI agents to leave durable, greppable breadcrumbs in codebases. This skill covers authoring waymarks correctly.

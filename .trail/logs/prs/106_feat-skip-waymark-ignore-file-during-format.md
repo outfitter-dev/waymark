@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for skipping waymark-ignore files during format operations -->
+
 # PR #106: feat: skip waymark-ignore-file during format
 
 **Branch:** feat-skip-waymark-ignore-file-during-format  

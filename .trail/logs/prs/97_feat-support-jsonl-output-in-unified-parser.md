@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for adding JSONL output support to unified parser -->
+
 # PR #97: feat: support jsonl output in unified parser
 
 **Branch:** feat-support-jsonl-output-in-unified-parser  

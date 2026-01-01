@@ -1,3 +1,5 @@
+<!-- tldr ::: extended TLDR sentence patterns organized by file type -->
+
 # TLDR Patterns by File Type
 
 Extended patterns for writing effective TLDR waymarks.

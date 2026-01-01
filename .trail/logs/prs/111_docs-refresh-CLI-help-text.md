@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for refreshing CLI help text and descriptions -->
+
 # PR #111: docs: refresh CLI help text
 
 **Branch:** docs-refresh-CLI-help-text  

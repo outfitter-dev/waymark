@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for clarifying docstring and line-comment policy documentation -->
+
 # PR #96: docs: clarify docstrings and line-comment policy
 
 **Branch:** docs-clarify-docstrings-and-line-comment-policy  

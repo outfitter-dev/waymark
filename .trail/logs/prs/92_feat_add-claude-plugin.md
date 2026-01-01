@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for adding Claude Code plugin with waymark commands and skills -->
+
 # PR #92: feat: add Claude Code plugin for waymarks
 
 **Branch:** feat/add-claude-plugin  

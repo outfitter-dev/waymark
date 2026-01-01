@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for expanding format command to handle directories -->
+
 # PR #104: feat: expand format to directories
 
 **Branch:** feat-expand-format-to-directories  

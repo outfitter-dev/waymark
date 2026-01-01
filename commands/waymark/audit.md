@@ -4,6 +4,8 @@ argument-hint: [path] [--all] [--tldr]
 allowed-tools: Glob, Grep, Read, Task, Bash(wm:*, rg:*, git:*)
 ---
 
+<!-- tldr ::: audit waymark coverage quality and accuracy across codebase files -->
+
 # Audit Waymarks Command
 
 Audit waymarks for coverage, accuracy, and quality.

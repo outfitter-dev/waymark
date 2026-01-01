@@ -4,6 +4,8 @@ description: This skill should be used when the user asks to "find waymarks with
 version: 0.1.0
 ---
 
+<!-- tldr ::: ripgrep patterns for waymark discovery when CLI is unavailable -->
+
 # Ripgrep Waymarks
 
 Search for waymarks using ripgrep when the `wm` CLI is unavailable. These patterns work with `rg` (ripgrep) or standard `grep`.

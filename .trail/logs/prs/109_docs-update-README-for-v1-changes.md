@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for updating README documentation for v1 changes -->
+
 # PR #109: docs: update README for v1 changes
 
 **Branch:** docs-update-README-for-v1-changes  

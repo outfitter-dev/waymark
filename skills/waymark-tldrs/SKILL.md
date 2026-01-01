@@ -4,6 +4,8 @@ description: This skill should be used when the user asks to "write a tldr", "ad
 version: 0.1.0
 ---
 
+<!-- tldr ::: file-level summary waymark patterns placement and tagging guidance -->
+
 # Waymark TLDRs
 
 TLDR waymarks provide file-level summaries that help humans and agents quickly understand file purpose. They are the most important waymark in any file.

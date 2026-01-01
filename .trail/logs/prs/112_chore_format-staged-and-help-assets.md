@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for formatting staged pre-commit and moving help assets -->
+
 # PR #112: chore: format staged pre-commit and move help assets
 
 **Branch:** chore/format-staged-and-help-assets  

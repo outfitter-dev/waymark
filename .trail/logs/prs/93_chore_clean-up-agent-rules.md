@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for cleaning up agent rules and removing stale documentation -->
+
 # PR #93: chore: clean up agent rules and remove stale docs
 
 **Branch:** chore/clean-up-agent-rules  

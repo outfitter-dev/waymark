@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for removing deprecated migrate command from CLI -->
+
 # PR #103: chore: remove migrate command
 
 **Branch:** chore-remove-migrate-command  

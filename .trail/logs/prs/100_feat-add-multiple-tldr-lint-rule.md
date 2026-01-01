@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for adding multiple-tldr lint rule enforcement -->
+
 # PR #100: feat: add multiple-tldr lint rule
 
 **Branch:** feat-add-multiple-tldr-lint-rule  

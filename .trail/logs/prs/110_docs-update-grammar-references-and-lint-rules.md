@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for updating grammar references and lint rule documentation -->
+
 # PR #110: docs: update grammar references and lint rules
 
 **Branch:** docs-update-grammar-references-and-lint-rules  

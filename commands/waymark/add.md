@@ -4,6 +4,8 @@ argument-hint: [file-path] [marker-type]
 allowed-tools: AskUserQuestion, Edit, Read, Write, Bash(wm:*)
 ---
 
+<!-- tldr ::: guide interactive waymark addition to files with proper syntax -->
+
 # Add Waymark Command
 
 Guide the user through adding a waymark to a file.

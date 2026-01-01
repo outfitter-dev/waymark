@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for adding duplicate-property lint rule detection -->
+
 # PR #99: feat: add duplicate-property lint rule
 
 **Branch:** feat-add-duplicate-property-lint-rule  

@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for aligning v1 documentation with spec and CLI updates -->
+
 # PR #113: docs: align v1 docs with spec and CLI updates
 
 **Branch:** docs-align-v1-docs-with-spec-and-CLI-updates  

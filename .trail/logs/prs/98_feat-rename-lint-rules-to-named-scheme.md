@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for renaming lint rules to use named scheme -->
+
 # PR #98: feat: rename lint rules to named scheme
 
 **Branch:** feat-rename-lint-rules-to-named-scheme  

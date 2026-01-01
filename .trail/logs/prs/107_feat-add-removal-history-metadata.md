@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for adding removal history metadata tracking -->
+
 # PR #107: feat: add removal history metadata
 
 **Branch:** feat-add-removal-history-metadata  

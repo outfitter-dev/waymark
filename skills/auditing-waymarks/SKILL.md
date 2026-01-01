@@ -4,6 +4,8 @@ description: This skill should be used when the user asks to "audit waymarks", "
 version: 0.1.0
 ---
 
+<!-- tldr ::: systematic waymark audit methodology for coverage and quality verification -->
+
 # Auditing Waymarks
 
 Systematic verification of waymark coverage, quality, and accuracy across a codebase. Use this skill when reviewing waymark health before releases, during code reviews, or for periodic maintenance.

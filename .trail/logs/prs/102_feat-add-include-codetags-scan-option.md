@@ -1,3 +1,5 @@
+<!-- tldr ::: PR log for adding include codetags option to scan command -->
+
 # PR #102: feat: add include codetags scan option
 
 **Branch:** feat-add-include-codetags-scan-option  

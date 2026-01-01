@@ -1,3 +1,5 @@
+<!-- tldr ::: complete blessed marker list with usage guidance and examples -->
+
 # Waymark Markers Reference
 
 Complete list of blessed markers with usage guidance.
