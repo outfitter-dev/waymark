@@ -57,275 +57,202 @@ function getTerminalWidth(): number {
 /**
  * Tokenize content into breakable chunks
  */
-type TokenRead = {
+function tokenize(content: string): Token[] {
+  const tokens: Token[] = [];
+  let index = 0;
+
+  while (index < content.length) {
+    const char = content[index];
+    if (!char) {
+      break;
+    }
+
+    const scanned =
+      scanTag(content, index) ??
+      scanMention(content, index) ??
+      scanPropertyOrText(content, index) ??
+      scanWhitespace(content, index) ??
+      scanComma(content, index) ??
+      scanTextRun(content, index);
+
+    tokens.push(scanned.token);
+    index = scanned.nextIndex;
+  }
+
+  return tokens;
+}
+
+type ScanResult = {
   token: Token;
   nextIndex: number;
 };
 
-function readTagToken(content: string, index: number): TokenRead | undefined {
-  const nextChar = content[index + 1] ?? "";
-  if (content[index] !== "#" || !ALPHANUMERIC_PATTERN.test(nextChar)) {
-    return;
+function scanTag(content: string, index: number): ScanResult | null {
+  if (content[index] !== "#" || !isAlphanumeric(content[index + 1])) {
+    return null;
   }
-
-  let value = "#";
-  let j = index + 1;
-  while (j < content.length && TAG_CONTENT_PATTERN.test(content[j] ?? "")) {
-    const c = content[j];
-    if (!c) {
-      break;
-    }
-    value += c;
-    j += 1;
-  }
-
+  const end = scanWhile(content, index + 1, TAG_CONTENT_PATTERN);
   return {
-    token: { type: "tag", value, canBreakBefore: true },
-    nextIndex: j,
+    token: {
+      type: "tag",
+      value: content.slice(index, end),
+      canBreakBefore: true,
+    },
+    nextIndex: end,
   };
 }
 
-function readMentionToken(
-  content: string,
-  index: number
-): TokenRead | undefined {
-  const nextChar = content[index + 1] ?? "";
-  if (content[index] !== "@" || !ALPHANUMERIC_PATTERN.test(nextChar)) {
-    return;
+function scanMention(content: string, index: number): ScanResult | null {
+  if (content[index] !== "@" || !isAlphanumeric(content[index + 1])) {
+    return null;
   }
-
-  let value = "@";
-  let j = index + 1;
-  while (j < content.length && MENTION_CONTENT_PATTERN.test(content[j] ?? "")) {
-    const c = content[j];
-    if (!c) {
-      break;
-    }
-    value += c;
-    j += 1;
-  }
-
+  const end = scanWhile(content, index + 1, MENTION_CONTENT_PATTERN);
   return {
-    token: { type: "mention", value, canBreakBefore: true },
-    nextIndex: j,
+    token: {
+      type: "mention",
+      value: content.slice(index, end),
+      canBreakBefore: true,
+    },
+    nextIndex: end,
   };
 }
 
-type PropertyKeyRead = {
-  key: string;
-  nextIndex: number;
-};
+function scanPropertyOrText(content: string, index: number): ScanResult | null {
+  const char = content[index];
+  if (!(char && ALPHANUMERIC_PATTERN.test(char))) {
+    return null;
+  }
+  const keyEnd = scanWhile(content, index + 1, PROPERTY_KEY_PATTERN);
+  const key = content.slice(index, keyEnd);
 
-type PropertyValueRead = {
-  value: string;
-  nextIndex: number;
-  /** True if a quoted string was not properly terminated */
-  unterminated?: boolean;
-};
-
-function readPropertyKey(
-  content: string,
-  index: number
-): PropertyKeyRead | undefined {
-  const char = content[index] ?? "";
-  if (!ALPHANUMERIC_PATTERN.test(char)) {
-    return;
+  if (content[keyEnd] !== ":") {
+    return {
+      token: { type: "text", value: key, canBreakBefore: false },
+      nextIndex: keyEnd,
+    };
   }
 
-  let key = char;
-  let j = index + 1;
-  while (j < content.length && PROPERTY_KEY_PATTERN.test(content[j] ?? "")) {
-    const c = content[j];
-    if (!c) {
-      break;
-    }
-    key += c;
-    j += 1;
-  }
-
-  if (content[j] !== ":") {
-    return;
-  }
-
-  return { key, nextIndex: j };
-}
-
-function readQuotedPropertyValue(
-  content: string,
-  index: number
-): PropertyValueRead {
-  let value = '"';
-  let j = index + 1;
-  let terminated = false;
-
-  while (j < content.length) {
-    const c = content[j] ?? "";
-    value += c;
-    if (c === "\\" && j + 1 < content.length) {
-      const escaped = content[j + 1];
-      if (escaped) {
-        value += escaped;
-      }
-      j += 2;
-      continue;
-    }
-    if (c === '"') {
-      j += 1;
-      terminated = true;
-      break;
-    }
-    j += 1;
-  }
-
-  return { value, nextIndex: j, unterminated: !terminated };
-}
-
-function readUnquotedPropertyValue(
-  content: string,
-  index: number
-): PropertyValueRead {
-  let value = "";
-  let j = index;
-  while (j < content.length && NON_SPACE_COMMA_PATTERN.test(content[j] ?? "")) {
-    const c = content[j];
-    if (!c) {
-      break;
-    }
-    value += c;
-    j += 1;
-  }
-  return { value, nextIndex: j };
-}
-
-function readPropertyValue(content: string, index: number): PropertyValueRead {
-  if (index >= content.length) {
-    return { value: "", nextIndex: index };
-  }
-  if (content[index] === '"') {
-    return readQuotedPropertyValue(content, index);
-  }
-  return readUnquotedPropertyValue(content, index);
-}
-
-function readPropertyToken(
-  content: string,
-  index: number
-): TokenRead | undefined {
-  const keyRead = readPropertyKey(content, index);
-  if (!keyRead) {
-    return;
-  }
-
-  const valueRead = readPropertyValue(content, keyRead.nextIndex + 1);
-  const value = `${keyRead.key}:${valueRead.value}`;
-
+  const { value, nextIndex } = scanPropertyValue(content, key, keyEnd + 1);
   return {
     token: { type: "property", value, canBreakBefore: true },
-    nextIndex: valueRead.nextIndex,
+    nextIndex,
   };
 }
 
-function readWhitespaceToken(
-  content: string,
-  index: number
-): TokenRead | undefined {
-  const char = content[index] ?? "";
-  if (!WHITESPACE_PATTERN.test(char)) {
-    return;
+function scanWhitespace(content: string, index: number): ScanResult | null {
+  if (!WHITESPACE_PATTERN.test(content[index] ?? "")) {
+    return null;
   }
-
-  let value = "";
-  let j = index;
-  while (j < content.length && WHITESPACE_PATTERN.test(content[j] ?? "")) {
-    const c = content[j];
-    if (!c) {
-      break;
-    }
-    value += c;
-    j += 1;
-  }
-
+  const end = scanWhile(content, index, WHITESPACE_PATTERN);
   return {
-    token: { type: "space", value, canBreakBefore: false },
-    nextIndex: j,
+    token: {
+      type: "space",
+      value: content.slice(index, end),
+      canBreakBefore: false,
+    },
+    nextIndex: end,
   };
 }
 
-function readCommaToken(content: string, index: number): TokenRead | undefined {
+function scanComma(content: string, index: number): ScanResult | null {
   if (content[index] !== ",") {
-    return;
+    return null;
   }
-
   return {
     token: { type: "comma", value: ",", canBreakBefore: false },
     nextIndex: index + 1,
   };
 }
 
-function isPropertyKeyStart(content: string, index: number): boolean {
-  let k = index + 1;
-  while (k < content.length && PROPERTY_KEY_PATTERN.test(content[k] ?? "")) {
-    k += 1;
+function scanTextRun(content: string, index: number): ScanResult {
+  let end = index + 1;
+  while (end < content.length) {
+    const nextChar = content[end];
+    if (!nextChar) {
+      break;
+    }
+    if (SPECIAL_CHARS_PATTERN.test(nextChar)) {
+      break;
+    }
+    if (isPropertyStart(content, end)) {
+      break;
+    }
+    end += 1;
   }
-  return content[k] === ":";
-}
-
-function shouldStopTextToken(content: string, index: number): boolean {
-  const nextChar = content[index];
-  if (!nextChar) {
-    return true;
-  }
-  if (SPECIAL_CHARS_PATTERN.test(nextChar)) {
-    return true;
-  }
-  if (!ALPHANUMERIC_PATTERN.test(nextChar)) {
-    return false;
-  }
-  return isPropertyKeyStart(content, index);
-}
-
-function readTextToken(content: string, index: number): TokenRead | undefined {
-  const char = content[index] ?? "";
-  if (!char) {
-    return;
-  }
-
-  let value = char;
-  let j = index + 1;
-  while (j < content.length && !shouldStopTextToken(content, j)) {
-    value += content[j] ?? "";
-    j += 1;
-  }
-
   return {
-    token: { type: "text", value, canBreakBefore: false },
-    nextIndex: j,
+    token: {
+      type: "text",
+      value: content.slice(index, end),
+      canBreakBefore: false,
+    },
+    nextIndex: end,
   };
 }
 
-function tokenize(content: string): Token[] {
-  const tokens: Token[] = [];
-  let i = 0;
+function scanPropertyValue(
+  content: string,
+  key: string,
+  index: number
+): { value: string; nextIndex: number } {
+  let value = `${key}:`;
+  const current = index;
 
-  while (i < content.length) {
-    const tokenRead =
-      readTagToken(content, i) ??
-      readMentionToken(content, i) ??
-      readPropertyToken(content, i) ??
-      readWhitespaceToken(content, i) ??
-      readCommaToken(content, i) ??
-      readTextToken(content, i);
-
-    if (!tokenRead) {
-      i += 1;
-      continue;
-    }
-
-    tokens.push(tokenRead.token);
-    i = tokenRead.nextIndex;
+  if (content[current] === '"') {
+    value += '"';
+    const quoted = scanQuotedValue(content, current + 1);
+    value += quoted.value;
+    return { value, nextIndex: quoted.nextIndex };
   }
 
-  return tokens;
+  const end = scanWhile(content, current, NON_SPACE_COMMA_PATTERN);
+  value += content.slice(current, end);
+  return { value, nextIndex: end };
+}
+
+function scanQuotedValue(
+  content: string,
+  index: number
+): { value: string; nextIndex: number; unterminated?: boolean } {
+  let value = "";
+  let current = index;
+  let terminated = false;
+  while (current < content.length) {
+    const char = content[current] ?? "";
+    value += char;
+    if (char === "\\" && current + 1 < content.length) {
+      const escaped = content[current + 1] ?? "";
+      value += escaped;
+      current += 2;
+      continue;
+    }
+    if (char === '"') {
+      current += 1;
+      terminated = true;
+      break;
+    }
+    current += 1;
+  }
+  return { value, nextIndex: current, unterminated: !terminated };
+}
+
+function scanWhile(content: string, index: number, pattern: RegExp): number {
+  let current = index;
+  while (current < content.length && pattern.test(content[current] ?? "")) {
+    current += 1;
+  }
+  return current;
+}
+
+function isAlphanumeric(char?: string): boolean {
+  return Boolean(char && ALPHANUMERIC_PATTERN.test(char));
+}
+
+function isPropertyStart(content: string, index: number): boolean {
+  if (!ALPHANUMERIC_PATTERN.test(content[index] ?? "")) {
+    return false;
+  }
+  const end = scanWhile(content, index + 1, PROPERTY_KEY_PATTERN);
+  return content[end] === ":";
 }
 
 /**
@@ -364,11 +291,26 @@ export function wrapContent(content: string, config: WrapConfig): string[] {
   return lines;
 }
 
-function wrapTokens(tokens: Token[], availableWidth: number): string[] {
-  const lines: string[] = [];
-  let currentLine = "";
+type WrapState = {
+  lines: string[];
+  currentLine: string;
+};
 
-  for (let i = 0; i < tokens.length; i++) {
+function handleSplitToken(
+  split: { lines: string[]; remainder: string; flushCurrentLine: boolean },
+  state: WrapState
+): void {
+  if (split.flushCurrentLine && state.currentLine.trim().length > 0) {
+    state.lines.push(state.currentLine.trim());
+  }
+  state.lines.push(...split.lines);
+  state.currentLine = split.remainder;
+}
+
+function wrapTokens(tokens: Token[], availableWidth: number): string[] {
+  const state: WrapState = { lines: [], currentLine: "" };
+
+  for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
     if (!token) {
       continue;
@@ -376,90 +318,92 @@ function wrapTokens(tokens: Token[], availableWidth: number): string[] {
 
     const nextToken = tokens[i + 1];
     const prevToken = i > 0 ? tokens[i - 1] : undefined;
-    const canBreakHere = canBreakBeforeToken(token, prevToken);
+    const canBreakHere = shouldBreakBefore(token, prevToken);
 
-    if (token.value.length > availableWidth && currentLine.length === 0) {
-      const { remainder, fragments } = splitLongToken(
-        token.value,
-        availableWidth
-      );
-      lines.push(...fragments);
-      currentLine = remainder;
+    const split = splitLongToken(token, availableWidth, state.currentLine);
+    if (split) {
+      handleSplitToken(split, state);
       continue;
     }
 
-    const { lineToPush, nextLine } = appendToken(
-      token.value,
-      currentLine,
+    const appended = appendTokenToLine(
+      state.currentLine,
+      token,
       availableWidth,
       canBreakHere
     );
-
-    if (lineToPush) {
-      lines.push(lineToPush);
+    if (appended.lineToPush) {
+      state.lines.push(appended.lineToPush);
     }
-    currentLine = nextLine;
+    state.currentLine = appended.nextLine;
 
-    if (shouldBreakOnSpace(token, nextToken, currentLine, availableWidth)) {
-      lines.push(currentLine.trim());
-      currentLine = "";
+    if (
+      shouldBreakAfterSpace(token, nextToken, state.currentLine, availableWidth)
+    ) {
+      state.lines.push(state.currentLine.trim());
+      state.currentLine = "";
     }
   }
 
-  if (currentLine.trim().length > 0) {
-    lines.push(currentLine.trim());
+  if (state.currentLine.trim().length > 0) {
+    state.lines.push(state.currentLine.trim());
   }
 
-  return lines;
+  return state.lines;
 }
 
-function splitLongToken(
-  value: string,
-  availableWidth: number
-): { fragments: string[]; remainder: string } {
-  const fragments: string[] = [];
-  let remaining = value;
-  while (remaining.length > availableWidth) {
-    fragments.push(remaining.slice(0, availableWidth));
-    remaining = remaining.slice(availableWidth);
-  }
-  return { fragments, remainder: remaining };
-}
-
-function appendToken(
-  value: string,
-  currentLine: string,
-  availableWidth: number,
-  canBreakHere: boolean
-): { lineToPush?: string; nextLine: string } {
-  const testLine = currentLine + value;
-  if (testLine.length > availableWidth && currentLine.length > 0) {
-    if (canBreakHere) {
-      return { lineToPush: currentLine.trim(), nextLine: value };
-    }
-    return { nextLine: testLine };
-  }
-  return { nextLine: testLine };
-}
-
-function canBreakBeforeToken(
-  token: Token,
-  prevToken: Token | undefined
-): boolean {
+function shouldBreakBefore(token: Token, prevToken?: Token): boolean {
   return (
     token.canBreakBefore ||
     (token.type === "text" && prevToken?.type === "space")
   );
 }
 
-function shouldBreakOnSpace(
+function splitLongToken(
+  token: Token,
+  availableWidth: number,
+  currentLine: string
+): { lines: string[]; remainder: string; flushCurrentLine: boolean } | null {
+  if (token.value.length <= availableWidth) {
+    return null;
+  }
+  // Token is longer than availableWidth and needs splitting
+  const lines: string[] = [];
+  let remaining = token.value;
+  // If currentLine has content, signal caller to flush it first
+  const flushCurrentLine = currentLine.length > 0;
+  while (remaining.length > availableWidth) {
+    lines.push(remaining.slice(0, availableWidth));
+    remaining = remaining.slice(availableWidth);
+  }
+  return { lines, remainder: remaining, flushCurrentLine };
+}
+
+function appendTokenToLine(
+  currentLine: string,
+  token: Token,
+  availableWidth: number,
+  canBreakHere: boolean
+): { lineToPush?: string; nextLine: string } {
+  const testLine = currentLine + token.value;
+  if (testLine.length > availableWidth && currentLine.length > 0) {
+    if (canBreakHere) {
+      return { lineToPush: currentLine.trim(), nextLine: token.value };
+    }
+    return { nextLine: testLine };
+  }
+  return { nextLine: testLine };
+}
+
+function shouldBreakAfterSpace(
   token: Token,
   nextToken: Token | undefined,
   currentLine: string,
   availableWidth: number
 ): boolean {
-  if (token.type !== "space" || !nextToken) {
-    return false;
-  }
-  return currentLine.length + nextToken.value.length > availableWidth;
+  return (
+    token.type === "space" &&
+    Boolean(nextToken) &&
+    currentLine.length + (nextToken?.value.length ?? 0) > availableWidth
+  );
 }

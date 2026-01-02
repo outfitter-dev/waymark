@@ -30,6 +30,7 @@ export type RemoveCommandOptions = {
   json: boolean;
   jsonl: boolean;
   from?: string;
+  reason?: string;
 };
 
 const RemoveCommandOptionsSchema = z
@@ -139,6 +140,9 @@ const VALUE_FLAG_HANDLERS: Record<
   },
   "--contains": (state, value) => {
     state.criteria.contains = value;
+  },
+  "--reason": (state, value) => {
+    state.optionState.reason = value;
   },
 };
 
@@ -330,6 +334,8 @@ export async function runRemoveCommand(
     write: shouldWrite,
     config: context.config,
     ...(idManager ? { idManager } : {}),
+    ...(mergedOptions.reason ? { reason: mergedOptions.reason } : {}),
+    removedBy: "cli",
     logger: {
       debug: (msg, meta) => logger.debug(meta ?? {}, msg),
       info: (msg, meta) => logger.info(meta ?? {}, msg),

@@ -137,7 +137,7 @@ const commonFlags = {
 export const commands: HelpRegistry = {
   format: {
     name: "format",
-    usage: "wm format <file> [options]",
+    usage: "wm format <paths...> [options]",
     description:
       "Format waymark comments in a file, normalizing spacing, case, and alignment.",
     flags: [
@@ -150,6 +150,7 @@ export const commands: HelpRegistry = {
       "wm format src/index.ts             # Preview formatting changes",
       "wm format src/index.ts --write     # Apply formatting changes",
       "wm format src/index.ts -w          # Apply formatting (short form)",
+      "wm format src/ --write             # Format all waymarks in a directory",
     ],
   },
   lint: {
@@ -167,22 +168,6 @@ export const commands: HelpRegistry = {
       "wm lint src/                       # Lint all files in src/",
       "wm lint src/*.ts                   # Lint TypeScript files",
       "wm lint src/ --json                # Output results as JSON",
-    ],
-  },
-  migrate: {
-    name: "migrate",
-    usage: "wm migrate <file> [options]",
-    description: "Convert legacy TODO/FIXME/NOTE comments to waymark syntax.",
-    flags: [
-      commonFlags.write,
-      commonFlags.config,
-      commonFlags.prompt,
-      commonFlags.help,
-    ],
-    examples: [
-      "wm migrate src/legacy.ts           # Preview migration",
-      "wm migrate src/legacy.ts --write   # Apply migration",
-      "wm migrate src/ --write            # Migrate all files in directory",
     ],
   },
   help: {
@@ -406,6 +391,12 @@ export const commands: HelpRegistry = {
         description: "Read removal specs from JSON/JSONL file",
       },
       {
+        name: "reason",
+        type: "string",
+        placeholder: "text",
+        description: "Record removal reason in history",
+      },
+      {
         name: "id",
         type: "string",
         placeholder: "wm:abcdef",
@@ -487,6 +478,7 @@ export const commands: HelpRegistry = {
       "wm remove src/auth.ts:42 --write      # Actually remove",
       "wm remove --id wm:a3k9m2p --write     # Remove by ID",
       "wm remove --type todo --tag #wip --write --yes  # Batch removal",
+      'wm remove src/auth.ts:42 --write --reason "cleanup"',
     ],
   },
   init: {

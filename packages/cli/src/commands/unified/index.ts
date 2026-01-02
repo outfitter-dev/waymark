@@ -23,7 +23,7 @@ export async function runUnifiedCommand(
   options: UnifiedCommandOptions,
   context: CommandContext
 ): Promise<UnifiedCommandResult> {
-  const { filePaths, isGraphMode, json, noColor } = options;
+  const { filePaths, isGraphMode, outputFormat, noColor } = options;
 
   // Disable chalk colors if --no-color flag is set
   if (noColor) {
@@ -33,10 +33,21 @@ export async function runUnifiedCommand(
   // Graph mode: extract relation edges
   if (isGraphMode) {
     const edges = await graphRecords(filePaths, context.config);
-    if (json) {
+    if (outputFormat === "json") {
       return { output: JSON.stringify(edges) };
     }
-    return { output: edges.map((edge) => JSON.stringify(edge)).join("\n") };
+    if (outputFormat === "jsonl") {
+      return { output: edges.map((edge) => JSON.stringify(edge)).join("\n") };
+    }
+    // Default: human-readable text output
+    return {
+      output: edges
+        .map(
+          (e) =>
+            `${e.from.file}:${e.from.startLine} -[${e.relation}]-> ${e.toCanonical}`
+        )
+        .join("\n"),
+    };
   }
 
   // Scan + filter mode (find behavior)
@@ -44,8 +55,11 @@ export async function runUnifiedCommand(
   const filtered = applyFilters(records, options);
 
   // If JSON output requested, use renderRecords
-  if (json) {
-    return { output: renderRecords(filtered, "json"), records: filtered };
+  if (outputFormat) {
+    return {
+      output: renderRecords(filtered, outputFormat),
+      records: filtered,
+    };
   }
 
   // Otherwise use the new display formatting

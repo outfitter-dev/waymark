@@ -2,8 +2,6 @@
 
 type_case = "lowercase"
 id_scope = "repo"
-protected_branches = ["main", "release/*"]
-signals_on_protected = "strip"
 allow_types = ["idea", "example"]
 
 skip_paths = [

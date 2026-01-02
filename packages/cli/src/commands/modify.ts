@@ -771,11 +771,7 @@ async function promptStep(
     }
   ).ui;
 
-  const isTextInput =
-    typeof question === "object" &&
-    question !== null &&
-    "type" in question &&
-    question.type === "input";
+  const isTextInput = isInputQuestion(question);
 
   // Initialize buffer with default value to allow editing pre-filled content
   const state: KeypressState = {
@@ -806,6 +802,15 @@ async function promptStep(
       stdin.removeListener("keypress", onKeypress);
     }
   }
+}
+
+function isInputQuestion(question: unknown): boolean {
+  return (
+    typeof question === "object" &&
+    question !== null &&
+    "type" in question &&
+    question.type === "input"
+  );
 }
 
 function resolveMarkerChoices(

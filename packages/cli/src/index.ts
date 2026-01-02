@@ -2,7 +2,6 @@
 
 // tldr ::: waymark CLI entry point using commander for command routing and parsing
 
-import { existsSync } from "node:fs";
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
 import { Command, Option } from "commander";
@@ -13,10 +12,9 @@ import {
   formatDoctorReport,
   runDoctorCommand,
 } from "./commands/doctor.ts";
-import { formatFile } from "./commands/fmt.ts";
+import { expandFormatPaths, formatFile } from "./commands/fmt.ts";
 import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
-import { migrateFile } from "./commands/migrate.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
 import {
   type ParsedRemoveArgs,
@@ -48,12 +46,6 @@ function writeStderr(message: string): void {
   STDERR.write(`${message}\n`);
 }
 
-function ensureFileExists(path: string): void {
-  if (!existsSync(path)) {
-    throw new Error(`File not found: ${path}`);
-  }
-}
-
 // Command handlers extracted for complexity management
 async function handleFormatCommand(
   program: Command,
@@ -76,10 +68,14 @@ async function handleFormatCommand(
 
   // If no paths provided, default to current directory
   const pathsToFormat = paths.length > 0 ? paths : ["."];
+  const expandedPaths = await expandFormatPaths(pathsToFormat, context.config);
 
-  for (const filePath of pathsToFormat) {
-    ensureFileExists(filePath);
+  if (expandedPaths.length === 0) {
+    writeStdout("format: no waymarks found");
+    return;
+  }
 
+  for (const filePath of expandedPaths) {
     // First, format without writing to see what changes would be made
     const { formattedText, edits } = await formatFile(
       { filePath, write: false },
@@ -145,69 +141,21 @@ async function handleLintCommand(
     writeStdout(JSON.stringify(report));
   } else {
     for (const issue of report.issues) {
-      writeStderr(`${issue.file}:${issue.line} invalid type "${issue.type}"`);
+      writeStderr(
+        `${issue.file}:${issue.line} ${issue.severity} ${issue.rule}: ${issue.message}`
+      );
     }
     if (report.issues.length === 0) {
       writeStdout("lint: no issues found");
     }
   }
 
-  if (report.issues.length > 0) {
+  const errorCount = report.issues.filter(
+    (issue) => issue.severity === "error"
+  ).length;
+
+  if (errorCount > 0) {
     process.exit(1);
-  }
-}
-
-async function handleMigrateCommand(
-  program: Command,
-  paths: string[],
-  options: { write?: boolean; prompt?: boolean }
-): Promise<void> {
-  if (options.prompt) {
-    const promptText = loadPrompt("migrate");
-    if (promptText) {
-      writeStdout(promptText);
-      return;
-    }
-    writeStderr("No agent prompt available for this command");
-    process.exit(1);
-  }
-
-  const scopeValue = program.opts().scope as string;
-  const globalOpts = { scope: normalizeScope(scopeValue) };
-  const context = await createContext(globalOpts);
-
-  // If no paths provided, default to current directory
-  const pathsToMigrate = paths.length > 0 ? paths : ["."];
-
-  for (const filePath of pathsToMigrate) {
-    ensureFileExists(filePath);
-
-    // First, migrate without writing to see what changes would be made
-    const result = await migrateFile({ filePath, write: false }, context);
-
-    if (!result.changed) {
-      writeStdout(`${filePath}: no changes`);
-      continue;
-    }
-
-    // If --write flag is set, confirm before writing
-    if (options.write) {
-      const shouldWrite = await confirmWrite({
-        filePath,
-        actionVerb: "migrate",
-      });
-
-      if (shouldWrite) {
-        // Actually write the changes
-        await migrateFile({ filePath, write: true }, context);
-        writeStdout(`${filePath}: migrated`);
-      } else {
-        writeStdout("Write cancelled");
-        process.exit(1);
-      }
-    } else {
-      writeStdout(result.output);
-    }
   }
 }
 
@@ -761,7 +709,6 @@ const COMMAND_ORDER = [
   "modify",
   "remove",
   "init",
-  "migrate",
   "completions",
   "update",
   "help",
@@ -1047,6 +994,9 @@ Examples:
   $ wm format src/**/*.ts --write      # Format multiple files
   $ wm format src/ --write             # Format all files in directory
 
+Notes:
+  - Files beginning with a \`waymark-ignore-file\` comment are skipped
+
 Formatting Rules:
   - Exactly one space before and after ::: sigil
   - Marker case normalized (default: lowercase)
@@ -1213,6 +1163,7 @@ Notes:
       "--from <file>",
       "read removal targets from JSON file (use - for stdin)"
     )
+    .option("--reason <text>", "record a removal reason in history")
     .option("--criteria <query>", "remove waymarks matching filter criteria")
     .option("--write, -w", "actually remove (default is preview)", false)
     .option("--yes, -y", "skip confirmation prompt", false)
@@ -1236,6 +1187,7 @@ Examples:
   $ wm remove --id wm:a3k9m2p --write         # Remove by ID
   $ wm remove --criteria "type:todo mention:@agent" src/ --write
   $ wm remove --from removals.json --write
+  $ wm remove src/auth.ts:42 --write --reason "cleanup"
 
 Filter Criteria Syntax:
   type:<marker>         Match waymark type (todo, fix, note, etc.)
@@ -1250,7 +1202,7 @@ Safety Features:
   - --write flag required for actual removal
   - Confirmation prompt before removing (unless --yes)
   - Multi-line waymarks removed atomically
-  - Removed waymarks tracked in .waymark/history.json
+  - Removed waymarks tracked in .waymark/history.json (with optional --reason)
 
 See 'wm remove --prompt' for agent-facing documentation.
     `
@@ -1290,13 +1242,10 @@ Examples:
   $ git diff --name-only --cached | xargs wm lint    # Pre-commit hook
 
 Lint Rules:
-  WM001   Duplicate property key (warn)
-  WM010   Unknown marker (warn)
-  WM020   Unterminated multi-line block (error)
-  WM030   Multiple tldr in file (error)
-  WM040   Canonical collision (error)
-  WM041   Dangling relation (error)
-  WM050   Signal on protected branch (policy)
+  duplicate-property   Duplicate property key (warn)
+  unknown-marker       Unknown marker (warn)
+  multiple-tldr        Multiple tldr in file (error)
+  legacy-pattern       Legacy codetag pattern (warn)
 
 Exit Codes:
   0   No errors (warnings allowed)
@@ -1304,8 +1253,8 @@ Exit Codes:
   2   Internal/tooling error
 
 Example Output:
-  src/auth.ts:12:1 - error WM041: Dangling relation 'depends:#payments/core'
-  src/auth.ts:34:1 - warn WM001: Duplicate property key 'owner'
+  src/auth.ts:12:1 - error multiple-tldr: File already has tldr at line 1
+  src/auth.ts:34:1 - warn duplicate-property: Duplicate property key 'owner'
   ✖ 2 errors, 1 warning
 
 See 'wm lint --prompt' for agent-facing documentation.
@@ -1318,59 +1267,6 @@ See 'wm lint --prompt' for agent-facing documentation.
       ) => {
         try {
           await handleLintCommand(program, paths, options);
-        } catch (error) {
-          writeStderr(error instanceof Error ? error.message : String(error));
-          process.exit(1);
-        }
-      }
-    );
-
-  // Migrate command
-  program
-    .command("migrate")
-    .argument("[paths...]", "files or directories to migrate")
-    .option("--write, -w", "write changes to file", false)
-    .option("--include-legacy", "also migrate non-standard patterns", false)
-    .option("--prompt", "show agent-facing prompt instead of help")
-    .description("convert legacy comment patterns to waymark syntax")
-    .addHelpText(
-      "after",
-      `
-Examples:
-  $ wm migrate src/auth.ts                # Preview migration of single file
-  $ wm migrate src/auth.ts --write        # Apply migration to single file
-  $ wm migrate src/**/*.ts --write        # Migrate multiple files
-  $ wm migrate src/ --write               # Migrate directory
-  $ wm migrate src/auth.ts --include-legacy --write
-
-Supported Legacy Patterns:
-  TODO:           → todo :::
-  FIXME:          → fix :::
-  HACK:           → hack :::
-  NOTE:           → note :::
-  XXX:            → warn :::
-  @deprecated     → deprecated :::
-
-Before Migration:
-  // TODO: implement authentication
-  // FIXME: validate email format
-  /* XXX: this is a hack */
-
-After Migration:
-  // todo ::: implement authentication
-  // fix ::: validate email format
-  /* hack ::: this is a hack */
-
-See 'wm migrate --prompt' for agent-facing documentation.
-    `
-    )
-    .action(
-      async (
-        paths: string[],
-        options: { write?: boolean; prompt?: boolean }
-      ) => {
-        try {
-          await handleMigrateCommand(program, paths, options);
         } catch (error) {
           writeStderr(error instanceof Error ? error.message : String(error));
           process.exit(1);

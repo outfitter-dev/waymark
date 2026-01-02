@@ -15,7 +15,7 @@ export type FindCommandOptions = {
   types?: string[];
   tags?: string[];
   mentions?: string[];
-  json?: boolean;
+  outputFormat?: "json" | "jsonl";
   config: WaymarkConfig;
 };
 
@@ -57,7 +57,7 @@ export function parseFindArgs(
   const types: string[] = [];
   const tags: string[] = [];
   const mentions: string[] = [];
-  const jsonState = { json: false };
+  const jsonState = { outputFormat: null };
 
   while (iterator.hasNext()) {
     const token = iterator.next();
@@ -68,10 +68,10 @@ export function parseFindArgs(
     handleMentionFlag(token, iterator, mentions);
   }
 
-  const options: Omit<FindCommandOptions, "config"> = {
-    filePath,
-    json: jsonState.json,
-  };
+  const options: Omit<FindCommandOptions, "config"> = { filePath };
+  if (jsonState.outputFormat) {
+    options.outputFormat = jsonState.outputFormat;
+  }
   if (types.length > 0) {
     options.types = types;
   }

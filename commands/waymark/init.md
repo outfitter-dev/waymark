@@ -15,11 +15,6 @@ Initialize waymarks in the current project through guided setup.
 - `--plan` - Skip questions, generate plan document only
 - `--execute` - Skip questions, execute immediately with detected defaults
 
-## Context Injection
-
-Existing config: !`cat .waymark/config.jsonc 2>/dev/null || echo "Not configured"`
-Source files: !`git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' '*.rb' | head -20`
-
 ## Instructions
 
 Load the `waymark-authoring` skill for grammar and marker guidance.
@@ -227,7 +222,7 @@ Strategy: comprehensive
   type: tldr
   content: "[pending]"
   suggestion: "Suggested TLDR content here"
-```
+```text
 
 ## Next Steps
 
@@ -243,6 +238,7 @@ Edit this file to modify suggestions before applying.
 Report what was done:
 
 **Execute Mode:**
+
 ```text
 
 Waymark initialization complete!

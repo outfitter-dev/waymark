@@ -18,15 +18,18 @@ export type WaymarkLintConfig = {
   duplicateCanonical: "warn" | "error" | "ignore";
 };
 
+export type WaymarkScanConfig = {
+  includeCodetags: boolean;
+};
+
 export type WaymarkConfig = {
   typeCase: "lowercase" | "uppercase";
   idScope: "repo" | "file";
-  protectedBranches: string[];
-  signalsOnProtected: "strip" | "fail" | "allow";
   allowTypes: string[];
   skipPaths: string[];
   includePaths: string[];
   respectGitignore: boolean;
+  scan: WaymarkScanConfig;
   format: WaymarkFormatConfig;
   lint: WaymarkLintConfig;
   ids: WaymarkIdConfig;
@@ -37,23 +40,20 @@ export type WaymarkConfig = {
 export type PartialWaymarkConfig = {
   typeCase?: "lowercase" | "uppercase";
   idScope?: "repo" | "file";
-  protectedBranches?: string[];
-  signalsOnProtected?: "strip" | "fail" | "allow";
   allowTypes?: string[];
   skipPaths?: string[];
   includePaths?: string[];
   respectGitignore?: boolean;
+  scan?: Partial<WaymarkScanConfig>;
   format?: Partial<WaymarkFormatConfig>;
   lint?: Partial<WaymarkLintConfig>;
   ids?: Partial<WaymarkIdConfig>;
   index?: Partial<WaymarkIndexConfig>;
 };
 
-import type { WaymarkRecord } from "@waymarks/grammar";
-
 export type ScanOptions = {
   cache?: boolean;
-  filter?: (record: WaymarkRecord) => boolean;
+  filter?: (record: import("@waymarks/grammar").WaymarkRecord) => boolean;
   config?: Partial<WaymarkConfig>;
 };
 

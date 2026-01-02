@@ -2,19 +2,22 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 
-import type { FormatResult } from "@waymarks/core";
+import type { FormatResult, WaymarkConfig } from "@waymarks/core";
 import { formatText } from "@waymarks/core";
 
 import type { CommandContext } from "../types";
-import { ensureFileExists } from "../utils/fs";
+import { ensureFileExists, expandInputPaths } from "../utils/fs";
 
 export type FormatCommandOptions = {
-  filePath: string;
+  filePaths: string[];
   write: boolean;
 };
 
+const IGNORE_FILE_MARKER_PATTERN =
+  /^\s*(\/\/|#|--|<!--)\s*waymark-ignore-file\b/;
+
 export async function formatFile(
-  options: FormatCommandOptions,
+  options: { filePath: string; write: boolean },
   context: CommandContext
 ): Promise<FormatResult> {
   const { filePath, write } = options;
@@ -32,21 +35,67 @@ export async function formatFile(
   return result;
 }
 
+function hasIgnoreMarker(source: string): boolean {
+  const lines = source.split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#!")) {
+      continue;
+    }
+    if (IGNORE_FILE_MARKER_PATTERN.test(line)) {
+      return true;
+    }
+    const startsWithComment =
+      trimmed.startsWith("//") ||
+      trimmed.startsWith("#") ||
+      trimmed.startsWith("--") ||
+      trimmed.startsWith("<!--");
+    if (!startsWithComment) {
+      break;
+    }
+  }
+  return false;
+}
+async function filterFilesWithWaymarks(paths: string[]): Promise<string[]> {
+  const results: string[] = [];
+  for (const path of paths) {
+    const source = await readFile(path, "utf8").catch(() => null);
+    if (typeof source !== "string") {
+      continue;
+    }
+    if (hasIgnoreMarker(source)) {
+      continue;
+    }
+    if (source.includes(":::")) {
+      results.push(path);
+    }
+  }
+  return results;
+}
+
+export async function expandFormatPaths(
+  inputs: string[],
+  config: WaymarkConfig
+): Promise<string[]> {
+  const expanded = await expandInputPaths(inputs, config);
+  return await filterFilesWithWaymarks(expanded);
+}
+
 export function parseFormatArgs(argv: string[]): FormatCommandOptions {
   if (argv.length === 0) {
-    throw new Error("fmt requires a file path");
+    throw new Error("fmt requires at least one file path");
   }
 
   const write = argv.includes("--write") || argv.includes("-w");
   const remaining = argv.filter((arg) => !arg.startsWith("-"));
-  const filePath = remaining[0];
+  const filePaths = remaining.filter((path) => path.length > 0);
 
-  if (typeof filePath !== "string" || filePath.length === 0) {
-    throw new Error("fmt requires a file path");
+  if (filePaths.length === 0) {
+    throw new Error("fmt requires at least one file path");
   }
 
   return {
-    filePath,
+    filePaths,
     write,
   };
 }

@@ -121,6 +121,21 @@ describe("wrapContent", () => {
     expect(result.join("")).toBe(content);
   });
 
+  test("handles long token after existing content", () => {
+    // Edge case: long token appears after short content already on line
+    const content = "hello #verylongtagthatexceedsavailablewidthentirely";
+    const result = wrapContent(content, { indent: 10, width: 30 });
+    // Available width = 30 - 10 = 20
+    // "hello " (6 chars) fits, then long tag (45 chars) should be split
+    expect(result.length).toBeGreaterThan(1);
+    // First line should have "hello"
+    expect(result[0]).toBe("hello");
+    // No single line should exceed available width (20)
+    for (const line of result) {
+      expect(line.length).toBeLessThanOrEqual(20);
+    }
+  });
+
   test("calculates indent correctly", () => {
     const content = "text that wraps";
     const indent = 15;

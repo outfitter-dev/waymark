@@ -7,10 +7,9 @@ import { join } from "node:path";
 import { resolveConfig } from "@waymarks/core";
 import type { Command } from "commander";
 import { findRecords } from "./commands/find";
-import { formatFile } from "./commands/fmt";
+import { expandFormatPaths, formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
-import { migrateFile, migrateLegacyWaymarks } from "./commands/migrate";
 import type { ModifyPayload } from "./commands/modify";
 import { parseScanArgs, scanRecords } from "./commands/scan";
 import {
@@ -94,6 +93,15 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
+  test("format path expansion skips waymark-ignore-file", async () => {
+    const { file, cleanup } = await withTempFile(
+      "// waymark-ignore-file\n// todo ::: ignore this\n"
+    );
+    const paths = await expandFormatPaths([file], defaultContext.config);
+    expect(paths).toEqual([]);
+    await cleanup();
+  });
+
   test("scan command parses waymarks", async () => {
     const source = ["// todo ::: implement feature", "// note ::: helper"].join(
       "\n"
@@ -102,6 +110,20 @@ describe("CLI handlers", () => {
     const records = await scanRecords([file], defaultContext.config);
     expect(records).toHaveLength(2);
     expect(records[0]?.type).toBe("todo");
+    await cleanup();
+  });
+
+  test("scan command includes legacy codetags when enabled", async () => {
+    const source = "// TODO: legacy task";
+    const { file, cleanup } = await withTempFile(source);
+    const records = await scanRecords([file], {
+      ...defaultContext.config,
+      scan: { ...defaultContext.config.scan, includeCodetags: true },
+    });
+    const legacy = records.find((record) => record.legacy);
+    expect(legacy).toBeDefined();
+    expect(legacy?.type).toBe("todo");
+    expect(legacy?.contentText).toBe("legacy task");
     await cleanup();
   });
 
@@ -424,29 +446,61 @@ describe("CLI handlers", () => {
       defaultContext.config.allowTypes,
       defaultContext.config
     );
-    expect(report.issues).toHaveLength(1);
-    expect(report.issues[0]?.type).toBe("todooo");
+    const issue = report.issues.find((i) => i.rule === "unknown-marker");
+    expect(issue).toBeDefined();
+    expect(issue?.severity).toBe("warn");
+    expect(issue?.type).toBe("todooo");
     await cleanup();
   });
 
-  test("migrate command converts legacy TODO", async () => {
-    const source = "// TODO: replace legacy\n";
+  test("lint command detects duplicate properties", async () => {
+    const source = "// todo ::: owner:@alice owner:@bob\n";
     const { file, cleanup } = await withTempFile(source);
-    const { output } = await migrateFile(
-      { filePath: file, write: false },
-      defaultContext
+    const report = await lintFiles(
+      [file],
+      defaultContext.config.allowTypes,
+      defaultContext.config
     );
-    expect(output).toBe("// todo ::: replace legacy\n");
+    const duplicateIssue = report.issues.find(
+      (issue) => issue.rule === "duplicate-property"
+    );
+    expect(duplicateIssue).toBeDefined();
+    expect(duplicateIssue?.line).toBe(1);
     await cleanup();
   });
 
-  test("legacy migration helper handles multiple patterns", () => {
-    const migrated = migrateLegacyWaymarks(
-      ["// TODO: item", "// FIXME: bug", "// NOTE: detail"].join("\n")
+  test("lint command detects multiple tldr waymarks", async () => {
+    const source = ["// tldr ::: one", "// tldr ::: two"].join("\n");
+    const { file, cleanup } = await withTempFile(source);
+    const report = await lintFiles(
+      [file],
+      defaultContext.config.allowTypes,
+      defaultContext.config
     );
-    expect(migrated).toBe(
-      "// todo ::: item\n// fix ::: bug\n// note ::: detail"
+    const tldrIssue = report.issues.find(
+      (issue) => issue.rule === "multiple-tldr"
     );
+    expect(tldrIssue).toBeDefined();
+    expect(tldrIssue?.severity).toBe("error");
+    expect(tldrIssue?.line).toBe(2);
+    await cleanup();
+  });
+
+  test("lint command detects legacy codetags", async () => {
+    const source = ["// TODO: legacy task", "// note ::: ok"].join("\n");
+    const { file, cleanup } = await withTempFile(source);
+    const report = await lintFiles(
+      [file],
+      defaultContext.config.allowTypes,
+      defaultContext.config
+    );
+    const legacyIssue = report.issues.find(
+      (issue) => issue.rule === "legacy-pattern"
+    );
+    expect(legacyIssue).toBeDefined();
+    expect(legacyIssue?.severity).toBe("warn");
+    expect(legacyIssue?.line).toBe(1);
+    await cleanup();
   });
 });
 
@@ -483,6 +537,16 @@ describe("Unified command", () => {
       "src/",
     ]);
     expect(options.mentions).toEqual(["@alice", "agent"]);
+  });
+
+  test("parseUnifiedArgs detects json output format", () => {
+    const options = parseUnifiedArgs(["--json", "src/"]);
+    expect(options.outputFormat).toBe("json");
+  });
+
+  test("parseUnifiedArgs detects jsonl output format", () => {
+    const options = parseUnifiedArgs(["--jsonl", "src/"]);
+    expect(options.outputFormat).toBe("jsonl");
   });
 
   test("parseUnifiedArgs accepts --after-context alias", () => {
@@ -554,7 +618,7 @@ describe("Unified command", () => {
       filePaths: [file],
       isGraphMode: false,
       types: ["todo"],
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{ type: string }>;
@@ -573,7 +637,7 @@ describe("Unified command", () => {
       filePaths: [file],
       isGraphMode: false,
       raised: true,
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{
@@ -594,7 +658,7 @@ describe("Unified command", () => {
       filePaths: [file],
       isGraphMode: false,
       starred: true,
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{
@@ -621,7 +685,7 @@ describe("Unified command", () => {
       raised: true,
       starred: true,
       tags: ["#perf"],
-      json: true,
+      outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{

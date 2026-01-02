@@ -15,40 +15,25 @@ OUTPUT FORMATS
 
 LINT RULES
 
-  WM001 - Duplicate property key (warn)
+  duplicate-property - Duplicate property key (warn)
     Multiple instances of same property key in a waymark.
     Example: owner:@alice ... owner:@bob
     Action: Remove duplicate, keep last value
 
-  WM010 - Unknown marker (warn)
+  unknown-marker - Unknown marker (warn)
     Marker not in blessed list or allowTypes config.
     Example: // foo ::: unknown marker
     Action: Use blessed marker or add to allowTypes
 
-  WM020 - Unterminated multi-line block (error)
-    Multi-line waymark missing proper continuation or closure.
-    Example: HTML comment missing -->
-    Action: Add missing continuation lines or close block
-
-  WM030 - Multiple tldr in file (error)
+  multiple-tldr - Multiple tldr in file (error)
     More than one tldr waymark in a single file.
     Example: Two // tldr ::: statements
     Action: Consolidate into single tldr at top of file
 
-  WM040 - Canonical collision (error)
-    Multiple waymarks declare same ref:#token.
-    Example: ref:#auth/service in two files
-    Action: Rename one canonical or remove duplicate
-
-  WM041 - Dangling relation (error)
-    Relation property references non-existent canonical.
-    Example: depends:#payments/core with no ref:#payments/core
-    Action: Create canonical or fix token reference
-
-  WM050 - Signal on protected branch (policy)
-    Raised (^) waymark found on protected branch.
-    Example: // ^todo ::: implement on main branch
-    Action: Complete work or remove signal before merge
+  legacy-pattern - Legacy codetag pattern (warn)
+    Legacy TODO/FIXME/NOTE/HACK/XXX patterns found.
+    Example: // TODO: replace legacy
+    Action: Convert to waymark syntax (// todo :::)
 
 EXIT CODES
   0 = Success (no errors, warnings allowed)
@@ -74,19 +59,16 @@ AGENT WORKFLOWS
      → Lint files changed in current branch
 
   5. Validate specific rule:
-     wm lint src/ --json | jq 'map(select(.code == "WM041"))'
-     → Find all dangling relations
+     wm lint src/ --json | jq 'map(select(.rule == "multiple-tldr"))'
+     → Find all files with multiple tldr entries
 
 EXAMPLE OUTPUT (text)
 
-  src/auth.ts:12:1 - error WM041: Dangling relation 'depends:#payments/core'
-    No canonical found for token #payments/core
+  src/auth.ts:12:1 - error multiple-tldr: File already has tldr at line 1
+    Found tldr at lines 1 and 12
 
-  src/auth.ts:34:1 - warn WM001: Duplicate property key 'owner'
+  src/auth.ts:34:1 - warn duplicate-property: Duplicate property key 'owner'
     Property 'owner' appears multiple times
-
-  src/payments.ts:5:1 - error WM030: Multiple tldr waymarks in file
-    Found tldr at lines 5 and 23
 
   ✖ 2 errors, 1 warning
 
@@ -98,8 +80,8 @@ EXAMPLE OUTPUT (json)
       "line": 12,
       "column": 1,
       "severity": "error",
-      "code": "WM041",
-      "message": "Dangling relation 'depends:#payments/core'",
+      "rule": "multiple-tldr",
+      "message": "File already has tldr at line 1",
       "type": "todo"
     },
     {
@@ -107,7 +89,7 @@ EXAMPLE OUTPUT (json)
       "line": 34,
       "column": 1,
       "severity": "warn",
-      "code": "WM001",
+      "rule": "duplicate-property",
       "message": "Duplicate property key 'owner'",
       "type": "fix"
     }
@@ -123,11 +105,11 @@ INTEGRATION PATTERNS
 
   # Check for protected branch violations
   if git branch --show-current | grep -E '^(main|master|release/)'; then
-    wm lint src/ --json | jq 'map(select(.code == "WM050"))'
+    wm lint src/ --json | jq 'map(select(.rule == "unknown-marker"))'
   fi
 
   # Auto-fix duplicate properties (manual review)
-  wm lint src/ --json | jq 'map(select(.code == "WM001"))' | process-duplicates
+  wm lint src/ --json | jq 'map(select(.rule == "duplicate-property"))' | process-duplicates
 
 CONFIGURATION
 
@@ -135,13 +117,11 @@ CONFIGURATION
 
   {
     "allowTypes": ["todo", "fix", "note", "tldr", "custom"],
-    "protectedBranches": ["main", "release/*"],
-    "signalsOnProtected": "strip",  // or "fail" or "allow"
     "lint": {
-      "duplicateProperty": "warn",   // or "error" or "off"
-      "unknownMarker": "warn",
-      "danglingRelation": "error",
-      "duplicateCanonical": "error"
+      "duplicate-property": "warn",   // or "error" or "off"
+      "unknown-marker": "warn",
+      "multiple-tldr": "error",
+      "legacy-pattern": "warn"
     }
   }
 
@@ -149,8 +129,8 @@ TIPS FOR AGENTS
   ✓ Always lint before committing waymark changes
   ✓ Use --json for parsing in automated workflows
   ✓ Fix errors immediately; warnings can be deferred
-  ✓ Check for WM041 (dangling relations) when refactoring
-  ✓ Ensure WM030 (multiple tldrs) never occurs
+  ✓ Check for legacy-pattern when refactoring
+  ✓ Ensure multiple-tldr never occurs
   ✓ Use exit code 1 to fail CI on lint errors
   ✓ Integrate with format command for complete validation
 

@@ -12,6 +12,85 @@ export type ParsedScanArgs = {
   format?: ScanOutputFormat;
 };
 
+type LegacyPattern = {
+  regex: RegExp;
+  leader: string;
+  marker: string;
+};
+
+const INDENT_MATCH_PATTERN = /^\s*/;
+
+const LEGACY_CODETAG_PATTERNS: LegacyPattern[] = [
+  { regex: /^\s*\/\/\s*TODO\s*:\s*(.*)$/i, leader: "//", marker: "todo" },
+  { regex: /^\s*\/\/\s*FIXME\s*:\s*(.*)$/i, leader: "//", marker: "fix" },
+  { regex: /^\s*\/\/\s*NOTE\s*:\s*(.*)$/i, leader: "//", marker: "note" },
+  { regex: /^\s*\/\/\s*HACK\s*:\s*(.*)$/i, leader: "//", marker: "hack" },
+  { regex: /^\s*\/\/\s*XXX\s*:\s*(.*)$/i, leader: "//", marker: "fix" },
+  { regex: /^\s*#\s*TODO\s*:\s*(.*)$/i, leader: "#", marker: "todo" },
+  { regex: /^\s*#\s*FIXME\s*:\s*(.*)$/i, leader: "#", marker: "fix" },
+  { regex: /^\s*#\s*NOTE\s*:\s*(.*)$/i, leader: "#", marker: "note" },
+  { regex: /^\s*--\s*TODO\s*:\s*(.*)$/i, leader: "--", marker: "todo" },
+  { regex: /^\s*--\s*FIXME\s*:\s*(.*)$/i, leader: "--", marker: "fix" },
+];
+
+function buildLegacyRecord(args: {
+  filePath: string;
+  line: string;
+  lineNumber: number;
+  leader: string;
+  marker: string;
+  content: string;
+}): WaymarkRecord | null {
+  const { filePath, line, lineNumber, leader, marker, content } = args;
+  const indentMatch = line.match(INDENT_MATCH_PATTERN);
+  const indent = indentMatch ? (indentMatch[0] ?? "") : "";
+  const synthetic = `${indent}${leader} ${marker} ::: ${content}`.trimEnd();
+  const parsed = parse(synthetic, { file: filePath })[0];
+  if (!parsed) {
+    return null;
+  }
+  parsed.startLine = lineNumber;
+  parsed.endLine = lineNumber;
+  parsed.raw = line;
+  parsed.contentText = content.trim();
+  parsed.properties = {};
+  parsed.relations = [];
+  parsed.canonicals = [];
+  parsed.mentions = [];
+  parsed.tags = [];
+  parsed.legacy = true;
+  return parsed;
+}
+
+function scanLegacyCodetags(source: string, filePath: string): WaymarkRecord[] {
+  const records: WaymarkRecord[] = [];
+  const lines = source.split("\n");
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    for (const pattern of LEGACY_CODETAG_PATTERNS) {
+      const match = line.match(pattern.regex);
+      if (!match) {
+        continue;
+      }
+      const content = match[1] ?? "";
+      const record = buildLegacyRecord({
+        filePath,
+        line,
+        lineNumber: index + 1,
+        leader: pattern.leader,
+        marker: pattern.marker,
+        content,
+      });
+      if (record) {
+        records.push(record);
+      }
+    }
+  }
+
+  return records;
+}
+
 export async function scanRecords(
   filePaths: string[],
   config: WaymarkConfig
@@ -25,6 +104,9 @@ export async function scanRecords(
       continue;
     }
     records.push(...parse(source, { file: filePath }));
+    if (config.scan?.includeCodetags) {
+      records.push(...scanLegacyCodetags(source, filePath));
+    }
   }
 
   return records;

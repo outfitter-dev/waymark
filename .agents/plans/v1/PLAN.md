@@ -692,7 +692,7 @@ Place waymarks **adjacent to** docstrings, never inside them:
 export async function authenticate(credentials: Credentials): Promise<Session> {
   // ...
 }
-```
+```text
 
 The docstring serves TypeScript tooling and API consumers. The waymarks serve you, your team, and your agents.
 

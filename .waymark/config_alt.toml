@@ -2,7 +2,6 @@
 
 type_case = "lowercase"
 canonical_ref_scope = "repo"  # note ::: scope for ref:#token uniqueness (repo-wide or file-scoped)
-protected_branches = ["main", "release/*"]
 
 # note ::: ignore patterns to reduce noise in searches
 [ignore]
@@ -39,4 +38,3 @@ custom_types = [
 [waymark.workflow.raised]
 pre_commit = "info"     # Just log on commit
 pre_push = "warn"       # Warn before push
-protected_branch = "error"  # Block merge to protected branches

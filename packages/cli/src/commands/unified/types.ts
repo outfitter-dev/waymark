@@ -49,7 +49,7 @@ export type UnifiedCommandOptions = {
   limit?: number;
   page?: number;
   // Output
-  json?: boolean;
+  outputFormat?: "json" | "jsonl";
   // Formatting
   compact?: boolean;
   noColor?: boolean;

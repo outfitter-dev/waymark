@@ -25,6 +25,7 @@ export type WaymarkRecord = {
   mentions: string[];
   tags: string[];
   raw: string;
+  legacy?: boolean;
 };
 
 export type ParseOptions = {
