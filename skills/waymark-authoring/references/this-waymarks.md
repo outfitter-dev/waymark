@@ -1,3 +1,5 @@
+<!-- tldr ::: guidance for writing clear this waymarks above code constructs -->
+
 # Writing `this :::` Waymarks
 
 `this :::` markers describe the code section immediately following them. They provide quick breadcrumbs for classes, functions, and major blocks.
@@ -24,6 +26,7 @@ class ConnectionPool:
 Focus on the upcoming section only - do not restate file-level TLDR:
 
 **Good (section-specific):**
+
 ```typescript
 // tldr ::: user authentication service
 // ...
@@ -36,6 +39,7 @@ function hashPassword(password: string) {}
 ```
 
 **Bad (restates file purpose):**
+
 ```typescript
 // this ::: handles user authentication  // too broad, same as tldr
 function validatePassword(password: string) {}
@@ -46,7 +50,7 @@ function validatePassword(password: string) {}
 Write short, active-voice sentences (6-12 words):
 
 | Construct | Pattern | Example |
-|-----------|---------|---------|
+| ----------- | --------- | --------- |
 | Class | "encapsulates/manages [domain] [state/behavior]" | `encapsulates session lifecycle state` |
 | Function | "validates/transforms/fetches [input] [action]" | `validates webhook signatures before processing` |
 | Component | "renders [element] with [feature]" | `renders account overview with metrics` |

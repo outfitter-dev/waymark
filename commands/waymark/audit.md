@@ -1,8 +1,12 @@
 ---
 description: Audit waymark coverage and quality
 argument-hint: [path] [--all] [--tldr]
-allowed-tools: Bash(wm:*, rg:*, git:*), Read, Grep, Glob, Task
+allowed-tools: Glob, Grep, Read, Task, Bash(wm:*, rg:*, git:*)
 ---
+
+<!-- tldr ::: audit waymark coverage quality and accuracy across codebase files -->
+
+# Audit Waymarks Command
 
 Audit waymarks for coverage, accuracy, and quality.
 
@@ -43,6 +47,7 @@ Load the `auditing-waymarks` skill for detailed audit methodology.
 ### Spawning Scouts
 
 For large codebases with `--all`:
+
 - Launch `waymarker` agents to parallelize audit
 - Partition by top-level directories
 - Consolidate findings into single report
@@ -50,6 +55,7 @@ For large codebases with `--all`:
 ## Output
 
 Provide categorized findings:
+
 - **Critical**: Missing TLDRs on important files, broken references
 - **Warning**: Stale markers, inconsistent tags
 - **Info**: Improvement opportunities

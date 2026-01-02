@@ -1,3 +1,5 @@
+<!-- tldr ::: complete grammar reference for waymark syntax and validation rules -->
+
 # Waymark Grammar Specification
 
 Complete grammar reference for waymark syntax.
@@ -16,7 +18,7 @@ content     = text (property | hashtag | mention)*
 ## Comment Leaders by Language
 
 | Language | Leader | Example |
-|----------|--------|---------|
+| ---------- | -------- | --------- |
 | JavaScript/TypeScript | `//` | `// todo ::: implement` |
 | Python/Ruby/Shell | `#` | `# todo ::: implement` |
 | HTML/Markdown | `<!--` | `<!-- todo ::: implement -->` |
@@ -36,6 +38,7 @@ Only the star (`*`) signal is valid:
 ```
 
 **Invalid signals:**
+
 - `^` (deprecated - was "raised")
 - `!`, `!!`, `?` (never valid)
 - `**` (double star invalid)
@@ -43,6 +46,7 @@ Only the star (`*`) signal is valid:
 ## Marker Validation
 
 Markers must be:
+
 - Lowercase only
 - From the blessed list (or custom-configured)
 - Single word, no spaces
@@ -70,6 +74,7 @@ quoted   = '"' ([^"\\] | '\\' .)* '"'
 ```
 
 **Examples:**
+
 ```javascript
 // todo ::: priority:high implement feature
 // note ::: owner:@alice since:2025-01-01
@@ -79,16 +84,20 @@ quoted   = '"' ([^"\\] | '\\' .)* '"'
 ## Hashtag Syntax
 
 ```text
-hashtag = "#" [A-Za-z0-9._/:%-]+
+hashtag = "#" [A-Za-z][A-Za-z0-9._/:%-]*
 ```
 
+Hashtags must start with a letter to avoid conflicts with issue references.
+
 **Valid hashtags:**
+
 - `#perf` - Simple tag
 - `#perf:hotpath` - Namespaced
 - `#docs/guide/auth` - Path-style
 - `#v1.2.3` - Version tag
 
 **Invalid hashtags:**
+
 - `#123` - Numeric only (conflicts with issues)
 - `# tag` - Space after hash
 
@@ -99,6 +108,7 @@ mention = "@" [A-Za-z][A-Za-z0-9_-]*
 ```
 
 **Examples:**
+
 - `@agent` - Any AI assistant
 - `@claude` - Specific assistant
 - `@alice` - Human assignee
@@ -109,7 +119,7 @@ mention = "@" [A-Za-z][A-Za-z0-9_-]*
 Special properties for linking waymarks:
 
 | Property | Purpose | Example |
-|----------|---------|---------|
+| ---------- | --------- | --------- |
 | `ref:` | Declare anchor | `ref:#payments/core` |
 | `depends:` | Requires | `depends:#auth/session` |
 | `needs:` | Requires | `needs:#db/migration` |
@@ -134,11 +144,13 @@ Alignment of `:::` is optional but improves readability.
 ## Nesting Rules
 
 Waymarks cannot be nested inside:
+
 - String literals
 - Docstrings (JSDoc, TSDoc, Python triple quotes)
 - Rendered documentation sections
 
 **Correct (adjacent to docstring):**
+
 ```typescript
 /**
  * Authenticates the user.
@@ -148,6 +160,7 @@ function authenticate() {}
 ```
 
 **Incorrect (inside docstring):**
+
 ```typescript
 /**
  * Authenticates the user.
@@ -169,7 +182,7 @@ No escaping is needed in waymark content. The parser reads until end of comment.
 Common validation errors from `wm lint`:
 
 | Error | Cause | Fix |
-|-------|-------|-----|
+| ------- | ------- | ----- |
 | Unknown marker | Marker not in allowed list | Use blessed marker or configure |
 | Invalid signal | Signal other than `*` | Remove or use `*` only |
 | Duplicate ref | Same `ref:#token` twice | Choose unique token |

@@ -25,7 +25,7 @@ This plan addresses the gaps identified in the [v1 Audit](./AUDIT.md). The core 
 ## Decision Summary
 
 | Item | Decision | Rationale |
-|------|----------|-----------|
+| ------ | ---------- | ----------- |
 | Block comments (`/* */`) | Restrict | Line comments preferred; block comments allowed only for languages without line comments (CSS) |
 | `wm map` command | Remove | No longer needed; using other approaches for codebase overview |
 | `--jsonl` flag | Implement | Half-done, valid use case, silent failure is bad UX |
@@ -320,7 +320,7 @@ const multipleTldrRule: LintRule = {
 **Patterns to detect:**
 
 | Legacy | Suggested |
-|--------|-----------|
+| -------- | ----------- |
 | `// TODO:` | `// todo :::` |
 | `// FIXME:` | `// fix :::` |
 | `// NOTE:` | `// note :::` |
@@ -673,7 +673,7 @@ async function hasIgnoreMarker(filePath: string): Promise<boolean> {
 Waymarks complement documentation comments — they don't replace them.
 
 | Purpose | Tool |
-|---------|------|
+| --------- | ------ |
 | API contracts for consumers | JSDoc, TSDoc, docstrings |
 | Breadcrumbs for maintainers & agents | Waymarks |
 
@@ -696,8 +696,6 @@ export async function authenticate(credentials: Credentials): Promise<Session> {
 
 The docstring serves TypeScript tooling and API consumers. The waymarks serve you, your team, and your agents.
 
-```
-
 ### 7.2 Add GRAMMAR.md Section
 
 **Location:** Near the top, after "Overview"
@@ -707,12 +705,14 @@ The docstring serves TypeScript tooling and API consumers. The waymarks serve yo
 ### 7.3 Audit Existing Examples
 
 **Task:** Review all examples in docs to ensure:
+
 - [ ] No waymark content duplicates what a docstring should say
 - [ ] Examples show waymarks adjacent to (not inside) doc-comments
 - [ ] Block comment examples are removed
 - [ ] Continuation examples use line comments only
 
 **Files to audit:**
+
 - `README.md`
 - `PRD.md`
 - `docs/GRAMMAR.md`

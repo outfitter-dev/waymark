@@ -4,6 +4,8 @@ description: This skill should be used when the user asks to "add waymarks", "wr
 version: 0.1.0
 ---
 
+<!-- tldr ::: waymark grammar markers and structured annotation authoring patterns -->
+
 # Waymark Authoring
 
 Waymarks are structured code annotations using the `:::` sigil that enable humans and AI agents to leave durable, greppable breadcrumbs in codebases. This skill covers authoring waymarks correctly.
@@ -17,6 +19,7 @@ Every waymark follows this pattern:
 ```
 
 **Components:**
+
 - **Comment leader**: Language-appropriate (`//`, `#`, `<!--`, `--`, etc.)
 - **Signal** (optional): `*` for starred/high-priority
 - **Marker**: Keyword from the blessed list (lowercase)
@@ -26,6 +29,7 @@ Every waymark follows this pattern:
 ## Markers
 
 ### Work / Action
+
 - `todo` - Task to complete
 - `fix` - Bug to address
 - `wip` - Work in progress
@@ -35,6 +39,7 @@ Every waymark follows this pattern:
 - `check` - Verification needed
 
 ### Information
+
 - `note` - General information
 - `context` - Background/reasoning
 - `tldr` - File summary (one per file, at top)
@@ -44,6 +49,7 @@ Every waymark follows this pattern:
 - `comment` - General commentary
 
 ### Caution / Quality
+
 - `warn` - Warning about behavior
 - `alert` - Critical attention needed
 - `deprecated` - Outdated code
@@ -51,15 +57,18 @@ Every waymark follows this pattern:
 - `hack` - Workaround
 
 ### Workflow
+
 - `blocked` - Cannot proceed
 - `needs` - Dependency required
 
 ### Inquiry
+
 - `question` - Needs clarification
 
 ## Signals
 
 Only one signal is supported:
+
 - `*` (starred): High-priority item that needs attention
 
 Place the signal before the marker:
@@ -94,6 +103,7 @@ Reference elsewhere via hashtags or explicit properties:
 ```
 
 **Relation properties:**
+
 - `depends:#token` - Requires another waymark
 - `needs:#token` - Similar to depends
 - `blocks:#token` - Prevents other work
@@ -110,6 +120,7 @@ Add hashtags for categorization:
 ```
 
 **Conventions:**
+
 - Use namespaces for specificity: `#perf:hotpath`, `#docs/guide`
 - Common namespaces: `#perf`, `#sec`, `#docs`, `#arch`, `#test`
 
@@ -137,6 +148,7 @@ export function verifyWebhook(payload: string, signature: string) {
 ```
 
 **Guidelines:**
+
 - Place directly above the construct it describes
 - Keep scope local to the section
 - 6-12 words, active voice
@@ -147,6 +159,7 @@ See `references/this-waymarks.md` for detailed patterns.
 ## Writing `tldr :::` Waymarks
 
 For file-level summaries, see the `waymark-tldrs` skill which covers:
+
 - Placement rules (first waymark after shebang/frontmatter)
 - Sentence patterns (8-14 words, active voice)
 - Tagging conventions
@@ -177,6 +190,7 @@ Use HTML comments in Markdown:
 ## Anti-patterns
 
 **Avoid:**
+
 - Placing waymarks inside docstrings/JSDoc (use adjacent comments)
 - Numeric-only hashtags (conflicts with issue refs)
 - Custom signals beyond `*`

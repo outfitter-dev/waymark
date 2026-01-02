@@ -1,8 +1,12 @@
 ---
 description: Initialize waymarks in a project with guided setup
 argument-hint: [--plan] [--execute]
-allowed-tools: Bash(wm:*, rg:*, git:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Task
+allowed-tools: AskUserQuestion, Edit, Glob, Grep, Read, Task, Write, Bash(wm:*, rg:*, git:*, ls:*, head:*, wc:*, mkdir:*)
 ---
+
+<!-- tldr ::: guided project initialization for waymark setup with strategy selection -->
+
+# Initialize Waymarks Command
 
 Initialize waymarks in the current project through guided setup.
 
@@ -10,6 +14,11 @@ Initialize waymarks in the current project through guided setup.
 
 - `--plan` - Skip questions, generate plan document only
 - `--execute` - Skip questions, execute immediately with detected defaults
+
+## Context Injection
+
+Existing config: !`cat .waymark/config.jsonc 2>/dev/null || echo "Not configured"`
+Source files: !`git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' '*.rb' | head -20`
 
 ## Instructions
 
@@ -20,11 +29,13 @@ Load the `waymark-authoring` skill for grammar and marker guidance.
 Before asking questions, gather context:
 
 1. **Check existing waymark setup**:
+
    ```bash
    ls -la .waymark/ 2>/dev/null
    ```
 
 2. **Detect agent configurations**:
+
    ```bash
    # Claude
    [ -f "CLAUDE.md" ] && echo "@claude"
@@ -37,11 +48,13 @@ Before asking questions, gather context:
    ```
 
 3. **Scan source file types**:
+
    ```bash
    git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' '*.rb' | head -100
    ```
 
 4. **Count files in scope**:
+
    ```bash
    git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' '*.rb' | wc -l
    ```
@@ -53,7 +66,8 @@ Store detected agents and file count for later questions.
 Use AskUserQuestion to gather preferences:
 
 **Q1: Strategy Tier**
-```
+
+```text
 Question: "What level of waymark coverage do you want?"
 Options:
 - Minimal: TLDRs only - one summary per file
@@ -62,7 +76,8 @@ Options:
 ```
 
 **Q2: Agent Behavior** (only ask if Comprehensive selected)
-```
+
+```text
 Question: "How should waymarks be added?"
 Options:
 - Execute now: Add all waymarks immediately via background agents
@@ -71,7 +86,8 @@ Options:
 ```
 
 **Q3: File Patterns**
-```
+
+```text
 Question: "Which files should be in scope?"
 (Show detected patterns, allow customization)
 Options:
@@ -80,7 +96,8 @@ Options:
 ```
 
 **Q4: Tag Namespaces**
-```
+
+```text
 Question: "Which tag namespaces do you want to use?"
 (Multi-select, suggest based on strategy)
 Options:
@@ -93,7 +110,8 @@ Options:
 ```
 
 **Q5: Actor Conventions**
-```
+
+```text
 Question: "How should agent mentions work?"
 (Show detected agents)
 Options:
@@ -105,6 +123,7 @@ Options:
 ### Phase 3: Config Generation
 
 Create `.waymark/` directory if needed:
+
 ```bash
 mkdir -p .waymark
 ```
@@ -161,7 +180,8 @@ Based on selected mode:
 4. Report progress as agents complete
 
 Example Task invocation:
-```
+
+```text
 Task(
   subagent_type: "waymarker",
   prompt: "Add waymarks to files in src/auth/. Strategy: standard. Add tldr to each file, add todo/fix markers where obvious work items exist. Use IDs.",
@@ -177,9 +197,11 @@ Task(
    - Identify sections that need `this :::` markers
    - Identify obvious work items for `todo :::` markers
 3. Generate placeholder waymarks with IDs:
+
    ```ts
    // tldr ::: [pending] wm:init-a3k9
    ```
+
 4. Write `.waymark/plan.md` with YAML blocks:
 
 ```markdown
@@ -211,7 +233,8 @@ Strategy: comprehensive
 
 Review suggestions above, then run `/waymark:apply` to apply them.
 Edit this file to modify suggestions before applying.
-```
+
+```text
 
 5. Instruct user to review and run `/waymark:apply`
 
@@ -220,7 +243,8 @@ Edit this file to modify suggestions before applying.
 Report what was done:
 
 **Execute Mode:**
-```
+```text
+
 Waymark initialization complete!
 
 Config: .waymark/config.jsonc
@@ -231,10 +255,13 @@ Work markers added: 15
 
 Run `wm find .` to see all waymarks.
 Run `/waymark:audit` to check coverage.
+
 ```
 
 **Plan Mode:**
-```
+
+```text
+
 Waymark initialization plan created!
 
 Config: .waymark/config.jsonc
@@ -244,15 +271,16 @@ Files analyzed: 47
 Suggestions generated: 82
 
 Review .waymark/plan.md and run `/waymark:apply` to apply suggestions.
+
 ```
 
 ## Strategy → Markers Mapping
 
-| Strategy      | Markers Enabled                                          |
-|---------------|----------------------------------------------------------|
-| Minimal       | tldr                                                     |
-| Standard      | tldr, todo, fix, wip, done, review                       |
-| Comprehensive | tldr, todo, fix, wip, done, review, this, note, context, warn, hack, temp |
+| Strategy      | Markers Enabled                                                               |
+| ------------- | ----------------------------------------------------------------------------- |
+| Minimal       | tldr                                                                          |
+| Standard      | tldr, todo, fix, wip, done, review                                            |
+| Comprehensive | tldr, todo, fix, wip, done, review, this, note, context, warn, hack, temp     |
 
 ## Error Handling
 

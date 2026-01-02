@@ -57,179 +57,272 @@ function getTerminalWidth(): number {
 /**
  * Tokenize content into breakable chunks
  */
+type TokenRead = {
+  token: Token;
+  nextIndex: number;
+};
+
+function readTagToken(content: string, index: number): TokenRead | undefined {
+  const nextChar = content[index + 1] ?? "";
+  if (content[index] !== "#" || !ALPHANUMERIC_PATTERN.test(nextChar)) {
+    return;
+  }
+
+  let value = "#";
+  let j = index + 1;
+  while (j < content.length && TAG_CONTENT_PATTERN.test(content[j] ?? "")) {
+    const c = content[j];
+    if (!c) {
+      break;
+    }
+    value += c;
+    j += 1;
+  }
+
+  return {
+    token: { type: "tag", value, canBreakBefore: true },
+    nextIndex: j,
+  };
+}
+
+function readMentionToken(
+  content: string,
+  index: number
+): TokenRead | undefined {
+  const nextChar = content[index + 1] ?? "";
+  if (content[index] !== "@" || !ALPHANUMERIC_PATTERN.test(nextChar)) {
+    return;
+  }
+
+  let value = "@";
+  let j = index + 1;
+  while (j < content.length && MENTION_CONTENT_PATTERN.test(content[j] ?? "")) {
+    const c = content[j];
+    if (!c) {
+      break;
+    }
+    value += c;
+    j += 1;
+  }
+
+  return {
+    token: { type: "mention", value, canBreakBefore: true },
+    nextIndex: j,
+  };
+}
+
+type PropertyKeyRead = {
+  key: string;
+  nextIndex: number;
+};
+
+type PropertyValueRead = {
+  value: string;
+  nextIndex: number;
+  /** True if a quoted string was not properly terminated */
+  unterminated?: boolean;
+};
+
+function readPropertyKey(
+  content: string,
+  index: number
+): PropertyKeyRead | undefined {
+  const char = content[index] ?? "";
+  if (!ALPHANUMERIC_PATTERN.test(char)) {
+    return;
+  }
+
+  let key = char;
+  let j = index + 1;
+  while (j < content.length && PROPERTY_KEY_PATTERN.test(content[j] ?? "")) {
+    const c = content[j];
+    if (!c) {
+      break;
+    }
+    key += c;
+    j += 1;
+  }
+
+  if (content[j] !== ":") {
+    return;
+  }
+
+  return { key, nextIndex: j };
+}
+
+function readQuotedPropertyValue(
+  content: string,
+  index: number
+): PropertyValueRead {
+  let value = '"';
+  let j = index + 1;
+  let terminated = false;
+
+  while (j < content.length) {
+    const c = content[j] ?? "";
+    value += c;
+    if (c === "\\" && j + 1 < content.length) {
+      const escaped = content[j + 1];
+      if (escaped) {
+        value += escaped;
+      }
+      j += 2;
+      continue;
+    }
+    if (c === '"') {
+      j += 1;
+      terminated = true;
+      break;
+    }
+    j += 1;
+  }
+
+  return { value, nextIndex: j, unterminated: !terminated };
+}
+
+function readUnquotedPropertyValue(
+  content: string,
+  index: number
+): PropertyValueRead {
+  let value = "";
+  let j = index;
+  while (j < content.length && NON_SPACE_COMMA_PATTERN.test(content[j] ?? "")) {
+    const c = content[j];
+    if (!c) {
+      break;
+    }
+    value += c;
+    j += 1;
+  }
+  return { value, nextIndex: j };
+}
+
+function readPropertyValue(content: string, index: number): PropertyValueRead {
+  if (index >= content.length) {
+    return { value: "", nextIndex: index };
+  }
+  if (content[index] === '"') {
+    return readQuotedPropertyValue(content, index);
+  }
+  return readUnquotedPropertyValue(content, index);
+}
+
+function readPropertyToken(
+  content: string,
+  index: number
+): TokenRead | undefined {
+  const keyRead = readPropertyKey(content, index);
+  if (!keyRead) {
+    return;
+  }
+
+  const valueRead = readPropertyValue(content, keyRead.nextIndex + 1);
+  const value = `${keyRead.key}:${valueRead.value}`;
+
+  return {
+    token: { type: "property", value, canBreakBefore: true },
+    nextIndex: valueRead.nextIndex,
+  };
+}
+
+function readWhitespaceToken(
+  content: string,
+  index: number
+): TokenRead | undefined {
+  const char = content[index] ?? "";
+  if (!WHITESPACE_PATTERN.test(char)) {
+    return;
+  }
+
+  let value = "";
+  let j = index;
+  while (j < content.length && WHITESPACE_PATTERN.test(content[j] ?? "")) {
+    const c = content[j];
+    if (!c) {
+      break;
+    }
+    value += c;
+    j += 1;
+  }
+
+  return {
+    token: { type: "space", value, canBreakBefore: false },
+    nextIndex: j,
+  };
+}
+
+function readCommaToken(content: string, index: number): TokenRead | undefined {
+  if (content[index] !== ",") {
+    return;
+  }
+
+  return {
+    token: { type: "comma", value: ",", canBreakBefore: false },
+    nextIndex: index + 1,
+  };
+}
+
+function isPropertyKeyStart(content: string, index: number): boolean {
+  let k = index + 1;
+  while (k < content.length && PROPERTY_KEY_PATTERN.test(content[k] ?? "")) {
+    k += 1;
+  }
+  return content[k] === ":";
+}
+
+function shouldStopTextToken(content: string, index: number): boolean {
+  const nextChar = content[index];
+  if (!nextChar) {
+    return true;
+  }
+  if (SPECIAL_CHARS_PATTERN.test(nextChar)) {
+    return true;
+  }
+  if (!ALPHANUMERIC_PATTERN.test(nextChar)) {
+    return false;
+  }
+  return isPropertyKeyStart(content, index);
+}
+
+function readTextToken(content: string, index: number): TokenRead | undefined {
+  const char = content[index] ?? "";
+  if (!char) {
+    return;
+  }
+
+  let value = char;
+  let j = index + 1;
+  while (j < content.length && !shouldStopTextToken(content, j)) {
+    value += content[j] ?? "";
+    j += 1;
+  }
+
+  return {
+    token: { type: "text", value, canBreakBefore: false },
+    nextIndex: j,
+  };
+}
+
 function tokenize(content: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
 
   while (i < content.length) {
-    const char = content[i];
-    if (!char) {
-      break;
-    }
+    const tokenRead =
+      readTagToken(content, i) ??
+      readMentionToken(content, i) ??
+      readPropertyToken(content, i) ??
+      readWhitespaceToken(content, i) ??
+      readCommaToken(content, i) ??
+      readTextToken(content, i);
 
-    // Handle tags (#tag)
-    if (char === "#" && ALPHANUMERIC_PATTERN.test(content[i + 1] ?? "")) {
-      let value = "#";
-      let j = i + 1;
-      while (j < content.length && TAG_CONTENT_PATTERN.test(content[j] ?? "")) {
-        const c = content[j];
-        if (!c) {
-          break;
-        }
-        value += c;
-        j++;
-      }
-      tokens.push({ type: "tag", value, canBreakBefore: true });
-      i = j;
+    if (!tokenRead) {
+      i += 1;
       continue;
     }
 
-    // Handle mentions (@user)
-    if (char === "@" && ALPHANUMERIC_PATTERN.test(content[i + 1] ?? "")) {
-      let value = "@";
-      let j = i + 1;
-      while (
-        j < content.length &&
-        MENTION_CONTENT_PATTERN.test(content[j] ?? "")
-      ) {
-        const c = content[j];
-        if (!c) {
-          break;
-        }
-        value += c;
-        j++;
-      }
-      tokens.push({ type: "mention", value, canBreakBefore: true });
-      i = j;
-      continue;
-    }
-
-    // Handle properties (key:value or key:"quoted value")
-    if (ALPHANUMERIC_PATTERN.test(char)) {
-      let value = char;
-      let j = i + 1;
-
-      // Scan for key
-      while (
-        j < content.length &&
-        PROPERTY_KEY_PATTERN.test(content[j] ?? "")
-      ) {
-        const c = content[j];
-        if (!c) {
-          break;
-        }
-        value += c;
-        j++;
-      }
-
-      // Check if followed by colon (property key)
-      if (content[j] === ":") {
-        value += ":";
-        j++;
-
-        // Handle quoted value
-        if (content[j] === '"') {
-          value += '"';
-          j++;
-          while (j < content.length) {
-            const c = content[j] ?? "";
-            value += c;
-            if (c === "\\" && j + 1 < content.length) {
-              // Escaped character
-              const escaped = content[j + 1];
-              if (escaped) {
-                value += escaped;
-              }
-              j += 2;
-            } else if (c === '"') {
-              j++;
-              break;
-            } else {
-              j++;
-            }
-          }
-        } else {
-          // Unquoted value (no spaces)
-          while (
-            j < content.length &&
-            NON_SPACE_COMMA_PATTERN.test(content[j] ?? "")
-          ) {
-            const c = content[j];
-            if (!c) {
-              break;
-            }
-            value += c;
-            j++;
-          }
-        }
-
-        tokens.push({ type: "property", value, canBreakBefore: true });
-        i = j;
-        continue;
-      }
-
-      // Not a property, treat as text
-      tokens.push({ type: "text", value, canBreakBefore: false });
-      i = j;
-      continue;
-    }
-
-    // Handle spaces
-    if (WHITESPACE_PATTERN.test(char)) {
-      let value = "";
-      let j = i;
-      while (j < content.length && WHITESPACE_PATTERN.test(content[j] ?? "")) {
-        const c = content[j];
-        if (!c) {
-          break;
-        }
-        value += c;
-        j++;
-      }
-      tokens.push({ type: "space", value, canBreakBefore: false });
-      i = j;
-      continue;
-    }
-
-    // Handle commas
-    if (char === ",") {
-      tokens.push({ type: "comma", value: ",", canBreakBefore: false });
-      i++;
-      continue;
-    }
-
-    // Default: treat as text (collect until special character)
-    let value = char;
-    let j = i + 1;
-    while (j < content.length) {
-      const nextChar = content[j];
-      if (!nextChar) {
-        break;
-      }
-      // Stop at spaces, tags, mentions, commas, or potential property keys
-      if (SPECIAL_CHARS_PATTERN.test(nextChar)) {
-        break;
-      }
-      // Check if this could be start of a property (letter followed eventually by colon)
-      if (ALPHANUMERIC_PATTERN.test(nextChar)) {
-        // Peek ahead to see if it's a property
-        let k = j + 1;
-        while (
-          k < content.length &&
-          PROPERTY_KEY_PATTERN.test(content[k] ?? "")
-        ) {
-          k++;
-        }
-        if (content[k] === ":") {
-          // This is a property, stop here
-          break;
-        }
-      }
-      value += nextChar;
-      j++;
-    }
-    tokens.push({ type: "text", value, canBreakBefore: false });
-    i = j;
+    tokens.push(tokenRead.token);
+    i = tokenRead.nextIndex;
   }
 
   return tokens;
@@ -262,6 +355,16 @@ export function wrapContent(content: string, config: WrapConfig): string[] {
   }
 
   const tokens = tokenize(content);
+  const lines = wrapTokens(tokens, availableWidth);
+
+  if (lines.length === 0) {
+    return content.trim() === "" ? [""] : [content];
+  }
+
+  return lines;
+}
+
+function wrapTokens(tokens: Token[], availableWidth: number): string[] {
   const lines: string[] = [];
   let currentLine = "";
 
@@ -270,67 +373,93 @@ export function wrapContent(content: string, config: WrapConfig): string[] {
     if (!token) {
       continue;
     }
+
     const nextToken = tokens[i + 1];
     const prevToken = i > 0 ? tokens[i - 1] : undefined;
+    const canBreakHere = canBreakBeforeToken(token, prevToken);
 
-    // Determine if we can break before this token
-    // Allow breaking before tags, mentions, properties, AND text that follows a space
-    const canBreakHere =
-      token.canBreakBefore ||
-      (token.type === "text" && prevToken?.type === "space");
-
-    // Handle very long single tokens (longer than available width)
     if (token.value.length > availableWidth && currentLine.length === 0) {
-      // Single token too long - force split it
-      let remaining = token.value;
-      while (remaining.length > availableWidth) {
-        lines.push(remaining.slice(0, availableWidth));
-        remaining = remaining.slice(availableWidth);
-      }
-      currentLine = remaining;
+      const { remainder, fragments } = splitLongToken(
+        token.value,
+        availableWidth
+      );
+      lines.push(...fragments);
+      currentLine = remainder;
       continue;
     }
 
-    // Add token to current line
-    const testLine = currentLine + token.value;
+    const { lineToPush, nextLine } = appendToken(
+      token.value,
+      currentLine,
+      availableWidth,
+      canBreakHere
+    );
 
-    // Check if this line would exceed width
-    if (testLine.length > availableWidth && currentLine.length > 0) {
-      // Can we break before this token?
-      if (canBreakHere) {
-        // Push current line and start new one
-        lines.push(currentLine.trim());
-        currentLine = token.value;
-      } else {
-        // Can't break here, add to current line anyway
-        currentLine = testLine;
-      }
-    } else {
-      // Fits on current line
-      currentLine = testLine;
+    if (lineToPush) {
+      lines.push(lineToPush);
     }
+    currentLine = nextLine;
 
-    // Special handling: if this is a space and next token would overflow,
-    // consider breaking here
-    if (
-      token.type === "space" &&
-      nextToken &&
-      currentLine.length + nextToken.value.length > availableWidth
-    ) {
+    if (shouldBreakOnSpace(token, nextToken, currentLine, availableWidth)) {
       lines.push(currentLine.trim());
       currentLine = "";
     }
   }
 
-  // Push remaining content
   if (currentLine.trim().length > 0) {
     lines.push(currentLine.trim());
   }
 
-  // If no lines were added (e.g., all whitespace), return appropriate value
-  if (lines.length === 0) {
-    return content.trim() === "" ? [""] : [content];
-  }
-
   return lines;
+}
+
+function splitLongToken(
+  value: string,
+  availableWidth: number
+): { fragments: string[]; remainder: string } {
+  const fragments: string[] = [];
+  let remaining = value;
+  while (remaining.length > availableWidth) {
+    fragments.push(remaining.slice(0, availableWidth));
+    remaining = remaining.slice(availableWidth);
+  }
+  return { fragments, remainder: remaining };
+}
+
+function appendToken(
+  value: string,
+  currentLine: string,
+  availableWidth: number,
+  canBreakHere: boolean
+): { lineToPush?: string; nextLine: string } {
+  const testLine = currentLine + value;
+  if (testLine.length > availableWidth && currentLine.length > 0) {
+    if (canBreakHere) {
+      return { lineToPush: currentLine.trim(), nextLine: value };
+    }
+    return { nextLine: testLine };
+  }
+  return { nextLine: testLine };
+}
+
+function canBreakBeforeToken(
+  token: Token,
+  prevToken: Token | undefined
+): boolean {
+  return (
+    token.canBreakBefore ||
+    (token.type === "text" && prevToken?.type === "space")
+  );
+}
+
+function shouldBreakOnSpace(
+  token: Token,
+  nextToken: Token | undefined,
+  currentLine: string,
+  availableWidth: number
+): boolean {
+  if (token.type !== "space" || !nextToken) {
+    return false;
+  }
+  return currentLine.length + nextToken.value.length > availableWidth;
 }

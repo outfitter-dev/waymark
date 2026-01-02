@@ -14,7 +14,7 @@
 ## Sentence Patterns
 
 | Construct        | Pattern Example                                                 |
-|------------------|-----------------------------------------------------------------|
+| ------------------ | ----------------------------------------------------------------- |
 | Class declaration| `// this ::: encapsulates session lifecycle state #auth/session`   |
 | Function/method  | `// this ::: validates webhook signatures #payments/stripe`        |
 | React component  | `// this ::: renders account overview card with metrics`          |

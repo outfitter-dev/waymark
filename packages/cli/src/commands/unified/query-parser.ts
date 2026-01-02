@@ -35,6 +35,37 @@ export type ParsedQuery = {
  *   "fix !@alice" → types: [fix], exclusions.mentions: [@alice]
  *   "owner:@alice" → properties: { owner: "@alice" }
  */
+function applyToken(token: QueryToken, result: ParsedQuery): void {
+  switch (token.type) {
+    case "exclusion":
+      classifyExclusion(token.value, result);
+      return;
+    case "type":
+      result.types.push(token.value);
+      return;
+    case "mention":
+      result.mentions.push(token.value);
+      return;
+    case "tag":
+      result.tags.push(token.value);
+      return;
+    case "property": {
+      const [key, value] = token.value.split(":", 2);
+      if (key && value) {
+        result.properties.set(key, value);
+      } else if (key) {
+        result.properties.set(key, true);
+      }
+      return;
+    }
+    case "text":
+      result.textTerms.push(token.value);
+      return;
+    default:
+      return;
+  }
+}
+
 export function parseQuery(query: string): ParsedQuery {
   const tokens = tokenize(query);
   const result: ParsedQuery = {
@@ -51,24 +82,7 @@ export function parseQuery(query: string): ParsedQuery {
   };
 
   for (const token of tokens) {
-    if (token.type === "exclusion") {
-      classifyExclusion(token.value, result);
-    } else if (token.type === "type") {
-      result.types.push(token.value);
-    } else if (token.type === "mention") {
-      result.mentions.push(token.value);
-    } else if (token.type === "tag") {
-      result.tags.push(token.value);
-    } else if (token.type === "property") {
-      const [key, value] = token.value.split(":", 2);
-      if (key && value) {
-        result.properties.set(key, value);
-      } else if (key) {
-        result.properties.set(key, true);
-      }
-    } else if (token.type === "text") {
-      result.textTerms.push(token.value);
-    }
+    applyToken(token, result);
   }
 
   return result;
@@ -77,73 +91,100 @@ export function parseQuery(query: string): ParsedQuery {
 /**
  * Tokenize a query string into individual tokens
  */
+type TokenizeState = {
+  tokens: QueryToken[];
+  current: string;
+  inQuotes: boolean;
+  index: number;
+};
+
+function pushTextToken(tokens: QueryToken[], value: string, raw: string): void {
+  tokens.push({
+    type: "text",
+    value,
+    raw,
+  });
+}
+
+function handleQuote(state: TokenizeState, char: string): boolean {
+  if (char !== '"') {
+    return false;
+  }
+
+  if (state.inQuotes) {
+    if (state.current) {
+      pushTextToken(state.tokens, state.current, `"${state.current}"`);
+      state.current = "";
+    }
+    state.inQuotes = false;
+  } else {
+    if (state.current) {
+      emitToken(state.current, state.tokens);
+      state.current = "";
+    }
+    state.inQuotes = true;
+  }
+  state.index += 1;
+  return true;
+}
+
+function handleQuotedChar(state: TokenizeState, char: string): boolean {
+  if (!state.inQuotes) {
+    return false;
+  }
+  state.current += char;
+  state.index += 1;
+  return true;
+}
+
+function handleWhitespace(state: TokenizeState, char: string): boolean {
+  if (char !== " " && char !== "\t") {
+    return false;
+  }
+  if (state.current) {
+    emitToken(state.current, state.tokens);
+    state.current = "";
+  }
+  state.index += 1;
+  return true;
+}
+
 function tokenize(query: string): QueryToken[] {
-  const tokens: QueryToken[] = [];
-  let current = "";
-  let inQuotes = false;
-  let i = 0;
+  const state: TokenizeState = {
+    tokens: [],
+    current: "",
+    inQuotes: false,
+    index: 0,
+  };
 
-  while (i < query.length) {
-    const char = query[i];
+  while (state.index < query.length) {
+    const char = query[state.index] ?? "";
 
-    // Handle quoted strings
-    if (char === '"') {
-      if (inQuotes) {
-        // End quote - emit current as text token
-        if (current) {
-          tokens.push({
-            type: "text",
-            value: current,
-            raw: `"${current}"`,
-          });
-          current = "";
-        }
-        inQuotes = false;
-      } else {
-        // Start quote
-        if (current) {
-          emitToken(current, tokens);
-          current = "";
-        }
-        inQuotes = true;
-      }
-      i++;
+    if (handleQuote(state, char)) {
+      continue;
+    }
+    if (handleQuotedChar(state, char)) {
+      continue;
+    }
+    if (handleWhitespace(state, char)) {
       continue;
     }
 
-    // Inside quotes, accumulate everything
-    if (inQuotes) {
-      current += char;
-      i++;
-      continue;
-    }
-
-    // Whitespace delimiter
-    if (char === " " || char === "\t") {
-      if (current) {
-        emitToken(current, tokens);
-        current = "";
-      }
-      i++;
-      continue;
-    }
-
-    // Accumulate character
-    current += char;
-    i++;
+    state.current += char;
+    state.index += 1;
   }
 
   // Emit final token
-  if (current) {
-    if (inQuotes) {
+  if (state.current) {
+    if (state.inQuotes) {
       // Unclosed quote - treat as text
-      tokens.push({ type: "text", value: current, raw: `"${current}` });
+      pushTextToken(state.tokens, state.current, `"${state.current}`);
     } else {
-      emitToken(current, tokens);
+      emitToken(state.current, state.tokens);
     }
   }
 
-  return tokens;
+  return state.tokens;
 }
 
 /**

@@ -1,7 +1,11 @@
 ---
 description: Show all todo waymarks in the codebase
-allowed-tools: Bash(wm:*, rg:*), Read, Grep
+allowed-tools: Grep, Read, Bash(wm:*, rg:*)
 ---
+
+<!-- tldr ::: gather and display all todo waymarks for task tracking #docs -->
+
+# TODO Waymarks Command
 
 Gather all `todo :::` waymarks from the codebase and present them to the user.
 
@@ -10,6 +14,8 @@ Gather all `todo :::` waymarks from the codebase and present them to the user.
 Current todos: !`wm find . --type todo --text 2>/dev/null || rg 'todo\s*:::' -n`
 
 ## Instructions
+
+Load the `find-waymarks` skill for waymark discovery and filtering.
 
 1. Parse the injected waymark data above
 2. Group todos by file or directory for readability

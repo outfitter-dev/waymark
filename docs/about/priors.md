@@ -13,12 +13,12 @@ Open-source teams routinely evolve conventions that work well before they become
 
 ## 2. Ancestor patterns
 
-| Era / ecosystem         | Anchor syntax (typical)                        | Purpose                                   | What we carry forward                                    |
+| Era / ecosystem         | Anchor syntax (typical)                        | Purpose                                   | What we carry forward                                     |
 | ----------------------- | ---------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- |
 | **UNIX 1980s**          | `# TODO:`                                      | Human breadcrumb for future work          | Plain-text greppability (e.g. `grep TODO`)                |
-| **C family**            | `// FIXME`, `// XXX`, `// HACK`               | Flag questionable code or bugs            | Single-token severity markers                            |
+| **C family**            | `// FIXME`, `// XXX`, `// HACK`                | Flag questionable code or bugs            | Single-token severity markers                             |
 | **Google / Chromium**   | `// TODO(user):`                               | Ownership metadata in the tag itself      | Named actors (`@alice`) baked into the marker             |
-| **Xcode / Swift**       | `// MARK:`                                     | Editor jump bar & fold markers            | IDE integration via predictable prefixes                 |
+| **Xcode / Swift**       | `// MARK:`                                     | Editor jump bar & fold markers            | IDE integration via predictable prefixes                  |
 | **Go (1.17+)**          | `//go:build <expr>`                            | Build constraint parsed pre-AST           | Comment-only directives honoring strict grammar           |
 | **Clang-Tidy**          | `// NOLINT(rule)`                              | Linter suppression                        | Machine-auditable anchors that impact CI                  |
 | **ESLint / Flake8**     | `// eslint-disable-next-line` / `# noqa: E501` | Scoped rule ignores                       | Policy hooks that prevent rot through automation          |

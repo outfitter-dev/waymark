@@ -4,6 +4,8 @@ description: This skill should be used when the user asks to "find waymarks with
 version: 0.1.0
 ---
 
+<!-- tldr ::: ripgrep patterns for waymark discovery when CLI is unavailable -->
+
 # Ripgrep Waymarks
 
 Search for waymarks using ripgrep when the `wm` CLI is unavailable. These patterns work with `rg` (ripgrep) or standard `grep`.
@@ -226,14 +228,14 @@ echo "TLDRs: $(rg -c 'tldr\s*:::' | awk -F: '{sum+=$2}END{print sum}')"
 ## Pattern Reference
 
 | Purpose | Pattern |
-|---------|---------|
+| --------- | --------- |
 | All waymarks | `:::` |
 | Specific marker | `marker\s*:::` |
 | Starred | `\*\w+\s*:::` |
 | Mentions | `:::\s*@\w+` |
 | Tags | `:::.+#\w+` |
 | Canonicals | `ref:#\w+` |
-| Relations | `(depends|needs|fixes):#` |
+| Relations | `(depends\|needs\|fixes):#` |
 
 ## Grep vs Ripgrep
 
@@ -248,6 +250,7 @@ grep -rE 'todo\s*:::' .
 ```
 
 **Ripgrep advantages:**
+
 - Faster on large codebases
 - Respects `.gitignore` by default
 - Better default behavior
@@ -255,6 +258,7 @@ grep -rE 'todo\s*:::' .
 ## When to Use
 
 Use ripgrep patterns when:
+
 - `wm` CLI is not installed
 - Working in environment without waymark tooling
 - Need quick one-off searches

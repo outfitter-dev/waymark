@@ -4,6 +4,8 @@ description: This skill should be used when the user asks to "audit waymarks", "
 version: 0.1.0
 ---
 
+<!-- tldr ::: systematic waymark audit methodology for coverage and quality verification -->
+
 # Auditing Waymarks
 
 Systematic verification of waymark coverage, quality, and accuracy across a codebase. Use this skill when reviewing waymark health before releases, during code reviews, or for periodic maintenance.
@@ -15,6 +17,7 @@ Systematic verification of waymark coverage, quality, and accuracy across a code
 Verify every source file has a proper `tldr :::` waymark:
 
 **Checks performed:**
+
 1. **Presence**: File has exactly one `tldr :::` waymark
 2. **Placement**: TLDR is first waymark, after shebang/frontmatter
 3. **Quality**: Sentence is 8-14 words, active voice, capability-first
@@ -22,6 +25,7 @@ Verify every source file has a proper `tldr :::` waymark:
 5. **Accuracy**: Description matches current file purpose
 
 **Quick check with ripgrep:**
+
 ```bash
 # Files with TLDRs
 rg -l 'tldr\s*:::'
@@ -33,6 +37,7 @@ comm -23 \
 ```
 
 **With CLI:**
+
 ```bash
 wm find --type tldr --json | jq -r '.[].file' | sort > has_tldr.txt
 git ls-files '*.ts' | sort > all_ts.txt
@@ -44,6 +49,7 @@ comm -23 all_ts.txt has_tldr.txt
 Comprehensive waymark review across the repository:
 
 **Checks performed:**
+
 1. All TLDR audit checks
 2. **Starred items**: Review `*` waymarks for continued relevance
 3. **Stale markers**: Check `todo`, `fix`, `wip` for age/validity
@@ -79,12 +85,14 @@ rg ':::' --json > waymarks.jsonl
 ### 2. Check Coverage
 
 **Source files needing TLDRs:**
+
 - All `.ts`, `.tsx`, `.js`, `.jsx` files
 - All `.py` files
 - Configuration files (`*.config.*`)
 - Entry points and main modules
 
 **Files that may skip TLDRs:**
+
 - Generated files (`*.generated.ts`)
 - Type declaration files (`*.d.ts`)
 - Index/barrel files with only re-exports
@@ -95,7 +103,7 @@ rg ':::' --json > waymarks.jsonl
 For each waymark found, verify:
 
 | Marker | Quality Check |
-|--------|---------------|
+| -------- | --------------- |
 | `tldr` | Active voice, 8-14 words, matches file purpose |
 | `this` | Describes following section accurately |
 | `todo` | Still relevant, not stale |
@@ -107,6 +115,7 @@ For each waymark found, verify:
 ### 4. Check Consistency
 
 **Tag audit:**
+
 ```bash
 # List all unique tags
 rg ':::.+#\w+' -o | grep -oE '#[A-Za-z0-9._/:%-]+' | sort -u
@@ -116,6 +125,7 @@ rg ':::.+#\w+' -o | grep -oE '#[A-Za-z0-9._/:%-]+' | sort -u
 ```
 
 **Canonical reference audit:**
+
 ```bash
 # List all canonical anchors
 rg 'ref:#[A-Za-z0-9._/:%-]+' -o | sort -u
@@ -129,16 +139,19 @@ rg '(depends|needs|blocks|rel):#'
 Categorize issues by severity:
 
 **Critical** (must fix):
+
 - Missing TLDRs on important files
 - Inaccurate waymark descriptions
 - Broken canonical references
 
 **Warning** (should fix):
+
 - Stale todos/fixes older than 30 days
 - Inconsistent tag usage
 - Starred items that should be demoted
 
 **Info** (consider):
+
 - Files that could benefit from `this :::` markers
 - Opportunities for canonical references
 - Tag namespace consolidation
@@ -182,6 +195,7 @@ For large codebases, parallelize auditing:
 3. **Consolidate findings**: Merge reports from all scouts
 
 Scout configuration:
+
 - **Conservative mode**: Only report definite issues
 - **Thorough mode**: Flag potential improvements too
 - **Fix mode**: Propose corrections for issues found
@@ -217,7 +231,7 @@ git diff --cached --name-only | xargs -I{} sh -c \
 
 ### Missing TLDR
 
-```
+```text
 File: src/auth/service.ts
 Issue: Missing TLDR waymark
 Suggested: // tldr ::: handles user authentication and session management #auth
@@ -225,7 +239,7 @@ Suggested: // tldr ::: handles user authentication and session management #auth
 
 ### Stale Todo
 
-```
+```text
 File: src/payments/stripe.ts:45
 Marker: // todo ::: implement retry logic
 Issue: Todo exists since 2024-03-01 (>90 days)
@@ -234,7 +248,7 @@ Action: Complete, remove, or add timeline
 
 ### Inaccurate Description
 
-```
+```text
 File: src/utils/format.ts:1
 Marker: // tldr ::: date formatting utilities
 Issue: File now includes number and currency formatting

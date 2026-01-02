@@ -7,6 +7,8 @@ allowed-tools:
   - Grep
 ---
 
+<!-- tldr ::: CLI-based waymark search and filtering with the wm tool -->
+
 # Find Waymarks
 
 Search for waymarks in the codebase using the `wm` CLI tool.

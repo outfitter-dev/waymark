@@ -7,7 +7,7 @@ Welcome to the Waymark documentation. This guide helps you find the right resour
 ## Quick Start
 
 | I want to... | Start here |
-|--------------|------------|
+| -------------- | ------------ |
 | Use the CLI | [CLI Installation](./cli/README.md) → [Commands](./cli/commands.md) |
 | Understand waymark syntax | [Grammar](./GRAMMAR.md) |
 | See practical examples | [How-To Guides](./howto/README.md) |
@@ -184,7 +184,7 @@ Waymark documentation follows these conventions:
 ## Document Maintenance
 
 | Document | Update Trigger | Owner |
-|----------|---------------|-------|
+| ---------- | --------------- | ------- |
 | GRAMMAR.md | Grammar changes in PRD | Maintainers |
 | cli/README.md | CLI command changes | Maintainers |
 | howto/README.md | New workflow patterns | Contributors |
