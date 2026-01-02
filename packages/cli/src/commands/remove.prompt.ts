@@ -1,3 +1,7 @@
 // tldr ::: agent-facing usage guide for remove command
 
-export { default } from "./remove.prompt.txt";
+import content from "./remove.prompt.txt";
+
+const text = content;
+
+export default text;
