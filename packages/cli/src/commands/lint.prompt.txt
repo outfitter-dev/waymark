@@ -107,7 +107,7 @@ INTEGRATION PATTERNS
   fi
 
   # Auto-fix duplicate properties (manual review)
-  wm lint src/ --json | jq 'map(select(.code == "WM001"))' | process-duplicates
+  wm lint src/ --json | jq 'map(select(.rule == "duplicate-property"))' | process-duplicates
 
 CONFIGURATION
 
