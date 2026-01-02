@@ -301,6 +301,10 @@ const legacyPatternRule: LintRule = {
 
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index] ?? "";
+      // Skip lines that already have waymark sigil - they're valid waymarks, not legacy
+      if (line.includes(SIGIL)) {
+        continue;
+      }
       for (const pattern of CODETAG_PATTERNS) {
         if (pattern.regex.test(line)) {
           issues.push({
