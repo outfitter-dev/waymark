@@ -1,4 +1,4 @@
-<!-- tldr ::: working concepts for for #v0.1 CLI output -->
+<!-- tldr ::: working concepts for #v0.1 CLI output -->
 # CLI Readout Improvements
 
 ## Notes

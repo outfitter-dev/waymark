@@ -3,6 +3,7 @@
   "globs": ["**/*.md"],
   "ignores": [
     "**/node_modules",
+    "**/.bun/**",
     "**/.git",
     "**/.waymark/cache",
     "**/.waymark/index",

@@ -503,7 +503,7 @@ describe("CLI handlers", () => {
     expect(legacyIssue?.line).toBe(1);
     await cleanup();
   });
-  
+
   test("lint command detects multiple tldr waymarks", async () => {
     const source = ["// tldr ::: one", "// tldr ::: two"].join("\n");
     const { file, cleanup } = await withTempFile(source);
