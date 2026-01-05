@@ -135,9 +135,9 @@ const commonFlags = {
 
 // Command-specific configurations
 export const commands: HelpRegistry = {
-  format: {
-    name: "format",
-    usage: "wm format <paths...> [options]",
+  fmt: {
+    name: "fmt",
+    usage: "wm fmt <paths...> [options]",
     description:
       "Format waymark comments in a file, normalizing spacing, case, and alignment.",
     flags: [
@@ -147,10 +147,10 @@ export const commands: HelpRegistry = {
       commonFlags.help,
     ],
     examples: [
-      "wm format src/index.ts             # Preview formatting changes",
-      "wm format src/index.ts --write     # Apply formatting changes",
-      "wm format src/index.ts -w          # Apply formatting (short form)",
-      "wm format src/ --write             # Format all waymarks in a directory",
+      "wm fmt src/index.ts                # Preview formatting changes",
+      "wm fmt src/index.ts --write        # Apply formatting changes",
+      "wm fmt src/index.ts -w             # Apply formatting (short form)",
+      "wm fmt src/ --write                # Format all waymarks in a directory",
     ],
   },
   lint: {
@@ -176,7 +176,7 @@ export const commands: HelpRegistry = {
     description: "Show help for a specific command or general usage.",
     examples: [
       "wm help                            # Show general help",
-      "wm help format                     # Show format command help",
+      "wm help fmt                        # Show format command help",
       "wm help lint                       # Show lint command help",
     ],
   },
@@ -317,9 +317,9 @@ export const commands: HelpRegistry = {
     flags: [],
     examples: ["wm add src/auth.ts:42 todo \"use 'add' instead of 'insert'\""],
   },
-  modify: {
-    name: "modify",
-    usage: "wm modify [file:line] [options]",
+  edit: {
+    name: "edit",
+    usage: "wm edit [file:line] [options]",
     description:
       "Update existing waymarks in place by adjusting type, signals, or content.",
     flags: [
@@ -355,7 +355,7 @@ export const commands: HelpRegistry = {
         description: "Add raised signal (^)",
       },
       {
-        name: "mark-starred",
+        name: "starred",
         type: "boolean",
         description: "Add starred signal (*)",
       },
@@ -371,16 +371,16 @@ export const commands: HelpRegistry = {
       commonFlags.help,
     ],
     examples: [
-      "wm modify src/auth.ts:42 --type fix",
-      "wm modify --id wm:a3k9m2p --starred --write",
-      'printf "new copy" | wm modify src/auth.ts:42 --content - --write',
-      "wm modify                                # Interactive prompts (no args)",
-      "wm modify --no-interactive --id wm:a3k9m2p",
+      "wm edit src/auth.ts:42 --type fix",
+      "wm edit --id wm:a3k9m2p --starred --write",
+      'printf "new copy" | wm edit src/auth.ts:42 --content - --write',
+      "wm edit                                 # Interactive prompts (no args)",
+      "wm edit --no-interactive --id wm:a3k9m2p",
     ],
   },
-  remove: {
-    name: "remove",
-    usage: "wm remove <file:line> [options]",
+  rm: {
+    name: "rm",
+    usage: "wm rm <file:line> [options]",
     description: "Remove waymarks from files programmatically.",
     flags: [
       commonFlags.write,
@@ -474,11 +474,11 @@ export const commands: HelpRegistry = {
       commonFlags.help,
     ],
     examples: [
-      "wm remove src/auth.ts:42              # Preview removal",
-      "wm remove src/auth.ts:42 --write      # Actually remove",
-      "wm remove --id wm:a3k9m2p --write     # Remove by ID",
-      "wm remove --type todo --tag #wip --write --yes  # Batch removal",
-      'wm remove src/auth.ts:42 --write --reason "cleanup"',
+      "wm rm src/auth.ts:42                  # Preview removal",
+      "wm rm src/auth.ts:42 --write          # Actually remove",
+      "wm rm --id wm:a3k9m2p --write         # Remove by ID",
+      "wm rm --type todo --tag #wip --write --yes  # Batch removal",
+      'wm rm src/auth.ts:42 --write --reason "cleanup"',
     ],
   },
   init: {

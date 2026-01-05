@@ -91,13 +91,13 @@ wm src/ --graph                      # dependency graph
 wm src/ --graph --json               # JSON output
 
 # Formatting and validation
-wm format src/example.ts --write     # normalize syntax
+wm fmt src/example.ts --write     # normalize syntax
 wm lint src/                         # validate waymarks
 
 # Waymark management
 wm add src/auth.ts:42 todo "add rate limiting" --write
-wm remove src/auth.ts:42 --write
-wm modify src/auth.ts:42 --raise --write
+wm rm src/auth.ts:42 --write
+wm edit src/auth.ts:42 --raised --write
 
 # Output formats
 wm src/ --json                       # compact JSON

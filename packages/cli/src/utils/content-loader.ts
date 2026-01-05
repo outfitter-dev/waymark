@@ -10,11 +10,14 @@ import unifiedPrompt from "../commands/unified/index.prompt.ts";
 const promptRegistry: Record<string, string> = {
   unified: unifiedPrompt,
   format: formatPrompt,
+  fmt: formatPrompt,
   add: addPrompt,
   insert: addPrompt, // deprecated alias
+  edit: modifyPrompt,
   modify: modifyPrompt,
   lint: lintPrompt,
   remove: removePrompt,
+  rm: removePrompt,
 };
 
 /**

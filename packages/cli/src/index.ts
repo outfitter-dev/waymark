@@ -228,7 +228,7 @@ async function handleRemoveCommand(
 }
 
 function handlePromptOption(
-  key: "insert" | "remove" | "modify",
+  key: "insert" | "remove" | "edit",
   options: { prompt?: boolean }
 ): boolean {
   if (!options.prompt) {
@@ -298,8 +298,8 @@ type ModifyCliOptions = {
   id?: string;
   type?: string;
   content?: string;
-  raise?: boolean;
-  markStarred?: boolean;
+  raised?: boolean;
+  starred?: boolean;
   clearSignals?: boolean;
   write?: boolean;
   json?: boolean;
@@ -316,7 +316,7 @@ async function resolveInteractiveTarget(
 ): Promise<{ target: string; id?: string | undefined }> {
   const records = await scanRecords([workspaceRoot], config);
   if (records.length === 0) {
-    writeStderr("No waymarks found to modify.");
+    writeStderr("No waymarks found to edit.");
     process.exit(1);
   }
 
@@ -370,10 +370,10 @@ function buildModifyOptions(
   if (interactiveOverride !== undefined) {
     options.interactive = interactiveOverride;
   }
-  if (rawOptions.raise) {
+  if (rawOptions.raised) {
     options.raised = true;
   }
-  if (rawOptions.markStarred) {
+  if (rawOptions.starred) {
     options.starred = true;
   }
 
@@ -400,8 +400,8 @@ function determineInteractiveOverride(
   const hasMutationFlag = Boolean(
     rawOptions.type ||
       rawOptions.content ||
-      rawOptions.raise ||
-      rawOptions.markStarred ||
+      rawOptions.raised ||
+      rawOptions.starred ||
       rawOptions.clearSignals
   );
   const hasOutputFlag = Boolean(rawOptions.json || rawOptions.jsonl);
@@ -420,7 +420,7 @@ async function handleModifyCommand(
   target: string | undefined,
   rawOptions: ModifyCliOptions
 ): Promise<void> {
-  if (handlePromptOption("modify", rawOptions)) {
+  if (handlePromptOption("edit", rawOptions)) {
     return;
   }
 
@@ -706,15 +706,18 @@ const _DEFAULT_HELP_WIDTH = 80;
 const COMMAND_ORDER = [
   "find",
   "add",
-  "modify",
-  "remove",
+  "edit",
+  "rm",
+  "fmt",
+  "lint",
   "init",
+  "doctor",
   "completions",
   "update",
   "help",
 ];
 
-const HIDDEN_COMMANDS = ["format", "lint"];
+const HIDDEN_COMMANDS = ["fmt", "lint"];
 
 /**
  * Sort comparator for commands based on predefined order.
@@ -908,9 +911,10 @@ export async function createProgram(): Promise<Command> {
     .description(
       "Waymark CLI - scan, filter, format, and manage waymarks\n\n" +
         "Quick Start:\n" +
-        "  wm find [paths...]        Scan and filter waymarks (default: current directory)\n" +
-        "  wm find --graph           Show dependency graph\n" +
-        "  wm format <file> --write  Format waymarks in file\n" +
+        "  wm [paths...]             Scan and filter waymarks (default: current directory)\n" +
+        "  wm --graph                Show dependency graph\n" +
+        "  wm fmt <file> --write     Format waymarks in file\n" +
+        "  wm rm <file:line> --write Remove waymark from file\n" +
         "  wm init                   Initialize waymark configuration"
     )
     .version(version, "--version, -v", "output the current version")
@@ -980,7 +984,7 @@ export async function createProgram(): Promise<Command> {
 
   // Format command
   program
-    .command("format")
+    .command("fmt")
     .argument("[paths...]", "files or directories to format")
     .option("--write, -w", "write changes to file", false)
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -989,10 +993,10 @@ export async function createProgram(): Promise<Command> {
       "after",
       `
 Examples:
-  $ wm format src/auth.ts              # Preview formatting single file
-  $ wm format src/auth.ts --write      # Apply formatting to single file
-  $ wm format src/**/*.ts --write      # Format multiple files
-  $ wm format src/ --write             # Format all files in directory
+  $ wm fmt src/auth.ts                 # Preview formatting single file
+  $ wm fmt src/auth.ts --write         # Apply formatting to single file
+  $ wm fmt src/**/*.ts --write         # Format multiple files
+  $ wm fmt src/ --write                # Format all files in directory
 
 Notes:
   - Files beginning with a \`waymark-ignore-file\` comment are skipped
@@ -1012,7 +1016,7 @@ After Formatting:
   // todo ::: implement auth
   // *fix ::: validate input
 
-See 'wm format --prompt' for agent-facing documentation.
+See 'wm fmt --prompt' for agent-facing documentation.
     `
     )
     .action(
@@ -1088,14 +1092,14 @@ See 'wm add --prompt' for agent-facing documentation.
       await handleAddCommand(program, this, options);
     });
 
-  const modifyCmd = program
-    .command("modify")
+  const editCmd = program
+    .command("edit")
     .argument("[target]", "waymark location (file:line)")
-    .option("--id <id>", "waymark ID to modify")
+    .option("--id <id>", "waymark ID to edit")
     .option("--type <marker>", "change waymark type")
-    .option("--raise", "add ^ (raised) signal", false)
+    .option("--raised, -R", "add ^ (raised) signal", false)
     .option(
-      "--mark-starred",
+      "--starred",
       "add * (starred) signal to mark as important/valuable",
       false
     )
@@ -1112,21 +1116,21 @@ See 'wm add --prompt' for agent-facing documentation.
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .option("--prompt", "show agent-facing prompt instead of help")
-    .description("modify existing waymarks");
+    .description("edit existing waymarks");
 
-  modifyCmd
+  editCmd
     .addHelpText(
       "after",
       `
 Examples:
-  $ wm modify src/auth.ts:42 --type fix                    # Preview type change
-  $ wm modify src/auth.ts:42 --raise --mark-starred       # Preview signal updates
-  $ wm modify --id wm:a3k9m2p --mark-starred --write      # Apply starred flag by ID
-  $ wm modify src/auth.ts:42 --clear-signals --write       # Remove all signals
-  $ wm modify src/auth.ts:42 --content "new text" --write
-  $ printf "new text" | wm modify src/auth.ts:42 --content - --write
-  $ wm modify                                          # Interactive workflow (default when no args)
-  $ wm modify --no-interactive                         # Skip prompts if default interactive would trigger
+  $ wm edit src/auth.ts:42 --type fix                    # Preview type change
+  $ wm edit src/auth.ts:42 --raised --starred           # Preview signal updates
+  $ wm edit --id wm:a3k9m2p --starred --write           # Apply starred flag by ID
+  $ wm edit src/auth.ts:42 --clear-signals --write       # Remove all signals
+  $ wm edit src/auth.ts:42 --content "new text" --write
+  $ printf "new text" | wm edit src/auth.ts:42 --content - --write
+  $ wm edit                                           # Interactive workflow (default when no args)
+  $ wm edit --no-interactive                          # Skip prompts if default interactive would trigger
 
 Notes:
   - Provide either FILE:LINE or --id (not both)
@@ -1154,8 +1158,7 @@ Notes:
     });
 
   program
-    .command("remove")
-    .alias("rm")
+    .command("rm")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
     .option("--id <id>", "remove waymark by ID (wm:xxxxx)")
@@ -1176,18 +1179,18 @@ Notes:
       "after",
       `
 Removal Methods:
-  1. By Location:     wm remove src/auth.ts:42
-  2. By ID:           wm remove --id wm:a3k9m2p
-  3. By Criteria:     wm remove --criteria "type:todo mention:@agent" src/
-  4. From JSON Input: wm remove --from waymarks.json
+  1. By Location:     wm rm src/auth.ts:42
+  2. By ID:           wm rm --id wm:a3k9m2p
+  3. By Criteria:     wm rm --criteria "type:todo mention:@agent" src/
+  4. From JSON Input: wm rm --from waymarks.json
 
 Examples:
-  $ wm remove src/auth.ts:42                  # Preview removal
-  $ wm remove src/auth.ts:42 --write          # Actually remove
-  $ wm remove --id wm:a3k9m2p --write         # Remove by ID
-  $ wm remove --criteria "type:todo mention:@agent" src/ --write
-  $ wm remove --from removals.json --write
-  $ wm remove src/auth.ts:42 --write --reason "cleanup"
+  $ wm rm src/auth.ts:42                      # Preview removal
+  $ wm rm src/auth.ts:42 --write              # Actually remove
+  $ wm rm --id wm:a3k9m2p --write             # Remove by ID
+  $ wm rm --criteria "type:todo mention:@agent" src/ --write
+  $ wm rm --from removals.json --write
+  $ wm rm src/auth.ts:42 --write --reason "cleanup"
 
 Filter Criteria Syntax:
   type:<marker>         Match waymark type (todo, fix, note, etc.)
@@ -1204,7 +1207,7 @@ Safety Features:
   - Multi-line waymarks removed atomically
   - Removed waymarks tracked in .waymark/history.json (with optional --reason)
 
-See 'wm remove --prompt' for agent-facing documentation.
+See 'wm rm --prompt' for agent-facing documentation.
     `
     )
     .action(async function (this: Command, ...actionArgs: unknown[]) {
@@ -1482,31 +1485,23 @@ See 'wm find --prompt' for agent-facing documentation.
       }
     });
 
-  // Default action - unified command (deprecated implicit behavior, use 'wm find' instead)
+  // Default action - unified command
   program
     .argument("[paths...]", "files or directories to scan")
     .addHelpText(
       "after",
       `
-DEPRECATION NOTICE:
-  The implicit scan syntax (e.g., 'wm src/') is deprecated.
-  Use 'wm find [paths...]' instead. This will be removed in v2.0.
-
 Examples:
-  $ wm find                                   # Scan current directory
-  $ wm find src/ --type todo --mention @agent
-  $ wm find --graph --json                   # Export dependency graph as JSON
-  $ wm find --starred --tag "#sec"           # Find high-priority security issues
+  $ wm                                      # Scan current directory
+  $ wm src/ --type todo --mention @agent
+  $ wm --graph --json                       # Export dependency graph as JSON
+  $ wm --starred --tag "#sec"               # Find high-priority security issues
 
 See 'wm find --help' for all available options and comprehensive documentation.
     `
     )
     .action(async (paths: string[], options: Record<string, unknown>) => {
       try {
-        // Show deprecation warning to STDERR (won't interfere with piped output)
-        writeStderr(
-          "Warning: Implicit command syntax is deprecated. Use 'wm find [paths...]' instead. This will be removed in v2.0"
-        );
         const mergedOptions = { ...program.opts(), ...options };
         await handleUnifiedCommand(program, paths, mergedOptions);
       } catch (error) {

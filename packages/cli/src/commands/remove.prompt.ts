@@ -1,4 +1,4 @@
-// tldr ::: agent-facing usage guide for remove command
+// tldr ::: agent-facing usage guide for rm command
 
 import content from "./remove.prompt.txt";
 

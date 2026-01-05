@@ -1,4 +1,4 @@
-// tldr ::: agent-facing usage guide for format command
+// tldr ::: agent-facing usage guide for fmt command
 
 import content from "./format.prompt.txt";
 

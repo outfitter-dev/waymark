@@ -5,11 +5,11 @@ PURPOSE
   Programmatically remove waymarks from files with safety checks and audit logging.
 
 COMMAND SYNTAX
-  wm remove <file:line> [--write]
-  wm remove --id <wm-id> [--write]
-  wm remove --from <json-file> [--write]
-  wm remove [filter-flags] <paths> [--write]
-  wm remove <file:line> [--write] [--reason "<text>"]
+  wm rm <file:line> [--write]
+  wm rm --id <wm-id> [--write]
+  wm rm --from <json-file> [--write]
+  wm rm [filter-flags] <paths> [--write]
+  wm rm <file:line> [--write] [--reason "<text>"]
 
 REMOVAL MODES
 
@@ -31,19 +31,19 @@ SAFETY MODEL
 INPUT METHODS
 
   1. By Location:
-     wm remove src/auth.ts:42 --write
+     wm rm src/auth.ts:42 --write
      → Removes waymark at line 42 in src/auth.ts
 
   2. By Waymark ID:
-     wm remove --id wm:a3k9m2p --write
+     wm rm --id wm:a3k9m2p --write
      → Removes waymark with ID wm:a3k9m2p
 
   3. By Filter Flags:
-     wm remove --type todo --mention @agent src/ --write
+     wm rm --type todo --mention @agent src/ --write
      → Removes all todos mentioning @agent in src/
 
   4. From JSON Input:
-     cat removals.json | wm remove --from - --write
+     cat removals.json | wm rm --from - --write
      → Batch removal from JSON
 
 FILTER FLAGS
@@ -56,7 +56,7 @@ FILTER FLAGS
   --contains <text>     Match content containing text
 
   Combine flags with AND logic:
-  wm remove --type todo --mention @agent --tag "#deprecated" src/ --write
+  wm rm --type todo --mention @agent --tag "#deprecated" src/ --write
 
 OUTPUT FORMATS
 
@@ -67,55 +67,55 @@ OUTPUT FORMATS
 EXAMPLES
 
   1. Preview removal by location:
-     wm remove src/auth.ts:42
+     wm rm src/auth.ts:42
      → Shows waymark that would be removed
 
   2. Execute removal:
-     wm remove src/auth.ts:42 --write
+     wm rm src/auth.ts:42 --write
      → Actually removes the waymark
 
   3. Remove by ID:
-     wm remove --id wm:a3k9m2p --write
+     wm rm --id wm:a3k9m2p --write
 
   4. Remove all completed todos:
-     wm remove --type done . --write
+     wm rm --type done . --write
 
   5. Remove stale agent todos:
-     wm remove --type todo --mention @agent --raised src/ --write
+     wm rm --type todo --mention @agent --raised src/ --write
 
   6. Batch remove from analysis:
      echo '[
        {"file":"src/a.ts","line":42},
        {"id":"wm:xyz123"}
-     ]' | wm remove --from - --write --json
+     ]' | wm rm --from - --write --json
 
   7. Remove deprecated waymarks:
-     wm remove --type deprecated . --write
+     wm rm --type deprecated . --write
 
   8. Record a removal reason:
-     wm remove src/auth.ts:42 --write --reason "obsolete"
+     wm rm src/auth.ts:42 --write --reason "obsolete"
 
 AGENT WORKFLOWS
 
   1. Clean up completed work:
      # Agent finds done waymarks and removes them
      wm scan --type done --json | jq -r '.file + ":" + (.startLine|tostring)' \
-       | while read loc; do wm remove "$loc" --write; done
+       | while read loc; do wm rm "$loc" --write; done
 
   2. Remove raised waymarks after merge:
      # Agent removes ^ waymarks after PR merges
-     wm remove --raised . --write
+     wm rm --raised . --write
 
   3. Archive deprecated markers:
      # Agent removes deprecated waymarks after refactor
-     wm remove --type deprecated --tag "#old-api" . --write
+     wm rm --type deprecated --tag "#old-api" . --write
 
   4. Conditional removal based on analysis:
      # Agent analyzes codebase and removes outdated waymarks
      wm scan --type todo --json \
        | jq 'map(select(.properties.since < "2024-01-01"))
            | map({file, line: .startLine})' \
-       | wm remove --from - --write
+       | wm rm --from - --write
 
 JSON INPUT SCHEMA
 
@@ -178,23 +178,23 @@ ERROR HANDLING
 VERIFICATION
 
   After removal, verify with scan:
-  wm remove src/auth.ts:42 --write
+  wm rm src/auth.ts:42 --write
   wm scan src/auth.ts --type todo
   → Confirm waymark was removed
 
 COMBINING WITH OTHER COMMANDS
 
   # Remove all todos, then verify
-  wm remove --type todo . --write && wm scan --type todo
+  wm rm --type todo . --write && wm scan --type todo
 
   # Find and remove specific waymarks
   wm scan --type deprecated --json \
     | jq -r '.file + ":" + (.startLine|tostring)' \
-    | xargs -I {} wm remove {} --write
+    | xargs -I {} wm rm {} --write
 
   # Clean up before release
-  wm remove --raised . --write  # Remove raised
-  wm remove --type wip . --write  # Remove WIP
+  wm rm --raised . --write  # Remove raised
+  wm rm --type wip . --write  # Remove WIP
 
 TIPS FOR AGENTS
 
@@ -212,4 +212,4 @@ UNDO CAPABILITY (future)
 
   (This feature may be added in future versions)
 
-For human-facing help, use: wm remove --help
+For human-facing help, use: wm rm --help

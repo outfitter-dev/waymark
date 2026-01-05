@@ -1036,7 +1036,7 @@ describe("Commander integration", () => {
     }
   });
 
-  test("modify command forwards --json option", async () => {
+  test("edit command forwards --json option", async () => {
     const modifyModule = await import("./commands/modify");
     const contextModule = await import("./utils/context");
     const mockPayload: ModifyPayload = {
@@ -1070,7 +1070,7 @@ describe("Commander integration", () => {
 
     try {
       const result = await runCliCaptured([
-        "modify",
+        "edit",
         "src/sample.ts:1",
         "--json",
       ]);
@@ -1084,7 +1084,7 @@ describe("Commander integration", () => {
     }
   });
 
-  test("remove command forwards --json flag to parser", async () => {
+  test("rm command forwards --json flag to parser", async () => {
     const removeModule = await import("./commands/remove");
     const contextModule = await import("./utils/context");
     const parseSpy = spyOn(removeModule, "parseRemoveArgs");
@@ -1105,7 +1105,7 @@ describe("Commander integration", () => {
 
     try {
       const result = await runCliCaptured([
-        "remove",
+        "rm",
         "src/sample.ts:1",
         "--json",
       ]);
@@ -1140,18 +1140,18 @@ describe("Commander integration", () => {
   });
 
   test("other commands do not list find filters", async () => {
-    const result = await runCliCaptured(["format", "--help"]);
+    const result = await runCliCaptured(["fmt", "--help"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).not.toContain("--type <types...>");
   });
 
-  test("implicit command emits deprecation warning", async () => {
+  test("implicit command runs without deprecation warning", async () => {
     const { file, cleanup } = await withTempFile("// todo ::: legacy\n");
 
     try {
       const result = await runCliCaptured([file]);
       expect(result.exitCode).toBe(0);
-      expect(result.stderr).toContain("Implicit command syntax is deprecated");
+      expect(result.stderr).not.toContain("deprecated");
       expect(result.stdout.length).toBeGreaterThan(0);
     } finally {
       await cleanup();
