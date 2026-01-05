@@ -109,10 +109,10 @@ wm find src/ --jsonl                      # newline-delimited JSON
 wm find src/ --text                       # human-readable formatted text
 
 # Standalone commands
-wm format src/ --write               # format waymarks in a directory
+wm fmt src/ --write               # format waymarks in a directory
 wm lint src/ --json                  # validate waymark types
-wm remove src/auth.ts:42 --write     # remove a waymark
-wm modify src/auth.ts:42 --raise --write # adjust an existing waymark
+wm rm src/auth.ts:42 --write     # remove a waymark
+wm edit src/auth.ts:42 --raised --write # adjust an existing waymark
 ```
 
 To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
@@ -122,7 +122,7 @@ To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
 include_codetags = true
 ```
 
-When ID history tracking is enabled (`ids.track_history = true`), removals are recorded in `.waymark/history.json` with `removedAt`, `removedBy`, and optional `reason` metadata (via `wm remove --reason`).
+When ID history tracking is enabled (`ids.track_history = true`), removals are recorded in `.waymark/history.json` with `removedAt`, `removedBy`, and optional `reason` metadata (via `wm rm --reason`).
 
 The CLI relies on the core formatter and parser helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
 

@@ -135,7 +135,7 @@ TIPS FOR AGENTS
 COMBINING WITH OTHER COMMANDS
 
   # Format then lint
-  wm format src/auth.ts --write && wm lint src/auth.ts
+  wm fmt src/auth.ts --write && wm lint src/auth.ts
 
   # Scan for issues, then lint for structure
   wm src/ --type todo --raised && wm lint src/

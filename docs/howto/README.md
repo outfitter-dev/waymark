@@ -52,7 +52,7 @@ wm src/
 wm lint src/
 
 # Normalize updated waymarks after edits
-wm format src/ --write
+wm fmt src/ --write
 ```
 
 **What to convert**:
@@ -368,7 +368,7 @@ wm add src/legacy.ts:1 note "depends:#new-api/client" --write
 wm src/ --raised --mention @yourname
 
 # 4. Clear signals when done
-wm modify src/legacy.ts:1 --unraise --write
+wm edit src/legacy.ts:1 --unraise --write
 ```
 
 ### Security Audit

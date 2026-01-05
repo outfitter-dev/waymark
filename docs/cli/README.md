@@ -91,13 +91,13 @@ wm src/ --graph                      # dependency graph
 wm src/ --graph --json               # JSON output
 
 # Formatting and validation
-wm format src/example.ts --write     # normalize syntax
+wm fmt src/example.ts --write     # normalize syntax
 wm lint src/                         # validate waymarks
 
 # Waymark management
 wm add src/auth.ts:42 todo "add rate limiting" --write
-wm remove src/auth.ts:42 --write
-wm modify src/auth.ts:42 --raise --write
+wm rm src/auth.ts:42 --write
+wm edit src/auth.ts:42 --raised --write
 
 # Output formats
 wm src/ --json                       # compact JSON
@@ -186,7 +186,7 @@ wm src/ --tag "#sec"
 ## Next Steps
 
 - **[Commands Reference](./commands.md)** - Learn all commands in depth
-- **[Waymark Editing](./waymark_editing.md)** - Master insert/remove/modify
+- **[Waymark Editing](./waymark_editing.md)** - Master add/edit/rm
 - **[How-To Guides](../howto/README.md)** - See practical workflows
 - **[Grammar](../GRAMMAR.md)** - Understand waymark syntax
 
@@ -199,8 +199,8 @@ wm src/ --tag "#sec"
 wm help
 
 # Command-specific help
-wm help format
-wm help insert
+wm help fmt
+wm help add
 ```
 
 **Resources**:
