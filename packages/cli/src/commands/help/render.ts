@@ -114,7 +114,7 @@ export function renderGlobalHelp(): string {
 
   // Footer
   sections.push("");
-  sections.push("Run 'wm help <command>' for detailed help on a command.");
+  sections.push("Run 'wm help <command|topic>' for detailed help.");
 
   return sections.join("\n");
 }

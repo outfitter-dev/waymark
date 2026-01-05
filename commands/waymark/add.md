@@ -93,7 +93,7 @@ Use Edit tool to insert the waymark with proper comment syntax for the file type
 If `wm` CLI available, prefer:
 
 ```bash
-wm insert $1 --type <marker> --content "<content>" --line <line>
+wm add $1 --type <marker> --content "<content>" --line <line>
 ```
 
 ### Step 6: Verify

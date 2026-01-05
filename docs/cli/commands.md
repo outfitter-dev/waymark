@@ -52,7 +52,7 @@ wm init --format toml --scope project
   - [Format](#format)
   - [Lint](#lint)
   - [Init](#init)
-  - [Insert/Remove/Modify](#insertremovemodify)
+  - [Add/Remove/Edit](#addremoveedit)
   - [Help](#help)
 - [Configuration](#configuration)
   - [Config Files](#config-files)
@@ -343,7 +343,7 @@ wm init --force
 - Adds `.waymark/index.json` to `.gitignore` (project scope only)
 - Uses interactive prompts when no flags provided
 
-### Insert/Remove/Modify
+### Add/Remove/Edit
 
 For detailed documentation on waymark management commands, see [Waymark Editing Guide](./waymark_editing.md).
 
@@ -357,10 +357,10 @@ wm add src/auth.ts:42 todo "add rate limiting" --write
 wm rm src/auth.ts:42 --write              # or: wm rm src/auth.ts:42 --write
 wm rm src/auth.ts:42 --reason "cleanup" --write
 
-# Modify waymark signals
+# Edit waymark signals
 wm edit src/auth.ts:42 --raised --write
-wm edit src/auth.ts:42 --star --write
-wm edit src/auth.ts:42 --unraise --unstar --write
+wm edit src/auth.ts:42 --starred --write
+wm edit src/auth.ts:42 --clear-signals --write
 ```
 
 ### Help
@@ -372,9 +372,12 @@ Display help for commands:
 wm help
 
 # Command-specific help
-wm help format
-wm help insert
-wm help remove                       # or: wm help rm
+wm help fmt
+wm help add
+wm help rm
+
+# Topic help
+wm help syntax
 ```
 
 ---
@@ -817,7 +820,7 @@ wm src/ --mention @agents             # matches all agent handles
 ## See Also
 
 - [CLI Installation](./README.md) — Installation and quick start
-- [Waymark Editing](./waymark_editing.md) — Insert, remove, and modify waymarks
+- [Waymark Editing](./waymark_editing.md) — Add, edit, and remove waymarks
 - [Waymark Grammar](../GRAMMAR.md) — Grammar reference
 - [How-To Guides](../howto/README.md) — Practical usage examples
 - [MCP Server Documentation](../../README.md#mcp-server) — Agent integration

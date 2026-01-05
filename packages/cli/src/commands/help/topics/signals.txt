@@ -1,0 +1,17 @@
+SIGNALS
+
+Signals are single-character prefixes that change the priority or state.
+
+^ raised
+  In-progress or blocking work. Should be empty before merging to main.
+
+* starred
+  Important or high priority.
+
+Rules:
+  - Signals come before the type with no space
+  - Order is ^ then * when combined (e.g., ^*todo)
+
+Examples:
+  // ^todo ::: stabilize cache layer
+  // *fix ::: avoid leaking tokens in logs

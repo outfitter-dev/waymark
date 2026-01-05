@@ -1,4 +1,4 @@
-// tldr ::: agent-facing usage guide for add command (formerly insert)
+// tldr ::: agent-facing usage guide for add command
 
 import content from "./add.prompt.txt";
 

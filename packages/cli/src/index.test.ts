@@ -1127,6 +1127,29 @@ describe("Commander integration", () => {
     expect(result.stdout).not.toContain("--type <types...>");
   });
 
+  test("wm help defaults to global help", async () => {
+    const result = await runCliCaptured(["help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Commands:");
+    expect(result.stdout).toContain("Global Options:");
+    expect(result.stdout).not.toContain("WAYMARK SYNTAX");
+    expect(result.stdout).toContain("Topics:");
+    expect(result.stdout).toContain("syntax");
+  });
+
+  test("wm help fmt shows command help", async () => {
+    const result = await runCliCaptured(["help", "fmt"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Usage: wm fmt");
+    expect(result.stdout).toContain("Arguments:");
+  });
+
+  test("wm help syntax shows topic help", async () => {
+    const result = await runCliCaptured(["help", "syntax"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("WAYMARK SYNTAX");
+  });
+
   test("wm find --help shows filter options", async () => {
     const result = await runCliCaptured(["find", "--help"]);
     expect(result.exitCode).toBe(0);

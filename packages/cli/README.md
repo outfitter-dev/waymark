@@ -47,7 +47,7 @@ wm add src/auth.ts:42 todo "implement rate limiting"
 # Remove waymarks
 wm rm src/auth.ts:42 --write
 
-# Modify existing waymarks
+# Edit existing waymarks
 wm edit src/auth.ts:42 --raised --write
 
 # Lint waymarks
@@ -59,7 +59,7 @@ wm lint src/
 - `wm [paths...]` - Scan and filter waymarks (default command)
 - `wm fmt [paths...]` - Format and normalize waymark syntax
 - `wm add <file:line> <type> <content>` - Insert waymarks into files
-- `wm edit <file:line>` - Modify existing waymarks
+- `wm edit <file:line>` - Edit existing waymarks
 - `wm rm <file:line>` - Remove waymarks from files
 - `wm lint [paths...]` - Validate waymark structure and surface legacy codetags
 - `wm init` - Initialize waymark configuration
