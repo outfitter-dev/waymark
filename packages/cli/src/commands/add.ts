@@ -1,4 +1,4 @@
-// tldr ::: add command implementation for wm CLI (formerly insert)
+// tldr ::: add command implementation for wm CLI
 
 import { readFile } from "node:fs/promises";
 

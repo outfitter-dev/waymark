@@ -1,0 +1,14 @@
+TLDR WAYMARKS
+
+Purpose:
+  File-level summary of what the module does.
+
+Guidelines:
+  - Only one tldr per file
+  - Place it at the top (after shebang or frontmatter)
+  - Use 8-14 words, active voice
+  - Focus on capability and scope
+
+Examples:
+  // tldr ::: handles billing webhooks and retries failed deliveries
+  <!-- tldr ::: summarizes API contract and usage for this doc -->

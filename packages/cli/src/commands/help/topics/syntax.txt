@@ -1,0 +1,19 @@
+WAYMARK SYNTAX
+
+Basic form:
+  <comment leader> <signals?> <type> ::: <content> [properties]
+
+Examples:
+  // todo ::: add retry with backoff
+  // ^fix ::: handle null input
+  <!-- note ::: describes API contract -->
+
+Rules:
+  - Use exactly one space on each side of :::
+  - Signals come before the type with no space (e.g., ^*todo)
+  - Use the correct comment style for the file type
+  - Properties come after content as key:value pairs
+
+Property examples:
+  // todo ::: add cache depends:#infra/redis ref:#123
+  // note ::: aligns with ADR-12 link:https://example.com

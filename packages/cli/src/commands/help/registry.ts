@@ -172,12 +172,13 @@ export const commands: HelpRegistry = {
   },
   help: {
     name: "help",
-    usage: "wm help [command]",
-    description: "Show help for a specific command or general usage.",
+    usage: "wm help [command|topic]",
+    description: "Show help for a specific command or topic.",
     examples: [
-      "wm help                            # Show general help",
+      "wm help                            # Show syntax overview",
       "wm help fmt                        # Show format command help",
-      "wm help lint                       # Show lint command help",
+      "wm help syntax                     # Show syntax guide",
+      "wm help tags                       # Show tags and mentions",
     ],
   },
   add: {
@@ -309,13 +310,6 @@ export const commands: HelpRegistry = {
       'wm add src/api.ts:10 todo "add caching" --tag #perf --raised',
       "wm add --from waymarks.json --write",
     ],
-  },
-  insert: {
-    name: "insert",
-    usage: "wm insert (deprecated, use 'wm add' instead)",
-    description: "Deprecated alias for 'add' command.",
-    flags: [],
-    examples: ["wm add src/auth.ts:42 todo \"use 'add' instead of 'insert'\""],
   },
   edit: {
     name: "edit",
