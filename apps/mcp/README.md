@@ -19,7 +19,6 @@ waymark-mcp
 The server communicates over stdio and implements the Model Context Protocol, allowing AI agents to:
 
 - Scan and parse waymarks from files
-- Generate TLDR summaries
 - Extract dependency graphs
 - Insert waymarks with proper formatting
 - Access repository-wide waymark data
@@ -28,19 +27,13 @@ The server communicates over stdio and implements the Model Context Protocol, al
 
 ### Tools
 
-- `waymark.scan` - Parse files/directories and return waymark records (supports text, json, jsonl, pretty formats)
-- `waymark.graph` - Extract dependency graph from relations
-- `waymark.add` - Add formatted waymarks into files
-- `waymark.insert` - (deprecated, use `waymark.add` instead)
+- `waymark` - Single tool for scan/graph/add actions (set `action` and pass the corresponding inputs)
 
 ### Resources
 
 - `waymark://todos` - Filtered list of all TODO waymarks
 
-### Prompts
-
-- `waymark.tldr` - Draft TLDR sentence for a file
-- `waymark.todo` - Draft actionable TODO content
+Drafting TLDR/TODO guidance now lives in agent skills; MCP prompts were removed.
 
 ## Configuration
 
@@ -65,21 +58,15 @@ const client = new Client({
 
 // Scan waymarks
 const result = await client.callTool({
-  name: 'waymark.scan',
+  name: 'waymark',
   arguments: {
+    action: 'scan',
     paths: ['src/'],
     format: 'json'
   }
 });
 
-// Generate TLDR
-const tldr = await client.callPrompt({
-  name: 'waymark.tldr',
-  arguments: {
-    filePath: 'src/auth.ts',
-    snippet: '...'
-  }
-});
+// Drafting guidance lives in agent skills (no MCP prompts).
 ```
 
 ## Documentation

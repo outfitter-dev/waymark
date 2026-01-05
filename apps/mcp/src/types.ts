@@ -30,10 +30,29 @@ export const addWaymarkInputSchema = configOptionsSchema.extend({
     .optional(),
 });
 
-// Deprecated alias for backward compatibility
-export const insertWaymarkInputSchema = addWaymarkInputSchema;
+const waymarkActionSchema = z.enum(["scan", "graph", "add"]);
+
+export const waymarkToolInputSchema = z.discriminatedUnion("action", [
+  scanInputSchema.extend({ action: z.literal("scan") }),
+  graphInputSchema.extend({ action: z.literal("graph") }),
+  addWaymarkInputSchema.extend({ action: z.literal("add") }),
+]);
+
+export const waymarkToolInputShape = {
+  action: waymarkActionSchema,
+  configPath: configOptionsSchema.shape.configPath,
+  scope: configOptionsSchema.shape.scope,
+  paths: scanInputSchema.shape.paths.optional(),
+  format: scanInputSchema.shape.format.optional(),
+  filePath: addWaymarkInputSchema.shape.filePath.optional(),
+  type: addWaymarkInputSchema.shape.type.optional(),
+  content: addWaymarkInputSchema.shape.content.optional(),
+  line: addWaymarkInputSchema.shape.line.optional(),
+  signals: addWaymarkInputSchema.shape.signals.optional(),
+};
 
 export type ScanInput = z.infer<typeof scanInputSchema>;
+export type WaymarkToolInput = z.infer<typeof waymarkToolInputSchema>;
 export type RenderFormat = ScanInput["format"];
 
 export type SignalFlags = {
@@ -54,5 +73,3 @@ export type ExpandedConfig = {
 };
 
 export const TODOS_RESOURCE_URI = "waymark://todos";
-export const DEFAULT_TLDR_PROMPT_LINES = 200;
-export const MAX_TLDR_PROMPT_LINES = 2000;

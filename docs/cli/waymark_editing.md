@@ -1,4 +1,4 @@
-<!-- tldr ::: comprehensive guide to insert, remove, and modify commands for waymark management #docs/cli -->
+<!-- tldr ::: comprehensive guide to add, remove, and edit commands for waymark management #docs/cli -->
 
 # Waymark Editing Guide
 
@@ -24,7 +24,7 @@ Current workflows require manual editing or complex sed/awk scripts to add wayma
 - **Compliance systems** marking code sections requiring review
 - **Migration tools** converting external annotations (GitHub issues, TODOs, etc.)
 
-The insert command makes waymarks first-class citizens in automation pipelines.
+The add command makes waymarks first-class citizens in automation pipelines.
 
 ## Command Interface
 
@@ -408,7 +408,7 @@ auto_refresh_after_minutes = 10
 assign_on_refresh = false
 ```
 
-### Insert Command Use Cases
+### Add Command Use Cases
 
 **1. Update Specific Waymark**
 
@@ -984,9 +984,9 @@ function formatWaymark(
 ### Phase 4: CLI Command
 
 ```typescript
-// packages/cli/src/commands/insert.ts
+// packages/cli/src/commands/add.ts
 
-interface ParsedInsertArgs {
+interface ParsedAddArgs {
   from?: string;
   specs: InsertionSpec[]; // derived from positional FILE:LINE arguments (one per invocation)
   write: boolean;
@@ -994,8 +994,8 @@ interface ParsedInsertArgs {
   jsonl: boolean;
 }
 
-export async function runInsertCommand(args: string[]): Promise<void> {
-  const parsed = parseInsertArgs(args);
+export async function runAddCommand(args: string[]): Promise<void> {
+  const parsed = parseAddArgs(args);
 
   // Load specs from file or use inline specs
   const specs = parsed.from
@@ -1235,7 +1235,7 @@ Should we check if inserting at a line that already has a waymark?
 
 ### 5. Multi-line Waymarks
 
-Should the insert command support multi-line waymark insertion?
+Should the add command support multi-line waymark insertion?
 
 ```json
 {
@@ -1291,7 +1291,7 @@ Should `file` field support globs?
 
 **Behavior**: Insert same waymark at line 1 of all matching files?
 
-**Decision**: Not applicable for insert command. Line numbers won't be consistent across different files. For bulk insertions at consistent locations (like TLDR at top), consider a future enhancement for semantic positioning (e.g., "after imports", "before first function").
+**Decision**: Not applicable for add command. Line numbers won't be consistent across different files. For bulk insertions at consistent locations (like TLDR at top), consider a future enhancement for semantic positioning (e.g., "after imports", "before first function").
 
 ---
 
@@ -2045,7 +2045,7 @@ The following design choices need to be finalized:
 
 **Decision Tracking:**
 
-**Insert Command:**
+**Add Command:**
 
 | Question | Status | Decision | Notes |
 | -------- | ------ | -------- | ----- |
@@ -2076,41 +2076,20 @@ The following design choices need to be finalized:
 
 ### MCP Server
 
-Extend MCP server with both insert and remove tools:
+Expose a single MCP tool for waymark operations:
 
-**Insert Tool:**
+**Tool:**
 
 ```typescript
-// apps/mcp/src/tools/insert.ts
+// apps/mcp/src/tools/waymark.ts
 {
-  name: "waymark.insert",
-  description: "Insert waymark(s) into file(s)",
+  name: "waymark",
+  description: "Single tool for scan, graph, or add actions",
   inputSchema: {
-    oneOf: [
-      // Single insertion
-      {
-        type: "object",
-        properties: {
-          file: { type: "string" },
-          line: { type: "number" },
-          type: { type: "string" },
-          content: { type: "string" },
-          // ... other fields
-        },
-        required: ["file", "line", "type", "content"]
-      },
-      // Batch insertion
-      {
-        type: "object",
-        properties: {
-          insertions: {
-            type: "array",
-            items: { /* InsertionSpec schema */ }
-          }
-        },
-        required: ["insertions"]
-      }
-    ]
+    action: { type: "string", enum: ["scan", "graph", "add"] },
+    // scan: paths[], format?
+    // graph: paths[]
+    // add: filePath, type, content, line?, signals?, configPath?, scope?
   }
 }
 ```
@@ -2218,15 +2197,15 @@ jobs:
 
 ### Phase 3: CLI Integration
 
-1. **Add `wm add` command** in `packages/cli/src/commands/insert.ts`
+1. **Add `wm add` command** in `packages/cli/src/commands/add.ts`
 2. **Add `wm rm` command** in `packages/cli/src/commands/remove.ts`
 3. **Add CLI integration tests** covering all usage modes
 4. **Update CLI help** and usage documentation
 
 ### Phase 4: MCP Extension
 
-1. **Extend MCP server** with `waymark.insert` tool
-2. **Add `waymark.remove` tool** to MCP server
+1. **Extend MCP server** with `waymark` tool (action: scan|graph|add)
+2. **Add `action: remove`** to the `waymark` MCP tool
 3. **Test MCP integration** with Claude Code and other agents
 
 ### Phase 5: Documentation & Release
@@ -2238,7 +2217,7 @@ jobs:
 
 ## Feedback Needed
 
-### Insert Command
+### Add Command
 
 - [ ] Line number stability algorithm correct?
 - [ ] JSON schema complete and ergonomic?
