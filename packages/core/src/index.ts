@@ -20,6 +20,8 @@ export {
   loadConfigFromDisk,
   resolveConfig,
 } from "./config";
+export type { EditOptions, EditResult, EditSpec } from "./edit";
+export { EditSpecSchema, editWaymark } from "./edit";
 export type { FormatEdit, FormatOptions, FormatResult } from "./format";
 export { formatText } from "./format";
 export type { GraphEdge, WaymarkGraph } from "./graph";
