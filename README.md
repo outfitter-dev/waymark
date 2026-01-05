@@ -167,16 +167,11 @@ waymark-mcp
 The server advertises a compact surface area:
 
 - **Tools**
-  - `waymark.scan` – parse files/directories and return waymark records in `text`, `json`, `jsonl`, or `pretty` formats.
-  - `waymark.graph` – emit relation edges (ref/depends/needs/etc.).
-  - `waymark.insert` – insert any waymark (including `tldr`, `this`, `todo`, or custom markers) into a file, normalize it with the formatter, and return the inserted record metadata.
+  - `waymark` – single tool for waymark actions. Set `action` to `scan`, `graph`, or `add` and provide the corresponding inputs (`paths`/`format`, `paths`, or `filePath` + `type` + `content`).
 - **Resources**
   - `waymark://todos` – filtered list of every `todo` waymark detected.
-- **Prompts**
-  - `waymark.tldr` – drafts a TLDR sentence for a file given an optional snippet window.
-  - `waymark.todo` – drafts actionable TODO content based on a summary/context payload.
 
-Tools accept the same configuration options as the CLI (`configPath`, `scope`) so agents respect local project settings. The server streams JSON over stdout/stdin; see `apps/mcp/src/index.ts` for the exact schemas.
+Drafting TLDR/TODO guidance now lives in agent skills; MCP prompts were removed. Tools accept the same configuration options as the CLI (`configPath`, `scope`) so agents respect local project settings. The server streams JSON over stdout/stdin; see `apps/mcp/src/index.ts` for the exact schemas.
 
 ### Code Structure
 
