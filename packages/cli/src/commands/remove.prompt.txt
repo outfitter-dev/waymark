@@ -8,7 +8,7 @@ COMMAND SYNTAX
   wm remove <file:line> [--write]
   wm remove --id <wm-id> [--write]
   wm remove --from <json-file> [--write]
-  wm remove --criteria <filter-query> <paths> [--write]
+  wm remove [filter-flags] <paths> [--write]
   wm remove <file:line> [--write] [--reason "<text>"]
 
 REMOVAL MODES
@@ -38,26 +38,25 @@ INPUT METHODS
      wm remove --id wm:a3k9m2p --write
      → Removes waymark with ID wm:a3k9m2p
 
-  3. By Filter Criteria:
-     wm remove --criteria "type:todo mention:@agent" src/ --write
+  3. By Filter Flags:
+     wm remove --type todo --mention @agent src/ --write
      → Removes all todos mentioning @agent in src/
 
   4. From JSON Input:
      cat removals.json | wm remove --from - --write
      → Batch removal from JSON
 
-FILTER CRITERIA SYNTAX
+FILTER FLAGS
 
-  type:<marker>         Match by waymark type
-  mention:<actor>       Match by mention
-  tag:<hashtag>         Match by hashtag
-  signal:^              Match raised (^) waymarks
-  signal:*              Match starred (*) waymarks (important/valuable)
-  contains:<text>       Match content containing text
-  ref:<token>           Match canonical references
+  --type <marker>       Match by waymark type (todo, fix, note, etc.)
+  --mention <actor>     Match by mention (@agent, @alice, etc.)
+  --tag <hashtag>       Match by hashtag (#deprecated, #perf, etc.)
+  --raised              Match raised (^) waymarks
+  --starred             Match starred (*) waymarks (important/valuable)
+  --contains <text>     Match content containing text
 
-  Combine filters with AND logic:
-  "type:todo mention:@agent tag:#deprecated"
+  Combine flags with AND logic:
+  wm remove --type todo --mention @agent --tag "#deprecated" src/ --write
 
 OUTPUT FORMATS
 
@@ -79,10 +78,10 @@ EXAMPLES
      wm remove --id wm:a3k9m2p --write
 
   4. Remove all completed todos:
-     wm remove --criteria "type:done" . --write
+     wm remove --type done . --write
 
   5. Remove stale agent todos:
-     wm remove --criteria "type:todo mention:@agent signal:^" src/ --write
+     wm remove --type todo --mention @agent --raised src/ --write
 
   6. Batch remove from analysis:
      echo '[
@@ -91,7 +90,7 @@ EXAMPLES
      ]' | wm remove --from - --write --json
 
   7. Remove deprecated waymarks:
-     wm remove --criteria "type:deprecated" --write
+     wm remove --type deprecated . --write
 
   8. Record a removal reason:
      wm remove src/auth.ts:42 --write --reason "obsolete"
@@ -100,23 +99,23 @@ AGENT WORKFLOWS
 
   1. Clean up completed work:
      # Agent finds done waymarks and removes them
-     wm scan --type done --json | jq -r '.file + ":" + (.startLine|tostring)' | \\
-       while read loc; do wm remove $loc --write; done
+     wm scan --type done --json | jq -r '.file + ":" + (.startLine|tostring)' \
+       | while read loc; do wm remove "$loc" --write; done
 
   2. Remove raised waymarks after merge:
      # Agent removes ^ waymarks after PR merges
-     wm remove --criteria "signal:^" . --write
+     wm remove --raised . --write
 
   3. Archive deprecated markers:
      # Agent removes deprecated waymarks after refactor
-     wm remove --criteria "type:deprecated tag:#old-api" --write
+     wm remove --type deprecated --tag "#old-api" . --write
 
   4. Conditional removal based on analysis:
      # Agent analyzes codebase and removes outdated waymarks
-     wm scan --type todo --json | \\
-       jq 'map(select(.properties.since < "2024-01-01")) | \\
-           map({file, line: .startLine})' | \\
-       wm remove --from - --write
+     wm scan --type todo --json \
+       | jq 'map(select(.properties.since < "2024-01-01"))
+           | map({file, line: .startLine})' \
+       | wm remove --from - --write
 
 JSON INPUT SCHEMA
 
@@ -186,22 +185,22 @@ VERIFICATION
 COMBINING WITH OTHER COMMANDS
 
   # Remove all todos, then verify
-  wm remove --criteria "type:todo" . --write && wm scan --type todo
+  wm remove --type todo . --write && wm scan --type todo
 
   # Find and remove specific waymarks
-  wm scan --type deprecated --json | \\
-    jq -r '.file + ":" + (.startLine|tostring)' | \\
-    xargs -I {} wm remove {} --write
+  wm scan --type deprecated --json \
+    | jq -r '.file + ":" + (.startLine|tostring)' \
+    | xargs -I {} wm remove {} --write
 
   # Clean up before release
-  wm remove --criteria "signal:^" . --write  # Remove raised
-  wm remove --criteria "type:wip" . --write  # Remove WIP
+  wm remove --raised . --write  # Remove raised
+  wm remove --type wip . --write  # Remove WIP
 
 TIPS FOR AGENTS
 
   ✓ Always preview before --write to avoid mistakes
   ✓ Use --json output for programmatic processing
-  ✓ Use criteria filters for bulk cleanup operations
+  ✓ Use filter flags for bulk cleanup operations
   ✓ Verify removal with scan command afterward
   ✓ Review .waymark/history.json for audit trail
   ✓ Consider committing history.json for team sync
