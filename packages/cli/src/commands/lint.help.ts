@@ -1,7 +1,4 @@
 // tldr ::: human-facing help text for lint command
+// biome-ignore-all lint/performance/noBarrelFile: re-exporting text content for command help
 
-import content from "./lint.help.txt";
-
-const text = content;
-
-export default text;
+export { default } from "./lint.help.txt";

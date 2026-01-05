@@ -1,7 +1,4 @@
 // tldr ::: agent-facing usage guide for lint command
+// biome-ignore-all lint/performance/noBarrelFile: re-exporting text content for agent prompt
 
-import content from "./lint.prompt.txt";
-
-const text = content;
-
-export default text;
+export { default } from "./lint.prompt.txt";
