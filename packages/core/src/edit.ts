@@ -129,18 +129,21 @@ export async function editWaymark(
     target
   );
   assertIdMatches({
-    targetId: target.id,
-    existingId,
+    ...(target.id === undefined ? {} : { targetId: target.id }),
+    ...(existingId === undefined ? {} : { existingId }),
     file: target.file,
     line: record.startLine,
   });
 
   const nextType = resolveType(record.type, spec.type);
-  const nextSignals = resolveSignals(record.signals, {
-    raised: spec.raised,
-    starred: spec.starred,
-    clearSignals: spec.clearSignals,
-  });
+  const signalOverrides = {
+    ...(spec.raised === undefined ? {} : { raised: spec.raised }),
+    ...(spec.starred === undefined ? {} : { starred: spec.starred }),
+    ...(spec.clearSignals === undefined
+      ? {}
+      : { clearSignals: spec.clearSignals }),
+  };
+  const nextSignals = resolveSignals(record.signals, signalOverrides);
 
   const draftLines = buildDraftLines({
     record,
@@ -155,9 +158,9 @@ export async function editWaymark(
     snapshot,
     record,
     draftLines,
-    config,
     file: target.file,
-    write: spec.write,
+    ...(config === undefined ? {} : { config }),
+    ...(spec.write === undefined ? {} : { write: spec.write }),
   });
 
   const afterRecord = resolveUpdatedRecord({
@@ -165,7 +168,7 @@ export async function editWaymark(
     file: target.file,
     record,
     existingId,
-    targetId: target.id,
+    ...(target.id === undefined ? {} : { targetId: target.id }),
   });
 
   if (written && options.idManager && (existingId || target.id)) {
@@ -275,10 +278,11 @@ async function applyDraftEdits(args: {
   written: boolean;
 }> {
   const draftText = args.draftLines.join("\n");
-  const { formattedText } = formatText(draftText, {
-    config: args.config,
+  const formatOptions = {
     file: args.file,
-  });
+    ...(args.config === undefined ? {} : { config: args.config }),
+  };
+  const { formattedText } = formatText(draftText, formatOptions);
   const formattedLines = formattedText.split(LINE_SPLIT_REGEX);
 
   const updatedLines = [...args.snapshot.lines];
@@ -310,10 +314,11 @@ function resolveUpdatedRecord(args: {
   targetId?: string;
 }): WaymarkRecord {
   const updatedRecords = parse(args.updatedText, { file: args.file });
+  const resolvedId = args.existingId ?? args.targetId;
   const afterRecord = resolveRecord(updatedRecords, {
     file: args.file,
     line: args.record.startLine,
-    id: args.existingId ?? args.targetId,
+    ...(resolvedId === undefined ? {} : { id: resolvedId }),
   });
   if (!afterRecord) {
     throw new Error(
