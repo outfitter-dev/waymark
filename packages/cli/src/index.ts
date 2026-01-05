@@ -917,7 +917,7 @@ export async function createProgram(): Promise<Command> {
   program
     .name("wm")
     .description(
-        "Waymark CLI - scan, filter, format, and manage waymarks\n\n" +
+      "Waymark CLI - scan, filter, format, and manage waymarks\n\n" +
         "Quick Start:\n" +
         "  wm [paths...]             Scan and filter waymarks (default: current directory)\n" +
         "  wm find --graph           Show dependency graph\n" +

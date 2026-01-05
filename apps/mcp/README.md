@@ -27,7 +27,7 @@ The server communicates over stdio and implements the Model Context Protocol, al
 
 ### Tools
 
-- `waymark` - Single tool for scan/graph/add actions (set `action` and pass the corresponding inputs)
+- `waymark` - Single tool for scan/graph/add/help actions (set `action` and pass the corresponding inputs). `scan` and `graph` default to the current directory when `paths` is omitted.
 
 ### Resources
 
@@ -61,7 +61,6 @@ const result = await client.callTool({
   name: 'waymark',
   arguments: {
     action: 'scan',
-    paths: ['src/'],
     format: 'json'
   }
 });

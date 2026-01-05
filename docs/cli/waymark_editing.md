@@ -2084,12 +2084,13 @@ Expose a single MCP tool for waymark operations:
 // apps/mcp/src/tools/waymark.ts
 {
   name: "waymark",
-  description: "Single tool for scan, graph, or add actions",
+  description: "Single tool for scan, graph, add, or help actions",
   inputSchema: {
-    action: { type: "string", enum: ["scan", "graph", "add"] },
+    action: { type: "string", enum: ["scan", "graph", "add", "help"] },
     // scan: paths[], format?
     // graph: paths[]
     // add: filePath, type, content, line?, signals?, configPath?, scope?
+    // help: topic?
   }
 }
 ```
@@ -2204,7 +2205,7 @@ jobs:
 
 ### Phase 4: MCP Extension
 
-1. **Extend MCP server** with `waymark` tool (action: scan|graph|add)
+1. **Extend MCP server** with `waymark` tool (action: scan|graph|add|help)
 2. **Add `action: remove`** to the `waymark` MCP tool
 3. **Test MCP integration** with Claude Code and other agents
 

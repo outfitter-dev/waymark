@@ -167,7 +167,7 @@ waymark-mcp
 The server advertises a compact surface area:
 
 - **Tools**
-  - `waymark` – single tool for waymark actions. Set `action` to `scan`, `graph`, or `add` and provide the corresponding inputs (`paths`/`format`, `paths`, or `filePath` + `type` + `content`).
+  - `waymark` – single tool for waymark actions. Set `action` to `scan`, `graph`, `add`, or `help` and provide the corresponding inputs. `scan`/`graph` default to the current directory when `paths` is omitted.
 - **Resources**
   - `waymark://todos` – filtered list of every `todo` waymark detected.
 
