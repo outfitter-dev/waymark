@@ -145,24 +145,28 @@ waymark/
 │   │   │   ├── config.ts         # Config loading
 │   │   │   ├── format.ts         # Formatting
 │   │   │   ├── search.ts         # Search filters
-│   │   │   ├── graph.ts          # Relation graphs
-│   │   │   └── map.ts            # TLDR aggregation
+│   │   │   └── graph.ts          # Relation graphs
 │   │
 │   ├── cli/              # Command-line interface
 │   │   ├── src/
 │   │   │   ├── index.ts          # Main entry (203 lines)
 │   │   │   ├── commands/         # Command handlers
-│   │   │   │   ├── fmt.ts
-│   │   │   │   ├── scan.ts
-│   │   │   │   ├── map.ts
+│   │   │   │   ├── add.ts
+│   │   │   │   ├── doctor.ts
 │   │   │   │   ├── find.ts
+│   │   │   │   ├── fmt.ts
 │   │   │   │   ├── graph.ts
+│   │   │   │   ├── init.ts
 │   │   │   │   ├── lint.ts
-│   │   │   │   └── migrate.ts
+│   │   │   │   ├── modify.ts
+│   │   │   │   ├── remove.ts
+│   │   │   │   ├── scan.ts
+│   │   │   │   ├── tui.ts
+│   │   │   │   └── update.ts
+│   │   │   ├── unified/          # Unified command pipeline
 │   │   │   └── utils/
 │   │   │       ├── context.ts    # Context creation (19 lines)
 │   │   │       ├── options.ts    # Option parsing (88 lines)
-│   │   │       ├── map-rendering.ts  # Map rendering (210 lines)
 │   │   │       ├── output.ts     # Record rendering
 │   │   │       ├── fs.ts         # Filesystem helpers
 │   │   │       └── flags/        # Flag parsing utilities
@@ -176,13 +180,11 @@ waymark/
         │   ├── types.ts          # Shared types (58 lines)
         │   ├── tools/
         │   │   ├── index.ts      # Tool registry (16 lines)
-        │   │   ├── scan.ts       # Scan tool (111 lines)
-        │   │   ├── map.ts        # Map tool (93 lines)
+        │   │   ├── add.ts        # Add tool (354 lines)
         │   │   ├── graph.ts      # Graph tool (77 lines)
-        │   │   └── insert.ts     # Insert tool (354 lines)
+        │   │   └── scan.ts       # Scan tool (111 lines)
         │   ├── resources/
         │   │   ├── index.ts      # Resource registry (21 lines)
-        │   │   ├── map.ts        # Map resource (84 lines)
         │   │   └── todos.ts      # Todos resource (72 lines)
         │   ├── prompts/
         │   │   ├── index.ts      # Prompt registry (11 lines)
@@ -203,9 +205,8 @@ Used in MCP server and CLI for extensibility:
 // tools/index.ts - Registry
 export const tools = [
   scanTool,
-  mapTool,
   graphTool,
-  insertTool,
+  addTool,
 ];
 
 // index.ts - Main entry
@@ -416,7 +417,7 @@ Areas for potential architectural evolution:
 
 ## References
 
-- [PRD.md](../PRD.md) - Product requirements and v1.0 scope
-- [PLAN.md](../PLAN.md) - Execution roadmap and decisions log
+- [Specification](./waymark/SPEC.md) - Canonical grammar and v1 scope
+- [Release Plan](../.agents/plans/v1/PLAN.md) - Execution roadmap and decisions log
 - [TypeScript Conventions](../.agents/rules/conventions/typescript.md)
 - [Bun Conventions](../.agents/rules/conventions/bun.md)

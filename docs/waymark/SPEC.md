@@ -2,7 +2,7 @@
 
 # Waymark Specification (v1)
 
-Waymark is a lightweight, comment-based grammar for embedding code-adjacent context beside implementation. This document mirrors the authoritative definition in `PRD.md` for quick reference when writing tooling, reviews, or documentation.
+Waymark is a lightweight, comment-based grammar for embedding code-adjacent context beside implementation. This document is the canonical definition for v1.
 
 ## 1. Line Form
 
@@ -12,7 +12,7 @@ Waymark is a lightweight, comment-based grammar for embedding code-adjacent cont
 
 - **Comment leader**: Whatever the host language uses (`//`, `#`, `<!--`, etc.). Waymarks never appear inside string literals or rendered docstrings.
 - **Signals** (optional): A short prefix indicating scope/urgency. The only valid signals are:
-  - `^` (caret) — produces a raised waymark for branch-scoped work that must be cleared before merging to protected branches.
+  - `^` (caret) — produces a raised waymark for branch-scoped work that must be cleared before merging.
   - `*` (star) — high-priority item. When combined with the caret, the order is `^*` (e.g., `^*todo`). Double intensity (`**`) and other legacy signals are not part of v1.
 - **Marker** (required): A single lowercase keyword from the blessed list below.
 - **`:::` sigil**: Exactly three ASCII colons, with one space before and after when a marker is present.
@@ -111,7 +111,7 @@ Properties are `key:value` pairs in the content region. Keys match `[A-Za-z][A-Z
 
 - Any `#` followed by non-whitespace (`[A-Za-z0-9._/:%-]+`) is treated as a tag or reference.
 - Preferred namespaces include:
-  - `#docs/...` — documentation (`#docs/prd`, `#docs/guide`)
+  - `#docs/...` — documentation (`#docs/spec`, `#docs/guide`)
   - `#arch/...` — architecture (`#arch/entrypoint`, `#arch/state`)
   - `#perf:...` — performance attributes (`#perf:hotpath`)
   - `#sec:...` — security (`#sec:boundary`, `#sec:auth`)
@@ -185,7 +185,7 @@ export async function handleWebhook(body: StripePayload) { /* ... */ }
 ```
 
 ```md
-<!-- tldr ::: Bun-based CLI PRD defining v1.0 scope and requirements #docs/prd -->
+<!-- tldr ::: Waymark CLI spec defining v1 scope and requirements #docs/spec -->
 <!-- this ::: workflow overview for installing the CLI -->
 ```
 
@@ -198,8 +198,8 @@ def send_email(message: Email) -> None:
 
 ## 9. Implementation Notes
 
-- Parsers should normalize signals to `^` and `*`, lowercase markers, trim extra spaces, and emit structured records matching the schema in `PRD.md`.
+- Parsers should normalize signals to `^` and `*`, lowercase markers, trim extra spaces, and emit structured records matching the `WaymarkRecord` schema in `@waymarks/grammar`.
 - Formatters must enforce a single space around `:::` when a marker is present.
-- Tooling should warn on unknown markers, duplicate canonical tokens, and legacy signal usage.
+- Tooling should warn on unknown markers, duplicate properties, multiple TLDRs per file, and legacy codetag patterns.
 
-This specification stays in lockstep with `PRD.md`. When the grammar evolves, update both documents and record the change in the Decisions Log.
+This specification is canonical. When the grammar evolves, update `docs/GRAMMAR.md` and `.waymark/rules/WAYMARKS.md` alongside the code so guidance stays aligned.

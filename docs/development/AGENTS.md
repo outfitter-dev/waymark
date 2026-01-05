@@ -532,4 +532,4 @@ waymark find --type todo # Find specific types
 - [CORE.md](../../.agents/rules/CORE.md) - Agent identity and principles
 - [TypeScript Conventions](../../.agents/rules/conventions/typescript.md) - Language rules
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Module organization patterns
-- [PRD.md](../../PRD.md) - Product requirements
+- [SPEC.md](../waymark/SPEC.md) - Waymark specification

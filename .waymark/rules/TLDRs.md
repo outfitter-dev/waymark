@@ -22,12 +22,12 @@ Examples:
 
 - `// tldr ::: Stripe webhook handler verifying signatures and queuing retries #payments`
 - `// tldr ::: React hooks exposing BetterAuth session state #auth/frontend`
-- `<!-- tldr ::: Bun-based CLI PRD defining v1.0 scope and requirements ref:#docs/prd -->`
+- `<!-- tldr ::: Waymark CLI spec defining v1 scope and requirements ref:#docs/spec -->`
 
 ## Tagging & Anchors
 
 - Hashtags are optional, but if you add them you **must stay consistent** with existing usage. Run `rg ":::\s.*#<tag-fragment>" -g '*.{ts,tsx,md}'` (or similar) so you only match real waymarks before inventing a new namespace.
-- Prefer namespaces (`#docs/prd`, `#auth/service`, `#perf:hotpath`) so that future searches remain precise. Avoid one-off tags that do not align with repo conventions.
+- Prefer namespaces (`#docs/spec`, `#auth/service`, `#perf:hotpath`) so that future searches remain precise. Avoid one-off tags that do not align with repo conventions.
 - Documentation TLDRs **must** include a `#docs` tag (with optional namespace) so doc-only filters can find them quickly.
 - When the TLDR declares the canonical anchor for the file, append `ref:#token` near the end. Use the same token shape that other files already reference.
   - `// tldr ::: payment gateway service ref:#payments/service #payments`
@@ -47,7 +47,7 @@ Examples:
 | Entry point     | `// *tldr ::: main entry wiring <framework> + <middleware> #arch/...`     |
 | Utility library | `// tldr ::: utilities for <concept> using <tech> #lib/...`               |
 | Tests           | `// tldr ::: integration tests for <feature> covering <edge cases> #test` |
-| Docs/PRDs       | `<!-- tldr ::: <doc> summary focusing on <scope> #docs/<type> -->`        |
+| Docs/Specs      | `<!-- tldr ::: <doc> summary focusing on <scope> #docs/<type> -->`        |
 
 ## Workflow Tips
 

@@ -5,7 +5,7 @@ pre-commit:
   parallel: false
   commands:
     format:
-      run: bun run format
+      run: bun run format:staged
 
 pre-push:
   parallel: false

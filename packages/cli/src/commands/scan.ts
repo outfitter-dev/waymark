@@ -53,11 +53,6 @@ function buildLegacyRecord(args: {
   parsed.endLine = lineNumber;
   parsed.raw = line;
   parsed.contentText = content.trim();
-  parsed.properties = {};
-  parsed.relations = [];
-  parsed.canonicals = [];
-  parsed.mentions = [];
-  parsed.tags = [];
   parsed.legacy = true;
   return parsed;
 }

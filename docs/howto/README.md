@@ -48,21 +48,20 @@ wm src/
 **Goal**: Migrate existing TODO/FIXME comments to waymark syntax.
 
 ```bash
-# Preview migration
-wm migrate src/
+# Surface legacy codetags
+wm lint src/
 
-# Apply to specific file
-wm migrate src/auth.ts --write
-
-# Batch migrate entire directory
-wm migrate src/ --write
+# Normalize updated waymarks after edits
+wm format src/ --write
 ```
 
-**What gets converted**:
+**What to convert**:
 
 - `// TODO: fix bug` → `// todo ::: fix bug`
 - `# FIXME: memory leak` → `# fix ::: memory leak`
 - `<!-- NOTE: deprecated -->` → `<!-- note ::: deprecated -->`
+
+Tip: enable `scan.include_codetags = true` in config to include legacy codetags in scans while you migrate.
 
 ---
 

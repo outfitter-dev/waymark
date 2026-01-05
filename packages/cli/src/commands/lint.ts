@@ -257,42 +257,101 @@ function recordDuplicateProperty({
   seen.set(key, lineNumber);
 }
 
+function isMarkdownFile(filePath: string): boolean {
+  const lower = filePath.toLowerCase();
+  return lower.endsWith(".md") || lower.endsWith(".mdx");
+}
+
+const CODE_FENCE_OPEN_REGEX = /^(\s*)(`{3,}|~{3,})/;
+const DEFAULT_FENCE_LENGTH = 3;
+
+function createFenceCloseRegex(fenceChar: string, fenceLength: number): RegExp {
+  const escaped = fenceChar === "~" ? "~" : "\\`";
+  return new RegExp(`^\\s*${escaped}{${fenceLength},}\\s*$`);
+}
+
+/**
+ * Returns line numbers (1-indexed) that are inside fenced code blocks.
+ * Used for Markdown files to distinguish real waymarks from examples.
+ */
+function getCodeFenceLines(source: string): Set<number> {
+  const lines = source.split("\n");
+  const fencedLines = new Set<number>();
+  let fenceChar = "";
+  let fenceLength = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? "";
+    const lineNumber = i + 1;
+
+    if (fenceLength > 0) {
+      const closePattern = createFenceCloseRegex(fenceChar, fenceLength);
+      if (closePattern.test(line)) {
+        fenceLength = 0;
+      } else {
+        fencedLines.add(lineNumber);
+      }
+      continue;
+    }
+
+    const match = line.match(CODE_FENCE_OPEN_REGEX);
+    if (match) {
+      fenceChar = match[2]?.[0] ?? "`";
+      fenceLength = match[2]?.length ?? DEFAULT_FENCE_LENGTH;
+    }
+  }
+
+  return fencedLines;
+}
+
 const multipleTldrRule: LintRule = {
   name: "multiple-tldr",
   severity: "error",
-  checkFile: ({ filePath, records }) => {
-    const tldrs = records.filter(
-      (record) => record.type.toLowerCase() === "tldr"
-    );
+  checkFile: ({ filePath, source, records }) => {
+    const codeFenceLines = isMarkdownFile(filePath)
+      ? getCodeFenceLines(source)
+      : new Set<number>();
+
+    const tldrs = records.filter((record) => {
+      if (record.type.toLowerCase() !== "tldr") {
+        return false;
+      }
+      // Skip waymarks inside code fences (examples in Markdown)
+      if (codeFenceLines.has(record.startLine)) {
+        return false;
+      }
+      // For docs, only count HTML comment TLDRs (not code examples)
+      if (record.fileCategory === "docs") {
+        return record.commentLeader === "<!--";
+      }
+      return true;
+    });
     if (tldrs.length <= 1) {
       return [];
     }
-    const first = tldrs.at(0);
-    if (!first) {
-      return [];
-    }
+    const firstLine = tldrs[0]?.startLine ?? 1;
     return tldrs.slice(1).map((record) => ({
       file: filePath,
       line: record.startLine,
       rule: "multiple-tldr",
       severity: "error",
-      message: `File already has tldr at line ${first.startLine}`,
+      message: `File already has ${record.type} at line ${firstLine}`,
       type: record.type,
     }));
   },
 };
 
 const CODETAG_PATTERNS = [
-  { regex: /\/\/\s*TODO\s*:/i, leader: "//", marker: "todo" },
-  { regex: /\/\/\s*FIXME\s*:/i, leader: "//", marker: "fix" },
-  { regex: /\/\/\s*NOTE\s*:/i, leader: "//", marker: "note" },
-  { regex: /\/\/\s*HACK\s*:/i, leader: "//", marker: "hack" },
-  { regex: /\/\/\s*XXX\s*:/i, leader: "//", marker: "fix" },
-  { regex: /#\s*TODO\s*:/i, leader: "#", marker: "todo" },
-  { regex: /#\s*FIXME\s*:/i, leader: "#", marker: "fix" },
-  { regex: /#\s*NOTE\s*:/i, leader: "#", marker: "note" },
-  { regex: /--\s*TODO\s*:/i, leader: "--", marker: "todo" },
-  { regex: /--\s*FIXME\s*:/i, leader: "--", marker: "fix" },
+  { regex: /^\s*\/\/\s*TODO\s*:/i, leader: "//", marker: "todo" },
+  { regex: /^\s*\/\/\s*FIXME\s*:/i, leader: "//", marker: "fix" },
+  { regex: /^\s*\/\/\s*NOTE\s*:/i, leader: "//", marker: "note" },
+  { regex: /^\s*\/\/\s*HACK\s*:/i, leader: "//", marker: "hack" },
+  { regex: /^\s*\/\/\s*XXX\s*:/i, leader: "//", marker: "fix" },
+  { regex: /^\s*#\s*TODO\s*:/i, leader: "#", marker: "todo" },
+  { regex: /^\s*#\s*FIXME\s*:/i, leader: "#", marker: "fix" },
+  { regex: /^\s*#\s*NOTE\s*:/i, leader: "#", marker: "note" },
+  { regex: /^\s*--\s*TODO\s*:/i, leader: "--", marker: "todo" },
+  { regex: /^\s*--\s*FIXME\s*:/i, leader: "--", marker: "fix" },
 ];
 
 const legacyPatternRule: LintRule = {
@@ -304,6 +363,10 @@ const legacyPatternRule: LintRule = {
 
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index] ?? "";
+      // Skip lines that already have waymark sigil - they're valid waymarks, not legacy
+      if (line.includes(SIGIL)) {
+        continue;
+      }
       for (const pattern of CODETAG_PATTERNS) {
         if (pattern.regex.test(line)) {
           issues.push({

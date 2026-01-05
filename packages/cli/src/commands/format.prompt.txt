@@ -1,0 +1,120 @@
+
+FORMAT COMMAND - Agent Usage Guide
+
+PURPOSE
+  Normalize waymark syntax to ensure consistent formatting across files.
+
+COMMAND SYNTAX
+  wm format <paths...> [--write]
+
+MODES
+  Default (dry-run):  Preview changes without modifying files
+  --write:            Apply formatting changes to files
+
+FORMATTING RULES
+
+  1. Sigil spacing: Exactly one space before and after :::
+     Before: //todo:::implement
+     After:  // todo ::: implement
+
+  2. Marker case: Normalized to lowercase (configurable)
+     Before: // TODO ::: fix this
+     After:  // todo ::: fix this
+
+  3. Signal order: ^ (raised) before * (starred)
+     Before: // *^todo ::: implement
+     After:  // ^*todo ::: implement
+
+  4. Multi-line alignment: Continuation ::: aligns with parent
+     Before:
+       // tldr ::: payment processor
+       // ::: handles webhooks
+     After:
+       // tldr ::: payment processor
+       //      ::: handles webhooks
+
+  5. Property ordering: Relations placed after free text
+     Properties like ref:#token, depends:#token ordered consistently
+
+AGENT WORKFLOWS
+
+  1. Preview formatting before committing:
+     wm format src/auth.ts
+     → Shows diff of what would change
+
+  2. Apply formatting to file:
+     wm format src/auth.ts --write
+     → Normalizes waymarks in place
+
+  3. Format multiple files:
+     wm format src/**/*.ts --write
+     → Batch format all TypeScript files
+
+  3b. Format an entire directory:
+     wm format src/ --write
+     → Format all waymark files under src/
+
+  4. Integrate with pre-commit hooks:
+     git diff --name-only | grep '\\.ts$' | xargs wm format --write
+     → Format only changed TypeScript files
+
+EXAMPLE OUTPUT (dry-run)
+
+  $ wm format src/auth.ts
+
+  src/auth.ts:
+  - //todo:::implement OAuth
+  + // todo ::: implement OAuth
+
+  - // *  fix  ::: validate input
+  + // *fix ::: validate input
+
+  Would format 2 waymarks. Use --write to apply changes.
+
+EXAMPLE OUTPUT (--write)
+
+  $ wm format src/auth.ts --write
+
+  Formatted 2 waymarks in src/auth.ts
+
+INTEGRATION PATTERNS
+
+  # Format before committing
+  wm format $(git diff --name-only --cached) --write
+
+  # Verify formatting in CI
+  wm format src/**/*.ts && echo "All waymarks formatted correctly"
+
+  # Format specific file types
+  find src -name "*.ts" -o -name "*.tsx" | xargs wm format --write
+
+CONFIGURATION
+
+  Formatting behavior is controlled by .waymark/config.jsonc:
+
+  {
+    "typeCase": "lowercase",        // Marker case normalization
+    "format": {
+      "spaceAroundSigil": true,     // Enforce spacing around :::
+      "normalizeCase": true,         // Normalize marker case
+      "alignContinuations": true    // Align multi-line continuations
+    }
+  }
+
+TIPS FOR AGENTS
+  ✓ Always preview with dry-run before using --write
+  ✓ Format files after bulk waymark insertion
+  ✓ Integrate into pre-commit hooks for consistency
+  ✓ Use with lint to ensure both syntax and structure correctness
+  ✓ Format before submitting PRs to avoid style conflicts
+  ✓ Add `// waymark-ignore-file` at the top to skip a file
+
+COMBINING WITH OTHER COMMANDS
+
+  # Format then lint
+  wm format src/auth.ts --write && wm lint src/auth.ts
+
+  # Scan for waymarks, then format files
+  wm src/ --type todo --json | jq -r '.file' | sort -u | xargs wm format --write
+
+For human-facing help, use: wm format --help

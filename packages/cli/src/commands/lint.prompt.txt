@@ -1,0 +1,143 @@
+
+LINT COMMAND - Agent Usage Guide
+
+PURPOSE
+  Validate waymark structure and enforce quality rules to maintain codebase integrity.
+
+COMMAND SYNTAX
+  wm lint <files...> [--json]
+
+OUTPUT FORMATS
+  Default:  Human-readable text with colored output
+  --json:   JSON array of lint issues for parsing
+
+LINT RULES
+
+  duplicate-property - Duplicate property key (warn)
+    Multiple instances of same property key in a waymark.
+    Example: owner:@alice ... owner:@bob
+    Action: Remove duplicate, keep last value
+
+  unknown-marker - Unknown marker (warn)
+    Marker not in blessed list or allowTypes config.
+    Example: // foo ::: unknown marker
+    Action: Use blessed marker or add to allowTypes
+
+  multiple-tldr - Multiple tldr in file (error)
+    More than one tldr waymark in a single file.
+    Example: Two // tldr ::: statements
+    Action: Consolidate into single tldr at top of file
+
+  legacy-pattern - Legacy codetag pattern (warn)
+    Legacy TODO/FIXME/NOTE/HACK/XXX patterns found.
+    Example: // TODO: replace legacy
+    Action: Convert to waymark syntax (// todo :::)
+
+EXIT CODES
+  0 = Success (no errors, warnings allowed)
+  1 = Lint errors found
+  2 = Internal error or invalid usage
+
+AGENT WORKFLOWS
+
+  1. Pre-commit validation:
+     git diff --name-only --cached | xargs wm lint
+     → Lint only staged files
+
+  2. CI integration:
+     wm lint src/ --json | jq 'map(select(.severity == "error"))'
+     → Filter for errors only, fail build if any
+
+  3. Find all issues in project:
+     wm lint src/ --json > lint-results.json
+     → Export all issues for review
+
+  4. Check before merge:
+     wm lint $(git diff --name-only main..HEAD)
+     → Lint files changed in current branch
+
+  5. Validate specific rule:
+     wm lint src/ --json | jq 'map(select(.rule == "multiple-tldr"))'
+     → Find all files with multiple tldr entries
+
+EXAMPLE OUTPUT (text)
+
+  src/auth.ts:12:1 - error multiple-tldr: File already has tldr at line 1
+    Found tldr at lines 1 and 12
+
+  src/auth.ts:34:1 - warn duplicate-property: Duplicate property key 'owner'
+    Property 'owner' appears multiple times
+
+  ✖ 2 errors, 1 warning
+
+EXAMPLE OUTPUT (json)
+
+  [
+    {
+      "file": "src/auth.ts",
+      "line": 12,
+      "column": 1,
+      "severity": "error",
+      "rule": "multiple-tldr",
+      "message": "File already has tldr at line 1",
+      "type": "todo"
+    },
+    {
+      "file": "src/auth.ts",
+      "line": 34,
+      "column": 1,
+      "severity": "warn",
+      "rule": "duplicate-property",
+      "message": "Duplicate property key 'owner'",
+      "type": "fix"
+    }
+  ]
+
+INTEGRATION PATTERNS
+
+  # Fail CI on errors
+  wm lint src/ --json | jq 'map(select(.severity == "error")) | length' | grep -q '^0$'
+
+  # Generate lint report
+  wm lint src/ > lint-report.txt
+
+  # Check for protected branch violations
+  if git branch --show-current | grep -E '^(main|master|release/)'; then
+    wm lint src/ --json | jq 'map(select(.rule == "unknown-marker"))'
+  fi
+
+  # Auto-fix duplicate properties (manual review)
+  wm lint src/ --json | jq 'map(select(.rule == "duplicate-property"))' | process-duplicates
+
+CONFIGURATION
+
+  Lint behavior controlled by .waymark/config.jsonc:
+
+  {
+    "allowTypes": ["todo", "fix", "note", "tldr", "custom"],
+    "lint": {
+      "duplicateProperty": "warn",   // or "error" or "off"
+      "unknownMarker": "warn",
+      "multipleTldr": "error",
+      "legacyPattern": "warn"
+    }
+  }
+
+TIPS FOR AGENTS
+  ✓ Always lint before committing waymark changes
+  ✓ Use --json for parsing in automated workflows
+  ✓ Fix errors immediately; warnings can be deferred
+  ✓ Check for legacy-pattern when refactoring
+  ✓ Ensure multiple-tldr never occurs
+  ✓ Use exit code 1 to fail CI on lint errors
+  ✓ Integrate with format command for complete validation
+
+COMBINING WITH OTHER COMMANDS
+
+  # Format then lint
+  wm format src/auth.ts --write && wm lint src/auth.ts
+
+  # Scan for issues, then lint for structure
+  wm src/ --type todo --raised && wm lint src/
+
+For human-facing help, use: wm lint --help
