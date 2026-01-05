@@ -1,4 +1,4 @@
-// tldr ::: add tool handler for waymark MCP server (formerly insert)
+// tldr ::: add tool handler for waymark MCP server
 
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
@@ -331,7 +331,7 @@ function toJsonResponse(value: unknown): CallToolResult {
 }
 
 export const addToolDefinition = {
-  title: "Insert a waymark",
+  title: "Add a waymark",
   description:
     "Creates a new waymark (e.g., tldr/this/todo) at the requested location and normalizes the file.",
   inputSchema: addWaymarkInputSchema.shape,
@@ -350,6 +350,3 @@ export function handleAddWaymark(params: {
 }): Promise<CallToolResult> {
   return handleAdd(params, params.server);
 }
-
-// Deprecated alias for backward compatibility
-export const handleInsertWaymark = handleAddWaymark;

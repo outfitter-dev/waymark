@@ -218,9 +218,10 @@ wm src/ --mention @claude
 
 **Agent can now**:
 
-- `waymark.scan` - Read all waymarks
-- `waymark.insert` - Add new waymarks
-- `waymark.graph` - Analyze dependencies
+- `waymark` - Single tool for actions:
+  - `action: "scan"` - Read all waymarks
+  - `action: "add"` - Add new waymarks
+  - `action: "graph"` - Analyze dependencies
 
 See [MCP Server Documentation](../../README.md#mcp-server) for integration details.
 
