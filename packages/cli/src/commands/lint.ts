@@ -257,12 +257,67 @@ function recordDuplicateProperty({
   seen.set(key, lineNumber);
 }
 
+function isMarkdownFile(filePath: string): boolean {
+  const lower = filePath.toLowerCase();
+  return lower.endsWith(".md") || lower.endsWith(".mdx");
+}
+
+const CODE_FENCE_OPEN_REGEX = /^(\s*)(`{3,}|~{3,})/;
+const DEFAULT_FENCE_LENGTH = 3;
+
+function createFenceCloseRegex(fenceChar: string, fenceLength: number): RegExp {
+  const escaped = fenceChar === "~" ? "~" : "\\`";
+  return new RegExp(`^\\s*${escaped}{${fenceLength},}\\s*$`);
+}
+
+/**
+ * Returns line numbers (1-indexed) that are inside fenced code blocks.
+ * Used for Markdown files to distinguish real waymarks from examples.
+ */
+function getCodeFenceLines(source: string): Set<number> {
+  const lines = source.split("\n");
+  const fencedLines = new Set<number>();
+  let fenceChar = "";
+  let fenceLength = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? "";
+    const lineNumber = i + 1;
+
+    if (fenceLength > 0) {
+      const closePattern = createFenceCloseRegex(fenceChar, fenceLength);
+      if (closePattern.test(line)) {
+        fenceLength = 0;
+      } else {
+        fencedLines.add(lineNumber);
+      }
+      continue;
+    }
+
+    const match = line.match(CODE_FENCE_OPEN_REGEX);
+    if (match) {
+      fenceChar = match[2]?.[0] ?? "`";
+      fenceLength = match[2]?.length ?? DEFAULT_FENCE_LENGTH;
+    }
+  }
+
+  return fencedLines;
+}
+
 const multipleTldrRule: LintRule = {
   name: "multiple-tldr",
   severity: "error",
-  checkFile: ({ filePath, records }) => {
+  checkFile: ({ filePath, source, records }) => {
+    const codeFenceLines = isMarkdownFile(filePath)
+      ? getCodeFenceLines(source)
+      : new Set<number>();
+
     const tldrs = records.filter((record) => {
       if (record.type.toLowerCase() !== "tldr") {
+        return false;
+      }
+      // Skip waymarks inside code fences (examples in Markdown)
+      if (codeFenceLines.has(record.startLine)) {
         return false;
       }
       // For docs, only count HTML comment TLDRs (not code examples)
