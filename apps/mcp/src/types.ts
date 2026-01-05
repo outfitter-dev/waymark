@@ -9,12 +9,12 @@ export const configOptionsSchema = z.object({
 });
 
 export const scanInputSchema = configOptionsSchema.extend({
-  paths: z.array(z.string().min(1)).nonempty(),
+  paths: z.array(z.string().min(1)).nonempty().default(["."]),
   format: z.enum(["text", "json", "jsonl", "pretty"]).default("json"),
 });
 
 export const graphInputSchema = configOptionsSchema.extend({
-  paths: z.array(z.string().min(1)).nonempty(),
+  paths: z.array(z.string().min(1)).nonempty().default(["."]),
 });
 
 export const addWaymarkInputSchema = configOptionsSchema.extend({
@@ -30,12 +30,18 @@ export const addWaymarkInputSchema = configOptionsSchema.extend({
     .optional(),
 });
 
-const waymarkActionSchema = z.enum(["scan", "graph", "add"]);
+export const helpInputSchema = configOptionsSchema.extend({
+  topic: z.string().min(1).optional(),
+});
+
+export const WAYMARK_ACTIONS = ["scan", "graph", "add", "help"] as const;
+export const waymarkActionSchema = z.enum(WAYMARK_ACTIONS);
 
 export const waymarkToolInputSchema = z.discriminatedUnion("action", [
   scanInputSchema.extend({ action: z.literal("scan") }),
   graphInputSchema.extend({ action: z.literal("graph") }),
   addWaymarkInputSchema.extend({ action: z.literal("add") }),
+  helpInputSchema.extend({ action: z.literal("help") }),
 ]);
 
 export const waymarkToolInputShape = {
@@ -49,9 +55,11 @@ export const waymarkToolInputShape = {
   content: addWaymarkInputSchema.shape.content.optional(),
   line: addWaymarkInputSchema.shape.line.optional(),
   signals: addWaymarkInputSchema.shape.signals.optional(),
+  topic: helpInputSchema.shape.topic.optional(),
 };
 
 export type ScanInput = z.infer<typeof scanInputSchema>;
+export type HelpInput = z.infer<typeof helpInputSchema>;
 export type WaymarkToolInput = z.infer<typeof waymarkToolInputSchema>;
 export type RenderFormat = ScanInput["format"];
 

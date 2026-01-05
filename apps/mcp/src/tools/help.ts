@@ -1,0 +1,103 @@
+// tldr ::: help action handler for waymark MCP tool
+
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { HelpInput } from "../types";
+
+type HelpActionInput = HelpInput & { action: "help" };
+
+type HelpTopic = {
+  title: string;
+  body: string;
+};
+
+const HELP_TOPICS: Record<string, HelpTopic> = {
+  scan: {
+    title: "scan",
+    body: [
+      "Action: scan",
+      "Find waymarks in files or directories.",
+      "",
+      "Inputs:",
+      '- paths?: string[] (defaults to ["."])',
+      "- format?: text | json | jsonl | pretty (default: json)",
+      "- configPath?: string",
+      "- scope?: default | project | user",
+      "",
+      "Example:",
+      '{"action":"scan","paths":["src/"]}',
+    ].join("\n"),
+  },
+  graph: {
+    title: "graph",
+    body: [
+      "Action: graph",
+      "Build relation edges from waymark references.",
+      "",
+      "Inputs:",
+      '- paths?: string[] (defaults to ["."])',
+      "- configPath?: string",
+      "- scope?: default | project | user",
+      "",
+      "Example:",
+      '{"action":"graph","paths":["src/"]}',
+    ].join("\n"),
+  },
+  add: {
+    title: "add",
+    body: [
+      "Action: add",
+      "Insert a new waymark into a file.",
+      "",
+      "Inputs:",
+      "- filePath: string",
+      "- type: string",
+      "- content: string",
+      "- line?: number",
+      "- signals?: { raised?: boolean; important?: boolean }",
+      "- configPath?: string",
+      "- scope?: default | project | user",
+      "",
+      "Example:",
+      '{"action":"add","filePath":"src/app.ts","type":"todo","content":"add retry"}',
+    ].join("\n"),
+  },
+};
+
+const DEFAULT_HELP = [
+  "Waymark MCP Tool",
+  "",
+  "Single tool with action dispatch.",
+  "",
+  "Actions:",
+  "- scan  (paths?, format?, configPath?, scope?)",
+  "- graph (paths?, configPath?, scope?)",
+  "- add   (filePath, type, content, line?, signals?)",
+  "- help  (topic?)",
+  "",
+  "Defaults:",
+  '- scan/graph paths default to ["."]',
+  "- scan format defaults to json",
+  "- scope defaults to default",
+  "",
+  "Examples:",
+  '{"action":"scan"}',
+  '{"action":"graph","paths":["src/"]}',
+  '{"action":"add","filePath":"src/app.ts","type":"todo","content":"add retry"}',
+  '{"action":"help","topic":"scan"}',
+].join("\n");
+
+export function handleHelp(input: HelpActionInput): CallToolResult {
+  const topic = input.topic?.trim().toLowerCase();
+  const selected = topic ? HELP_TOPICS[topic] : undefined;
+  const text = selected ? selected.body : DEFAULT_HELP;
+
+  return {
+    content: [
+      {
+        type: "text",
+        mimeType: "text/plain",
+        text,
+      },
+    ],
+  };
+}
