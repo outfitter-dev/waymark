@@ -1,4 +1,4 @@
-// tldr ::: human-facing help text for format command
+// tldr ::: human-facing help text for fmt command
 
 import content from "./format.help.txt";
 

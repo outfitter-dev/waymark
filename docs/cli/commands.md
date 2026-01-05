@@ -20,13 +20,13 @@ wm src/ --graph                      # extract dependencies
 wm src/ --graph --json               # JSON output
 
 # Formatting and validation
-wm format src/example.ts --write     # normalize waymark syntax
+wm fmt src/example.ts --write     # normalize waymark syntax
 wm lint src/                         # validate waymarks
 
 # Waymark management
 wm add src/auth.ts:42 todo "add rate limiting" --write
-wm remove src/auth.ts:42 --write             # or: wm rm
-wm modify src/auth.ts:42 --raise --write
+wm rm src/auth.ts:42 --write             # or: wm rm
+wm edit src/auth.ts:42 --raised --write
 
 # Output formats
 wm src/ --json                       # compact JSON
@@ -270,19 +270,19 @@ Normalize waymark syntax (spacing, case, property order):
 
 ```bash
 # Preview changes
-wm format src/example.ts
+wm fmt src/example.ts
 
 # Apply changes
-wm format src/example.ts --write
+wm fmt src/example.ts --write
 
 # Format multiple files
-wm format src/**/*.ts --write
+wm fmt src/**/*.ts --write
 
 # Format directories (filters to files containing :::)
-wm format src/ --write
+wm fmt src/ --write
 
 # Format with specific config
-wm format src/ --write --config-path .waymark/config.toml
+wm fmt src/ --write --config-path .waymark/config.toml
 ```
 
 **What it does:**
@@ -354,13 +354,13 @@ For detailed documentation on waymark management commands, see [Waymark Editing 
 wm add src/auth.ts:42 todo "add rate limiting" --write
 
 # Remove waymark
-wm remove src/auth.ts:42 --write              # or: wm rm src/auth.ts:42 --write
-wm remove src/auth.ts:42 --reason "cleanup" --write
+wm rm src/auth.ts:42 --write              # or: wm rm src/auth.ts:42 --write
+wm rm src/auth.ts:42 --reason "cleanup" --write
 
 # Modify waymark signals
-wm modify src/auth.ts:42 --raise --write
-wm modify src/auth.ts:42 --star --write
-wm modify src/auth.ts:42 --unraise --unstar --write
+wm edit src/auth.ts:42 --raised --write
+wm edit src/auth.ts:42 --star --write
+wm edit src/auth.ts:42 --unraise --unstar --write
 ```
 
 ### Help
@@ -784,7 +784,7 @@ wm src/ --mention @agents             # matches all agent handles
 
 ### Format Not Working
 
-**Symptom**: `wm format --write` doesn't change files
+**Symptom**: `wm fmt --write` doesn't change files
 
 **Solutions**:
 

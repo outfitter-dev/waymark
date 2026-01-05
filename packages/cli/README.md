@@ -39,16 +39,16 @@ wm src/ --type todo --mention @agent --tag "#perf"
 wm src/ --graph
 
 # Format files
-wm format src/auth.ts --write
+wm fmt src/auth.ts --write
 
 # Insert waymarks
 wm add src/auth.ts:42 todo "implement rate limiting"
 
 # Remove waymarks
-wm remove src/auth.ts:42 --write
+wm rm src/auth.ts:42 --write
 
 # Modify existing waymarks
-wm modify src/auth.ts:42 --raise --write
+wm edit src/auth.ts:42 --raised --write
 
 # Lint waymarks
 wm lint src/
@@ -57,10 +57,10 @@ wm lint src/
 ## Key Commands
 
 - `wm [paths...]` - Scan and filter waymarks (default command)
-- `wm format [paths...]` - Format and normalize waymark syntax
+- `wm fmt [paths...]` - Format and normalize waymark syntax
 - `wm add <file:line> <type> <content>` - Insert waymarks into files
-- `wm modify <file:line>` - Modify existing waymarks
-- `wm remove <file:line>` - Remove waymarks from files
+- `wm edit <file:line>` - Modify existing waymarks
+- `wm rm <file:line>` - Remove waymarks from files
 - `wm lint [paths...]` - Validate waymark structure and surface legacy codetags
 - `wm init` - Initialize waymark configuration
 - `wm update` - Check for and install CLI updates

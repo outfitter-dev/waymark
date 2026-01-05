@@ -305,7 +305,7 @@ wm update wm:a3k9m2p --content "add rate limiting with exponential backoff" --wr
 **Remove by ID:**
 
 ```bash
-wm remove --id wm:a3k9m2p --write
+wm rm --id wm:a3k9m2p --write
 ```
 
 **Query by ID:**
@@ -448,7 +448,7 @@ wm find --id wm:x7k2n4m
 }
 
 // Later, after fixes, remove by ID
-wm remove --id wm:gh42-rev1 --write
+wm rm --id wm:gh42-rev1 --write
 ```
 
 **4. Task Management Integration**
@@ -463,7 +463,7 @@ wm add src/api.ts --line 100 \
   --write
 
 # When task completes, remove by ID
-wm remove --id wm:lin-1234 --write
+wm rm --id wm:lin-1234 --write
 ```
 
 **5. Code Generation Markers**
@@ -1211,7 +1211,7 @@ Should inserted waymarks auto-format via `formatText()`?
 
 **Option A**: Always format (ensures consistency)
 **Option B**: Only if `--format` flag (user control)
-**Option C**: Never format (user runs `wm format` separately)
+**Option C**: Never format (user runs `wm fmt` separately)
 
 **Decision**: Option A (always format)
 
@@ -1299,7 +1299,7 @@ Should `file` field support globs?
 
 ### Overview
 
-The `wm remove` command (alias: `wm rm`) enables programmatic removal of waymarks based on various criteria. This complements `wm add` and enables cleanup workflows, task completion automation, and maintenance operations.
+The `wm rm` command enables programmatic removal of waymarks based on various criteria. This complements `wm add` and enables cleanup workflows, task completion automation, and maintenance operations.
 
 ### Motivation
 
@@ -1317,51 +1317,51 @@ Teams need to remove waymarks when:
 
 ```bash
 # Remove waymark at specific line
-wm remove src/auth.ts --line 42
+wm rm src/auth.ts --line 42
 
 # Remove from multiple files
-wm remove src/auth.ts --line 42 src/db.ts --line 15 --write
+wm rm src/auth.ts --line 42 src/db.ts --line 15 --write
 
 # Remove with an audit reason (stored in history when enabled)
-wm remove src/auth.ts --line 42 --reason "cleanup obsolete marker" --write
+wm rm src/auth.ts --line 42 --reason "cleanup obsolete marker" --write
 
 # Dry run (default - shows what would be removed)
-wm remove src/auth.ts --line 42
+wm rm src/auth.ts --line 42
 ```
 
 ### By Query Criteria
 
 ```bash
 # Remove all waymarks of a specific type
-wm remove --type todo --write
+wm rm --type todo --write
 
 # Remove by type in specific files
-wm remove src/**/*.ts --type todo --write
+wm rm src/**/*.ts --type todo --write
 
 # Remove by tag
-wm remove --tag "#deprecated" --write
+wm rm --tag "#deprecated" --write
 
 # Remove by owner
-wm remove --property owner:@alice --write
+wm rm --property owner:@alice --write
 
 # Remove by multiple criteria (AND logic)
-wm remove --type todo --tag "#old" --owner @alice --write
+wm rm --type todo --tag "#old" --owner @alice --write
 
 # Remove completed waymarks
-wm remove --type done --write
+wm rm --type done --write
 ```
 
 ### Batch Removal (JSON)
 
 ```bash
 # From JSON file
-wm remove --from removals.json --write
+wm rm --from removals.json --write
 
 # From stdin
-cat removals.json | wm remove --from - --write
+cat removals.json | wm rm --from - --write
 
 # With confirmation for large operations
-wm remove --from removals.json --confirm --write
+wm rm --from removals.json --confirm --write
 ```
 
 ### Interactive Selection (Future)
@@ -1707,28 +1707,28 @@ function matchesCriteria(waymark: WaymarkRecord, criteria: RemovalSpec['criteria
 
 ```bash
 # Remove all completed todos
-wm remove --type done --write
+wm rm --type done --write
 
 # Remove specific completed task
-wm remove src/auth.ts --line 42 --write
+wm rm src/auth.ts --line 42 --write
 ```
 
 ### 2. Cleanup After Refactor
 
 ```bash
 # Remove all temporary/wip markers
-wm remove --type temp --write
-wm remove --type wip --write
+wm rm --type temp --write
+wm rm --type wip --write
 
 # Remove stale review comments
-wm remove --type review --property "owner:@former-employee" --write
+wm rm --type review --property "owner:@former-employee" --write
 ```
 
 ### 3. Compliance Workflow
 
 ```bash
 # Remove check markers after audit
-wm remove --tag "#pci-audit" --type check --write
+wm rm --tag "#pci-audit" --type check --write
 ```
 
 ### 4. Bulk Cleanup
@@ -1770,7 +1770,7 @@ jobs:
       - uses: oven-sh/setup-bun@v1
       - name: Remove completed waymarks
         run: |
-          wm remove --type done --write
+          wm rm --type done --write
           if [[ -n $(git status -s) ]]; then
             git config user.name "waymark-bot"
             git commit -am "chore: cleanup completed waymarks"
@@ -1786,10 +1786,10 @@ Same as insert - show what would be removed without modifying files.
 
 ```bash
 # Shows preview
-wm remove --type todo
+wm rm --type todo
 
 # Actually removes
-wm remove --type todo --write
+wm rm --type todo --write
 ```
 
 ### 2. Confirmation Prompts
@@ -1797,7 +1797,7 @@ wm remove --type todo --write
 For large operations, prompt user:
 
 ```bash
-wm remove --type todo --confirm --write
+wm rm --type todo --confirm --write
 
 # Output:
 # Found 47 waymarks matching criteria.
@@ -1807,7 +1807,7 @@ wm remove --type todo --confirm --write
 ### 3. Backup Option
 
 ```bash
-wm remove --type todo --backup --write
+wm rm --type todo --backup --write
 
 # Creates .waymark/backups/{timestamp}/
 ```
@@ -1816,10 +1816,10 @@ wm remove --type todo --backup --write
 
 ```bash
 # Show recent removals
-wm remove --show-history
+wm rm --show-history
 
 # Undo last removal operation
-wm remove --undo
+wm rm --undo
 ```
 
 ### Edge Cases
@@ -1975,7 +1975,7 @@ Should we prevent/warn when removing TLDR waymarks?
 Should we support undo for remove operations?
 
 **Option A**: No undo (use git for versioning)
-**Option B**: Track in .waymark/history/ for `wm remove --undo`
+**Option B**: Track in .waymark/history/ for `wm rm --undo`
 **Option C**: Optional backup directory with `--backup` flag
 
 **Recommendation**: Option C (explicit backup when needed)
@@ -2219,7 +2219,7 @@ jobs:
 ### Phase 3: CLI Integration
 
 1. **Add `wm add` command** in `packages/cli/src/commands/insert.ts`
-2. **Add `wm remove` command** in `packages/cli/src/commands/remove.ts`
+2. **Add `wm rm` command** in `packages/cli/src/commands/remove.ts`
 3. **Add CLI integration tests** covering all usage modes
 4. **Update CLI help** and usage documentation
 

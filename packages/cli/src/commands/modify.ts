@@ -1,4 +1,4 @@
-// tldr ::: modify command implementation for wm CLI
+// tldr ::: edit command implementation for wm CLI
 
 import { readFile, writeFile } from "node:fs/promises";
 import readline from "node:readline";
@@ -143,7 +143,7 @@ export async function runModifyCommand(
     } catch (error) {
       if (error instanceof InteractiveCancelError) {
         return {
-          output: "Modify cancelled.",
+          output: "Edit cancelled.",
           payload: {
             preview: true,
             applied: false,
@@ -853,7 +853,7 @@ function ensureModificationsSpecified(options: ModifyOptions): void {
 
   if (!(hasType || hasSignals || hasContent)) {
     throw new Error(
-      "No modifications specified. Use --type, --raise, --mark-starred, --clear-signals, --content, or run without arguments for interactive prompts."
+      "No modifications specified. Use --type, --raised, --starred, --clear-signals, --content, or run without arguments for interactive prompts."
     );
   }
 }
@@ -889,8 +889,8 @@ function formatOutput(args: OutputArgs): string {
 
   const lines: string[] = [];
   const heading = payload.applied
-    ? `Modified ${target.file}:${target.line}`
-    : `Preview modification for ${target.file}:${target.line}`;
+    ? `Edited ${target.file}:${target.line}`
+    : `Preview edit for ${target.file}:${target.line}`;
   lines.push(heading, "");
   lines.push("Before:");
   lines.push(`  ${formatLine(record.startLine, payload.before.raw)}`);
