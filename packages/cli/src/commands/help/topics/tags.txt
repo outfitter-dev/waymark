@@ -1,0 +1,19 @@
+TAGS AND MENTIONS
+
+Tags and mentions make waymarks searchable and assignable.
+
+Tags:
+  - Start with # (e.g., #perf, #security, #infra/queue)
+  - Use for grouping and filtering
+
+Mentions:
+  - Start with @ (e.g., @alice, @team)
+  - Use to assign or request review
+
+Examples:
+  // todo ::: add retries #infra/queue @team
+  // note ::: relies on #perf budget
+
+Filtering:
+  wm --tag #perf
+  wm --mention @alice

@@ -7,7 +7,7 @@ The `wm` command provides a unified interface for scanning, filtering, formattin
 ## Quick Navigation
 
 - **[Commands Reference](./commands.md)** - Comprehensive command documentation
-- **[Waymark Editing](./waymark_editing.md)** - Insert, remove, and modify waymarks
+- **[Waymark Editing](./waymark_editing.md)** - Add, edit, and remove waymarks
 - **[Grammar](../GRAMMAR.md)** - Waymark syntax reference
 - **[How-To Guides](../howto/README.md)** - Practical usage examples
 
@@ -186,7 +186,7 @@ wm src/ --tag "#sec"
 ## Next Steps
 
 - **[Commands Reference](./commands.md)** - Learn all commands in depth
-- **[Waymark Editing](./waymark_editing.md)** - Master insert/remove/modify
+- **[Waymark Editing](./waymark_editing.md)** - Master add/edit/rm
 - **[How-To Guides](../howto/README.md)** - See practical workflows
 - **[Grammar](../GRAMMAR.md)** - Understand waymark syntax
 
@@ -199,8 +199,11 @@ wm src/ --tag "#sec"
 wm help
 
 # Command-specific help
-wm help format
-wm help insert
+wm help fmt
+wm help add
+
+# Topic help
+wm help syntax
 ```
 
 **Resources**:

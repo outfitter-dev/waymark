@@ -12,9 +12,7 @@ const promptRegistry: Record<string, string> = {
   format: formatPrompt,
   fmt: formatPrompt,
   add: addPrompt,
-  insert: addPrompt, // deprecated alias
   edit: modifyPrompt,
-  modify: modifyPrompt,
   lint: lintPrompt,
   remove: removePrompt,
   rm: removePrompt,

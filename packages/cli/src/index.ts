@@ -13,6 +13,7 @@ import {
   runDoctorCommand,
 } from "./commands/doctor.ts";
 import { expandFormatPaths, formatFile } from "./commands/fmt.ts";
+import { getTopicHelp, helpTopicNames } from "./commands/help/index.ts";
 import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
@@ -228,7 +229,7 @@ async function handleRemoveCommand(
 }
 
 function handlePromptOption(
-  key: "insert" | "remove" | "edit",
+  key: "remove" | "edit",
   options: { prompt?: boolean }
 ): boolean {
   if (!options.prompt) {
@@ -967,19 +968,30 @@ export async function createProgram(): Promise<Command> {
           writeStderr("No agent prompt available for this command");
           process.exit(1);
         }
-      } else if (commandName) {
-        // Use Commander's built-in help for specific command
+        return;
+      }
+
+      const topicFallback = commandName ?? "syntax";
+      const topicHelp = getTopicHelp(topicFallback);
+      if (topicHelp) {
+        writeStdout(topicHelp);
+        return;
+      }
+
+      if (commandName) {
         const cmd = program.commands.find((c) => c.name() === commandName);
         if (cmd) {
           cmd.help();
-        } else {
-          writeStderr(`Unknown command: ${commandName}`);
-          program.help();
+          return;
         }
-      } else {
-        // Show general help
+
+        writeStderr(`Unknown command or topic: ${commandName}`);
+        writeStdout(`Available topics: ${helpTopicNames.join(", ")}`);
         program.help();
+        return;
       }
+
+      program.help();
     });
 
   // Format command
@@ -1135,7 +1147,7 @@ Examples:
 Notes:
   - Provide either FILE:LINE or --id (not both)
   - Preview is default; add --write to apply
-  - --content '-' reads replacement text from stdin (like wm insert)
+  - --content '-' reads replacement text from stdin (like wm add)
   - Running without arguments launches interactive mode automatically
   - Use --no-interactive to print the preview without prompts
       `

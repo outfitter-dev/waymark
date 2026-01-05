@@ -59,9 +59,9 @@ Comprehensive guides to the `wm` command-line tool.
 
 **[Waymark Editing](./cli/waymark_editing.md)**:
 
-- Insert command (add waymarks)
+- Add command (insert waymarks)
 - Remove command (delete waymarks)
-- Modify command (update signals)
+- Edit command (update signals)
 - Batch operations
 - ID management
 
