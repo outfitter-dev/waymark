@@ -1104,11 +1104,7 @@ describe("Commander integration", () => {
     );
 
     try {
-      const result = await runCliCaptured([
-        "rm",
-        "src/sample.ts:1",
-        "--json",
-      ]);
+      const result = await runCliCaptured(["rm", "src/sample.ts:1", "--json"]);
       expect(result.exitCode).toBe(0);
       expect(parseSpy).toHaveBeenCalled();
       const tokens = parseSpy.mock.calls[0]?.[0] ?? [];

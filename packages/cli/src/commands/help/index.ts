@@ -3,13 +3,13 @@
 // biome-ignore lint/performance/noBarrelFile: module API exports used by help command
 export { commands, mainCommand } from "./registry.ts";
 export { getHelp, renderCommandHelp, renderGlobalHelp } from "./render.ts";
-export type { CommandConfig, FlagConfig, HelpRegistry } from "./types.ts";
 export {
   getTopicHelp,
+  type HelpTopic,
   helpTopicNames,
   helpTopics,
-  type HelpTopic,
 } from "./topics/index.ts";
+export type { CommandConfig, FlagConfig, HelpRegistry } from "./types.ts";
 
 import { getHelp } from "./render.ts";
 
