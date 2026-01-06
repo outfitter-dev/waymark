@@ -140,9 +140,7 @@ export class WaymarkIdManager {
       }
       return id;
     }
-    // Strip wm: prefix if present (legacy format)
-    const hash = id.startsWith("wm:") ? id.slice(3) : id;
-    return `[[${hash}]]`;
+    return `[[${id}]]`;
   }
 
   private async validateAvailability(

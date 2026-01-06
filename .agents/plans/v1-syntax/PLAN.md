@@ -74,7 +74,7 @@ properties-sym (4)    tags-mentions (5)  [parallel ok]
 - `packages/grammar/src/parser.test.ts` - Update test expectations
 - `packages/grammar/src/constants.test.ts` - Update marker list assertions
 - `.waymark/rules/WAYMARKS.md` - Update marker documentation
-- `.waymark/rules/THIS.md` - Rename to `ABOUT.md`, update content
+- `.waymark/rules/ABOUT.md` - Update content if needed
 
 **Verification**:
 

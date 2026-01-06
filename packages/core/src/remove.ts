@@ -113,8 +113,6 @@ type RemovalMatch = {
 const ID_REGEX = /\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/gi;
 const LINE_SPLIT_REGEX = /\r?\n/;
 const MAX_CONTENT_PATTERN_LENGTH = 512;
-const LEGACY_WM_PREFIX = "wm:";
-const LEGACY_WM_PREFIX_LENGTH = LEGACY_WM_PREFIX.length;
 
 type RemovalState = {
   results: RemovalResult[];
@@ -484,14 +482,8 @@ function findRecordById(
   id: string
 ): WaymarkRecord | undefined {
   // Normalize to [[hash]] format
-  let normalized: string;
-  if (id.startsWith("[[") && id.endsWith("]]")) {
-    normalized = id;
-  } else if (id.startsWith(LEGACY_WM_PREFIX)) {
-    normalized = `[[${id.slice(LEGACY_WM_PREFIX_LENGTH)}]]`;
-  } else {
-    normalized = `[[${id}]]`;
-  }
+  const normalized =
+    id.startsWith("[[") && id.endsWith("]]") ? id : `[[${id}]]`;
   return records.find((record) => record.raw.includes(normalized));
 }
 

@@ -74,7 +74,6 @@ describe("Query Parser", () => {
   test("fuzzy matches common type variations", () => {
     expect(parseQuery("todos").types).toEqual(["todo"]);
     expect(parseQuery("to-do").types).toEqual(["todo"]);
-    expect(parseQuery("fixme").types).toEqual(["fix"]);
     expect(parseQuery("tldrs").types).toEqual(["tldr"]);
   });
 

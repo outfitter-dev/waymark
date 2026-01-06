@@ -13,7 +13,7 @@ Guide the user through adding a waymark to a file.
 ## Arguments
 
 - `$1` - File path (required)
-- `$2` - Marker type (optional: tldr, todo, fix, note, this, etc.)
+- `$2` - Marker type (optional: tldr, todo, fix, note, about, etc.)
 
 ## Context Injection
 
@@ -47,7 +47,7 @@ Otherwise, use AskUserQuestion to determine intent:
 - "Mark a task" → `todo`
 - "Flag a bug" → `fix`
 - "Add context/note" → `note`
-- "Describe a section" → `this`
+- "Describe a section" → `about`
 - "Add a warning" → `warn`
 
 ### Step 3: Content Drafting
@@ -61,7 +61,7 @@ Based on marker type:
 - Lead with capability, end with key detail
 - Add relevant tags (`#docs` for documentation)
 
-**For `this`:**
+**For `about`:**
 
 - Place above the target section/function/class
 - Describe what the following code does
@@ -83,7 +83,7 @@ Based on marker type:
 Determine correct insertion point:
 
 - `tldr` → After shebang/frontmatter, before code
-- `this` → Line above target construct
+- `about` → Line above target construct
 - Others → Near relevant code
 
 ### Step 5: Insert
