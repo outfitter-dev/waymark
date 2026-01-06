@@ -98,7 +98,7 @@ For each file, assess:
 - 8-14 words, active voice, capability-first
 - Include `#docs` tag on documentation files
 
-### This Waymarks
+### About Waymarks
 
 - Place above classes, functions, or major blocks
 - Keep scope local to the section
@@ -115,7 +115,7 @@ For each file, assess:
 Before placing any waymark:
 
 - [ ] Active voice with clear subject and verb
-- [ ] Appropriate word count (8-14 for TLDR, 6-12 for this)
+- [ ] Appropriate word count (8-14 for TLDR, 6-12 for about)
 - [ ] Tags follow established project conventions
 - [ ] Content matches actual code behavior
 - [ ] No duplication of existing waymarks

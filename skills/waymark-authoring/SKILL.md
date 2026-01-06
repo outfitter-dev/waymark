@@ -43,7 +43,7 @@ Every waymark follows this pattern:
 - `note` - General information
 - `context` - Background/reasoning
 - `tldr` - File summary (one per file, at top)
-- `this` - Section/construct summary
+- `about` - Section/construct summary
 - `example` - Usage example
 - `idea` - Potential improvement
 - `comment` - General commentary
@@ -98,17 +98,16 @@ Declare anchors with `ref:#token`:
 Reference elsewhere via hashtags or explicit properties:
 
 ```javascript
-// todo ::: fixes:#payments/stripe add retry logic
-// note ::: depends:#auth/session needs session validation
+// todo ::: see:#payments/stripe add retry logic
+// note ::: from:#auth/session needs session validation
 ```
 
 **Relation properties:**
 
-- `depends:#token` - Requires another waymark
-- `needs:#token` - Similar to depends
-- `blocks:#token` - Prevents other work
-- `fixes:#token` - Addresses an issue
-- `rel:#token` - General relationship
+- `see:#token` - Reference to another waymark
+- `docs:#url` - Link to documentation
+- `from:#token` - Dependency on another waymark
+- `replaces:#token` - Supersedes another waymark
 
 ## Hashtags
 
@@ -217,7 +216,7 @@ Use HTML comments in Markdown:
 // about ::: orchestrates email delivery #comm
 
 // Relations
-// todo ::: fixes:#auth/login add rate limiting
+// todo ::: see:#auth/login add rate limiting
 ```
 
 ## Additional Resources
@@ -226,7 +225,7 @@ Use HTML comments in Markdown:
 
 - **`references/grammar.md`** - Complete grammar specification
 - **`references/markers.md`** - Full marker list with usage
-- **`references/this-waymarks.md`** - Section summary patterns
+- **`references/about-waymarks.md`** - Section summary patterns
 
 ### Related Skills
 

@@ -12,7 +12,7 @@ The canonical reference for waymark syntax, structure, and semantics.
   - [Comment Leaders](#comment-leaders)
   - [The `:::` Sigil](#the--sigil)
 - [Signals](#signals)
-  - [Raised (`^`)](#raised-)
+  - [Raised (`~`)](#raised-)
   - [Starred (`*`)](#starred-)
   - [Combining Signals](#combining-signals)
 - [Types (Markers)](#types-markers)
@@ -107,7 +107,7 @@ export async function authenticate(request: AuthRequest) {
 **Components**:
 
 1. **Comment leader** - Language-specific comment syntax (`//`, `#`, `<!--`, etc.)
-2. **Signals** (optional) - State indicators: `^` (raised), `*` (starred)
+2. **Signals** (optional) - State indicators: `~` (raised), `*` (starred)
 3. **Type** (required) - Single lowercase keyword (e.g., `todo`, `fix`, `note`)
 4. **Sigil** (required) - Three colons `:::`
 5. **Content** (optional) - Free text with embedded tokens
@@ -160,13 +160,13 @@ The `:::` sigil is the delimiter between type and content:
 
 Signals are optional prefixes that indicate state or priority.
 
-### Raised (`^`)
+### Raised (`~`)
 
 Marks work-in-progress waymarks that are branch-scoped.
 
 ```typescript
-// ^todo ::: refactoring auth module
-// ^wip ::: implementing OAuth flow
+// ~todo ::: refactoring auth module
+// ~wip ::: implementing OAuth flow
 ```
 
 **Semantics**:
@@ -191,17 +191,17 @@ Marks high-priority or important waymarks.
 
 ### Combining Signals
 
-When both signals are needed, order is `^*`:
+When both signals are needed, order is `~*`:
 
 ```typescript
-// ^*todo ::: critical WIP - OAuth token refresh
+// ~*todo ::: critical WIP - OAuth token refresh
 ```
 
 **Invalid**:
 
 - `**` (double star) - not part of v1 grammar
-- `^^` (double caret) - not part of v1 grammar
-- `*^` (reversed order) - not part of v1 grammar
+- `~~` (double tilde) - not part of v1 grammar
+- `*~` (reversed order) - not part of v1 grammar
 
 ---
 
@@ -228,7 +228,7 @@ These types are first-class and built into the tooling:
 - `note` - General observation
 - `context` (alias: `why`) - Contextual explanation
 - `tldr` - File/module summary (one per file)
-- `this` - Section/block summary
+- `about` - Section/block summary
 - `example` - Example usage
 - `idea` - Suggestion or proposal
 - `comment` - General comment
@@ -271,7 +271,7 @@ These types are first-class and built into the tooling:
 <!-- tldr ::: REST API documentation for backend services #docs/api -->
 ```
 
-#### `this` (Section Summary)
+#### `about` (Section Summary)
 
 - **Placement**: Immediately before the section it describes
 - **Frequency**: Multiple per file
@@ -533,20 +533,19 @@ Linters error on duplicate canonicals.
 
 Relations express dependencies between waymarks:
 
-- `depends:#token` - Depends on another waymark
-- `needs:#token` - Requires something
-- `blocks:#token` - Blocks another waymark
-- `dupeof:#token` - Duplicate of another issue
-- `rel:#token` - Generic relation
+- `see:#token` - Related waymark or reference
+- `docs:#token` - Documentation reference
+- `from:#token` - Depends on or derived from another waymark
+- `replaces:#token` - Supersedes another waymark
 
 **Syntax**: Hash is always on the value, not the key:
 
 ```typescript
 // Correct:
-// todo ::: implement refunds depends:#payments/charge
+// todo ::: implement refunds from:#payments/charge
 
 // Incorrect:
-// todo ::: implement refunds #depends:payments/charge
+// todo ::: implement refunds #from:payments/charge
 ```
 
 ### Dependency Tracking
@@ -558,7 +557,7 @@ Use relations to track dependencies:
 // tldr ::: charge processing service ref:#payments/charge
 
 // File: src/payments/refund.ts
-// todo ::: implement refund flow depends:#payments/charge
+// todo ::: implement refund flow from:#payments/charge
 ```
 
 Extract graph:
@@ -573,7 +572,7 @@ A relation is "dangling" if it references a non-existent canonical:
 
 ```typescript
 // Error: no canonical for #nonexistent
-// todo ::: fix bug depends:#nonexistent
+// todo ::: fix bug from:#nonexistent
 ```
 
 Linters error on dangling relations.
@@ -726,12 +725,12 @@ See `schemas/waymark-record.schema.json` for the authoritative JSON Schema (draf
 WAYMARK       = HWS, COMMENT, HWS?, [SIGNALS], MARKER, HWS, ":::", HWS, CONTENT? ;
 HWS           = { " " | "\t" } ;
 COMMENT       = COMMENT_LEADER ;
-SIGNALS       = ["^"] , ["*"] ;
+SIGNALS       = ["~"] , ["*"] ;
 MARKER        = LOWER , { LOWER | DIGIT | "_" | "-" } ;
 CONTENT       = { TOKEN | HWS } ;
 TOKEN         = RELATION | PROPERTY | MENTION | HASHTAG | TEXT ;
 RELATION      = REL_KEY, ":", HASH_TOKEN ;
-REL_KEY       = "ref" | "rel" | "depends" | "needs" | "blocks" | "dupeof" ;
+REL_KEY       = "ref" | "see" | "docs" | "from" | "replaces" ;
 PROPERTY      = KEY, ":", VALUE ;
 KEY           = ALPHA , { ALPHA | DIGIT | "_" | "-" } ;
 VALUE         = UNQUOTED | QUOTED ;
@@ -754,11 +753,11 @@ IDENT_NS      = ALNUM , { ALNUM | "_" | "-" | "." | "/" | ":" } ;
 Parsers must:
 
 1. **Detect comment leaders** by file extension
-2. **Extract signals** (`^`, `*`)
+2. **Extract signals** (`~`, `*`)
 3. **Normalize type** to lowercase
 4. **Trim whitespace** around `:::`
 5. **Extract tokens**:
-   - Relations (reserved keys: `ref`, `depends`, etc.)
+   - Relations (reserved keys: `ref`, `see`, `from`, etc.)
    - Properties (other `key:value` pairs)
    - Mentions (`@actor`)
    - Tags (`#token`)
@@ -787,7 +786,7 @@ Parsers must:
 export class AuthService {
   // about ::: manages user sessions and JWT tokens
 
-  // todo ::: @agent add refresh token rotation depends:#auth/jwt
+  // todo ::: @agent add refresh token rotation from:#auth/jwt
   // priority:high
   async login(credentials: Credentials): Promise<Session> {
     // *fix ::: validate email format #sec:boundary
@@ -814,7 +813,7 @@ def process_webhook(payload: dict) -> None:
     # *fix ::: verify signature before processing #sec
     signature = payload.get('signature')
 
-    # todo ::: @agent add idempotency keys depends:#payments/charge
+    # todo ::: @agent add idempotency keys from:#payments/charge
     # note ::: see Stripe docs for signature verification
     pass
 ```
@@ -831,7 +830,7 @@ type CacheService struct {
     client *redis.Client
 }
 
-// todo ::: add circuit breaker depends:#infra/resilience
+// todo ::: add circuit breaker from:#infra/resilience
 // priority:high
 func (c *CacheService) Get(key string) (string, error) {
     // note ::: keys expire after 1 hour #perf
@@ -862,8 +861,8 @@ func (c *CacheService) Get(key string) (string, error) {
 // todo  ::: refactor authentication flow to support OAuth 2.0
 //       ::: coordinate with @backend team on token format
 //       ::: update documentation when complete
-// depends:#auth/jwt
-// blocks:#api/login
+// from:#auth/jwt
+// see:#api/login
 // priority:critical
 // owner:@alice
 ```
@@ -875,10 +874,10 @@ func (c *CacheService) Get(key string) (string, error) {
 // tldr ::: JWT token service ref:#auth/jwt
 
 // File: src/auth/session.ts
-// todo ::: implement session refresh depends:#auth/jwt
+// todo ::: implement session refresh from:#auth/jwt
 
 // File: src/api/login.ts
-// todo ::: add OAuth support depends:#auth/session blocks:#api/register
+// todo ::: add OAuth support from:#auth/session see:#api/register
 ```
 
 **Security boundary**:
@@ -887,7 +886,7 @@ func (c *CacheService) Get(key string) (string, error) {
 // note ::: validates all inputs at API boundary #sec:boundary
 // warn ::: XSS risk if input not sanitized #sec
 export function validateInput(input: string): boolean {
-  // *fix ::: add regex validation depends:#security/rules
+  // *fix ::: add regex validation from:#security/rules
   return input.length > 0;
 }
 ```
@@ -916,7 +915,7 @@ const note = "// todo ::: fix this";  // Not a waymark
 
 ```typescript
 // Bad
-// todo ::: fix bug #depends:auth  // Should be depends:#auth
+// todo ::: fix bug #from:auth  // Should be from:#auth
 ```
 
 ❌ Create one-off tags without checking existing patterns:
@@ -960,7 +959,7 @@ rg 'ref:#auth'  # See what exists first
 
 ```typescript
 // Good
-// todo ::: fix bug depends:#auth/service
+// todo ::: fix bug from:#auth/service
 ```
 
 ---
@@ -1008,8 +1007,8 @@ If you used earlier waymark syntax:
 **Property-style hashes**:
 
 ```diff
-- // todo ::: #depends:auth
-+ // todo ::: depends:#auth
+- // todo ::: #from:auth
++ // todo ::: from:#auth
 ```
 
 ---

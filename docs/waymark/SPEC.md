@@ -12,8 +12,8 @@ Waymark is a lightweight, comment-based grammar for embedding code-adjacent cont
 
 - **Comment leader**: Whatever the host language uses (`//`, `#`, `<!--`, etc.). Waymarks never appear inside string literals or rendered docstrings.
 - **Signals** (optional): A short prefix indicating scope/urgency. The only valid signals are:
-  - `^` (caret) — produces a raised waymark for branch-scoped work that must be cleared before merging.
-  - `*` (star) — high-priority item. When combined with the caret, the order is `^*` (e.g., `^*todo`). Double intensity (`**`) and other legacy signals are not part of v1.
+  - `~` (tilde) — produces a raised waymark for branch-scoped work that must be cleared before merging.
+  - `*` (star) — high-priority item. When combined with the tilde, the order is `~*` (e.g., `~*todo`). Double intensity (`**`) and other legacy signals are not part of v1.
 - **Marker** (required): A single lowercase keyword from the blessed list below.
 - **`:::` sigil**: Exactly three ASCII colons, with one space before and after when a marker is present.
 - **Content**: Free text plus optional properties, tags, and mentions. Parsers tolerate additional spaces but formatters normalize to the canonical shape.
@@ -76,7 +76,7 @@ Only the following markers are considered first-class by the toolchain. Custom m
 - `note`
 - `context` (alias `why`)
 - `tldr`
-- `this`
+- `about`
 - `example`
 - `idea`
 - `comment`
@@ -100,8 +100,8 @@ Only the following markers are considered first-class by the toolchain. Custom m
 
 #### Special Treatment
 
-- **`tldr`** appears once per file at the highest valid location (after shebang/front matter, before code). It summarizes the file’s purpose in 8–14 active words. Documentation TLDRs end with a `#docs/...` tag.
-- **`this`** summarizes sections/classes. Use multiple per file to orient readers and agents.
+- **`tldr`** appears once per file at the highest valid location (after shebang/front matter, before code). It summarizes the file's purpose in 8–14 active words. Documentation TLDRs end with a `#docs/...` tag.
+- **`about`** summarizes sections/classes. Use multiple per file to orient readers and agents.
 - **`*tldr`** prioritizes the summary in generated maps and dashboards—reserve it for files or documents that must be read first.
 
 ## 3. Properties & Relations
@@ -111,19 +111,18 @@ Properties are `key:value` pairs in the content region. Keys match `[A-Za-z][A-Z
 ### Canonical Anchors
 
 - Declare anchors with `ref:#token`. Tokens are lowercase by convention and support `/`, `:`, `.`, `_`, and `-`.
-- Place canonicals on TLDRs or high-level `this` waymarks.
+- Place canonicals on TLDRs or high-level `about` waymarks.
 - One canonical per token per repository. Detect collisions with `rg ":::\s.*ref:#<token>"`.
 
 ### Relations
 
 - Reference canonicals via either a bare hashtag (`#payments/stripe-webhook`) or explicit relational properties:
-  - `depends:#token`
-  - `needs:#token`
-  - `blocks:#token`
-  - `dupeof:#token`
-  - `rel:#token`
-- Relational values ALWAYS include the leading hash (`fixes:#123`, not `fixes:123`).
-- Arrays are comma-separated without spaces (`affects:#billing,#auth/api`).
+  - `see:#token` — related reference
+  - `docs:#token` — documentation reference
+  - `from:#token` — depends on or derived from
+  - `replaces:#token` — supersedes another waymark
+- Relational values ALWAYS include the leading hash (`see:#auth`, not `see:auth`).
+- Arrays are comma-separated without spaces (`see:#billing,#auth/api`).
 
 ### Free-form Properties
 
@@ -156,7 +155,7 @@ Recommended ripgrep patterns:
 rg ':::'                          # all waymarks
 rg ':::\s*@agent'                 # generic agent work
 rg '\*\w+\s*:::'                  # high-priority waymarks
-rg '\^\w+\s*:::'                  # raised/ongoing work
+rg '\~\w+\s*:::'                  # raised/ongoing work
 rg '#perf:hotpath|#hotpath'      # performance hotspots
 rg 'tldr\s*:::.*#docs'            # doc summaries
 rg '\*tldr\s*:::'                 # prioritized summaries
@@ -177,12 +176,12 @@ waymark find --file-category docs --type tldr
 WAYMARK       = HWS, COMMENT, HWS?, [SIGNALS], MARKER, HWS, ":::", HWS, CONTENT? ;
 HWS           = { " " | "\t" } ;
 COMMENT       = COMMENT_LEADER ;
-SIGNALS       = ["^"] , ["*"] ;
+SIGNALS       = ["~"] , ["*"] ;
 MARKER        = LOWER , { LOWER | DIGIT | "_" | "-" } ;
 CONTENT       = { TOKEN | HWS } ;
 TOKEN         = RELATION | PROPERTY | MENTION | HASHTAG | TEXT ;
 RELATION      = REL_KEY, ":", HASH_TOKEN ;
-REL_KEY       = "ref" | "rel" | "depends" | "needs" | "blocks" | "dupeof" ;
+REL_KEY       = "ref" | "see" | "docs" | "from" | "replaces" ;
 PROPERTY      = KEY, ":", VALUE ;
 KEY           = ALPHA , { ALPHA | DIGIT | "_" | "-" } ;
 VALUE         = UNQUOTED | QUOTED ;
@@ -242,7 +241,7 @@ def send_email(message: Email) -> None:
 
 ## 9. Implementation Notes
 
-- Parsers should normalize signals to `^` and `*`, lowercase markers, trim extra spaces, and emit structured records matching the `WaymarkRecord` schema in `@waymarks/grammar`.
+- Parsers should normalize signals to `~` and `*`, lowercase markers, trim extra spaces, and emit structured records matching the `WaymarkRecord` schema in `@waymarks/grammar`.
 - Formatters must enforce a single space around `:::` when a marker is present.
 - Continuation lines are context-sensitive: markerless `:::` is only parsed as a continuation when following a waymark. Isolated `:::` lines are ignored.
 - Property-as-marker continuations only trigger for known property keys (not blessed markers like `needs` or `blocks`).

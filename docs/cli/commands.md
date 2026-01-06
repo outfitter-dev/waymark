@@ -82,7 +82,7 @@ Examples:
 ```typescript
 // todo ::: implement rate limiting
 // *fix ::: validate email format
-// ^wip ::: refactoring auth flow
+// ~wip ::: refactoring auth flow
 // note ::: assumes UTC timezone
 ```
 
@@ -92,11 +92,11 @@ See [Waymark Grammar](../GRAMMAR.md) for complete grammar details.
 
 Signals are optional prefixes that indicate state or priority:
 
-- `^` (caret) — **Raised**: work-in-progress, branch-scoped. Must be cleared before merging.
+- `~` (tilde) — **Raised**: work-in-progress, branch-scoped. Must be cleared before merging.
 - `*` (star) — **Starred**: important, high-priority.
-- `^*` (combined) — Both raised and starred.
+- `~*` (combined) — Both raised and starred.
 
-**Important**: Only use single `^` and `*`. Double signals (`^^`, `**`) are not part of the v1 grammar.
+**Important**: Only use single `~` and `*`. Double signals (`~~`, `**`) are not part of the v1 grammar.
 
 ### Types (Markers)
 
@@ -117,7 +117,7 @@ Types (formerly called "markers") categorize the waymark's purpose:
 - `note` — General note
 - `context` — Contextual information
 - `tldr` — File summary (one per file)
-- `this` — Section summary
+- `about` — Section summary
 - `example` — Example usage
 - `idea` — Idea or suggestion
 - `comment` — General comment
@@ -145,7 +145,7 @@ Properties are `key:value` pairs in the content:
 
 ```typescript
 // todo ::: implement caching owner:@alice priority:high
-// fix ::: memory leak depends:#auth/session
+// fix ::: memory leak from:#auth/session
 // note ::: coordinates with @backend team
 ```
 
@@ -157,11 +157,10 @@ Properties are `key:value` pairs in the content:
 
 **Relations** (dependency tracking):
 
-- `depends:#token` — Depends on another waymark
-- `needs:#token` — Needs something
-- `blocks:#token` — Blocks something
-- `dupeof:#token` — Duplicate of another issue
-- `rel:#token` — Related to something
+- `see:#token` — Related reference
+- `docs:#token` — Documentation reference
+- `from:#token` — Depends on or derived from
+- `replaces:#token` — Supersedes another waymark
 
 **Hashtags** (tags and references):
 

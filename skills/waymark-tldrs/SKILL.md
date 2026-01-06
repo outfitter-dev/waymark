@@ -133,7 +133,7 @@ Declare the file's canonical anchor with `ref:#token`:
 Reference from other waymarks:
 
 ```javascript
-// todo ::: depends:#payments/gateway add retry logic
+// todo ::: from:#payments/gateway add retry logic
 ```
 
 ## By File Type

@@ -54,7 +54,7 @@ Comprehensive waymark review across the repository:
 2. **Starred items**: Review `*` waymarks for continued relevance
 3. **Stale markers**: Check `todo`, `fix`, `wip` for age/validity
 4. **Orphaned references**: Verify `ref:#token` anchors are referenced
-5. **Broken relations**: Validate `depends:#`, `needs:#` targets exist
+5. **Broken relations**: Validate `see:#`, `from:#` targets exist
 6. **Tag consistency**: Ensure tags follow established conventions
 7. **Accuracy**: Spot-check waymark descriptions match code behavior
 
@@ -105,7 +105,7 @@ For each waymark found, verify:
 | Marker | Quality Check |
 | -------- | --------------- |
 | `tldr` | Active voice, 8-14 words, matches file purpose |
-| `this` | Describes following section accurately |
+| `about` | Describes following section accurately |
 | `todo` | Still relevant, not stale |
 | `fix` | Bug still exists, not already fixed |
 | `note` | Information still accurate |
@@ -131,7 +131,7 @@ rg ':::.+#\w+' -o | grep -oE '#[A-Za-z0-9._/:%-]+' | sort -u
 rg 'ref:#[A-Za-z0-9._/:%-]+' -o | sort -u
 
 # Find references to canonicals
-rg '(depends|needs|blocks|rel):#'
+rg '(see|from|replaces):#'
 ```
 
 ### 5. Report Findings
@@ -214,7 +214,7 @@ git diff --cached --name-only | xargs -I{} sh -c \
 
 ```bash
 # No raised waymarks
-! rg '\^\w+\s*:::' && echo "OK: No raised waymarks"
+! rg '~\w+\s*:::' && echo "OK: No raised waymarks"
 
 # No WIP markers
 ! rg 'wip\s*:::' && echo "OK: No WIP markers"
@@ -261,7 +261,7 @@ Before completing an audit:
 
 - [ ] All source files have TLDR waymarks
 - [ ] TLDRs accurately describe file contents
-- [ ] No raised (`^`) waymarks remain (if auditing for merge)
+- [ ] No raised (`~`) waymarks remain (if auditing for merge)
 - [ ] Starred (`*`) items reviewed for continued priority
 - [ ] Work markers (todo, fix, wip) are current
 - [ ] Tags follow established conventions
