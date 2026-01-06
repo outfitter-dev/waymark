@@ -556,8 +556,8 @@ function stripHtmlClosure(
   return content;
 }
 
-// Match [[hash]], [[hash|alias]], or [[alias]]
-const ID_REGEX = /\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/gi;
+// Match [[hash]], [[hash|alias]], or [[Draft Title]] (draft IDs with spaces/uppercase)
+const ID_REGEX = /\[\[([^\]]+)\]\]/gi;
 const ID_TRAIL_REGEX = /(\[\[[^\]]+\]\])$/i;
 
 function extractExistingId(content: string): string | undefined {

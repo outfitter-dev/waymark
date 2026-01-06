@@ -133,6 +133,11 @@ export class WaymarkIdManager {
   private normalizeId(id: string): string {
     // Already in [[hash]] or [[hash|alias]] format
     if (id.startsWith("[[") && id.endsWith("]]")) {
+      const content = id.slice(2, -2);
+      // Reject empty brackets or whitespace-only content
+      if (!content || content.trim().length === 0) {
+        throw new Error(`Invalid waymark ID format: ${id}`);
+      }
       return id;
     }
     // Strip wm: prefix if present (legacy format)
