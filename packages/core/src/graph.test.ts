@@ -32,8 +32,8 @@ test("collects canonicals and edges", () => {
     record({
       type: "todo",
       relations: [
-        { kind: "depends", token: "#docs/prd" },
-        { kind: "rel", token: "#perf/hotpath" },
+        { kind: "from", token: "#docs/prd" },
+        { kind: "see", token: "#perf/hotpath" },
       ],
     }),
   ];
@@ -41,5 +41,5 @@ test("collects canonicals and edges", () => {
   const graph = buildRelationGraph(records);
   expect(graph.canonicals.get("#docs/prd")?.length).toBe(1);
   expect(graph.edges).toHaveLength(2);
-  expect(graph.edges[0]?.relation).toBe("depends");
+  expect(graph.edges[0]?.relation).toBe("from");
 });

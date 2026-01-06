@@ -88,22 +88,22 @@ describe("normalizeRelations", () => {
   test("sorts relations by kind then token", () => {
     const record = createTestRecord({
       relations: [
-        { kind: "needs", token: "#beta" },
-        { kind: "depends", token: "#alpha" },
-        { kind: "needs", token: "#alpha" },
+        { kind: "see", token: "#beta" },
+        { kind: "from", token: "#alpha" },
+        { kind: "see", token: "#alpha" },
       ],
     });
     const normalized = normalizeRelations(record.relations);
     expect(normalized).toEqual([
-      { kind: "depends", token: "#alpha" },
-      { kind: "needs", token: "#alpha" },
-      { kind: "needs", token: "#beta" },
+      { kind: "from", token: "#alpha" },
+      { kind: "see", token: "#alpha" },
+      { kind: "see", token: "#beta" },
     ]);
   });
 
   test("lowercases tokens", () => {
     const record = createTestRecord({
-      relations: [{ kind: "ref", token: "#AUTH/Service" }],
+      relations: [{ kind: "see", token: "#AUTH/Service" }],
     });
     const normalized = normalizeRelations(record.relations);
     expect(normalized[0]?.token).toBe("#auth/service");
@@ -166,8 +166,8 @@ describe("normalizeRecord", () => {
       type: "TODO",
       properties: { z: "last", a: "first" },
       relations: [
-        { kind: "needs", token: "#BETA" },
-        { kind: "depends", token: "#ALPHA" },
+        { kind: "see", token: "#BETA" },
+        { kind: "from", token: "#ALPHA" },
       ],
       tags: ["#TAG2", "#TAG1", "#TAG1"],
       canonicals: ["#CANON2", "#CANON1"],
@@ -180,7 +180,7 @@ describe("normalizeRecord", () => {
 
     expect(normalized.type).toBe("todo");
     expect(Object.keys(normalized.properties)).toEqual(["a", "z"]);
-    expect(normalized.relations[0]?.kind).toBe("depends");
+    expect(normalized.relations[0]?.kind).toBe("from");
     expect(normalized.relations[0]?.token).toBe("#alpha");
     expect(normalized.tags).toEqual(["#tag1", "#tag2"]);
     expect(normalized.canonicals).toEqual(["#canon1", "#canon2"]);

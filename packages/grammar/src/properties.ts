@@ -13,12 +13,10 @@ export const RELATION_KIND_MAP: Record<
   string,
   WaymarkRecord["relations"][number]["kind"]
 > = {
-  ref: "ref",
-  rel: "rel",
-  depends: "depends",
-  needs: "needs",
-  blocks: "blocks",
-  dupeof: "dupeof",
+  see: "see",
+  docs: "docs",
+  from: "from",
+  replaces: "replaces",
 };
 
 export function unescapeQuotedValue(value: string): string {
@@ -52,7 +50,7 @@ export function appendRelationTokens(
       continue;
     }
 
-    if (relationKind === "ref") {
+    if (relationKind === "see") {
       canonicalSet.add(normalizedToken);
     }
 
@@ -196,7 +194,7 @@ export function addRelationTokens(
     const normalizedToken = normalizeRelationToken(token);
     if (normalizedToken) {
       if (
-        relationKind === "ref" &&
+        relationKind === "see" &&
         !record.canonicals.includes(normalizedToken)
       ) {
         record.canonicals.push(normalizedToken);

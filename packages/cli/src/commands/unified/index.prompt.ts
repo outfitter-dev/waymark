@@ -18,7 +18,7 @@ WAYMARK SYNTAX PRIMER
     - Signals: ^ (raised/in-progress), * (starred for important/valuable)
     - Marker: todo, fix, wip, note, tldr, this, etc.
     - Content: Free text with optional properties
-    - Properties: key:value pairs (ref:#token, owner:@alice)
+    - Properties: key:value pairs (see:#token, owner:@alice)
     - Mentions: @agent, @alice, @bob
     - Tags: #perf, #sec, #docs
 
@@ -114,7 +114,7 @@ EXAMPLE OUTPUTS
       {
         "from": "src/payments.ts:45",
         "to": "#auth/service",
-        "kind": "depends"
+        "kind": "from"
       }
     ]
   }

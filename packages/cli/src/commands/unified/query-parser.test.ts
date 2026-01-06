@@ -37,8 +37,8 @@ describe("Query Parser", () => {
   });
 
   test("handles property without value", () => {
-    const result = parseQuery("depends:");
-    expect(result.properties.get("depends")).toBe(true);
+    const result = parseQuery("from:");
+    expect(result.properties.get("from")).toBe(true);
   });
 
   test("handles exclusion of type", () => {
@@ -95,8 +95,8 @@ describe("Query Parser", () => {
   });
 
   test("handles complex property patterns", () => {
-    const result = parseQuery("depends:#auth/core owner:@alice");
-    expect(result.properties.get("depends")).toBe("#auth/core");
+    const result = parseQuery("from:#auth/core owner:@alice");
+    expect(result.properties.get("from")).toBe("#auth/core");
     expect(result.properties.get("owner")).toBe("@alice");
   });
 
@@ -120,8 +120,8 @@ describe("Query Parser", () => {
   });
 
   test("preserves property keys with special characters", () => {
-    const result = parseQuery("ref:#auth/core depends:#payments");
-    expect(result.properties.get("ref")).toBe("#auth/core");
-    expect(result.properties.get("depends")).toBe("#payments");
+    const result = parseQuery("see:#auth/core from:#payments");
+    expect(result.properties.get("see")).toBe("#auth/core");
+    expect(result.properties.get("from")).toBe("#payments");
   });
 });

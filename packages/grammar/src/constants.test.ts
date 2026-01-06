@@ -32,12 +32,12 @@ describe("PROPERTY_KEYS contract", () => {
     // This test enforces the contract for PROPERTY_KEYS as the single source of truth.
     // Any additions or removals should be intentional and require updating this test.
     const expectedKeys = [
-      "ref",
-      "rel",
-      "depends",
-      "needs",
-      "blocks",
-      "dupeof",
+      // Relation keys
+      "see",
+      "docs",
+      "from",
+      "replaces",
+      // Other property keys
       "owner",
       "since",
       "fixes",
