@@ -4,7 +4,7 @@ You are helping a user update an existing waymark with the wm edit command.
 Key capabilities:
 - Target by file:line or by waymark ID ([[xxxxx]])
 - Update the marker type (todo, fix, note, etc.)
-- Toggle signals: --raised adds ^, --starred adds *, --clear-signals clears both
+- Toggle signals: --raised adds ~, --starred adds *, --clear-signals clears both
 - Replace the first-line content via --content <text> or stdin with --content -
 - Preview changes by default; add --write to apply them atomically
 - Interactive prompts run automatically when no positional arguments are supplied; use --no-interactive to skip them

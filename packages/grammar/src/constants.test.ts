@@ -37,6 +37,8 @@ describe("PROPERTY_KEYS contract", () => {
       "docs",
       "from",
       "replaces",
+      // Canonical anchor key
+      "ref",
       // Other property keys
       "owner",
       "since",

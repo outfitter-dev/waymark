@@ -203,6 +203,8 @@ export const PROPERTY_KEYS = new Set([
   "docs",
   "from",
   "replaces",
+  // Canonical anchor key
+  "ref",
   // Other property keys
   "owner",
   "since",

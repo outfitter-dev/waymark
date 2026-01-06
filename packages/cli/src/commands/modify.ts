@@ -585,7 +585,7 @@ function buildInteractiveSteps(args: {
       build: () => ({
         type: "confirm",
         name: "addRaised",
-        message: "Add raised signal (^) ?",
+        message: "Add raised signal (~) ?",
         default:
           answers.addRaised ?? record.signals.raised ?? options.raised ?? false,
       }),
@@ -940,7 +940,7 @@ function describeChanges(payload: ModifyPayload): string[] {
     const { from, to } = payload.modifications.signals;
     if (from.raised !== to.raised) {
       entries.push(
-        to.raised ? "Added raised signal (^)" : "Removed raised signal (^)"
+        to.raised ? "Added raised signal (~)" : "Removed raised signal (~)"
       );
     }
     if (from.important !== to.important) {

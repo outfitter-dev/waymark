@@ -51,7 +51,7 @@ FILTER FLAGS
   --type <marker>       Match by waymark type (todo, fix, note, etc.)
   --mention <actor>     Match by mention (@agent, @alice, etc.)
   --tag <hashtag>       Match by hashtag (#deprecated, #perf, etc.)
-  --raised              Match raised (^) waymarks
+  --raised              Match raised (~) waymarks
   --starred             Match starred (*) waymarks (important/valuable)
   --contains <text>     Match content containing text
 
@@ -103,7 +103,7 @@ AGENT WORKFLOWS
        | while read loc; do wm rm "$loc" --write; done
 
   2. Remove raised waymarks after merge:
-     # Agent removes ^ waymarks after PR merges
+     # Agent removes ~ waymarks after PR merges
      wm rm --raised . --write
 
   3. Archive deprecated markers:

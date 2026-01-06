@@ -38,7 +38,7 @@ FILTERING OPTIONS
                       Examples: #perf, #sec, #docs
                       Can be repeated: --tag "#perf" --tag "#sec"
 
-  --raised            Only show ^ (raised/in-progress) waymarks
+  --raised            Only show ~ (raised/in-progress) waymarks
                       Use to find work that shouldn't merge yet
 
   --starred           Only show * (starred) waymarks (important/valuable)
