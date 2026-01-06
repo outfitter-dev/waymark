@@ -95,11 +95,11 @@ describe("applyModifications", () => {
     } satisfies ApplyArgs);
     expect(result.signals.raised).toBe(true);
     expect(result.signals.important).toBe(true);
-    expect(result.firstLine).toBe("// ^*todo ::: implement OAuth");
+    expect(result.firstLine).toBe("// ~*todo ::: implement OAuth");
   });
 
   test("removes all signals", () => {
-    const record = createRecord("// ^*todo ::: implement OAuth");
+    const record = createRecord("// ~*todo ::: implement OAuth");
     const result = applyModifications({
       record,
       config,

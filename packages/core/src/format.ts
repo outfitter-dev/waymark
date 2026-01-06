@@ -219,7 +219,7 @@ function normalizeType(record: WaymarkRecord, config: WaymarkConfig): string {
 function buildSignalPrefix(record: WaymarkRecord): string {
   let prefix = "";
   if (record.signals.raised) {
-    prefix += "^";
+    prefix += "~";
   }
   if (record.signals.important) {
     prefix += "*";

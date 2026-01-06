@@ -3,10 +3,10 @@
 export const SIGIL = ":::" as const;
 
 // Signal constants
-// ^ = raised (work-in-progress, branch-scoped)
+// ~ = raised (work-in-progress, branch-scoped)
 // * = starred (important, high-priority)
 export const SIGNALS = {
-  raised: "^",
+  raised: "~",
   starred: "*",
 } as const;
 

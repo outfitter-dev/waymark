@@ -220,7 +220,7 @@ describe("runAddCommand", () => {
     expect(result.summary.successful).toBe(1);
 
     const fileContents = await readFile(sourcePath, "utf8");
-    expect(fileContents).toContain("^*todo ::: test content");
+    expect(fileContents).toContain("~*todo ::: test content");
     expect(fileContents).toContain("owner:@alice");
     expect(fileContents).toContain("#test");
     expect(fileContents).toContain("@alice");

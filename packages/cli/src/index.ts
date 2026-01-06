@@ -615,7 +615,7 @@ function displaySelectedWaymark(
   writeStdout("\nSelected waymark:\n");
   writeStdout(`${selected.file}:${selected.startLine}`);
   writeStdout(
-    `${selected.signals.raised ? "^" : ""}${selected.signals.important ? "*" : ""}${selected.type} ::: ${selected.contentText}`
+    `${selected.signals.raised ? "~" : ""}${selected.signals.important ? "*" : ""}${selected.type} ::: ${selected.contentText}`
   );
 
   if (Object.keys(selected.properties).length > 0) {

@@ -149,7 +149,7 @@ export function styleType(
 ): string {
   const color = getTypeColor(type);
   const signalStr =
-    (signals.raised ? "^" : "") + (signals.important ? "*" : "");
+    (signals.raised ? "~" : "") + (signals.important ? "*" : "");
 
   if (signalStr) {
     // Bold the signal and type with same color, use background for emphasis

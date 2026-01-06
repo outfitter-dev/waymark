@@ -411,7 +411,7 @@ function renderFirstLine(args: RenderArgs): string {
 function buildSignalPrefix(signals: ModifySignals): string {
   let prefix = "";
   if (signals.raised) {
-    prefix += "^";
+    prefix += "~";
   }
   if (signals.important) {
     prefix += "*";
