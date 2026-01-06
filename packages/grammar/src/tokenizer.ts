@@ -61,10 +61,10 @@ export function parseSignalsAndType(segment: string): {
 
   while (
     cursor < trimmed.length &&
-    (trimmed[cursor] === "^" || trimmed[cursor] === "*")
+    (trimmed[cursor] === "~" || trimmed[cursor] === "*")
   ) {
     const char = trimmed[cursor];
-    if (char === "^") {
+    if (char === "~") {
       raised = true;
     } else if (char === "*") {
       important = true;
@@ -74,7 +74,7 @@ export function parseSignalsAndType(segment: string): {
 
   const type = trimmed.slice(cursor);
 
-  if (type.includes("^") || type.includes("*")) {
+  if (type.includes("~") || type.includes("*") || type.includes("^")) {
     return {
       type: "",
       signals: { raised: false, important: false },

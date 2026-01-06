@@ -226,7 +226,7 @@ function buildSignalPrefix(signals?: SignalFlags): string {
   }
   let prefix = "";
   if (signals.raised) {
-    prefix += "^";
+    prefix += "~";
   }
   if (signals.important) {
     prefix += "*";

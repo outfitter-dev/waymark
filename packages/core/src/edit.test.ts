@@ -114,7 +114,7 @@ describe("editWaymark", () => {
     );
 
     let contents = await readFile(filePath, "utf8");
-    expect(contents).toContain("// ^*todo ::: audit");
+    expect(contents).toContain("// ~*todo ::: audit");
 
     await editWaymark(
       { file: filePath, line: 1, clearSignals: true, write: true },

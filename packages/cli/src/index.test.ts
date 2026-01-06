@@ -629,7 +629,7 @@ describe("Unified command", () => {
   });
 
   test("runUnifiedCommand applies raised signal filter", async () => {
-    const source = ["// ^todo ::: raised work", "// todo ::: normal work"].join(
+    const source = ["// ~todo ::: raised work", "// todo ::: normal work"].join(
       "\n"
     );
     const { file, cleanup } = await withTempFile(source);
@@ -672,8 +672,8 @@ describe("Unified command", () => {
 
   test("runUnifiedCommand combines multiple filters", async () => {
     const source = [
-      "// ^*todo ::: critical task #perf",
-      "// ^todo ::: raised work",
+      "// ~*todo ::: critical task #perf",
+      "// ~todo ::: raised work",
       "// *fix ::: important bug",
       "// note ::: context",
     ].join("\n");

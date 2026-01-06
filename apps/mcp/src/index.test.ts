@@ -105,7 +105,7 @@ describe("handleAddWaymark", () => {
     const updated = await readFile(file, "utf8");
     const lines = updated.split("\n");
     expect(lines[ABOUT_INSERT_LINE - 1]).toBe(
-      "  // ^about ::: documents the feature body"
+      "  // ~about ::: documents the feature body"
     );
 
     await rm(dir, { recursive: true, force: true });

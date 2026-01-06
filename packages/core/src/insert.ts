@@ -415,7 +415,7 @@ function buildSignals(signals: InsertionSpec["signals"]): string {
   }
   let result = "";
   if (signals.raised) {
-    result += "^";
+    result += "~";
   }
   if (signals.important) {
     result += "*";
