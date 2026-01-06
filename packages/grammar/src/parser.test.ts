@@ -70,6 +70,62 @@ describe("parseLine", () => {
     expect(record?.mentions).toEqual([]);
   });
 
+  test("does not treat decorator-like patterns as mentions", () => {
+    const record = parseLine(
+      "// about ::: uses @Injectable pattern for DI",
+      LINE_ONE,
+      { file: "src/di.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.mentions).toEqual([]);
+  });
+
+  test("does not treat decorator calls as mentions", () => {
+    const record = parseLine(
+      "// note ::: decorated with @Component() and @Input()",
+      LINE_ONE,
+      { file: "src/component.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.mentions).toEqual([]);
+  });
+
+  test("extracts mention after email in same content", () => {
+    const record = parseLine(
+      "// todo ::: email user@foo.com then @alice reviews",
+      LINE_ONE,
+      { file: "src/workflow.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.mentions).toEqual(["@alice"]);
+  });
+
+  test("extracts valid lowercase mentions", () => {
+    const record = parseLine(
+      "// todo ::: @alice and @agent should review this #task",
+      LINE_ONE,
+      { file: "src/review.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.mentions).toContain("@alice");
+    expect(record?.mentions).toContain("@agent");
+  });
+
+  test("extracts team/group mentions with slash", () => {
+    const record = parseLine(
+      "// todo ::: assign to @team/frontend for implementation",
+      LINE_ONE,
+      { file: "src/feature.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.mentions).toEqual(["@team/frontend"]);
+  });
+
   test("handles HTML comment waymarks", () => {
     const record = parseLine(
       "<!-- tldr ::: overview for automation workflows #docs/guide -->",
