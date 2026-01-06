@@ -210,4 +210,5 @@ export const PROPERTY_KEYS = new Set([
   "affects",
   "priority",
   "status",
+  "sym",
 ]);
