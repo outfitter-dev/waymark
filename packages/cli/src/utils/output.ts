@@ -32,8 +32,8 @@ function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
   // Remove signals if all are false
   if (
     cleaned.signals &&
-    !cleaned.signals.raised &&
-    !cleaned.signals.important &&
+    !cleaned.signals.flagged &&
+    !cleaned.signals.starred &&
     !cleaned.signals.current
   ) {
     cleaned.signals = undefined as unknown as WaymarkRecord["signals"];

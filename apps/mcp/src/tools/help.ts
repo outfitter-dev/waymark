@@ -53,7 +53,7 @@ const HELP_TOPICS: Record<string, HelpTopic> = {
       "- type: string",
       "- content: string",
       "- line?: number",
-      "- signals?: { raised?: boolean; important?: boolean }",
+      "- signals?: { flagged?: boolean; starred?: boolean }",
       "- configPath?: string",
       "- scope?: default | project | user",
       "",

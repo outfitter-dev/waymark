@@ -75,8 +75,8 @@ Tip: enable `scan.include_codetags = true` in config to include legacy codetags 
 # All your TODOs
 wm src/ --type todo --mention @yourname
 
-# Raised (WIP) items you're working on
-wm src/ --raised --mention @yourname
+# Flagged (WIP) items you're working on
+wm src/ --flagged --mention @yourname
 
 # Filter by priority
 wm src/ --starred --type todo --mention @yourname
@@ -93,8 +93,8 @@ alias mytodos='wm src/ --type todo --mention @yourname'
 **Goal**: Ensure branch is clean before committing.
 
 ```bash
-# 1. Find raised waymarks (must be cleared before merge)
-wm src/ --raised
+# 1. Find flagged waymarks (must be cleared before merge)
+wm src/ --flagged
 
 # 2. Find temp/hack waymarks that might need cleanup
 wm src/ --type temp --type hack
@@ -107,8 +107,8 @@ wm lint src/
 
 ```bash
 # .git/hooks/pre-push
-if wm src/ --raised --json | grep -q '\['; then
-  echo "Error: Raised (^) waymarks must be cleared before pushing"
+if wm src/ --flagged --json | grep -q '\['; then
+  echo "Error: Flagged (~) waymarks must be cleared before pushing"
   exit 1
 fi
 ```
@@ -366,10 +366,10 @@ wm add src/legacy.ts:1 ~wip "refactoring to TypeScript @yourname" --write
 wm add src/legacy.ts:1 note "from:#new-api/client" --write
 
 # 3. Track refactor progress
-wm src/ --raised --mention @yourname
+wm src/ --flagged --mention @yourname
 
 # 4. Clear signals when done
-wm edit src/legacy.ts:1 --unraise --write
+wm edit src/legacy.ts:1 --clear-signals --write
 ```
 
 ### Security Audit
@@ -412,7 +412,7 @@ Add to `.bashrc` / `.zshrc`:
 
 ```bash
 alias wmt='wm src/ --type todo'
-alias wmr='wm src/ --raised'
+alias wmr='wm src/ --flagged'
 alias wml='wm lint src/'
 ```
 
@@ -423,10 +423,10 @@ Enforce waymark quality in git hooks:
 ```bash
 # .git/hooks/pre-commit
 #!/bin/bash
-# Prevent committing raised waymarks to main branch
+# Prevent committing flagged waymarks to main branch
 BRANCH=$(git symbolic-ref --short HEAD)
-if [[ "$BRANCH" == "main" ]] && wm --raised --json | grep -q '\['; then
-  echo "Error: Cannot commit raised (^) waymarks to main branch"
+if [[ "$BRANCH" == "main" ]] && wm --flagged --json | grep -q '\['; then
+  echo "Error: Cannot commit flagged (~) waymarks to main branch"
   exit 1
 fi
 

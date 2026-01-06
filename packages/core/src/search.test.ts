@@ -14,7 +14,7 @@ const sampleRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => ({
   endLine: 1,
   indent: 0,
   commentLeader: "//",
-  signals: { raised: false, important: false },
+  signals: { flagged: false, starred: false },
   type: "todo",
   contentText: "example content",
   properties: {},

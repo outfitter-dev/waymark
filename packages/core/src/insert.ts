@@ -27,8 +27,8 @@ export const InsertionSpecSchema = z.object({
   content: z.string(),
   signals: z
     .object({
-      raised: z.boolean().optional(),
-      important: z.boolean().optional(),
+      flagged: z.boolean().optional(),
+      starred: z.boolean().optional(),
     })
     .strict()
     .optional(),
@@ -414,10 +414,10 @@ function buildSignals(signals: InsertionSpec["signals"]): string {
     return "";
   }
   let result = "";
-  if (signals.raised) {
+  if (signals.flagged) {
     result += "~";
   }
-  if (signals.important) {
+  if (signals.starred) {
     result += "*";
   }
   return result;

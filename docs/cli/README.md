@@ -83,7 +83,7 @@ helpers. Note: `wm complete` is also supported as a backward-compatible alias.
 # Scan and display waymarks
 wm src/                              # all waymarks
 wm src/ --type todo                  # filter by type
-wm src/ --raised                     # only ^ (WIP)
+wm src/ --flagged                    # only ~ (WIP)
 wm src/ --starred                    # only * (priority)
 
 # Graph mode: relation edges
@@ -97,7 +97,7 @@ wm lint src/                         # validate waymarks
 # Waymark management
 wm add src/auth.ts:42 todo "add rate limiting" --write
 wm rm src/auth.ts:42 --write
-wm edit src/auth.ts:42 --raised --write
+wm edit src/auth.ts:42 --flagged --write
 
 # Output formats
 wm src/ --json                       # compact JSON
@@ -164,8 +164,8 @@ alias mytodos='wm src/ --type todo --mention @yourname'
 ### Pre-Commit Check
 
 ```bash
-# Ensure no raised (WIP) waymarks
-wm src/ --raised
+# Ensure no flagged (WIP) waymarks
+wm src/ --flagged
 
 # Validate waymarks
 wm lint src/

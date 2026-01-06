@@ -45,21 +45,27 @@ export function deserializeRecord(row: WaymarkRow): WaymarkRecord {
 function parseSignals(
   source: string | null | undefined
 ): WaymarkRecord["signals"] {
-  const parsed = safeParse<Partial<WaymarkRecord["signals"]>>(source, {});
-  let raisedValue = false;
-  if (parsed.raised !== undefined) {
-    raisedValue = Boolean(parsed.raised);
+  const parsed = safeParse<Record<string, unknown>>(source, {});
+  let flaggedValue = false;
+  if (parsed.flagged !== undefined) {
+    flaggedValue = Boolean(parsed.flagged);
+  } else if (parsed.raised !== undefined) {
+    flaggedValue = Boolean(parsed.raised);
   } else if (parsed.current !== undefined) {
-    raisedValue = Boolean(parsed.current);
+    flaggedValue = Boolean(parsed.current);
   }
 
   const currentValue =
-    parsed.current !== undefined ? Boolean(parsed.current) : raisedValue;
+    parsed.current !== undefined ? Boolean(parsed.current) : flaggedValue;
   return {
-    raised: raisedValue,
+    flagged: flaggedValue,
     current: currentValue,
-    important:
-      parsed.important === undefined ? false : Boolean(parsed.important),
+    starred:
+      parsed.starred === undefined
+        ? parsed.important === undefined
+          ? false
+          : Boolean(parsed.important)
+        : Boolean(parsed.starred),
   };
 }
 

@@ -11,7 +11,7 @@
 ## General Rules
 
 - ALWAYS include only one `tldr :::` waymark in each file, near the top (accounting for language-specific preambles, shebangs, front matter, etc.).
-- ONLY use the v1 signals: `~` (raised) and a single `*` (starred). No `!`, `!!`, `?`, `^`, or other legacy signals anywhere in the repo.
+- ONLY use the v1 signals: `~` (flagged) and a single `*` (starred). No `!`, `!!`, `?`, `^`, or other legacy signals anywhere in the repo.
 - CLEAR all `~` waymarks before merging (`rg '\\~\\w+\\s*:::'`).
 - When adding a new waymark, search for precedent first (e.g., `rg ":::\s.*#<fragment>"`) to avoid proliferating one-off patterns.
 
@@ -70,4 +70,4 @@ We maintain a preferred list of hashtags below. Tags are optional; when you do a
 - Annotate known follow-up work liberally so humans and agents can spot outstanding tasks without reading full sections.
 - Phrase the description as an action with enough context that someone else could pick it up; include tags and mentions when ownership matters.
 - Sweep the codebase regularly with `rg 'todo\s*:::'` (optionally `rg -n 'todo\s*:::'`) to review the current backlog before shipping or planning.
-- Remove `todo :::` entries as soon as the work lands—either delete the waymark or replace it with `done :::` as a short-lived handoff signal, and make sure raised (`~`) waymarks are cleared before merging to `main`.
+- Remove `todo :::` entries as soon as the work lands—either delete the waymark or replace it with `done :::` as a short-lived handoff signal, and make sure flagged (`~`) waymarks are cleared before merging to `main`.

@@ -52,7 +52,7 @@ type RemoveCriteriaState = {
   tags: string[];
   mentions: string[];
   properties: Record<string, string>;
-  signals: { raised?: boolean; important?: boolean };
+  signals: { flagged?: boolean; starred?: boolean };
   contentPattern?: string;
   contains?: string;
 };
@@ -87,16 +87,16 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
       state.optionState.jsonl = true;
     },
     "-F": (state) => {
-      state.criteria.signals.raised = true;
+      state.criteria.signals.flagged = true;
     },
     "--flagged": (state) => {
-      state.criteria.signals.raised = true;
+      state.criteria.signals.flagged = true;
     },
     "-S": (state) => {
-      state.criteria.signals.important = true;
+      state.criteria.signals.starred = true;
     },
     "--starred": (state) => {
-      state.criteria.signals.important = true;
+      state.criteria.signals.starred = true;
     },
   };
 

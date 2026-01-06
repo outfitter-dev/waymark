@@ -81,7 +81,7 @@ describe("applyModifications", () => {
       baseContent: "implement OAuth",
       options: { starred: true },
     } satisfies ApplyArgs);
-    expect(result.signals.important).toBe(true);
+    expect(result.signals.starred).toBe(true);
     expect(result.firstLine).toBe("// *todo ::: implement OAuth");
   });
 
@@ -91,10 +91,10 @@ describe("applyModifications", () => {
       record,
       config,
       baseContent: "implement OAuth",
-      options: { raised: true },
+      options: { flagged: true },
     } satisfies ApplyArgs);
-    expect(result.signals.raised).toBe(true);
-    expect(result.signals.important).toBe(true);
+    expect(result.signals.flagged).toBe(true);
+    expect(result.signals.starred).toBe(true);
     expect(result.firstLine).toBe("// ~*todo ::: implement OAuth");
   });
 
@@ -106,8 +106,8 @@ describe("applyModifications", () => {
       baseContent: "implement OAuth",
       options: { noSignal: true },
     } satisfies ApplyArgs);
-    expect(result.signals.raised).toBe(false);
-    expect(result.signals.important).toBe(false);
+    expect(result.signals.flagged).toBe(false);
+    expect(result.signals.starred).toBe(false);
     expect(result.firstLine).toBe("// todo ::: implement OAuth");
   });
 });

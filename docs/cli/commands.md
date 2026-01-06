@@ -12,7 +12,7 @@ Complete documentation for all `wm` commands, configuration, filtering, and work
 # Scan and display waymarks
 wm src/                              # all waymarks in src/
 wm src/ --type todo                  # filter by type
-wm src/ --raised                     # only ^ (work-in-progress)
+wm src/ --flagged                     # only ^ (work-in-progress)
 wm src/ --starred                    # only * (high-priority)
 
 # Graph mode: relation edges
@@ -26,7 +26,7 @@ wm lint src/                         # validate waymarks
 # Waymark management
 wm add src/auth.ts:42 todo "add rate limiting" --write
 wm rm src/auth.ts:42 --write             # or: wm rm
-wm edit src/auth.ts:42 --raised --write
+wm edit src/auth.ts:42 --flagged --write
 
 # Output formats
 wm src/ --json                       # compact JSON
@@ -92,9 +92,9 @@ See [Waymark Grammar](../GRAMMAR.md) for complete grammar details.
 
 Signals are optional prefixes that indicate state or priority:
 
-- `~` (tilde) — **Raised**: work-in-progress, branch-scoped. Must be cleared before merging.
+- `~` (tilde) — **Flagged**: work-in-progress, branch-scoped. Must be cleared before merging.
 - `*` (star) — **Starred**: important, high-priority.
-- `~*` (combined) — Both raised and starred.
+- `~*` (combined) — Both flagged and starred.
 
 **Important**: Only use single `~` and `*`. Double signals (`~~`, `**`) are not part of the v1 grammar.
 
@@ -198,7 +198,7 @@ wm src/ --type todo
 wm src/ --type fix --type wip
 
 # Filter by signals
-wm src/ --raised                     # only ^ waymarks
+wm src/ --flagged                     # only ^ waymarks
 wm src/ --starred                    # only * waymarks
 
 # Filter by tags
@@ -357,7 +357,7 @@ wm rm src/auth.ts:42 --write              # or: wm rm src/auth.ts:42 --write
 wm rm src/auth.ts:42 --reason "cleanup" --write
 
 # Edit waymark signals
-wm edit src/auth.ts:42 --raised --write
+wm edit src/auth.ts:42 --flagged --write
 wm edit src/auth.ts:42 --starred --write
 wm edit src/auth.ts:42 --clear-signals --write
 ```
@@ -514,7 +514,7 @@ Output:
     "endLine": 42,
     "type": "todo",
     "contentText": "implement rate limiting",
-    "signals": { "raised": false, "important": false }
+    "signals": { "flagged": false, "starred": false }
   }
 ]
 ```
@@ -560,9 +560,9 @@ wm src/ --type todo --type fix        # OR logic (todo OR fix)
 Filter by signals:
 
 ```bash
-wm src/ --raised                      # only ^ waymarks
+wm src/ --flagged                      # only ^ waymarks
 wm src/ --starred                     # only * waymarks
-wm src/ --raised --starred            # both raised AND starred
+wm src/ --flagged --starred            # both flagged AND starred
 ```
 
 ### Tag Filters
@@ -603,8 +603,8 @@ Filters use AND logic across different types:
 # Find TODOs for @agent tagged with #perf
 wm src/ --type todo --mention @agent --tag perf
 
-# Find raised FIX waymarks blocking #payments
-wm src/ --raised --type fix --blocks "#payments"
+# Find flagged FIX waymarks blocking #payments
+wm src/ --flagged --type fix --blocks "#payments"
 ```
 
 ---
@@ -659,10 +659,10 @@ wm src/ --type todo --mention @yourname
 
 ### Pre-Merge Checklist
 
-Ensure no raised waymarks before merging:
+Ensure no flagged waymarks before merging:
 
 ```bash
-wm src/ --raised
+wm src/ --flagged
 # Should return no results
 ```
 

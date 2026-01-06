@@ -109,7 +109,7 @@ describe("editWaymark", () => {
     await writeFile(filePath, "// todo ::: audit\n", "utf8");
 
     await editWaymark(
-      { file: filePath, line: 1, raised: true, starred: true, write: true },
+      { file: filePath, line: 1, flagged: true, starred: true, write: true },
       DEFAULT_CONFIG
     );
 

@@ -23,7 +23,7 @@ function createTestRecord(
     endLine: 1,
     type: "todo",
     contentText: "test content",
-    signals: { raised: false, important: false },
+    signals: { flagged: false, starred: false },
     properties: {},
     relations: [],
     canonicals: [],

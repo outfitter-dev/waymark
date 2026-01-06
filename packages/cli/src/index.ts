@@ -299,7 +299,7 @@ type ModifyCliOptions = {
   id?: string;
   type?: string;
   content?: string;
-  raised?: boolean;
+  flagged?: boolean;
   starred?: boolean;
   clearSignals?: boolean;
   write?: boolean;
@@ -372,8 +372,8 @@ function buildModifyOptions(
   if (interactiveOverride !== undefined) {
     options.interactive = interactiveOverride;
   }
-  if (rawOptions.raised) {
-    options.raised = true;
+  if (rawOptions.flagged) {
+    options.flagged = true;
   }
   if (rawOptions.starred) {
     options.starred = true;
@@ -402,7 +402,7 @@ function determineInteractiveOverride(
   const hasMutationFlag = Boolean(
     rawOptions.type ||
       rawOptions.content ||
-      rawOptions.raised ||
+      rawOptions.flagged ||
       rawOptions.starred ||
       rawOptions.clearSignals
   );
@@ -616,7 +616,7 @@ function displaySelectedWaymark(
   writeStdout("\nSelected waymark:\n");
   writeStdout(`${selected.file}:${selected.startLine}`);
   writeStdout(
-    `${selected.signals.raised ? "~" : ""}${selected.signals.important ? "*" : ""}${selected.type} ::: ${selected.contentText}`
+    `${selected.signals.flagged ? "~" : ""}${selected.signals.starred ? "*" : ""}${selected.type} ::: ${selected.contentText}`
   );
 
   if (Object.keys(selected.properties).length > 0) {

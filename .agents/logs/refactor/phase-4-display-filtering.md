@@ -96,7 +96,7 @@ Created `test-display.ts` script that generated test files and verified:
 - Grouping by type/file
 - Sorting by file/line
 - Pagination with `--limit`
-- Signal filters (`--raised`, `--starred`)
+- Signal filters (`--flagged`, `--starred`)
 - Complex combinations
 
 ### Automated Tests ✅

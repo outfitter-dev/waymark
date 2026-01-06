@@ -89,13 +89,13 @@ rg '"this"' packages/grammar/src/constants.ts
 
 ### Branch 2: `syntax/signals-tilde`
 
-**Summary**: Change raised signal from `^` to `~`. Canonical order becomes `~*`.
+**Summary**: Change flagged signal from `^` to `~`. Canonical order becomes `~*`.
 
 **Files to Modify**:
 
 Grammar:
 
-- `packages/grammar/src/constants.ts` - Change `SIGNALS.raised` from `"^"` to `"~"`
+- `packages/grammar/src/constants.ts` - Change `SIGNALS.flagged` from `"^"` to `"~"`
 - `packages/grammar/src/tokenizer.ts` - Update signal detection (lines 64-67)
 - `packages/grammar/src/types.ts` - Update comments
 - `packages/grammar/src/parser.test.ts` - Update signal test expectations
@@ -120,7 +120,7 @@ CLI:
 rg '"\^"' packages/ --type ts        # Find ^ string literals
 rg "'\^'" packages/ --type ts        # Find ^ char literals
 rg '\\^' packages/ --type ts         # Find ^ in regexes
-rg 'raised' packages/ --type ts      # Find all raised references
+rg 'flagged' packages/ --type ts     # Find all flagged references
 ```
 
 **Estimated LOC**: ~150-200
@@ -283,7 +283,7 @@ Continuation handling exists in `packages/grammar/src/content.ts`. This branch e
 ```bash
 rg ':::'  # Find all waymark examples
 rg 'wm:'  # Find legacy ID references
-rg '\^'   # Find old raised signal references
+rg '\^'   # Find old flagged signal references
 ```
 
 **Estimated LOC**: ~200-300

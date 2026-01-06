@@ -24,8 +24,8 @@ export const addWaymarkInputSchema = configOptionsSchema.extend({
   line: z.number().int().positive().optional(),
   signals: z
     .object({
-      raised: z.boolean().optional(),
-      important: z.boolean().optional(),
+      flagged: z.boolean().optional(),
+      starred: z.boolean().optional(),
     })
     .optional(),
 });
@@ -64,8 +64,8 @@ export type WaymarkToolInput = z.infer<typeof waymarkToolInputSchema>;
 export type RenderFormat = ScanInput["format"];
 
 export type SignalFlags = {
-  raised?: boolean | undefined;
-  important?: boolean | undefined;
+  flagged?: boolean | undefined;
+  starred?: boolean | undefined;
 };
 
 export type CommentStyle = {

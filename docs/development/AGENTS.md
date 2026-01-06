@@ -386,8 +386,8 @@ Write tests first, then implementation:
 test('parseHeader extracts signals and marker', () => {
   const result = parseHeader('// ^*todo ::: fix bug');
   expect(result.marker).toBe('todo');
-  expect(result.signals.raised).toBe(true);
-  expect(result.signals.important).toBe(true);
+  expect(result.signals.flagged).toBe(true);
+  expect(result.signals.starred).toBe(true);
 });
 
 // Step 2: Implement minimum to pass

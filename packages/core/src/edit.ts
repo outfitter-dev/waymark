@@ -28,7 +28,7 @@ export const EditSpecSchema = z
     id: z.string().trim().min(1).optional(),
     type: z.string().trim().min(1).optional(),
     content: z.string().optional(),
-    raised: z.boolean().optional(),
+    flagged: z.boolean().optional(),
     starred: z.boolean().optional(),
     clearSignals: z.boolean().optional(),
     write: z.boolean().optional(),
@@ -58,7 +58,7 @@ export const EditSpecSchema = z
     (data) =>
       data.type !== undefined ||
       data.content !== undefined ||
-      data.raised !== undefined ||
+      data.flagged !== undefined ||
       data.starred !== undefined ||
       data.clearSignals === true,
     {
@@ -106,7 +106,7 @@ export async function editWaymark(
     id: options.id,
     type: options.type,
     content: options.content,
-    raised: options.raised,
+    flagged: options.flagged,
     starred: options.starred,
     clearSignals: options.clearSignals,
     write: options.write,
@@ -137,7 +137,7 @@ export async function editWaymark(
 
   const nextType = resolveType(record.type, spec.type);
   const signalOverrides = {
-    ...(spec.raised === undefined ? {} : { raised: spec.raised }),
+    ...(spec.flagged === undefined ? {} : { flagged: spec.flagged }),
     ...(spec.starred === undefined ? {} : { starred: spec.starred }),
     ...(spec.clearSignals === undefined
       ? {}
@@ -408,30 +408,30 @@ function resolveType(current: string, override?: string): string {
   return trimmed;
 }
 
-// `current` mirrors the raised signal unless we are explicitly clearing signals,
-// so the active display state stays aligned with the persisted raised flag.
+// `current` mirrors the flagged signal unless we are explicitly clearing signals,
+// so the active display state stays aligned with the persisted flagged flag.
 function resolveSignals(
   current: WaymarkRecord["signals"],
   overrides: {
-    raised?: boolean;
+    flagged?: boolean;
     starred?: boolean;
     clearSignals?: boolean;
   }
 ): WaymarkRecord["signals"] {
   if (overrides.clearSignals) {
-    return { ...current, raised: false, important: false, current: false };
+    return { ...current, flagged: false, starred: false, current: false };
   }
 
-  const nextRaised =
-    overrides.raised !== undefined ? overrides.raised : current.raised;
-  const nextImportant =
-    overrides.starred !== undefined ? overrides.starred : current.important;
+  const nextFlagged =
+    overrides.flagged !== undefined ? overrides.flagged : current.flagged;
+  const nextStarred =
+    overrides.starred !== undefined ? overrides.starred : current.starred;
 
   return {
     ...current,
-    raised: nextRaised,
-    important: nextImportant,
-    current: nextRaised,
+    flagged: nextFlagged,
+    starred: nextStarred,
+    current: nextFlagged,
   };
 }
 
@@ -527,10 +527,10 @@ function renderContinuationLine(
 
 function buildSignalPrefix(signals: WaymarkRecord["signals"]): string {
   let prefix = "";
-  if (signals.raised) {
+  if (signals.flagged) {
     prefix += "~";
   }
-  if (signals.important) {
+  if (signals.starred) {
     prefix += "*";
   }
   return prefix;

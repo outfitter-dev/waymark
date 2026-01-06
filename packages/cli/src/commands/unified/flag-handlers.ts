@@ -18,7 +18,7 @@ export type ParseState = {
   excludeMentions: string[];
   jsonState: { outputFormat: "json" | "jsonl" | null };
   isGraphMode: boolean;
-  raised: boolean | undefined;
+  flagged: boolean | undefined;
   starred: boolean | undefined;
   displayMode: "text" | "long" | "tree" | "flat" | "graph" | undefined;
   contextBefore: number | undefined;
@@ -166,7 +166,7 @@ export function handleModeDisplayFlags(
 
   // Signal filters
   if (token === "--flagged" || token === "-F") {
-    state.raised = true;
+    state.flagged = true;
     return true;
   }
   if (token === "--starred" || token === "-S") {

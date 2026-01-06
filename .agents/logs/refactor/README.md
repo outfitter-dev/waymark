@@ -28,7 +28,7 @@ Merged `scan`, `find`, `map`, `graph` into single intelligent `wm` command with 
 
 - Removed discrete `scan`, `find`, `map`, `graph` commands
 - Created unified command with `--map` and `--graph` flags
-- Added `--raised` and `--starred` signal filters
+- Added `--flagged` and `--starred` signal filters
 - Only standalone commands: `format`, `lint`, `migrate`, `help`
 
 ### 📍 [Phase 3: Intelligent Query Parsing](./phase-3-query-parsing.md)

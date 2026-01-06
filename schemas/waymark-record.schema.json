@@ -42,11 +42,11 @@
       "type": "object",
       "description": "Signal flags for the waymark",
       "properties": {
-        "raised": {
+        "flagged": {
           "type": "boolean",
-          "description": "Whether marked with ^ (raised work in progress)"
+          "description": "Whether marked with ~ (flagged work in progress)"
         },
-        "important": {
+        "starred": {
           "type": "boolean",
           "description": "Whether marked with * (high priority)"
         }

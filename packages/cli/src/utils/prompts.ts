@@ -65,9 +65,9 @@ export async function selectWaymark(
 
   const choices: WaymarkChoice[] = records.map((record) => {
     let prefix = " ";
-    if (record.signals.raised) {
+    if (record.signals.flagged) {
       prefix = "~";
-    } else if (record.signals.important) {
+    } else if (record.signals.starred) {
       prefix = "*";
     }
 

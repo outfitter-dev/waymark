@@ -572,7 +572,7 @@ describe("Unified command", () => {
 
   test("parseUnifiedArgs detects flagged signal filter", () => {
     const options = parseUnifiedArgs(["--flagged", "src/"]);
-    expect(options.raised).toBe(true);
+    expect(options.flagged).toBe(true);
   });
 
   test("parseUnifiedArgs detects starred signal filter", () => {
@@ -590,7 +590,7 @@ describe("Unified command", () => {
       "src/",
     ]);
     expect(options.types).toEqual(["todo"]);
-    expect(options.raised).toBe(true);
+    expect(options.flagged).toBe(true);
     expect(options.tags).toEqual(["perf"]);
   });
 
@@ -628,8 +628,8 @@ describe("Unified command", () => {
     await cleanup();
   });
 
-  test("runUnifiedCommand applies raised signal filter", async () => {
-    const source = ["// ~todo ::: raised work", "// todo ::: normal work"].join(
+  test("runUnifiedCommand applies flagged signal filter", async () => {
+    const source = ["// ~todo ::: flagged work", "// todo ::: normal work"].join(
       "\n"
     );
     const { file, cleanup } = await withTempFile(source);
@@ -637,15 +637,15 @@ describe("Unified command", () => {
     const output = await runUnifiedOutput({
       filePaths: [file],
       isGraphMode: false,
-      raised: true,
+      flagged: true,
       outputFormat: "json",
     });
 
     const parsed = JSON.parse(output) as Array<{
-      signals: { raised: boolean };
+      signals: { flagged: boolean };
     }>;
     expect(parsed).toHaveLength(1);
-    expect(parsed[0]?.signals.raised).toBe(true);
+    expect(parsed[0]?.signals.flagged).toBe(true);
     await cleanup();
   });
 
@@ -663,17 +663,17 @@ describe("Unified command", () => {
     });
 
     const parsed = JSON.parse(output) as Array<{
-      signals: { important: boolean };
+      signals: { starred: boolean };
     }>;
     expect(parsed).toHaveLength(1);
-    expect(parsed[0]?.signals.important).toBe(true);
+    expect(parsed[0]?.signals.starred).toBe(true);
     await cleanup();
   });
 
   test("runUnifiedCommand combines multiple filters", async () => {
     const source = [
       "// ~*todo ::: critical task #perf",
-      "// ~todo ::: raised work",
+      "// ~todo ::: flagged work",
       "// *fix ::: important bug",
       "// note ::: context",
     ].join("\n");
@@ -683,7 +683,7 @@ describe("Unified command", () => {
       filePaths: [file],
       isGraphMode: false,
       types: ["todo"],
-      raised: true,
+      flagged: true,
       starred: true,
       tags: ["#perf"],
       outputFormat: "json",
@@ -691,12 +691,12 @@ describe("Unified command", () => {
 
     const parsed = JSON.parse(output) as Array<{
       type: string;
-      signals: { raised: boolean; important: boolean };
+      signals: { flagged: boolean; starred: boolean };
     }>;
     expect(parsed).toHaveLength(1);
     expect(parsed[0]?.type).toBe("todo");
-    expect(parsed[0]?.signals.raised).toBe(true);
-    expect(parsed[0]?.signals.important).toBe(true);
+    expect(parsed[0]?.signals.flagged).toBe(true);
+    expect(parsed[0]?.signals.starred).toBe(true);
     await cleanup();
   });
 
@@ -1047,13 +1047,13 @@ describe("Commander integration", () => {
       before: {
         raw: "// todo ::: test",
         type: "todo",
-        signals: { raised: false, important: false },
+        signals: { flagged: false, starred: false },
         content: "test",
       },
       after: {
         raw: "// todo ::: test",
         type: "todo",
-        signals: { raised: false, important: false },
+        signals: { flagged: false, starred: false },
         content: "test",
       },
       indexRefreshed: false,

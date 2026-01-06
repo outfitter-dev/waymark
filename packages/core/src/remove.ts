@@ -13,8 +13,8 @@ import type { CoreLogger, WaymarkConfig } from "./types.ts";
 // Define the signals schema separately so we can reuse it
 const RemovalSignalsSchema = z
   .object({
-    raised: z.boolean().optional(),
-    important: z.boolean().optional(),
+    flagged: z.boolean().optional(),
+    starred: z.boolean().optional(),
   })
   .strict();
 
@@ -594,14 +594,14 @@ function signalsMatch(
     return true;
   }
   if (
-    signals.raised !== undefined &&
-    record.signals.raised !== signals.raised
+    signals.flagged !== undefined &&
+    record.signals.flagged !== signals.flagged
   ) {
     return false;
   }
   if (
-    signals.important !== undefined &&
-    record.signals.important !== signals.important
+    signals.starred !== undefined &&
+    record.signals.starred !== signals.starred
   ) {
     return false;
   }

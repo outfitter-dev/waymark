@@ -22,7 +22,7 @@ export type ModifyOptions = {
   id?: string;
   type?: string;
   content?: string;
-  raised?: boolean;
+  flagged?: boolean;
   starred?: boolean;
   noSignal?: boolean;
   write?: boolean;
@@ -44,8 +44,8 @@ export type ModifyCommandResult = {
 };
 
 type ModifySignals = {
-  raised: boolean;
-  important: boolean;
+  flagged: boolean;
+  starred: boolean;
 };
 
 type ModifyIo = {
@@ -99,8 +99,8 @@ class InteractiveCancelError extends Error {
 
 type InteractiveAnswers = {
   type?: string;
-  addRaised?: boolean;
-  addImportant?: boolean;
+  addFlagged?: boolean;
+  addStarred?: boolean;
   clearSignals?: boolean;
   updateContent?: boolean;
   content?: string;
@@ -339,12 +339,12 @@ function determineSignals(
   options: ModifyOptions
 ): ModifySignals {
   if (options.noSignal) {
-    return { raised: false, important: false };
+    return { flagged: false, starred: false };
   }
 
   return {
-    raised: options.raised ? true : current.raised,
-    important: options.starred ? true : current.important,
+    flagged: options.flagged ? true : current.flagged,
+    starred: options.starred ? true : current.starred,
   };
 }
 
@@ -411,10 +411,10 @@ function renderFirstLine(args: RenderArgs): string {
 
 function buildSignalPrefix(signals: ModifySignals): string {
   let prefix = "";
-  if (signals.raised) {
+  if (signals.flagged) {
     prefix += "~";
   }
-  if (signals.important) {
+  if (signals.starred) {
     prefix += "*";
   }
   return prefix;
@@ -523,8 +523,8 @@ async function runInteractiveSession(
   const {
     type,
     clearSignals,
-    addRaised,
-    addImportant,
+    addFlagged,
+    addStarred,
     updateContent,
     content,
     apply,
@@ -537,10 +537,10 @@ async function runInteractiveSession(
   if (clearSignals) {
     nextOptions.noSignal = true;
   } else {
-    if (addRaised && !record.signals.raised) {
-      nextOptions.raised = true;
+    if (addFlagged && !record.signals.flagged) {
+      nextOptions.flagged = true;
     }
-    if (addImportant && !record.signals.important) {
+    if (addStarred && !record.signals.starred) {
       nextOptions.starred = true;
     }
   }
@@ -581,24 +581,24 @@ function buildInteractiveSteps(args: {
       }),
     },
     {
-      name: "addRaised",
+      name: "addFlagged",
       build: () => ({
         type: "confirm",
-        name: "addRaised",
+        name: "addFlagged",
         message: "Add flagged signal (~)?",
         default:
-          answers.addRaised ?? record.signals.raised ?? options.raised ?? false,
+          answers.addFlagged ?? record.signals.flagged ?? options.flagged ?? false,
       }),
     },
     {
-      name: "addImportant",
+      name: "addStarred",
       build: () => ({
         type: "confirm",
-        name: "addImportant",
+        name: "addStarred",
         message: "Add starred signal (*) to mark as important/valuable?",
         default:
-          answers.addImportant ??
-          record.signals.important ??
+          answers.addStarred ??
+          record.signals.starred ??
           options.starred ??
           false,
       }),
@@ -854,7 +854,7 @@ export async function resolveContentInput(
 function ensureModificationsSpecified(options: ModifyOptions): void {
   const hasType = Boolean(options.type);
   const hasSignals = Boolean(
-    options.raised || options.starred || options.noSignal
+    options.flagged || options.starred || options.noSignal
   );
   const hasContent = options.content !== undefined;
 
@@ -938,14 +938,14 @@ function describeChanges(payload: ModifyPayload): string[] {
   }
   if (payload.modifications.signals) {
     const { from, to } = payload.modifications.signals;
-    if (from.raised !== to.raised) {
+    if (from.flagged !== to.flagged) {
       entries.push(
-        to.raised ? "Added flagged signal (~)" : "Removed flagged signal (~)"
+        to.flagged ? "Added flagged signal (~)" : "Removed flagged signal (~)"
       );
     }
-    if (from.important !== to.important) {
+    if (from.starred !== to.starred) {
       entries.push(
-        to.important ? "Added starred signal (*)" : "Removed starred signal (*)"
+        to.starred ? "Added starred signal (*)" : "Removed starred signal (*)"
       );
     }
   }
@@ -964,17 +964,17 @@ function buildModificationSummary(
     summary.type = { from: previous.type, to: applied.type };
   }
   if (
-    previous.signals.raised !== applied.signals.raised ||
-    previous.signals.important !== applied.signals.important
+    previous.signals.flagged !== applied.signals.flagged ||
+    previous.signals.starred !== applied.signals.starred
   ) {
     summary.signals = {
       from: {
-        raised: previous.signals.raised,
-        important: previous.signals.important,
+        flagged: previous.signals.flagged,
+        starred: previous.signals.starred,
       },
       to: {
-        raised: applied.signals.raised,
-        important: applied.signals.important,
+        flagged: applied.signals.flagged,
+        starred: applied.signals.starred,
       },
     };
   }

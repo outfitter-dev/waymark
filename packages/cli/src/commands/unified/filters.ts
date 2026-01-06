@@ -15,7 +15,7 @@ export function applyFilters(
     types,
     tags,
     mentions,
-    raised,
+    flagged,
     starred,
     excludeTypes,
     excludeTags,
@@ -54,13 +54,13 @@ export function applyFilters(
   }
 
   // Apply signal filters
-  if (raised !== undefined || starred !== undefined) {
+  if (flagged !== undefined || starred !== undefined) {
     filtered = filtered.filter((record) => {
       const { signals } = record;
-      if (raised && !signals.raised) {
+      if (flagged && !signals.flagged) {
         return false;
       }
-      if (starred && !signals.important) {
+      if (starred && !signals.starred) {
         return false;
       }
       return true;

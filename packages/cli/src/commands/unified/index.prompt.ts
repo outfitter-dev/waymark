@@ -97,7 +97,7 @@ EXAMPLE OUTPUTS
       "file": "src/auth.ts",
       "startLine": 12,
       "type": "todo",
-      "signals": { "raised": false, "important": false },
+      "signals": { "flagged": false, "starred": false },
       "contentText": "@agent implement OAuth callback",
       "mentions": ["@agent"],
       "tags": ["#sec"],

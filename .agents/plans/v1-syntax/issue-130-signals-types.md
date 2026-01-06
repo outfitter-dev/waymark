@@ -6,7 +6,7 @@ Update grammar/parser/formatter/lint + tests for the v1 signal changes and type 
 
 ## Scope
 
-- Replace raised signal `^` with `~` (important stays `*`), accept either order, format to canonical `~*`.
+- Replace flagged signal `^` with `~` (starred stays `*`), accept either order, format to canonical `~*`.
 - Update blessed type list and aliases (context/why, temp/tmp, question/ask, about replaces this).
 - Parser normalizes type casing to lowercase.
 
@@ -19,8 +19,8 @@ Update grammar/parser/formatter/lint + tests for the v1 signal changes and type 
 ## Edge cases / expectations
 
 - Accept both `~*todo` and `*~todo` input but normalize to `~*todo` in formatted output.
-- `~` should be treated as the only raised signal (no `^` support).
-- Ensure display + search filters map to the new `~` glyph while keeping flag names `--raised/--starred`.
+- `~` should be treated as the only flagged signal (no `^` support).
+- Ensure display + search filters map to the new `~` glyph while keeping flag names `--flagged/--starred`.
 
 ## Change surface (code + docs)
 
@@ -71,5 +71,5 @@ Update grammar/parser/formatter/lint + tests for the v1 signal changes and type 
 
 ## Notes
 
-- Keep `--raised/--starred` CLI flags but update rendered signal characters to `~` and `*`.
+- Keep `--flagged/--starred` CLI flags but update rendered signal characters to `~` and `*`.
 - Formatter should normalize to `~*` order even if parsed input was `*~`.

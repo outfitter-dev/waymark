@@ -64,7 +64,7 @@ const result = await insertWaymarks({
     line: 42,
     type: 'todo',
     content: 'implement rate limiting',
-    signals: { raised: true }
+    signals: { flagged: true }
   }]
 });
 
