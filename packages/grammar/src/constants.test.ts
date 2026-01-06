@@ -44,6 +44,7 @@ describe("PROPERTY_KEYS contract", () => {
       "affects",
       "priority",
       "status",
+      "sym",
     ].sort();
 
     expect(Array.from(PROPERTY_KEYS).sort()).toEqual(expectedKeys);

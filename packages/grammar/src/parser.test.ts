@@ -445,4 +445,43 @@ describe("parse", () => {
       owner: "@alice",
     });
   });
+
+  test("parses sym: property for symbol binding", () => {
+    const record = parseLine(
+      "// about ::: authentication handler sym:handleAuth #auth",
+      LINE_ONE,
+      { file: "src/auth.ts" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.type).toBe("about");
+    expect(record?.properties).toEqual({
+      sym: "handleAuth",
+    });
+    expect(record?.tags).toContain("#auth");
+  });
+
+  test("parses sym: as property-as-marker in continuation context", () => {
+    const source = [
+      "// about ::: user authentication service",
+      "// sym   ::: AuthService",
+      "// owner ::: @alice",
+    ].join("\n");
+
+    const records = parse(source, { file: "src/auth.ts" });
+    expect(records).toHaveLength(1);
+    const record = records[0];
+
+    expect(record).toBeDefined();
+    if (!record) {
+      throw new Error("expected waymark record");
+    }
+
+    expect(record.type).toBe("about");
+    expect(record.contentText).toBe("user authentication service");
+    expect(record.properties).toEqual({
+      sym: "AuthService",
+      owner: "@alice",
+    });
+  });
 });
