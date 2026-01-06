@@ -50,7 +50,7 @@ INLINE ARGUMENT FLAGS
 
   --ref <token>        Set canonical reference: ref:#auth/core
 
-  --source <token>     Add dependency: from:#infra/db
+  --source <token>     Add dependency: source:#infra/db
   --see <token>        Add reference relation: see:#api/v2
   --replaces <token>   Add replaces relation: replaces:#feature/old
 
