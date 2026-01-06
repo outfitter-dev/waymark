@@ -81,6 +81,8 @@ const LINE_SPLIT_REGEX = /\r?\n/;
 // Match [[hash]], [[hash|alias]], or [[alias]] at end of content
 const ID_TRAIL_REGEX = /(\[\[[^\]]+\]\])$/i;
 const DEFAULT_MARKERS = ["todo", "fix", "note", "warn", "tldr", "done"];
+const LEGACY_WM_PREFIX = "wm:";
+const LEGACY_WM_PREFIX_LENGTH = LEGACY_WM_PREFIX.length;
 
 const DEFAULT_IO: ModifyIo = {
   stdin: process.stdin,
@@ -490,7 +492,9 @@ function normalizeId(id: string): string {
     return id;
   }
   // Strip wm: prefix if present (legacy format)
-  const hash = id.startsWith("wm:") ? id.slice(3) : id;
+  const hash = id.startsWith(LEGACY_WM_PREFIX)
+    ? id.slice(LEGACY_WM_PREFIX_LENGTH)
+    : id;
   return `[[${hash}]]`;
 }
 
@@ -587,7 +591,10 @@ function buildInteractiveSteps(args: {
         name: "addFlagged",
         message: "Add flagged signal (~)?",
         default:
-          answers.addFlagged ?? record.signals.flagged ?? options.flagged ?? false,
+          answers.addFlagged ??
+          record.signals.flagged ??
+          options.flagged ??
+          false,
       }),
     },
     {

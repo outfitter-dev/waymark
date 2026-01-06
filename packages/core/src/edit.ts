@@ -20,6 +20,8 @@ const HTML_COMMENT_LEADER = "<!--";
 const HTML_COMMENT_CLOSE_REGEX = /\s*--!?>\s*$/;
 const CONTEXT_BEFORE_LINES = 2;
 const CONTEXT_AFTER_LINES = 3;
+const LEGACY_WM_PREFIX = "wm:";
+const LEGACY_WM_PREFIX_LENGTH = LEGACY_WM_PREFIX.length;
 
 export const EditSpecSchema = z
   .object({
@@ -606,7 +608,9 @@ function normalizeId(id: string): string {
     return id;
   }
   // Strip wm: prefix if present (legacy format)
-  const hash = id.startsWith("wm:") ? id.slice(3) : id;
+  const hash = id.startsWith(LEGACY_WM_PREFIX)
+    ? id.slice(LEGACY_WM_PREFIX_LENGTH)
+    : id;
   return `[[${hash}]]`;
 }
 

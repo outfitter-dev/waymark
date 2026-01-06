@@ -12,8 +12,7 @@ const LINE_NUMBER_WIDTH = 3;
  */
 export function formatRecordSimple(record: WaymarkRecord): string {
   const signals =
-    (record.signals.flagged ? "~" : "") +
-    (record.signals.starred ? "*" : "");
+    (record.signals.flagged ? "~" : "") + (record.signals.starred ? "*" : "");
   // Pad line numbers to 3 digits (aligned to column 4) unless > 999
   const lineStr = String(record.startLine).padStart(LINE_NUMBER_WIDTH, " ");
   return `${record.file}:${lineStr}: // ${signals}${record.type} ::: ${record.contentText}`;

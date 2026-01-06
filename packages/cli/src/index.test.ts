@@ -629,9 +629,10 @@ describe("Unified command", () => {
   });
 
   test("runUnifiedCommand applies flagged signal filter", async () => {
-    const source = ["// ~todo ::: flagged work", "// todo ::: normal work"].join(
-      "\n"
-    );
+    const source = [
+      "// ~todo ::: flagged work",
+      "// todo ::: normal work",
+    ].join("\n");
     const { file, cleanup } = await withTempFile(source);
 
     const output = await runUnifiedOutput({

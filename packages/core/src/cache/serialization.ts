@@ -57,15 +57,16 @@ function parseSignals(
 
   const currentValue =
     parsed.current !== undefined ? Boolean(parsed.current) : flaggedValue;
+  let starredValue = false;
+  if (parsed.starred !== undefined) {
+    starredValue = Boolean(parsed.starred);
+  } else if (parsed.important !== undefined) {
+    starredValue = Boolean(parsed.important);
+  }
   return {
     flagged: flaggedValue,
     current: currentValue,
-    starred:
-      parsed.starred === undefined
-        ? parsed.important === undefined
-          ? false
-          : Boolean(parsed.important)
-        : Boolean(parsed.starred),
+    starred: starredValue,
   };
 }
 

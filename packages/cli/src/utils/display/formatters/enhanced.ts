@@ -48,8 +48,7 @@ function getLongestTypeLength(records: WaymarkRecord[]): number {
   let maxLength = 0;
   for (const record of records) {
     const signalStr =
-      (record.signals.flagged ? "~" : "") +
-      (record.signals.starred ? "*" : "");
+      (record.signals.flagged ? "~" : "") + (record.signals.starred ? "*" : "");
     const typeLength = signalStr.length + record.type.length;
     if (typeLength > maxLength) {
       maxLength = typeLength;
