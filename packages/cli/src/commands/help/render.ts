@@ -86,7 +86,7 @@ export function renderGlobalHelp(): string {
   sections.push("");
   sections.push("Filter options:");
   const filterFlags = mainCommand.flags?.filter((f) =>
-    ["type", "tag", "mention", "raised", "starred"].includes(f.name)
+    ["type", "tag", "mention", "flagged", "starred"].includes(f.name)
   );
   for (const flag of filterFlags ?? []) {
     sections.push(renderFlag(flag));

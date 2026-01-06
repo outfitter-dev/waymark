@@ -20,7 +20,7 @@ export function getGroupKey(record: WaymarkRecord, groupBy: GroupBy): string {
     case "signal": {
       const signals: string[] = [];
       if (record.signals.raised) {
-        signals.push("raised");
+        signals.push("flagged");
       }
       if (record.signals.important) {
         signals.push("starred");

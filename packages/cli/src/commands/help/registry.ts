@@ -273,7 +273,7 @@ export const commands: HelpRegistry = {
         name: "signal",
         type: "string",
         placeholder: "~|*",
-        description: "Add signal (~ raised, * starred)",
+        description: "Add signal (~ flagged, * starred)",
       },
       {
         name: "flagged",
@@ -439,10 +439,10 @@ export const commands: HelpRegistry = {
         description: "Filter by content substring",
       },
       {
-        name: "raised",
+        name: "flagged",
         alias: "R",
         type: "boolean",
-        description: "Filter by raised signal (~)",
+        description: "Filter by flagged signal (~)",
       },
       {
         name: "starred",
@@ -591,10 +591,10 @@ queries, filtering by type/tag/mention, and multiple output formats.
       description: "Filter by mention",
     },
     {
-      name: "raised",
+      name: "flagged",
       alias: "R",
       type: "boolean",
-      description: "Show only raised (~) waymarks",
+      description: "Show only flagged (~) waymarks",
     },
     {
       name: "starred",
