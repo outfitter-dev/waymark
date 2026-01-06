@@ -21,9 +21,9 @@ FORMATTING RULES
      Before: // TODO ::: fix this
      After:  // todo ::: fix this
 
-  3. Signal order: ^ (raised) before * (starred)
-     Before: // *^todo ::: implement
-     After:  // ^*todo ::: implement
+  3. Signal order: ~ (raised) before * (starred)
+     Before: // *~todo ::: implement
+     After:  // ~*todo ::: implement
 
   4. Multi-line alignment: Continuation ::: aligns with parent
      Before:
@@ -34,7 +34,7 @@ FORMATTING RULES
        //      ::: handles webhooks
 
   5. Property ordering: Relations placed after free text
-     Properties like ref:#token, depends:#token ordered consistently
+     Properties like ref:#token, from:#token ordered consistently
 
 AGENT WORKFLOWS
 

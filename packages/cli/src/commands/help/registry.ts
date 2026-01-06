@@ -272,14 +272,14 @@ export const commands: HelpRegistry = {
       {
         name: "signal",
         type: "string",
-        placeholder: "^|*",
-        description: "Add signal (^ raised, * starred)",
+        placeholder: "~|*",
+        description: "Add signal (~ raised, * starred)",
       },
       {
         name: "raised",
         alias: "R",
         type: "boolean",
-        description: "Add raised signal (^)",
+        description: "Add raised signal (~)",
       },
       {
         name: "starred",
@@ -346,7 +346,7 @@ export const commands: HelpRegistry = {
         name: "raised",
         alias: "R",
         type: "boolean",
-        description: "Add raised signal (^)",
+        description: "Add raised signal (~)",
       },
       {
         name: "starred",
@@ -442,7 +442,7 @@ export const commands: HelpRegistry = {
         name: "raised",
         alias: "R",
         type: "boolean",
-        description: "Filter by raised signal (^)",
+        description: "Filter by raised signal (~)",
       },
       {
         name: "starred",
@@ -594,7 +594,7 @@ queries, filtering by type/tag/mention, and multiple output formats.
       name: "raised",
       alias: "R",
       type: "boolean",
-      description: "Show only raised (^) waymarks",
+      description: "Show only raised (~) waymarks",
     },
     {
       name: "starred",
@@ -633,7 +633,7 @@ queries, filtering by type/tag/mention, and multiple output formats.
     "wm src/                            # Scan and display all waymarks",
     "wm --type todo                     # Show all TODOs",
     "wm --tldr                          # Show all TLDRs (shorthand)",
-    "wm --type todo --raised            # Show raised TODOs (^todo)",
+    "wm --type todo --raised            # Show raised TODOs (~todo)",
     "wm --mention @alice                # Show waymarks mentioning @alice",
     "wm --tag perf                      # Show waymarks tagged #perf",
     "wm --graph                         # Show relation graph",

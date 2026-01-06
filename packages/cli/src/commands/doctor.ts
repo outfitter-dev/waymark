@@ -10,7 +10,7 @@ import type { CommandContext } from "../types";
 import { expandInputPaths } from "../utils/fs";
 import { logger } from "../utils/logger";
 
-// about :::canonical relation kinds that must have valid targets
+// about ::: canonical relation kinds that must have valid targets
 const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
   "from",
   "replaces",
@@ -20,7 +20,7 @@ const TLDR_TOP_LINES_MAX = 20;
 const BYTES_PER_MB = 1024 * 1024;
 const MAX_INDEX_MB = 10;
 
-// about :::diagnostic issue severity and metadata structure
+// about ::: diagnostic issue severity and metadata structure
 export type DiagnosticIssue = {
   severity: "error" | "warning" | "info";
   category: string;
@@ -30,7 +30,7 @@ export type DiagnosticIssue = {
   suggestion?: string;
 };
 
-// about :::check result with pass/fail status and findings
+// about ::: check result with pass/fail status and findings
 export type CheckResult = {
   category: string;
   name: string;
@@ -38,7 +38,7 @@ export type CheckResult = {
   issues: DiagnosticIssue[];
 };
 
-// about :::comprehensive doctor report with summary statistics
+// about ::: comprehensive doctor report with summary statistics
 export type DoctorReport = {
   healthy: boolean;
   timestamp: string;
@@ -52,7 +52,7 @@ export type DoctorReport = {
   };
 };
 
-// about :::command options for doctor functionality
+// about ::: command options for doctor functionality
 export type DoctorCommandOptions = {
   strict?: boolean;
   fix?: boolean;
@@ -60,7 +60,7 @@ export type DoctorCommandOptions = {
   paths?: string[];
 };
 
-// about :::orchestrates all diagnostic checks and returns comprehensive report
+// about ::: orchestrates all diagnostic checks and returns comprehensive report
 export async function runDoctorCommand(
   context: CommandContext,
   options: DoctorCommandOptions
@@ -110,7 +110,7 @@ export async function runDoctorCommand(
   };
 }
 
-// about :::validates configuration file existence parsing and value consistency
+// about ::: validates configuration file existence parsing and value consistency
 async function checkConfiguration(
   context: CommandContext
 ): Promise<CheckResult[]> {
@@ -193,7 +193,7 @@ async function checkConfiguration(
   return results;
 }
 
-// about :::checks git repository index files and CLI version
+// about ::: checks git repository index files and CLI version
 async function checkEnvironment(
   context: CommandContext
 ): Promise<CheckResult[]> {
@@ -264,7 +264,7 @@ async function checkEnvironment(
   return results;
 }
 
-// about :::validates waymark parsing canonical uniqueness and relation integrity
+// about ::: validates waymark parsing canonical uniqueness and relation integrity
 async function checkWaymarkIntegrity(
   context: CommandContext,
   paths?: string[]
@@ -449,7 +449,7 @@ async function checkWaymarkIntegrity(
   return results;
 }
 
-// about :::analyzes index size cache health and scan performance
+// about ::: analyzes index size cache health and scan performance
 async function checkPerformance(
   context: CommandContext
 ): Promise<CheckResult[]> {
@@ -486,7 +486,7 @@ async function checkPerformance(
   return results;
 }
 
-// about :::renders check results with color coded severity indicators
+// about ::: renders check results with color coded severity indicators
 export function formatDoctorReport(report: DoctorReport): string {
   const lines: string[] = [];
 

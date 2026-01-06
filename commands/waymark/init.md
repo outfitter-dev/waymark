@@ -67,7 +67,7 @@ Question: "What level of waymark coverage do you want?"
 Options:
 - Minimal: TLDRs only - one summary per file
 - Standard (Recommended): TLDRs + work markers (todo, fix, wip, done)
-- Comprehensive: All markers including section markers (this, note, context)
+- Comprehensive: All markers including section markers (about, note, context)
 ```
 
 **Q2: Agent Behavior** (only ask if Comprehensive selected)
@@ -276,7 +276,7 @@ Review .waymark/plan.md and run `/waymark:apply` to apply suggestions.
 | ------------- | ----------------------------------------------------------------------------- |
 | Minimal       | tldr                                                                          |
 | Standard      | tldr, todo, fix, wip, done, review                                            |
-| Comprehensive | tldr, todo, fix, wip, done, review, this, note, context, warn, hack, temp     |
+| Comprehensive | tldr, todo, fix, wip, done, review, about, note, context, warn, hack, temp    |
 
 ## Error Handling
 

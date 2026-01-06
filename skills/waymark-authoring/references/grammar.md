@@ -30,18 +30,20 @@ content     = text (property | hashtag | mention)*
 
 ## Signal Rules
 
-Only the star (`*`) signal is valid:
+Two signals are valid: `~` (raised) and `*` (starred):
 
 ```javascript
-// *todo ::: high priority task
-// *fix ::: critical bug
+// ~todo ::: work in progress, don't merge yet
+// *fix ::: high priority bug
+// ~*todo ::: raised and starred (~ always before *)
 ```
 
 **Invalid signals:**
 
-- `^` (deprecated - was "raised")
+- `^` (deprecated - was "raised" in v0)
 - `!`, `!!`, `?` (never valid)
 - `**` (double star invalid)
+- `*~` (wrong order - use `~*`)
 
 ## Marker Validation
 
@@ -121,13 +123,12 @@ Special properties for linking waymarks:
 | Property | Purpose | Example |
 | ---------- | --------- | --------- |
 | `ref:` | Declare anchor | `ref:#payments/core` |
-| `depends:` | Requires | `depends:#auth/session` |
-| `needs:` | Requires | `needs:#db/migration` |
-| `blocks:` | Prevents | `blocks:#deploy/prod` |
-| `fixes:` | Addresses | `fixes:#bug/login` |
-| `rel:` | Related | `rel:#feature/search` |
+| `see:` | Reference | `see:#auth/session` |
+| `docs:` | Documentation link | `docs:https://api.example.com` |
+| `from:` | Dependency | `from:#db/migration` |
+| `replaces:` | Supersedes | `replaces:#feature/old` |
 
-**Note:** Relation values keep the hash: `fixes:#auth/login`, not `fixes:auth/login`
+**Note:** Relation values keep the hash: `see:#auth/login`, not `see:auth/login`
 
 ## Multi-line Syntax
 

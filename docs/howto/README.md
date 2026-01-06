@@ -176,7 +176,7 @@ wm src/ --mention @agents --type todo
 
 ```bash
 # Add dependency
-wm add src/payments.ts:56 todo "implement refunds depends:#payments/charge" --write
+wm add src/payments.ts:56 todo "implement refunds from:#payments/charge" --write
 
 # Find dependency graph
 wm src/ --graph
@@ -208,7 +208,7 @@ wm src/ --mention @claude
 
 - Be specific: "implement X" not "fix this"
 - Add context: tags, dependencies, mentions
-- Use `^` signal for WIP: `^todo ::: @agent refactoring in progress`
+- Use `~` signal for WIP: `~todo ::: @agent refactoring in progress`
 
 ### MCP Server Workflows
 
@@ -239,7 +239,7 @@ wm add src/auth.ts:1 tldr "authentication service ref:#auth/service" --write
 
 # 2. Reference from other files
 wm add src/middleware.ts:45 note "delegates to ref:#auth/service" --write
-wm add src/api.ts:78 todo "coordinate with depends:#auth/service" --write
+wm add src/api.ts:78 todo "coordinate with from:#auth/service" --write
 
 # 3. Find all references to a canonical
 wm src/ --tag "#auth/service"
@@ -259,7 +259,7 @@ wm src/ --tag "#auth/service"
 // todo ::: refactor authentication flow for OAuth 2.0
 //      ::: coordinate with @backend team
 //      ::: update docs once complete
-// depends:#auth/session
+// from:#auth/session
 // priority:high
 ```
 
@@ -360,10 +360,10 @@ wm src/ --type tldr --type this
 
 ```bash
 # 1. Mark files for refactor
-wm add src/legacy.ts:1 ^wip "refactoring to TypeScript @yourname" --write
+wm add src/legacy.ts:1 ~wip "refactoring to TypeScript @yourname" --write
 
 # 2. Document dependencies
-wm add src/legacy.ts:1 note "depends:#new-api/client" --write
+wm add src/legacy.ts:1 note "from:#new-api/client" --write
 
 # 3. Track refactor progress
 wm src/ --raised --mention @yourname

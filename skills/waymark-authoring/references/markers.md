@@ -119,7 +119,7 @@ File-level summary (one per file).
 
 **When to use:** First waymark in file, summarizes file purpose. See `waymark-tldrs` skill.
 
-### `this`
+### `about`
 
 Section or construct summary.
 
@@ -237,7 +237,7 @@ Dependency required.
 
 ```javascript
 // needs ::: authentication module must be loaded first
-// needs:#config/env environment variables required
+// from:#config/env environment variables required
 ```
 
 **When to use:** Prerequisites, required setup.
@@ -266,7 +266,7 @@ Needs clarification.
 | Important context | `note` |
 | Background/why | `context` |
 | File purpose | `tldr` |
-| Section purpose | `this` |
+| Section purpose | `about` |
 | Potential gotcha | `warn` |
 | High-risk area | `alert` |
 | Old code to remove | `deprecated` |

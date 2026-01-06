@@ -50,12 +50,12 @@ INLINE ARGUMENT FLAGS
 
   --ref <token>        Set canonical reference: ref:#auth/core
 
-  --depends <token>    Add dependency: depends:#infra/db
-  --needs <token>      Add needs relation: needs:#api/v2
-  --blocks <token>     Add blocks relation: blocks:#feature/launch
+  --from <token>       Add dependency: from:#infra/db
+  --see <token>        Add reference relation: see:#api/v2
+  --replaces <token>   Add replaces relation: replaces:#feature/old
 
-  --signal <signal>    Add signal: ^ (raised) or * (starred)
-                       Can combine: --signal ^ --signal *
+  --signal <signal>    Add signal: ~ (raised) or * (starred)
+                       Can combine: --signal ~ --signal *
 
 OUTPUT FORMATS
 
@@ -75,10 +75,10 @@ EXAMPLES
      wm add src/api.ts:100 fix "validate input" --signal *
 
   4. Insert with signal (raised, in-progress):
-     wm add src/refactor.ts:50 wip "refactoring auth flow" --signal ^
+     wm add src/refactor.ts:50 wip "refactoring auth flow" --signal ~
 
   5. Insert with dependency relation:
-     wm add src/payments.ts:200 todo "add retry logic" --depends "#infra/queue"
+     wm add src/payments.ts:200 todo "add retry logic" --from "#infra/queue"
 
   6. Insert with canonical reference:
      wm add src/auth.ts:1 tldr "user authentication service" --ref "#auth/service"
@@ -108,7 +108,7 @@ AGENT WORKFLOWS
 
   4. Create dependency graph:
      # Agent maps dependencies while building
-     wm add src/api.ts:50 todo "implement endpoint" --depends "#db/schema"
+     wm add src/api.ts:50 todo "implement endpoint" --from "#db/schema"
 
   5. Batch insert from analysis:
      # Agent analyzes codebase and generates waymarks
@@ -130,7 +130,7 @@ JSON INPUT SCHEMA
     properties: object - Key-value pairs
     mentions: string[] - Actor mentions (include @ prefix)
     tags: string[] - Hashtags (include # prefix)
-    relations: object[] - [{kind: "depends", token: "#token"}]
+    relations: object[] - [{kind: "from", token: "#token"}]
 
 AUTOMATIC BEHAVIORS
 
@@ -168,7 +168,7 @@ TIPS FOR AGENTS
   ✓ Always validate file exists and line number is valid
   ✓ Use --json output for programmatic workflows
   ✓ Combine insert with scan to verify waymarks were added
-  ✓ Use signals (^ or *) to mark priority or in-progress work
+  ✓ Use signals (~ or *) to mark priority or in-progress work
   ✓ Add mentions (@agent) to delegate work to specific actors
   ✓ Use tags (#perf, #sec) for categorization and filtering
 

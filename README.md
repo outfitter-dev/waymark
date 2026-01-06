@@ -50,12 +50,12 @@ export async function authenticate(request: AuthRequest) {
   const user = await fetchUser(request.email)
   // question ::: should we allow social login here? @product
 
-  // ^todo ::: @agent implement refresh token rotation once backend ships
+  // ~todo ::: @agent implement refresh token rotation once backend ships
   return issueSession(user, request) // note ::: returns JWT signed with HS256
 }
 ```
 
-Signals follow the v1 grammar: only the caret (`^`) and a single star (`*`) prefix are valid. Raised waymarks (`^todo`) mark work-in-progress that must clear before merging; starred waymarks (`*fix`) mark high-priority items. Combining them (`^*todo`) is fine, while doubling (`**fix`) is not.
+Signals follow the v1 grammar: only the tilde (`~`) and a single star (`*`) prefix are valid. Raised waymarks (`~todo`) mark work-in-progress that must clear before merging; starred waymarks (`*fix`) mark high-priority items. Combining them (`~*todo`) is fine, while doubling (`**fix`) is not.
 
 Line comments are preferred for waymarks. Use block comments only in languages without line-comment support (for example, CSS).
 
@@ -95,7 +95,7 @@ The `wm` command provides a unified interface for all waymark operations:
 # Basic scanning and filtering
 wm find src/                              # scan and display all waymarks
 wm find src/ --type todo                  # filter by waymark type
-wm find src/ --raised                     # show only raised (^) waymarks (work-in-progress)
+wm find src/ --raised                     # show only raised (~) waymarks (work-in-progress)
 wm find src/ --starred                    # show only starred (*) waymarks (high-priority)
 wm find src/ --type todo --mention @agent # combine filters
 

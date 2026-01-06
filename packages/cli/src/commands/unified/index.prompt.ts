@@ -12,13 +12,13 @@ WAYMARK SYNTAX PRIMER
     // todo ::: implement auth #sec
     // *fix ::: validate input @alice
     // tldr ::: user service managing auth
-    // ^wip ::: refactoring in progress
+    // ~wip ::: refactoring in progress
 
   Components:
-    - Signals: ^ (raised/in-progress), * (starred for important/valuable)
-    - Marker: todo, fix, wip, note, tldr, this, etc.
+    - Signals: ~ (raised/in-progress), * (starred for important/valuable)
+    - Marker: todo, fix, wip, note, tldr, about, etc.
     - Content: Free text with optional properties
-    - Properties: key:value pairs (see:#token, owner:@alice)
+    - Properties: key:value pairs (see:#token, from:#token, owner:@alice)
     - Mentions: @agent, @alice, @bob
     - Tags: #perf, #sec, #docs
 
@@ -27,7 +27,7 @@ COMMAND SYNTAX
 
 FILTERING OPTIONS
   --type <marker>     Filter by waymark type
-                      Examples: todo, fix, wip, note, tldr, this
+                      Examples: todo, fix, wip, note, tldr, about
                       Can be repeated: --type todo --type fix
 
   --mention <actor>   Filter by mention
@@ -46,7 +46,7 @@ FILTERING OPTIONS
 
 DISPLAY MODES
   (default)           List view - shows all matching waymarks
-  --graph             Relations - dependency edges (ref/depends/needs)
+  --graph             Relations - dependency edges (ref/see/from)
 
 OUTPUT FORMATS
   (default)           Human-readable text
@@ -75,7 +75,7 @@ AGENT WORKFLOWS
 
   2. Identify dependencies:
      wm --graph --json
-     → Extract ref/depends/needs relations
+     → Extract ref/see/from relations
 
   3. Audit specific concerns:
      wm --tag "#sec" --starred --json
@@ -83,7 +83,7 @@ AGENT WORKFLOWS
 
   4. Find in-progress work:
      wm --raised --json
-     → Everything marked with ^ signal
+     → Everything marked with ~ signal
 
   5. Review recent changes:
      wm src/auth/ --type todo --type fix --json
@@ -123,7 +123,7 @@ TIPS FOR AGENTS
   ✓ Always use --json for programmatic parsing
   ✓ Combine filters for precision (type + mention + tag)
   ✓ Use --graph to understand dependencies before refactoring
-  ✓ Check --raised before merging to ensure no WIP remains
+  ✓ Check --raised before merging to ensure no WIP (~ signal) remains
   ✓ Use --starred to prioritize high-importance items
   ✓ Parse TLDR waymarks to understand file purposes
   ✓ Look for @agent mentions to find delegated work

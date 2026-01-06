@@ -23,7 +23,7 @@
   <!-- todo ::: @agent let's rename the `work` type to `todo` -->
   - `info`: `blue`
     - `tldr`: `greenBright`
-    - `this`: `green`
+    - `about`: `green`
   - `caution`: `magenta`
     - `alert`: `red`
   - `workflow`:
@@ -40,7 +40,7 @@
   - NOTE: `#text:subtext` should be still treated as tags
 - The `:::` sigil should be styled with `dim`, and never `bold`
 - Line numbers and trailing `:` should be styled with `dim`
-- Signaled types (`*todo :::`, `^wip :::` should get an underline below the text, but not the symbol)
+- Signaled types (`*todo :::`, `~wip :::` should get an underline below the text, but not the symbol)
   - And we should bold the signal and type text.
 
 ## List output
@@ -77,7 +77,7 @@ After seeing the implementation I have a few suggestions:
 
 1. In the below example, the `72:  *todo :::` waymark didn't have the `*` styled with the same color as the type it's adjacent to, which should be the case.
 2. The examples of `owner:@...` did not have the `owner:` color applied as expected.
-3. Where we see `depends:#infra/ratelimit`, the color was applied correctly, but the `depends:` should not have been bolded.
+3. Where we see `from:#infra/ratelimit`, the color was applied correctly, but the `from:` should not have been bolded.
 
 Original output:
 
@@ -95,8 +95,8 @@ Original output:
 170:   todo ::: implement authentication flow
 323:   todo ::: add input validation
 399:   todo ::: @agent add input validation for email format
-466:   todo ::: add rate limiting depends:#infra/ratelimit
-498:   todo ::: @agent implement PCI compliance checks depends:#compliance/pci
+466:   todo ::: add rate limiting from:#infra/ratelimit
+498:   todo ::: @agent implement PCI compliance checks from:#compliance/pci
 
 .agents/.archive/20250926-PROPOSED_SPEC.md
  77:   todo ::: implement authentication

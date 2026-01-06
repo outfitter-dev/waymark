@@ -6,9 +6,9 @@ Guidelines:
   - Start with a verb and be specific
   - Include ownership with mentions (@alice)
   - Use tags for grouping (#perf, #security)
-  - Use ^todo for in-progress work, *todo for high priority
+  - Use ~todo for in-progress work, *todo for high priority
 
 Examples:
   // todo ::: add request signing for webhook payloads #security
-  // ^todo ::: refactor cache invalidation @alice
+  // ~todo ::: refactor cache invalidation @alice
   // *todo ::: ship v2 migration guide #docs

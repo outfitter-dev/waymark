@@ -20,7 +20,7 @@ A waymark is a single comment line (or continuation block) built from the follow
 ```
 
 - **Comment leader**: Whatever the host language uses (`//`, `#`, `<!--`, etc.). Waymarks never live inside string literals or rendered docstrings.
-- **Signals** (optional): the caret (`^`) marks waymarks as raised (work-in-progress, branch-scoped), the star (`*`) marks waymarks as starred (important, high-priority). When combined, the caret precedes the star (`^*todo`). No other signals are allowed.
+- **Signals** (optional): the tilde (`~`) marks waymarks as raised (work-in-progress, branch-scoped), the star (`*`) marks waymarks as starred (important, high-priority). When combined, the tilde precedes the star (`~*todo`). No other signals are allowed.
 - **Marker** (required): One of the blessed keywords below. Lowercase, no spaces.
 - **`:::` sigil**: Exactly three ASCII colons with one space before and after when a marker is present.
 - **Content**: Free text plus optional properties, hashtags, actors, and tags following the grammar defined here.
@@ -102,13 +102,12 @@ Properties use `key:value` pairs. Keys are `^[A-Za-z][A-Za-z0-9_-]*$`. Values ar
 ### Relations
 
 - Reference canonicals via either bare hashtags (`#payments/stripe-webhook`) or explicit properties:
-  - `depends:#token`
-  - `needs:#token`
-  - `blocks:#token`
-  - `dupeof:#token`
-  - `rel:#token`
-- Relational values always keep the hash on the value (e.g., `fixes:#auth/reset-password`).
-- Arrays are comma-separated without spaces (`affects:#billing,#auth/api`).
+  - `see:#token` — related reference
+  - `docs:#token` — documentation reference
+  - `from:#token` — depends on or derived from
+  - `replaces:#token` — supersedes another waymark
+- Relational values always keep the hash on the value (e.g., `see:#auth/reset-password`).
+- Arrays are comma-separated without spaces (`see:#billing,#auth/api`).
 
 ### Additional Properties
 
@@ -178,7 +177,7 @@ waymark find --file-category docs --type tldr
 
 ## 10. Anti-patterns & Prohibitions
 
-- No wikilinks (`[[...]]`), complex property syntaxes, or custom signals beyond those listed.
+- No complex property syntaxes or custom signals beyond those listed. Wikilink syntax (`[[hash]]`) is reserved for waymark IDs only.
 - Do not place waymarks inside rendered documentation sections (e.g., Markdown body). Use HTML comments instead.
 - Avoid numeric-only hashtags, which collide with issue references.
 - Do not hand-edit generated caches; they will be overwritten by tooling.
