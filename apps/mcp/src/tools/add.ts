@@ -171,8 +171,8 @@ function _addWaymark(params: InsertWaymarkParams): InsertWaymarkResult {
   } else if (line !== undefined) {
     const zeroBased = Math.max(0, line - 1);
     insertIndex = Math.min(zeroBased, lines.length);
-  } else if (markerLower === MARKERS.this) {
-    throw new Error("line is required when inserting a `this` waymark");
+  } else if (markerLower === MARKERS.about) {
+    throw new Error("line is required when inserting an `about` waymark");
   }
 
   const indentString =

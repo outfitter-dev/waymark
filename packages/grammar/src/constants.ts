@@ -68,7 +68,7 @@ export const MARKER_DEFINITIONS: MarkerDefinition[] = [
     category: "info",
     description: "File-level summary (one per file)",
   },
-  { name: "this", category: "info", description: "Section/block summary" },
+  { name: "about", category: "info", description: "Section/block summary" },
   {
     name: "example",
     category: "info",
@@ -179,7 +179,7 @@ export const MARKERS = {
   context: "context",
   why: "why",
   tldr: "tldr",
-  this: "this",
+  about: "about",
   example: "example",
   idea: "idea",
   comment: "comment",

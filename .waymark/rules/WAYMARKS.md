@@ -9,7 +9,7 @@ This document codifies how the Waymark grammar is used in this repository. Every
 - @CONVENTIONS.md
 - @DOCSTRING-COMPATIBILITY.md
 - @TLDRs.md
-- @THIS.md
+- @ABOUT.md
 
 ## 1. Grammar Overview
 
@@ -48,7 +48,7 @@ Only the following markers are considered first-class by the toolchain. Custom m
 - `note`
 - `context` (alias: `why`)
 - `tldr`
-- `this`
+- `about`
 - `example`
 - `idea`
 - `comment`
@@ -73,7 +73,7 @@ Only the following markers are considered first-class by the toolchain. Custom m
 **Special rules**
 
 - `tldr` appears once per file at the highest valid location (after shebang/front-matter, before code). It carries the canonical summary.
-- `this` summarizes specific sections or constructs and can appear multiple times in a file.
+- `about` summarizes specific sections or constructs and can appear multiple times in a file.
 
 ## 3. Writing TLDR Waymarks
 
@@ -83,9 +83,9 @@ Only the following markers are considered first-class by the toolchain. Custom m
 - Example: `// tldr ::: Stripe webhook handler verifying signatures and queuing retries`.
 - Documentation TLDRs follow the same rule inside HTML comments and should end with a `#docs` tag, optionally namespaced (`#docs/prd`, `#docs/guide`).
 
-## 4. Writing `this :::` Waymarks
+## 4. Writing `about :::` Waymarks
 
-- See @THIS.md for examples and checklists.
+- See @ABOUT.md for examples and checklists.
 - Place the comment immediately above the class/function/block it summarizes.
 - Keep the scope local—capture what the upcoming section does, not the whole file.
 - Reuse existing tag namespaces so section searches align with TLDRs.
@@ -188,7 +188,7 @@ waymark find --file-category docs --type tldr
 
 ```ts
 // tldr ::: payment processor entry point ref:#payments/stripe-webhook #payments
-// this ::: Stripe webhook verification handler #perf:hotpath
+// about ::: Stripe webhook verification handler #perf:hotpath
 // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
 // *review ::: @alice confirm new retry strategy #sec:boundary
 // note ::: logs PII-hardened metadata only #docs/logging

@@ -364,7 +364,7 @@ describe("parse", () => {
   });
 
   test("rejects properties with space after colon (unquoted values)", () => {
-    // this ::: properties require no space after colon for unquoted values
+    // about ::: properties require no space after colon for unquoted values
     const record = parseLine(
       "// note ::: content: value with space should not be property",
       LINE_ONE,
@@ -432,7 +432,7 @@ describe("parse", () => {
   });
 
   test("allows quoted properties with spaces after colon", () => {
-    // this ::: quoted values can have spaces anywhere
+    // about ::: quoted values can have spaces anywhere
     const record = parseLine(
       '// note ::: message:"hello world" owner:@alice',
       LINE_ONE,

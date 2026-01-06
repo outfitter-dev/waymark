@@ -155,7 +155,7 @@ Waymarks cannot be nested inside:
 /**
  * Authenticates the user.
  */
-// this ::: validates credentials and creates session
+// about ::: validates credentials and creates session
 function authenticate() {}
 ```
 
@@ -164,7 +164,7 @@ function authenticate() {}
 ```typescript
 /**
  * Authenticates the user.
- * this ::: this won't be parsed!
+ * about ::: this won't be parsed!
  */
 function authenticate() {}
 ```

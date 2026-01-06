@@ -1,7 +1,31 @@
 // tldr ::: tests for waymark grammar constants and property keys contract
 
 import { describe, expect, test } from "bun:test";
-import { PROPERTY_KEYS } from "./constants";
+import {
+  BLESSED_MARKERS,
+  getCanonicalType,
+  MARKER_DEFINITIONS,
+  PROPERTY_KEYS,
+} from "./constants";
+
+describe("MARKER_DEFINITIONS contract", () => {
+  test("includes 'about' marker for section summaries", () => {
+    // about ::: section/block summary marker (replaces legacy 'this')
+    const aboutDef = MARKER_DEFINITIONS.find((def) => def.name === "about");
+    expect(aboutDef).toBeDefined();
+    expect(aboutDef?.category).toBe("info");
+    expect(aboutDef?.description).toBe("Section/block summary");
+  });
+
+  test("'about' is included in BLESSED_MARKERS", () => {
+    expect(BLESSED_MARKERS).toContain("about");
+  });
+
+  test("getCanonicalType returns 'about' for 'about'", () => {
+    expect(getCanonicalType("about")).toBe("about");
+    expect(getCanonicalType("ABOUT")).toBe("about");
+  });
+});
 
 describe("PROPERTY_KEYS contract", () => {
   test("maintains expected set of property keys", () => {

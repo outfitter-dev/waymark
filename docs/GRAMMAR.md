@@ -87,7 +87,7 @@ Place waymarks adjacent to docstrings, never inside them:
  * @param request - User login credentials
  * @returns Session token or throws AuthError
  */
-// this ::: orchestrates OAuth flow with PKCE #auth/login
+// about ::: orchestrates OAuth flow with PKCE #auth/login
 // todo ::: @agent add rate limiting #sec:boundary
 export async function authenticate(request: AuthRequest) {
   // ...
@@ -280,7 +280,7 @@ These types are first-class and built into the tooling:
 **Example**:
 
 ```typescript
-// this ::: validates webhook signatures using HMAC-SHA256
+// about ::: validates webhook signatures using HMAC-SHA256
 function verifySignature(payload: string, signature: string): boolean {
   // ...
 }
@@ -709,7 +709,7 @@ Parsers must:
 // tldr ::: authentication service ref:#auth/service
 
 export class AuthService {
-  // this ::: manages user sessions and JWT tokens
+  // about ::: manages user sessions and JWT tokens
 
   // todo ::: @agent add refresh token rotation depends:#auth/jwt
   // priority:high
@@ -733,7 +733,7 @@ export class AuthService {
 
 def process_webhook(payload: dict) -> None:
     """Process incoming Stripe webhook events."""
-    # this ::: validates signatures and routes events
+    # about ::: validates signatures and routes events
 
     # *fix ::: verify signature before processing #sec
     signature = payload.get('signature')
@@ -750,7 +750,7 @@ def process_webhook(payload: dict) -> None:
 
 package cache
 
-// this ::: manages Redis connection pool
+// about ::: manages Redis connection pool
 type CacheService struct {
     client *redis.Client
 }
@@ -770,7 +770,7 @@ func (c *CacheService) Get(key string) (string, error) {
 
 # API Documentation
 
-<!-- this ::: authentication endpoints -->
+<!-- about ::: authentication endpoints -->
 
 ## Authentication
 

@@ -189,7 +189,7 @@ Task(
 1. Scan all files in scope
 2. For each file:
    - Analyze content to draft TLDR suggestion
-   - Identify sections that need `this :::` markers
+   - Identify sections that need `about :::` markers
    - Identify obvious work items for `todo :::` markers
 3. Generate placeholder waymarks with IDs:
 

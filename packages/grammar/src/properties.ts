@@ -65,7 +65,7 @@ export function appendRelationTokens(
 
 /**
  * Mask content inside backticks to prevent property extraction
- * this ::: prevents parsing `key:value` patterns inside inline code
+ * about ::: prevents parsing `key:value` patterns inside inline code
  */
 export function maskBackticks(text: string): {
   masked: string;

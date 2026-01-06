@@ -8,7 +8,7 @@ Docstrings/inline documentation and waymarks must complement one another without
 
 - **Waymarks live outside docstrings.** Never place the `:::` sigil inside a string literal or rendered doc block. Use preceding or trailing comment lines instead.
 - **Docstring first, waymark second.** When both appear at the top of a function/class, keep the docstring immediately adjacent to the code and attach the waymark on the preceding or following comment line.
-- **Mirror docstring context.** If the docstring explains behavior, use `this :::` or `note :::` to summarize constraints so the waymark contains the machine-searchable version of the same idea.
+- **Mirror docstring context.** If the docstring explains behavior, use `about :::` or `note :::` to summarize constraints so the waymark contains the machine-searchable version of the same idea.
 - **Respect formatting tools.** Leave blank lines between docstrings and waymarks only if required by the language’s style guide (e.g., Python).
 
 ## Language Examples
@@ -18,7 +18,7 @@ Docstrings/inline documentation and waymarks must complement one another without
 ```python
 def send_email(message: Email) -> None:
     """Send an email using the configured transport."""
-    # this ::: orchestrates outbound email delivery #comm/email
+    # about ::: orchestrates outbound email delivery #comm/email
     # note ::: docstring is the human narrative; waymark is the searchable anchor
     transport.send(message)
 ```
@@ -29,7 +29,7 @@ def send_email(message: Email) -> None:
 /**
  * Sanitizes incoming webhook payloads.
  */
-// this ::: normalizes Stripe webhook data into canonical shape #payments/stripe
+// about ::: normalizes Stripe webhook data into canonical shape #payments/stripe
 export function normalize(body: StripePayload) { /* ... */ }
 ```
 
@@ -37,7 +37,7 @@ export function normalize(body: StripePayload) { /* ... */ }
 
 ```go
 // sanitize normalizes webhook payloads before verification.
-// this ::: ensures Stripe event payload conforms to canonical schema #payments/stripe
+// about ::: ensures Stripe event payload conforms to canonical schema #payments/stripe
 func sanitize(event Event) Event { /* ... */ }
 ```
 

@@ -1,22 +1,22 @@
-<!-- tldr ::: guidance for writing clear this waymarks above code constructs -->
+<!-- tldr ::: guidance for writing clear about waymarks above code constructs -->
 
-# Writing `this :::` Waymarks
+# Writing `about :::` Waymarks
 
-`this :::` markers describe the code section immediately following them. They provide quick breadcrumbs for classes, functions, and major blocks.
+`about :::` markers describe the code section immediately following them. They provide quick breadcrumbs for classes, functions, and major blocks.
 
 ## Placement
 
-Place `this :::` on the comment line directly above the construct:
+Place `about :::` on the comment line directly above the construct:
 
 ```typescript
-// this ::: validates JWT tokens and extracts claims
+// about ::: validates JWT tokens and extracts claims
 export function validateToken(token: string): Claims {
   // ...
 }
 ```
 
 ```python
-# this ::: manages database connection pooling
+# about ::: manages database connection pooling
 class ConnectionPool:
     pass
 ```
@@ -31,17 +31,17 @@ Focus on the upcoming section only - do not restate file-level TLDR:
 // tldr ::: user authentication service
 // ...
 
-// this ::: validates password against security policy
+// about ::: validates password against security policy
 function validatePassword(password: string) {}
 
-// this ::: hashes password with bcrypt
+// about ::: hashes password with bcrypt
 function hashPassword(password: string) {}
 ```
 
 **Bad (restates file purpose):**
 
 ```typescript
-// this ::: handles user authentication  // too broad, same as tldr
+// about ::: handles user authentication  // too broad, same as tldr
 function validatePassword(password: string) {}
 ```
 
@@ -61,18 +61,18 @@ Write short, active-voice sentences (6-12 words):
 ### TypeScript / JavaScript
 
 ```typescript
-// this ::: transforms API response into domain model
+// about ::: transforms API response into domain model
 export function normalize(response: ApiResponse): User {
   return { id: response.id, name: response.full_name };
 }
 
-// this ::: React hook exposing auth state and methods
+// about ::: React hook exposing auth state and methods
 export function useAuth() {
   const [user, setUser] = useState(null);
   // ...
 }
 
-// this ::: validates request body against JSON schema
+// about ::: validates request body against JSON schema
 export const validateRequest = (schema: Schema) => (req, res, next) => {
   // ...
 };
@@ -81,17 +81,17 @@ export const validateRequest = (schema: Schema) => (req, res, next) => {
 ### Python
 
 ```python
-# this ::: orchestrates email delivery through SMTP
+# about ::: orchestrates email delivery through SMTP
 class EmailService:
     def send(self, message: Email) -> None:
         # ...
 
-# this ::: rate limits requests by IP address
+# about ::: rate limits requests by IP address
 @decorator
 def rate_limit(requests_per_minute: int):
     # ...
 
-# this ::: parses CSV into structured records
+# about ::: parses CSV into structured records
 def parse_csv(file_path: str) -> list[Record]:
     # ...
 ```
@@ -99,12 +99,12 @@ def parse_csv(file_path: str) -> list[Record]:
 ### Go
 
 ```go
-// this ::: handles graceful shutdown of HTTP server
+// about ::: handles graceful shutdown of HTTP server
 func (s *Server) Shutdown(ctx context.Context) error {
     // ...
 }
 
-// this ::: validates configuration against required fields
+// about ::: validates configuration against required fields
 func ValidateConfig(cfg *Config) error {
     // ...
 }
@@ -113,7 +113,7 @@ func ValidateConfig(cfg *Config) error {
 ### Rust
 
 ```rust
-// this ::: deserializes JSON with custom error handling
+// about ::: deserializes JSON with custom error handling
 impl FromStr for Config {
     type Err = ConfigError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -129,10 +129,10 @@ Reuse tag namespaces consistent with file-level TLDR:
 ```typescript
 // tldr ::: payment processing service #payments
 
-// this ::: validates Stripe webhook signatures #payments
+// about ::: validates Stripe webhook signatures #payments
 export function verifyStripeWebhook() {}
 
-// this ::: calculates transaction fees #payments #billing
+// about ::: calculates transaction fees #payments #billing
 export function calculateFees() {}
 ```
 
@@ -141,7 +141,7 @@ export function calculateFees() {}
 Rarely needed, but available for major sections:
 
 ```typescript
-// this ::: core authentication flow ref:#auth/core #security
+// about ::: core authentication flow ref:#auth/core #security
 export class AuthenticationService {
   // ...
 }
@@ -149,21 +149,21 @@ export class AuthenticationService {
 
 ## Maintenance
 
-Update `this :::` markers when behavior changes:
+Update `about :::` markers when behavior changes:
 
 ```typescript
 // Before refactor
-// this ::: fetches user by ID
+// about ::: fetches user by ID
 
 // After refactor (now fetches by ID or email)
-// this ::: fetches user by ID or email
+// about ::: fetches user by ID or email
 ```
 
 Delete stale markers rather than leaving inaccurate guidance.
 
 ## Checklist
 
-Before committing a `this :::` waymark:
+Before committing an `about :::` waymark:
 
 - [ ] Comment sits immediately above the code it describes
 - [ ] Sentence is concise (6-12 words) and active voice
@@ -176,16 +176,16 @@ Before committing a `this :::` waymark:
 **Avoid:**
 
 ```typescript
-// this ::: this is a function  // too vague
-// this ::: handles everything related to users  // too broad
-// this ::: see documentation for details  // not self-descriptive
-// this ::: TODO: write description  // incomplete
+// about ::: this is a function  // too vague
+// about ::: handles everything related to users  // too broad
+// about ::: see documentation for details  // not self-descriptive
+// about ::: TODO: write description  // incomplete
 ```
 
 **Prefer:**
 
 ```typescript
-// this ::: validates user credentials against LDAP
-// this ::: fetches user profile from cache or database
-// this ::: transforms API errors into user-friendly messages
+// about ::: validates user credentials against LDAP
+// about ::: fetches user profile from cache or database
+// about ::: transforms API errors into user-friendly messages
 ```

@@ -643,7 +643,7 @@ function displaySelectedWaymark(
   writeStdout(`\nRaw:\n${selected.raw}`);
 }
 
-// this ::: executes doctor diagnostics and outputs health report
+// about ::: executes doctor diagnostics and outputs health report
 async function handleDoctorCommand(
   program: Command,
   options: DoctorCommandOptions

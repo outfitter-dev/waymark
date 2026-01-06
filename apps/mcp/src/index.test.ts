@@ -17,7 +17,7 @@ class TestServer {
 }
 
 const TLDR_EXISTS_REGEX = /already contains a tldr waymark/u;
-const THIS_INSERT_LINE = 3;
+const ABOUT_INSERT_LINE = 3;
 const SAMPLE_SOURCE = ["line 1", "line 2", "line 3", "line 4", "line 5"].join(
   "\n"
 );
@@ -87,9 +87,9 @@ describe("handleAddWaymark", () => {
     const response = await handleAddWaymark({
       server,
       filePath: file,
-      type: "this",
+      type: "about",
       content: "documents the feature body",
-      line: THIS_INSERT_LINE,
+      line: ABOUT_INSERT_LINE,
       signals,
     });
 
@@ -98,14 +98,14 @@ describe("handleAddWaymark", () => {
       startLine: number;
       content: string;
     };
-    expect(payload.type).toBe("this");
-    expect(payload.startLine).toBe(THIS_INSERT_LINE);
+    expect(payload.type).toBe("about");
+    expect(payload.startLine).toBe(ABOUT_INSERT_LINE);
     expect(payload.content).toBe("documents the feature body");
 
     const updated = await readFile(file, "utf8");
     const lines = updated.split("\n");
-    expect(lines[THIS_INSERT_LINE - 1]).toBe(
-      "  // ^this ::: documents the feature body"
+    expect(lines[ABOUT_INSERT_LINE - 1]).toBe(
+      "  // ^about ::: documents the feature body"
     );
 
     await rm(dir, { recursive: true, force: true });

@@ -59,7 +59,7 @@ We maintain a preferred list of hashtags below. Tags are optional; when you do a
 - Add `ref:#token` when the TLDR declares the canonical anchor for the file.
 - Use `*tldr` only for files/documents that must be read first; audit periodically with `rg '\\*tldr\\s*:::'`.
 
-### `this :::` Waymarks
+### `about :::` Waymarks
 
 - Place before major sections/classes to describe local responsibility.
 - Keep the sentence short and aligned with the current implementation; update whenever behavior changes.

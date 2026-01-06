@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tldr ::: Integration test for Waymark v1.0.0-beta.1 release candidate
-# this ::: Exercises full CLI workflow with real-world operations
+# about ::: Exercises full CLI workflow with real-world operations
 
 set -euo pipefail
 
