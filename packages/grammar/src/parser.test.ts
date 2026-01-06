@@ -92,6 +92,18 @@ describe("parseLine", () => {
     expect(record?.mentions).toEqual([]);
   });
 
+  test("does not treat lowercase decorator calls as mentions", () => {
+    const record = parseLine(
+      "// note ::: uses @dataclass() and @staticmethod() decorators",
+      LINE_ONE,
+      { file: "src/model.py" }
+    );
+
+    expect(record).not.toBeNull();
+    // Both rejected due to trailing parens - regex prevents backtracking
+    expect(record?.mentions).toEqual([]);
+  });
+
   test("extracts mention after email in same content", () => {
     const record = parseLine(
       "// todo ::: email user@foo.com then @alice reviews",

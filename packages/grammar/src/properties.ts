@@ -6,9 +6,10 @@ import type { WaymarkRecord } from "./types";
 // note ::: No space allowed after colon for unquoted values (key:value not key: value)
 export const PROPERTY_REGEX =
   /(?:^|[\s])([A-Za-z][A-Za-z0-9_-]*)\s*:(?:"([^"\\]*(?:\\.[^"\\]*)*)"|([^\s,]+(?:,[^\s,]+)*))/gm;
-// note ::: requires lowercase first char to reject decorators (@Component), negative lookahead rejects calls (@Foo())
+// note ::: requires lowercase first char to reject decorators (@Component)
+// note ::: lookahead rejects both continuations and parens to prevent backtracking on @dataclass()
 export const MENTION_REGEX =
-  /(?:^|[^A-Za-z0-9/_-])(@[a-z][A-Za-z0-9/_-]*)(?!\()/gm;
+  /(?:^|[^A-Za-z0-9/_-])(@[a-z][A-Za-z0-9/_-]*)(?![A-Za-z0-9/_(-])/gm;
 export const TAG_REGEX = /(?:^|[^A-Za-z0-9._/:%-])(#[A-Za-z0-9._/:%-]+)/gm;
 
 export const RELATION_KIND_MAP: Record<
