@@ -234,7 +234,9 @@ describe("runModifyCommand integration", () => {
       line: 1,
       type: "todo",
       content: "// todo ::: implement OAuth [[test123]]",
-      contentHash: fingerprintContent("// todo ::: implement OAuth [[test123]]"),
+      contentHash: fingerprintContent(
+        "// todo ::: implement OAuth [[test123]]"
+      ),
       contextHash: fingerprintContext(
         `${filePath}:1:// todo ::: implement OAuth`
       ),
