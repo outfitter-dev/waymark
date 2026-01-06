@@ -54,7 +54,7 @@ INLINE ARGUMENT FLAGS
   --see <token>        Add reference relation: see:#api/v2
   --replaces <token>   Add replaces relation: replaces:#feature/old
 
-  --signal <signal>    Add signal: ~ (raised) or * (starred)
+  --signal <signal>    Add signal: ~ (flagged) or * (starred)
                        Can combine: --signal ~ --signal *
 
 OUTPUT FORMATS
@@ -74,7 +74,7 @@ EXAMPLES
   3. Insert with signal (starred to mark as important/valuable):
      wm add src/api.ts:100 fix "validate input" --signal *
 
-  4. Insert with signal (raised, in-progress):
+  4. Insert with signal (flagged, in-progress):
      wm add src/refactor.ts:50 wip "refactoring auth flow" --signal ~
 
   5. Insert with dependency relation:
@@ -126,7 +126,7 @@ JSON INPUT SCHEMA
     content: string - Waymark content text
 
   Optional fields:
-    signals: object - {raised?: boolean, important?: boolean}
+    signals: object - {flagged?: boolean, starred?: boolean}
     properties: object - Key-value pairs
     mentions: string[] - Actor mentions (include @ prefix)
     tags: string[] - Hashtags (include # prefix)

@@ -218,10 +218,10 @@ function normalizeType(record: WaymarkRecord, config: WaymarkConfig): string {
 
 function buildSignalPrefix(record: WaymarkRecord): string {
   let prefix = "";
-  if (record.signals.raised) {
+  if (record.signals.flagged) {
     prefix += "~";
   }
-  if (record.signals.important) {
+  if (record.signals.starred) {
     prefix += "*";
   }
   return prefix;

@@ -27,9 +27,9 @@ export function sortRecords(
     case "signal":
       sorted.sort((a, b) => {
         const aScore =
-          (a.signals.important ? 2 : 0) + (a.signals.raised ? 1 : 0);
+          (a.signals.starred ? 2 : 0) + (a.signals.flagged ? 1 : 0);
         const bScore =
-          (b.signals.important ? 2 : 0) + (b.signals.raised ? 1 : 0);
+          (b.signals.starred ? 2 : 0) + (b.signals.flagged ? 1 : 0);
         return bScore - aScore; // Higher scores first
       });
       break;

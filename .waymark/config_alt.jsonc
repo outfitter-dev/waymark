@@ -7,7 +7,7 @@
     "customWaymarkTypes": ["custom1"]
   },
   "workflow": {
-    "raisedWaymarks": {
+    "flaggedWaymarks": {
       "logLevel": {
         "preCommit": "info",
         "prePush": "warn"

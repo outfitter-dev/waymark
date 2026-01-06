@@ -20,9 +20,9 @@ describe("parseLine", () => {
     expect(record).not.toBeNull();
     expect(record?.type).toBe("todo");
     expect(record?.signals).toEqual({
-      raised: false,
+      flagged: false,
       current: false,
-      important: false,
+      starred: false,
     });
     expect(record?.tags).toContain("#arch/state");
     expect(record?.language).toBe("typescript");

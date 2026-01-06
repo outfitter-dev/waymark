@@ -27,7 +27,7 @@ describe("parseAddArgs", () => {
       "@alice",
       "--property",
       "owner:@alice",
-      "--raised",
+      "--flagged",
       "--starred",
       "--continuation",
       "follow up with team",
@@ -53,7 +53,7 @@ describe("parseAddArgs", () => {
     expect(spec.tags).toEqual(["#security"]);
     expect(spec.mentions).toEqual(["@alice"]);
     expect(spec.properties).toEqual({ owner: "@alice" });
-    expect(spec.signals).toEqual({ raised: true, important: true });
+    expect(spec.signals).toEqual({ flagged: true, starred: true });
     expect(spec.continuations).toEqual(["follow up with team"]);
     expect(spec.order).toBe(2);
     expect(spec.id).toBe("[[custom123]]");
@@ -193,8 +193,8 @@ describe("runAddCommand", () => {
       content: "test content",
       position: "after",
       signals: {
-        raised: true,
-        important: true,
+        flagged: true,
+        starred: true,
       },
       properties: {
         owner: "@alice",

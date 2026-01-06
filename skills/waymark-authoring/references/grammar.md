@@ -30,17 +30,17 @@ content     = text (property | hashtag | mention)*
 
 ## Signal Rules
 
-Two signals are valid: `~` (raised) and `*` (starred):
+Two signals are valid: `~` (flagged) and `*` (starred):
 
 ```javascript
 // ~todo ::: work in progress, don't merge yet
 // *fix ::: high priority bug
-// ~*todo ::: raised and starred (~ always before *)
+// ~*todo ::: flagged and starred (~ always before *)
 ```
 
 **Invalid signals:**
 
-- `^` (deprecated - was "raised" in v0)
+- `^` (deprecated - was "flagged" in v0)
 - `!`, `!!`, `?` (never valid)
 - `**` (double star invalid)
 - `*~` (wrong order - use `~*`)

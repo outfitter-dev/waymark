@@ -6,7 +6,7 @@ We are adopting the new v1 syntax recap (no backward-compat). This issue tracks 
 
 ## Summary of changes (short)
 
-- Signals: raised is `~`, important is `*`, canonical order `~*`.
+- Signals: flagged is `~`, starred is `*`, canonical order `~*`.
 - IDs: wikilink-style `[[hash]]` or `[[hash|alias]]`, alias-only `[[alias]]` pre-assignment.
 - Relations: `see:`, `docs:`, `from:`, `replaces:` properties; repeat properties instead of arrays.
 - Properties: `key:value` with quoted values; no empty values; add `sym:`.
@@ -17,7 +17,7 @@ We are adopting the new v1 syntax recap (no backward-compat). This issue tracks 
 
 ## Current status
 
-- Codebase currently supports legacy `wm:` IDs, `^` raised signals, and legacy relation keys.
+- Codebase currently supports legacy `wm:` IDs, `^` flagged signals, and legacy relation keys.
 - v1 rollout is a breaking change; no backward compatibility expected.
 
 ## Subissues

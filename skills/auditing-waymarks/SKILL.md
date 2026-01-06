@@ -213,8 +213,8 @@ git diff --cached --name-only | xargs -I{} sh -c \
 ### Pre-merge
 
 ```bash
-# No raised waymarks
-! rg '~\w+\s*:::' && echo "OK: No raised waymarks"
+# No flagged waymarks
+! rg '~\w+\s*:::' && echo "OK: No flagged waymarks"
 
 # No WIP markers
 ! rg 'wip\s*:::' && echo "OK: No WIP markers"
@@ -261,7 +261,7 @@ Before completing an audit:
 
 - [ ] All source files have TLDR waymarks
 - [ ] TLDRs accurately describe file contents
-- [ ] No raised (`~`) waymarks remain (if auditing for merge)
+- [ ] No flagged (`~`) waymarks remain (if auditing for merge)
 - [ ] Starred (`*`) items reviewed for continued priority
 - [ ] Work markers (todo, fix, wip) are current
 - [ ] Tags follow established conventions

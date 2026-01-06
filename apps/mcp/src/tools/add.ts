@@ -225,10 +225,10 @@ function buildSignalPrefix(signals?: SignalFlags): string {
     return "";
   }
   let prefix = "";
-  if (signals.raised) {
+  if (signals.flagged) {
     prefix += "~";
   }
-  if (signals.important) {
+  if (signals.starred) {
     prefix += "*";
   }
   return prefix;

@@ -31,7 +31,7 @@ export function createParseState(): ParseState {
     excludeMentions: [] as string[],
     jsonState: { outputFormat: null },
     isGraphMode: false,
-    raised: undefined as boolean | undefined,
+    flagged: undefined as boolean | undefined,
     starred: undefined as boolean | undefined,
     // Display modes
     displayMode: undefined,
@@ -180,8 +180,8 @@ function applyFilters(state: ParseState, options: UnifiedCommandOptions): void {
   if (state.mentions.length > 0) {
     options.mentions = state.mentions;
   }
-  if (state.raised !== undefined) {
-    options.raised = state.raised;
+  if (state.flagged !== undefined) {
+    options.flagged = state.flagged;
   }
   if (state.starred !== undefined) {
     options.starred = state.starred;

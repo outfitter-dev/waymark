@@ -45,7 +45,7 @@ export function parseAddArgs(argv: string[]): ParsedAddArgs {
     mentions: [],
     continuations: [],
     properties: {},
-    signals: { raised: false, important: false },
+    signals: { flagged: false, starred: false },
   };
 
   let cursor = 0;
@@ -94,7 +94,7 @@ type InsertParseState = {
   mentions: string[];
   continuations: string[];
   properties: Record<string, string>;
-  signals: { raised: boolean; important: boolean };
+  signals: { flagged: boolean; starred: boolean };
   fileLine?: string;
   type?: string;
   content?: string;
@@ -180,11 +180,11 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: InsertParseState) => void> =
     "--after": (state) => {
       state.position = "after";
     },
-    "--raised": (state) => {
-      state.signals.raised = true;
+    "--flagged": (state) => {
+      state.signals.flagged = true;
     },
     "--starred": (state) => {
-      state.signals.important = true;
+      state.signals.starred = true;
     },
   };
 
@@ -288,7 +288,7 @@ function buildInsertionSpec(state: InsertParseState): InsertionSpec {
   if (state.position) {
     spec.position = state.position;
   }
-  if (state.signals.raised || state.signals.important) {
+  if (state.signals.flagged || state.signals.starred) {
     spec.signals = { ...state.signals };
   }
   if (Object.keys(state.properties).length > 0) {

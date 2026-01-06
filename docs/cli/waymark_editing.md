@@ -38,7 +38,7 @@ wm add src/auth.ts:42 --type todo --content "add rate limiting"
 wm add src/auth.ts:42 \
   --type todo \
   --content "add rate limiting" \
-  --important \
+  --starred \
   --owner @alice \
   --tag "#security" \
   --mention "@agent" \
@@ -99,8 +99,8 @@ wm add --from batch.json --jsonl
   "type": "todo",
   "content": "add rate limiting",
   "signals": {
-    "raised": false,
-    "important": true
+    "flagged": false,
+    "starred": true
   },
   "properties": {
     "owner": "@alice",
@@ -121,7 +121,7 @@ wm add --from batch.json --jsonl
       "line": 42,
       "type": "todo",
       "content": "add rate limiting",
-      "signals": { "important": true }
+      "signals": { "starred": true }
     },
     {
       "file": "src/auth.ts",
@@ -168,7 +168,7 @@ wm add --from batch.json --jsonl
 | `position` | "before" \| "after" | ❌ | "after" | Insert before or after target line |
 | `type` | string | ✅ | - | Waymark type (todo, note, tldr, etc.) |
 | `content` | string | ✅ | - | Waymark content text |
-| `signals` | object | ❌ | {} | Signal flags (raised, important) |
+| `signals` | object | ❌ | {} | Signal flags (flagged, starred) |
 | `properties` | object | ❌ | {} | Key-value properties |
 | `tags` | string[] | ❌ | [] | Hashtags (without # prefix in array) |
 | `mentions` | string[] | ❌ | [] | Actor mentions (without @ prefix in array) |
@@ -804,8 +804,8 @@ export interface InsertionSpec {
   type: string;
   content: string;
   signals?: {
-    raised?: boolean;
-    important?: boolean;
+    flagged?: boolean;
+    starred?: boolean;
   };
   properties?: Record<string, string>;
   tags?: string[];
@@ -951,8 +951,8 @@ function formatWaymark(
 
   // Build signal prefix
   let signals = '';
-  if (spec.signals?.raised) signals += '^';
-  if (spec.signals?.important) signals += '*';
+  if (spec.signals?.flagged) signals += '~';
+  if (spec.signals?.starred) signals += '*';
 
   // Build content with properties, tags, mentions
   let content = spec.content;
@@ -1058,7 +1058,7 @@ generate-tldrs src/**/*.ts | wm add --from - --write
       "type": "check",
       "content": "PCI-DSS compliance review required before production",
       "tags": ["#compliance", "#pci"],
-      "signals": { "important": true }
+      "signals": { "starred": true }
     }
   ]
 }
@@ -1522,8 +1522,8 @@ export interface RemovalSpec {
     files?: string[];
     content_pattern?: string;
     signals?: {
-      raised?: boolean;
-      important?: boolean;
+      flagged?: boolean;
+      starred?: boolean;
     };
   };
 }
@@ -1687,12 +1687,12 @@ function matchesCriteria(waymark: WaymarkRecord, criteria: RemovalSpec['criteria
 
   // Signal match
   if (criteria.signals) {
-    if (criteria.signals.raised !== undefined &&
-        waymark.signals.raised !== criteria.signals.raised) {
+    if (criteria.signals.flagged !== undefined &&
+        waymark.signals.flagged !== criteria.signals.flagged) {
       return false;
     }
-    if (criteria.signals.important !== undefined &&
-        waymark.signals.important !== criteria.signals.important) {
+    if (criteria.signals.starred !== undefined &&
+        waymark.signals.starred !== criteria.signals.starred) {
       return false;
     }
   }

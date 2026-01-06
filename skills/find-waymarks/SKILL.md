@@ -1,6 +1,6 @@
 ---
 name: Find Waymarks
-description: Search for waymarks (structured code annotations marked with `:::`) in the codebase using the `wm` CLI tool. Use when the user asks to find TODOs, search waymarks, locate code annotations, find work items, check for @agent tasks, or mentions waymarks, the `:::` sigil, work-in-progress markers (^), starred items (*), or code navigation. Supports filtering by type (todo/fix/note/tldr), tags (#perf, #security), mentions (@agent, @alice), and signals (raised/starred).
+description: Search for waymarks (structured code annotations marked with `:::`) in the codebase using the `wm` CLI tool. Use when the user asks to find TODOs, search waymarks, locate code annotations, find work items, check for @agent tasks, or mentions waymarks, the `:::` sigil, work-in-progress markers (~), starred items (*), or code navigation. Supports filtering by type (todo/fix/note/tldr), tags (#perf, #security), mentions (@agent, @alice), and signals (flagged/starred).
 allowed-tools:
   - Bash
   - Read
@@ -45,10 +45,10 @@ wm --mention @alice --json
 wm --tag perf --json
 ```
 
-**Find raised (work-in-progress) waymarks:**
+**Find flagged (work-in-progress) waymarks:**
 
 ```bash
-wm --raised --json
+wm --flagged --json
 ```
 
 **Find starred (high-priority) waymarks:**
@@ -68,7 +68,7 @@ wm --type todo --mention @agent --tag security --json
 - `--type <marker>`: Filter by waymark type (todo, fix, note, tldr, this, etc.)
 - `--mention <actor>`: Filter by mentions (@alice, @agent, etc.)
 - `--tag <tag>`: Filter by hashtags (#perf, #security, etc.)
-- `--raised`: Show only raised (^) waymarks (work-in-progress)
+- `--flagged`: Show only flagged (~) waymarks (work-in-progress)
 - `--starred`: Show only starred (*) waymarks (high-priority)
 - `--json`: Output as JSON for parsing
 - `--jsonl`: Output as JSON Lines
@@ -86,7 +86,7 @@ Common patterns:
 - "Find work for @agent" → `wm --mention @agent --json`
 - "Find security issues" → `wm --tag security --json`
 - "Find high priority items" → `wm --starred --json`
-- "Find work in progress" → `wm --raised --json`
+- "Find work in progress" → `wm --flagged --json`
 
 ### Show dependency graph
 
@@ -101,7 +101,7 @@ wm --graph --json
 1. Always use `--json` for programmatic parsing
 2. Combine filters to narrow results (e.g., `--type todo --mention @agent`)
 3. Use `--type tldr` to list all file summaries
-4. Check for raised waymarks (`--raised`) before merging to ensure work-in-progress is cleared
+4. Check for flagged waymarks (`--flagged`) before merging to ensure work-in-progress is cleared
 5. Use `--starred` to find high-priority items that need attention
 
 ## Implementation
@@ -127,8 +127,8 @@ Waymarks use a special syntax starting with `:::`:
 
 ```text
 ::: todo This needs to be done #priority @agent
-::: fix^ Bug that needs immediate attention
-::: note* Important information to remember
+::: ~fix Bug that needs immediate attention
+::: *note Important information to remember
 ::: tldr Summary of what this file does
 ```
 
@@ -142,7 +142,7 @@ Waymarks use a special syntax starting with `:::`:
 
 **Signals:**
 
-- `^` (raised) - Work in progress
+- `~` (flagged) - Work in progress
 - `*` (starred) - High priority
 
 **Metadata:**

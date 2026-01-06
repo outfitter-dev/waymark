@@ -312,7 +312,7 @@ test('parseHeader extracts signals and marker', () => {
   const result = parseHeader('// ^*todo ::: fix bug');
   expect(result).toMatchObject({
     marker: 'todo',
-    signals: { raised: true, important: true },
+    signals: { flagged: true, starred: true },
   });
 });
 ```

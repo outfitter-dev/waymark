@@ -48,7 +48,7 @@ wm add src/auth.ts:42 todo "implement rate limiting"
 wm rm src/auth.ts:42 --write
 
 # Edit existing waymarks
-wm edit src/auth.ts:42 --raised --write
+wm edit src/auth.ts:42 --flagged --write
 
 # Lint waymarks
 wm lint src/

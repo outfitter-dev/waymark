@@ -30,16 +30,16 @@ const baseRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => {
   const contentText = overrides.contentText ?? "content";
   const commentLeader = overrides.commentLeader ?? "//";
   const overrideSignals = overrides.signals;
-  let normalizedSignals = { raised: false, current: false, important: false };
+  let normalizedSignals = { flagged: false, current: false, starred: false };
   if (overrideSignals) {
-    const raisedValue =
-      overrideSignals.raised ?? overrideSignals.current ?? false;
+    const flaggedValue =
+      overrideSignals.flagged ?? overrideSignals.current ?? false;
     const currentValue =
-      overrideSignals.current ?? overrideSignals.raised ?? false;
+      overrideSignals.current ?? overrideSignals.flagged ?? false;
     normalizedSignals = {
-      raised: raisedValue,
+      flagged: flaggedValue,
       current: currentValue,
-      important: overrideSignals.important ?? false,
+      starred: overrideSignals.starred ?? false,
     };
   }
 

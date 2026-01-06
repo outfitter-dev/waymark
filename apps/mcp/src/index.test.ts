@@ -82,7 +82,7 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const signals: SignalFlags = { raised: true };
+    const signals: SignalFlags = { flagged: true };
     const server = new TestServer();
     const response = await handleAddWaymark({
       server,

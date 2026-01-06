@@ -34,7 +34,7 @@ custom_types = [
   "thought"
 ]
 
-# note ::: workflow-aware handling of raised (^) waymarks
-[waymark.workflow.raised]
+# note ::: workflow-aware handling of flagged (~) waymarks
+[waymark.workflow.flagged]
 pre_commit = "info"     # Just log on commit
 pre_push = "warn"       # Warn before push

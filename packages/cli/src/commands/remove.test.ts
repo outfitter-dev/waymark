@@ -245,8 +245,8 @@ describe("runRemoveCommand", () => {
         contentPattern: "test.*",
         contains: "removal",
         signals: {
-          raised: false,
-          important: false,
+          flagged: false,
+          starred: false,
         },
       },
     });

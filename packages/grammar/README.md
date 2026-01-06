@@ -18,7 +18,7 @@ bun add @waymarks/grammar
 - `BLESSED_MARKERS` - Array of officially supported waymark types
 - `MARKERS` - Rich marker definitions with metadata and categories
 - `SIGIL` - The `:::` sigil constant
-- `SIGNALS` - Signal prefix constants (`^` for raised, `*` for important)
+- `SIGNALS` - Signal prefix constants (`~` for flagged, `*` for starred)
 
 ## Example
 
@@ -42,7 +42,7 @@ const records: WaymarkRecord[] = parse(sourceCode, {
 //   startLine: 2,
 //   type: 'todo',
 //   contentText: 'implement rate limiting',
-//   signals: { raised: false, important: false },
+//   signals: { flagged: false, starred: false },
 //   ...
 // }
 ```

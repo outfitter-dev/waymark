@@ -15,7 +15,7 @@ WAYMARK SYNTAX PRIMER
     // ~wip ::: refactoring in progress
 
   Components:
-    - Signals: ~ (raised/in-progress), * (starred for important/valuable)
+    - Signals: ~ (flagged/in-progress), * (starred for important/valuable)
     - Marker: todo, fix, wip, note, tldr, about, etc.
     - Content: Free text with optional properties
     - Properties: key:value pairs (see:#token, from:#token, owner:@alice)
@@ -38,7 +38,7 @@ FILTERING OPTIONS
                       Examples: #perf, #sec, #docs
                       Can be repeated: --tag "#perf" --tag "#sec"
 
-  --raised            Only show ~ (raised/in-progress) waymarks
+  --flagged           Only show ~ (flagged/in-progress) waymarks
                       Use to find work that shouldn't merge yet
 
   --starred           Only show * (starred) waymarks (important/valuable)
@@ -82,7 +82,7 @@ AGENT WORKFLOWS
      → High-priority security items
 
   4. Find in-progress work:
-     wm --raised --json
+     wm --flagged --json
      → Everything marked with ~ signal
 
   5. Review recent changes:
@@ -97,7 +97,7 @@ EXAMPLE OUTPUTS
       "file": "src/auth.ts",
       "startLine": 12,
       "type": "todo",
-      "signals": { "raised": false, "important": false },
+      "signals": { "flagged": false, "starred": false },
       "contentText": "@agent implement OAuth callback",
       "mentions": ["@agent"],
       "tags": ["#sec"],
@@ -123,7 +123,7 @@ TIPS FOR AGENTS
   ✓ Always use --json for programmatic parsing
   ✓ Combine filters for precision (type + mention + tag)
   ✓ Use --graph to understand dependencies before refactoring
-  ✓ Check --raised before merging to ensure no WIP (~ signal) remains
+  ✓ Check --flagged before merging to ensure no WIP (~ signal) remains
   ✓ Use --starred to prioritize high-importance items
   ✓ Parse TLDR waymarks to understand file purposes
   ✓ Look for @agent mentions to find delegated work
@@ -133,7 +133,7 @@ INTEGRATION PATTERNS
   wm --type todo --mention @agent --jsonl | process-tasks
 
   # Check for blocking work before merge
-  wm --raised --json | jq 'length' # Should be 0
+  wm --flagged --json | jq 'length' # Should be 0
 
   # Extract dependency graph for visualization
   wm --graph --json > deps.json

@@ -29,7 +29,7 @@ export type UnifiedCommandOptions = {
   types?: string[];
   tags?: string[];
   mentions?: string[];
-  raised?: boolean;
+  flagged?: boolean;
   starred?: boolean;
   // Exclusions
   excludeTypes?: string[];

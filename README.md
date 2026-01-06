@@ -95,7 +95,7 @@ The `wm` command provides a unified interface for all waymark operations:
 # Basic scanning and filtering
 wm find src/                              # scan and display all waymarks
 wm find src/ --type todo                  # filter by waymark type
-wm find src/ --raised                     # show only raised (~) waymarks (work-in-progress)
+wm find src/ --flagged                    # show only flagged (~) waymarks (in-progress)
 wm find src/ --starred                    # show only starred (*) waymarks (high-priority)
 wm find src/ --type todo --mention @agent # combine filters
 
@@ -112,7 +112,7 @@ wm find src/ --text                       # human-readable formatted text
 wm fmt src/ --write               # format waymarks in a directory
 wm lint src/ --json                  # validate waymark types
 wm rm src/auth.ts:42 --write     # remove a waymark
-wm edit src/auth.ts:42 --raised --write # adjust an existing waymark
+wm edit src/auth.ts:42 --flagged --write # adjust an existing waymark
 ```
 
 To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:

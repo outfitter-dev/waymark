@@ -7,8 +7,8 @@ const ANY_WHITESPACE_REGEX = /\s/;
 const LEADING_WHITESPACE_REGEX = /^\s*/;
 
 export type SignalState = {
-  raised: boolean;
-  important: boolean;
+  flagged: boolean;
+  starred: boolean;
   current?: boolean;
 };
 
@@ -42,7 +42,7 @@ export function parseSignalsAndType(segment: string): {
   if (trimmed.length === 0) {
     return {
       type: "",
-      signals: { raised: false, current: false, important: false },
+      signals: { flagged: false, current: false, starred: false },
       valid: true,
     };
   }
@@ -50,14 +50,14 @@ export function parseSignalsAndType(segment: string): {
   if (ANY_WHITESPACE_REGEX.test(trimmed)) {
     return {
       type: "",
-      signals: { raised: false, current: false, important: false },
+      signals: { flagged: false, current: false, starred: false },
       valid: false,
     };
   }
 
   let cursor = 0;
-  let raised = false;
-  let important = false;
+  let flagged = false;
+  let starred = false;
 
   while (
     cursor < trimmed.length &&
@@ -65,9 +65,9 @@ export function parseSignalsAndType(segment: string): {
   ) {
     const char = trimmed[cursor];
     if (char === "~") {
-      raised = true;
+      flagged = true;
     } else if (char === "*") {
-      important = true;
+      starred = true;
     }
     cursor += 1;
   }
@@ -77,14 +77,14 @@ export function parseSignalsAndType(segment: string): {
   if (type.includes("~") || type.includes("*") || type.includes("^")) {
     return {
       type: "",
-      signals: { raised: false, important: false },
+      signals: { flagged: false, starred: false },
       valid: false,
     };
   }
 
   return {
     type: type.toLowerCase(),
-    signals: { raised, important, current: raised },
+    signals: { flagged, starred, current: flagged },
     valid: true,
   };
 }

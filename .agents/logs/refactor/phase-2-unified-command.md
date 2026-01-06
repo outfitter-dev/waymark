@@ -18,7 +18,7 @@ Create a unified command interface that handles all listing/searching operations
 
 - [x] Created `packages/cli/src/commands/unified/` module structure
 - [x] Implemented intent detection logic (map/graph/filter modes)
-- [x] Added `--raised` / `-r` signal filter for `^` waymarks
+- [x] Added `--flagged` / `-F` signal filter for `~` waymarks
 - [x] Added `--starred` / `-s` signal filter for `*` waymarks
 - [x] Updated CLI entry point to route to unified handler by default
 
@@ -48,7 +48,7 @@ Created focused modules under `commands/unified/`:
   - Basic scan/filter mode (default)
   - Map mode (`--map`)
   - Graph mode (`--graph`)
-  - Signal filters (`--raised`, `--starred`)
+  - Signal filters (`--flagged`, `--starred`)
   - Type/tag/mention filters
   - JSON output
 
@@ -62,7 +62,7 @@ wm src/
 wm src/ --type todo
 
 # Signal filters
-wm src/ --raised       # Only ^ waymarks
+wm src/ --flagged      # Only ~ waymarks
 wm src/ --starred      # Only * waymarks
 
 # Map mode

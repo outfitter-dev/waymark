@@ -145,11 +145,10 @@ export function getTypeColor(type: string): typeof chalk {
  */
 export function styleType(
   type: string,
-  signals: { raised: boolean; important: boolean }
+  signals: { flagged: boolean; starred: boolean }
 ): string {
   const color = getTypeColor(type);
-  const signalStr =
-    (signals.raised ? "~" : "") + (signals.important ? "*" : "");
+  const signalStr = (signals.flagged ? "~" : "") + (signals.starred ? "*" : "");
 
   if (signalStr) {
     // Bold the signal and type with same color, use background for emphasis
