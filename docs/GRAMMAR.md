@@ -12,7 +12,7 @@ The canonical reference for waymark syntax, structure, and semantics.
   - [Comment Leaders](#comment-leaders)
   - [The `:::` Sigil](#the--sigil)
 - [Signals](#signals)
-  - [Raised (`~`)](#raised-)
+  - [Flagged (`~`)](#flagged-)
   - [Starred (`*`)](#starred-)
   - [Combining Signals](#combining-signals)
 - [Types (Markers)](#types-markers)
@@ -114,7 +114,7 @@ export async function authenticate(request: AuthRequest) {
 **Components**:
 
 1. **Comment leader** - Language-specific comment syntax (`//`, `#`, `<!--`, etc.)
-2. **Signals** (optional) - State indicators: `~` (raised), `*` (starred)
+2. **Signals** (optional) - State indicators: `~` (flagged), `*` (starred)
 3. **Type** (required) - Single lowercase keyword (e.g., `todo`, `fix`, `note`)
 4. **Sigil** (required) - Three colons `:::`
 5. **Content** (optional) - Free text with embedded tokens
@@ -167,48 +167,79 @@ The `:::` sigil is the delimiter between type and content:
 
 Signals are optional prefixes that indicate state or priority.
 
-### Raised (`~`)
+### Flagged (`~`)
 
-Marks work-in-progress waymarks that are branch-scoped.
+The tilde (`~`) marks a waymark as **flagged**—indicating work that's actively in progress on the current branch.
 
 ```typescript
 // ~todo ::: refactoring auth module
-// ~wip ::: implementing OAuth flow
+// ~fix ::: handle edge case with empty arrays
+// ~note ::: revisiting this algorithm, may refactor
 ```
 
-**Semantics**:
+**What flagged means**:
 
-- Indicates active development
-- Use for temporary/branch-specific annotations
+- "I'm currently working on this"
+- "This needs attention before I'm done with this branch"
+- "Don't forget about this before merging"
+
+**What flagged does NOT mean**:
+
+- It's not a priority indicator (that's `*` starred)
+- It's not a lifecycle state with transitions
+- It's not permanent documentation
+
+**The mental model**: A flagged waymark is like a flag planted on a trail—a temporary marker showing where you're currently working. When you're done with that section of the trail, you remove the flag.
+
+**The merge gate**: Flagged waymarks should be cleared before merging to main. Run `wm find --flagged` before merge to see what needs attention.
 
 ### Starred (`*`)
 
-Marks high-priority or important waymarks.
+The star (`*`) marks a waymark as **starred**—indicating high priority or importance.
 
 ```typescript
-// *fix ::: memory leak in cache
-// *review ::: security-critical code path
+// *fix ::: security vulnerability in auth handler
+// *todo ::: critical path for launch
+// *warn ::: do not modify without approval
 ```
+
+**What starred means**:
+
+- "This is important"
+- "Pay attention to this"
+- "Higher priority than unstarred items"
 
 **Semantics**:
 
-- Highlights importance
-- Surfaces in filtered views/dashboards
+- Highlights importance for human and agent attention
+- Surfaces in filtered views and dashboards
 - No automatic enforcement (informational only)
 
 ### Combining Signals
 
-When both signals are needed, order is `~*`:
+Signals can be combined. When both are present, the canonical order is `~*` (flagged first, then starred):
 
 ```typescript
-// ~*todo ::: critical WIP - OAuth token refresh
+// ~*todo ::: urgent fix I'm actively working on
+// ~*fix ::: high-priority bug, in progress
 ```
 
 **Invalid**:
 
 - `**` (double star) - not part of v1 grammar
 - `~~` (double tilde) - not part of v1 grammar
-- `*~` (reversed order) - not part of v1 grammar
+- `*~` (reversed order) - parsers accept but formatters normalize to `~*`
+
+**The pair tells a complete story**:
+
+| Waymark | Meaning |
+|---------|---------|
+| `todo` | A todo |
+| `*todo` | An important todo |
+| `~todo` | A todo I'm working on |
+| `~*todo` | An important todo I'm working on |
+
+The signals are orthogonal: starred is about *importance*, flagged is about *current focus*. Together they let you express both dimensions without overloading either.
 
 ---
 
@@ -910,8 +941,8 @@ interface WaymarkRecord {
   indent: number;            // 0
   commentLeader: string | null; // "//"
   signals: {
-    raised: boolean;         // false
-    important: boolean;      // true
+    flagged: boolean;        // false (~ signal)
+    starred: boolean;        // true (* signal)
   };
   type: string;              // "fix"
   id: {                      // Waymark ID (optional)

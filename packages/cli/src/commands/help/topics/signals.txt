@@ -1,12 +1,23 @@
 SIGNALS
 
-Signals are single-character prefixes that change the priority or state.
+Signals are single-character prefixes that modify a waymark's meaning.
 
-~ raised
-  In-progress or blocking work. Should be empty before merging to main.
+~ flagged
+  Marks work actively in-progress on the current branch.
+  - "I'm currently working on this"
+  - "Don't forget this before merging"
+  Should be cleared before merging to main.
 
 * starred
-  Important or high priority.
+  Marks high-priority or important items.
+  - "This is important"
+  - "Pay attention to this"
+
+The pair tells a complete story:
+  todo     A todo
+  *todo    An important todo
+  ~todo    A todo I'm working on
+  ~*todo   An important todo I'm working on
 
 Rules:
   - Signals come before the type with no space
@@ -15,3 +26,4 @@ Rules:
 Examples:
   // ~todo ::: stabilize cache layer
   // *fix ::: avoid leaking tokens in logs
+  // ~*fix ::: critical bug I'm actively fixing

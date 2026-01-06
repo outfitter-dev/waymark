@@ -137,7 +137,7 @@ COMBINING WITH OTHER COMMANDS
   # Format then lint
   wm fmt src/auth.ts --write && wm lint src/auth.ts
 
-  # Scan for issues, then lint for structure
+  # Scan for flagged issues, then lint for structure
   wm src/ --type todo --raised && wm lint src/
 
 For human-facing help, use: wm lint --help

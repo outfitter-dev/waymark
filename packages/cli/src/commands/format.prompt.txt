@@ -21,7 +21,7 @@ FORMATTING RULES
      Before: // TODO ::: fix this
      After:  // todo ::: fix this
 
-  3. Signal order: ~ (raised) before * (starred)
+  3. Signal order: ~ (flagged) before * (starred)
      Before: // *~todo ::: implement
      After:  // ~*todo ::: implement
 

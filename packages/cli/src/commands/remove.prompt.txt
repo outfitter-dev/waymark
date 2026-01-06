@@ -51,7 +51,7 @@ FILTER FLAGS
   --type <marker>       Match by waymark type (todo, fix, note, etc.)
   --mention <actor>     Match by mention (@agent, @alice, etc.)
   --tag <hashtag>       Match by hashtag (#deprecated, #perf, etc.)
-  --raised              Match raised (~) waymarks
+  --raised              Match flagged (~) waymarks
   --starred             Match starred (*) waymarks (important/valuable)
   --contains <text>     Match content containing text
 
@@ -80,7 +80,7 @@ EXAMPLES
   4. Remove all completed todos:
      wm rm --type done . --write
 
-  5. Remove stale agent todos:
+  5. Remove stale flagged agent todos:
      wm rm --type todo --mention @agent --raised src/ --write
 
   6. Batch remove from analysis:
@@ -102,8 +102,8 @@ AGENT WORKFLOWS
      wm scan --type done --json | jq -r '.file + ":" + (.startLine|tostring)' \
        | while read loc; do wm rm "$loc" --write; done
 
-  2. Remove raised waymarks after merge:
-     # Agent removes ~ waymarks after PR merges
+  2. Remove flagged waymarks after merge:
+     # Agent removes ~ (flagged) waymarks after PR merges
      wm rm --raised . --write
 
   3. Archive deprecated markers:
@@ -193,7 +193,7 @@ COMBINING WITH OTHER COMMANDS
     | xargs -I {} wm rm {} --write
 
   # Clean up before release
-  wm rm --raised . --write  # Remove raised
+  wm rm --raised . --write  # Remove flagged
   wm rm --type wip . --write  # Remove WIP
 
 TIPS FOR AGENTS
