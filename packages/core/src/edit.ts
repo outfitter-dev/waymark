@@ -556,8 +556,9 @@ function stripHtmlClosure(
   return content;
 }
 
-const ID_REGEX = /\bwm:[a-z0-9-]+\b/gi;
-const ID_TRAIL_REGEX = /(wm:[a-z0-9-]+)$/i;
+// Match [[hash]], [[hash|alias]], or [[alias]]
+const ID_REGEX = /\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/gi;
+const ID_TRAIL_REGEX = /(\[\[[^\]]+\]\])$/i;
 
 function extractExistingId(content: string): string | undefined {
   const matches = content.match(ID_REGEX);
@@ -600,7 +601,13 @@ function ensureHtmlClosure(lines: string[]): void {
 }
 
 function normalizeId(id: string): string {
-  return id.startsWith("wm:") ? id : `wm:${id}`;
+  // Already in [[hash]] or [[hash|alias]] format
+  if (id.startsWith("[[") && id.endsWith("]]")) {
+    return id;
+  }
+  // Strip wm: prefix if present (legacy format)
+  const hash = id.startsWith("wm:") ? id.slice(3) : id;
+  return `[[${hash}]]`;
 }
 
 function buildFileText(

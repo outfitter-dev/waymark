@@ -6,7 +6,7 @@ PURPOSE
 
 COMMAND SYNTAX
   wm rm <file:line> [--write]
-  wm rm --id <wm-id> [--write]
+  wm rm --id <waymark-id> [--write]
   wm rm --from <json-file> [--write]
   wm rm [filter-flags] <paths> [--write]
   wm rm <file:line> [--write] [--reason "<text>"]
@@ -35,8 +35,8 @@ INPUT METHODS
      → Removes waymark at line 42 in src/auth.ts
 
   2. By Waymark ID:
-     wm rm --id wm:a3k9m2p --write
-     → Removes waymark with ID wm:a3k9m2p
+     wm rm --id [[a3k9m2p]] --write
+     → Removes waymark with ID [[a3k9m2p]]
 
   3. By Filter Flags:
      wm rm --type todo --mention @agent src/ --write
@@ -75,7 +75,7 @@ EXAMPLES
      → Actually removes the waymark
 
   3. Remove by ID:
-     wm rm --id wm:a3k9m2p --write
+     wm rm --id [[a3k9m2p]] --write
 
   4. Remove all completed todos:
      wm rm --type done . --write
@@ -86,7 +86,7 @@ EXAMPLES
   6. Batch remove from analysis:
      echo '[
        {"file":"src/a.ts","line":42},
-       {"id":"wm:xyz123"}
+       {"id":"[[xyz123]]"}
      ]' | wm rm --from - --write --json
 
   7. Remove deprecated waymarks:
@@ -125,14 +125,14 @@ JSON INPUT SCHEMA
 
   OR
 
-    id: string - Waymark ID (wm:xxxxx)
+    id: string - Waymark ID ([[xxxxx]])
 
   Optional fields:
     confirm: boolean - Force confirmation prompt
 
   Examples:
   {"file": "src/auth.ts", "line": 42}
-  {"id": "wm:a3k9m2p"}
+  {"id": "[[a3k9m2p]]"}
 
 AUTOMATIC BEHAVIORS
 
@@ -208,7 +208,7 @@ TIPS FOR AGENTS
 UNDO CAPABILITY (future)
 
   Removed waymarks in history can potentially be restored:
-  wm restore --id wm:a3k9m2p --from-history
+  wm restore --id [[a3k9m2p]] --from-history
 
   (This feature may be added in future versions)
 

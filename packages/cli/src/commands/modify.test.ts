@@ -40,16 +40,16 @@ function createRecord(source: string): WaymarkRecord {
 
 describe("preserveId", () => {
   test("preserves ID at end of content", () => {
-    const result = preserveId("implement OAuth wm:a3k9m2p", "validate JWT");
-    expect(result).toBe("validate JWT wm:a3k9m2p");
+    const result = preserveId("implement OAuth [[a3k9m2p]]", "validate JWT");
+    expect(result).toBe("validate JWT [[a3k9m2p]]");
   });
 
   test("removes duplicate ID from new content", () => {
     const result = preserveId(
-      "old content wm:a3k9m2p",
-      "new content wm:a3k9m2p"
+      "old content [[a3k9m2p]]",
+      "new content [[a3k9m2p]]"
     );
-    expect(result).toBe("new content wm:a3k9m2p");
+    expect(result).toBe("new content [[a3k9m2p]]");
   });
 
   test("returns content as-is when no ID present", () => {
@@ -165,7 +165,7 @@ describe("runModifyCommand integration", () => {
     const filePath = join(workspace, "auth.ts");
     await writeFile(
       filePath,
-      "// todo ::: implement OAuth wm:a3k9m2p\n",
+      "// todo ::: implement OAuth [[a3k9m2p]]\n",
       "utf8"
     );
 
@@ -176,9 +176,9 @@ describe("runModifyCommand integration", () => {
       { stdin: Readable.from([]) }
     );
 
-    expect(result.payload.after.content).toBe("validate JWT wm:a3k9m2p");
+    expect(result.payload.after.content).toBe("validate JWT [[a3k9m2p]]");
     const text = await readFile(filePath, "utf8");
-    expect(text).toBe("// todo ::: validate JWT wm:a3k9m2p\n");
+    expect(text).toBe("// todo ::: validate JWT [[a3k9m2p]]\n");
   });
 
   test("preserves multi-line structure when adding signals", async () => {
@@ -223,18 +223,18 @@ describe("runModifyCommand integration", () => {
     const filePath = join(workspace, "auth.ts");
     await writeFile(
       filePath,
-      "// todo ::: implement OAuth wm:test123\n",
+      "// todo ::: implement OAuth [[test123]]\n",
       "utf8"
     );
 
     const index = new JsonIdIndex({ workspaceRoot: workspace });
     await index.set({
-      id: "wm:test123",
+      id: "[[test123]]",
       file: filePath,
       line: 1,
       type: "todo",
-      content: "// todo ::: implement OAuth wm:test123",
-      contentHash: fingerprintContent("// todo ::: implement OAuth wm:test123"),
+      content: "// todo ::: implement OAuth [[test123]]",
+      contentHash: fingerprintContent("// todo ::: implement OAuth [[test123]]"),
       contextHash: fingerprintContext(
         `${filePath}:1:// todo ::: implement OAuth`
       ),
@@ -249,31 +249,31 @@ describe("runModifyCommand integration", () => {
     );
 
     const refreshedIndex = new JsonIdIndex({ workspaceRoot: workspace });
-    const updated = await refreshedIndex.get("wm:test123");
+    const updated = await refreshedIndex.get("[[test123]]");
     expect(updated).not.toBeNull();
     expect(updated?.type).toBe("todo");
-    expect(updated?.content).toBe("implement OAuth wm:test123");
+    expect(updated?.content).toBe("implement OAuth [[test123]]");
 
     const modifiedFile = await readFile(filePath, "utf8");
-    expect(modifiedFile).toContain("// *todo ::: implement OAuth wm:test123");
+    expect(modifiedFile).toContain("// *todo ::: implement OAuth [[test123]]");
   });
 
   test("resolves target via ID", async () => {
     const filePath = join(workspace, "auth.ts");
     await writeFile(
       filePath,
-      "// todo ::: implement OAuth wm:abc123\n",
+      "// todo ::: implement OAuth [[abc123]]\n",
       "utf8"
     );
 
     const index = new JsonIdIndex({ workspaceRoot: workspace });
     await index.set({
-      id: "wm:abc123",
+      id: "[[abc123]]",
       file: filePath,
       line: 1,
       type: "todo",
-      content: "// todo ::: implement OAuth wm:abc123",
-      contentHash: fingerprintContent("// todo ::: implement OAuth wm:abc123"),
+      content: "// todo ::: implement OAuth [[abc123]]",
+      contentHash: fingerprintContent("// todo ::: implement OAuth [[abc123]]"),
       contextHash: fingerprintContext(
         `${filePath}:1:// todo ::: implement OAuth`
       ),
@@ -283,11 +283,11 @@ describe("runModifyCommand integration", () => {
     await runModifyCommand(
       context,
       undefined,
-      { id: "wm:abc123", noSignal: true, write: true },
+      { id: "[[abc123]]", noSignal: true, write: true },
       { stdin: Readable.from([]) }
     );
 
     const text = await readFile(filePath, "utf8");
-    expect(text).toBe("// todo ::: implement OAuth wm:abc123\n");
+    expect(text).toBe("// todo ::: implement OAuth [[abc123]]\n");
   });
 });

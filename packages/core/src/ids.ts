@@ -131,7 +131,13 @@ export class WaymarkIdManager {
   }
 
   private normalizeId(id: string): string {
-    return id.startsWith("wm:") ? id : `wm:${id}`;
+    // Already in [[hash]] or [[hash|alias]] format
+    if (id.startsWith("[[") && id.endsWith("]]")) {
+      return id;
+    }
+    // Strip wm: prefix if present (legacy format)
+    const hash = id.startsWith("wm:") ? id.slice(3) : id;
+    return `[[${hash}]]`;
   }
 
   private async validateAvailability(
@@ -183,7 +189,7 @@ export class WaymarkIdManager {
       .toString(BASE36_RADIX)
       .padStart(sliceLength, "0")
       .slice(0, sliceLength);
-    return `wm:${base36}`;
+    return `[[${base36}]]`;
   }
 }
 

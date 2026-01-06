@@ -62,7 +62,7 @@ describe("removeWaymarks", () => {
   it("removes a waymark by id and updates the index", async () => {
     const filePath = join(workspace, "src/service.ts");
     await ensureDir(dirname(filePath));
-    const waymarkLine = "// todo ::: document handler wm:test123";
+    const waymarkLine = "// todo ::: document handler [[test123]]";
     await writeFile(
       filePath,
       ["export const handler = () => {};", waymarkLine, ""].join("\n"),
@@ -79,7 +79,7 @@ describe("removeWaymarks", () => {
     );
 
     await index.set({
-      id: "wm:test123",
+      id: "[[test123]]",
       file: filePath,
       line: 2,
       type: "todo",
@@ -89,7 +89,7 @@ describe("removeWaymarks", () => {
       updatedAt: Date.now(),
     });
 
-    const specs: RemovalSpec[] = [{ id: "wm:test123" }];
+    const specs: RemovalSpec[] = [{ id: "[[test123]]" }];
     const results = await removeWaymarks(specs, {
       write: true,
       idManager: manager,
@@ -102,13 +102,13 @@ describe("removeWaymarks", () => {
     expect(indexData).toHaveLength(0);
 
     const contents = await readFile(filePath, "utf8");
-    expect(contents).not.toContain("wm:test123");
+    expect(contents).not.toContain("[[test123]]");
   });
 
   it("records removal reason in history when provided", async () => {
     const filePath = join(workspace, "src/history.ts");
     await ensureDir(dirname(filePath));
-    const waymarkLine = "// todo ::: cleanup wm:test456";
+    const waymarkLine = "// todo ::: cleanup [[test456]]";
     await writeFile(
       filePath,
       ["export const handler = () => {};", waymarkLine, ""].join("\n"),
@@ -125,7 +125,7 @@ describe("removeWaymarks", () => {
     );
 
     await index.set({
-      id: "wm:test456",
+      id: "[[test456]]",
       file: filePath,
       line: 2,
       type: "todo",
@@ -135,7 +135,7 @@ describe("removeWaymarks", () => {
       updatedAt: Date.now(),
     });
 
-    const specs: RemovalSpec[] = [{ id: "wm:test456" }];
+    const specs: RemovalSpec[] = [{ id: "[[test456]]" }];
     await removeWaymarks(specs, {
       write: true,
       idManager: manager,

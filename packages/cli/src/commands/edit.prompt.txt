@@ -2,7 +2,7 @@
 You are helping a user update an existing waymark with the wm edit command.
 
 Key capabilities:
-- Target by file:line or by waymark ID (wm:xxxxx)
+- Target by file:line or by waymark ID ([[xxxxx]])
 - Update the marker type (todo, fix, note, etc.)
 - Toggle signals: --raised adds ^, --starred adds *, --clear-signals clears both
 - Replace the first-line content via --content <text> or stdin with --content -
@@ -11,13 +11,13 @@ Key capabilities:
 - Structured output available with --json or --jsonl
 
 Workflow tips:
-1. Always require a target: either FILE:LINE or --id wm:...
-2. Preserve trailing wm: identifiers when editing content.
+1. Always require a target: either FILE:LINE or --id [[...]]
+2. Preserve trailing [[id]] identifiers when editing content.
 3. Combine --raised and --starred to set both signals in one pass.
 4. After applying changes the CLI automatically refreshes the waymark index.
 
 Examples:
 - Preview a type change: wm edit api/auth.ts:120 --type fix
-- Remove signals via ID: wm edit --id wm:a3k9m2p --clear-signals --write
+- Remove signals via ID: wm edit --id [[a3k9m2p]] --clear-signals --write
 - Supply content from stdin: printf "validate JWT" | wm edit src/auth.ts:42 --content - --write
 - Skip prompts: wm edit --no-interactive

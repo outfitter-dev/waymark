@@ -19,7 +19,7 @@ describe("parseRemoveArgs", () => {
     const parsed = parseRemoveArgs([
       "src/auth.ts:10",
       "--id",
-      "wm:abc",
+      "[[abc]]",
       "--type",
       "todo",
       "--tag",
@@ -34,7 +34,7 @@ describe("parseRemoveArgs", () => {
     expect(parsed.specs).toHaveLength(ExpectedSpecCount);
     const [byLine, byId, criteria] = parsed.specs;
     expect(byLine).toEqual({ file: "src/auth.ts", line: 10 });
-    expect(byId).toEqual({ id: "wm:abc" });
+    expect(byId).toEqual({ id: "[[abc]]" });
     expect(criteria).toEqual({
       files: ["src/auth.ts"],
       criteria: { type: "todo", tags: ["#cleanup"], contains: "cleanup" },
@@ -99,7 +99,7 @@ describe("runRemoveCommand", () => {
   test("removes waymarks by id and updates the JSON index", async () => {
     const filePath = join(workspace, "src/module.ts");
     await ensureDir(join(workspace, "src"));
-    const waymarkLine = "// todo ::: needs docs wm:test-456";
+    const waymarkLine = "// todo ::: needs docs [[test-456]]";
     await writeFile(
       filePath,
       ["function noop() {}", waymarkLine, ""].join("\n"),
@@ -111,7 +111,7 @@ describe("runRemoveCommand", () => {
       trackHistory: false,
     });
     await index.set({
-      id: "wm:test-456",
+      id: "[[test-456]]",
       file: filePath,
       line: 2,
       type: "todo",
@@ -121,7 +121,7 @@ describe("runRemoveCommand", () => {
       updatedAt: Date.now(),
     });
 
-    const parsed = parseRemoveArgs(["--write", "--id", "wm:test-456"]);
+    const parsed = parseRemoveArgs(["--write", "--id", "[[test-456]]"]);
 
     const actual = await runRemoveCommand(parsed, context, {
       writeOverride: true,
@@ -129,7 +129,7 @@ describe("runRemoveCommand", () => {
 
     expect(actual.summary.successful).toBe(1);
     const remaining = await readFile(filePath, "utf8");
-    expect(remaining).not.toContain("wm:test-456");
+    expect(remaining).not.toContain("[[test-456]]");
 
     const freshIndex = new JsonIdIndex({
       workspaceRoot: workspace,
@@ -235,7 +235,7 @@ describe("runRemoveCommand", () => {
     const validJson = JSON.stringify({
       file: filePath,
       line: 1,
-      id: "wm:test-id",
+      id: "[[test-id]]",
       files: [filePath],
       criteria: {
         type: "todo",

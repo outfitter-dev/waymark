@@ -56,7 +56,7 @@ describe("editWaymark", () => {
     await ensureDir(dirname(filePath));
     await writeFile(
       filePath,
-      "// todo ::: add rate limiting wm:test123\n",
+      "// todo ::: add rate limiting [[test123]]\n",
       "utf8"
     );
 
@@ -70,9 +70,9 @@ describe("editWaymark", () => {
       DEFAULT_CONFIG
     );
 
-    expect(result.after.raw).toContain("wm:test123");
+    expect(result.after.raw).toContain("[[test123]]");
     const contents = await readFile(filePath, "utf8");
-    expect(contents).toContain("add retry budget wm:test123");
+    expect(contents).toContain("add retry budget [[test123]]");
   });
 
   it("preserves IDs found outside the header line", async () => {
@@ -82,7 +82,7 @@ describe("editWaymark", () => {
       filePath,
       [
         "// todo ::: add rate limiting",
-        "//      ::: wm:test999 #auth",
+        "//      ::: [[test999]] #auth",
         "",
       ].join("\n"),
       "utf8"
@@ -98,9 +98,9 @@ describe("editWaymark", () => {
       DEFAULT_CONFIG
     );
 
-    expect(result.after.raw).toContain("wm:test999");
+    expect(result.after.raw).toContain("[[test999]]");
     const contents = await readFile(filePath, "utf8");
-    expect(contents).toContain("add retry budget wm:test999");
+    expect(contents).toContain("add retry budget [[test999]]");
   });
 
   it("sets and clears signals", async () => {
@@ -130,25 +130,25 @@ describe("editWaymark", () => {
     await ensureDir(dirname(filePath));
     await writeFile(
       filePath,
-      "// todo ::: implement OAuth wm:abc123\n",
+      "// todo ::: implement OAuth [[abc123]]\n",
       "utf8"
     );
 
     const { index, manager } = createManager();
     await index.set({
-      id: "wm:abc123",
+      id: "[[abc123]]",
       file: filePath,
       line: 1,
       type: "todo",
-      content: "implement OAuth wm:abc123",
-      contentHash: fingerprintContent("implement OAuth wm:abc123"),
+      content: "implement OAuth [[abc123]]",
+      contentHash: fingerprintContent("implement OAuth [[abc123]]"),
       contextHash: fingerprintContext(`${filePath}:1`),
       updatedAt: Date.now(),
     });
 
     await editWaymark(
       {
-        id: "wm:abc123",
+        id: "[[abc123]]",
         content: "implement OAuth + PKCE",
         write: true,
         idManager: manager,
@@ -156,11 +156,11 @@ describe("editWaymark", () => {
       DEFAULT_CONFIG
     );
 
-    const refreshed = await index.get("wm:abc123");
-    expect(refreshed?.content).toBe("implement OAuth + PKCE wm:abc123");
+    const refreshed = await index.get("[[abc123]]");
+    expect(refreshed?.content).toBe("implement OAuth + PKCE [[abc123]]");
 
     const contents = await readFile(filePath, "utf8");
-    expect(contents).toContain("implement OAuth + PKCE wm:abc123");
+    expect(contents).toContain("implement OAuth + PKCE [[abc123]]");
   });
 
   it("previews edits without writing", async () => {

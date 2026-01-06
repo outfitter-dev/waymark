@@ -295,7 +295,7 @@ export const commands: HelpRegistry = {
       {
         name: "id",
         type: "string",
-        placeholder: "wm:abcdef",
+        placeholder: "[[abcdef]]",
         description: "Reserve specific ID for waymark",
       },
       commonFlags.json,
@@ -327,7 +327,7 @@ export const commands: HelpRegistry = {
       {
         name: "id",
         type: "string",
-        placeholder: "wm:abcdef",
+        placeholder: "[[abcdef]]",
         description: "Target waymark by ID instead of file:line",
       },
       {
@@ -366,10 +366,10 @@ export const commands: HelpRegistry = {
     ],
     examples: [
       "wm edit src/auth.ts:42 --type fix",
-      "wm edit --id wm:a3k9m2p --starred --write",
+      "wm edit --id [[a3k9m2p]] --starred --write",
       'printf "new copy" | wm edit src/auth.ts:42 --content - --write',
       "wm edit                                 # Interactive prompts (no args)",
-      "wm edit --no-interactive --id wm:a3k9m2p",
+      "wm edit --no-interactive --id [[a3k9m2p]]",
     ],
   },
   rm: {
@@ -393,7 +393,7 @@ export const commands: HelpRegistry = {
       {
         name: "id",
         type: "string",
-        placeholder: "wm:abcdef",
+        placeholder: "[[abcdef]]",
         description: "Remove by ID (repeatable)",
       },
       {
@@ -470,7 +470,7 @@ export const commands: HelpRegistry = {
     examples: [
       "wm rm src/auth.ts:42                  # Preview removal",
       "wm rm src/auth.ts:42 --write          # Actually remove",
-      "wm rm --id wm:a3k9m2p --write         # Remove by ID",
+      "wm rm --id [[a3k9m2p]] --write        # Remove by ID",
       "wm rm --type todo --tag #wip --write --yes  # Batch removal",
       'wm rm src/auth.ts:42 --write --reason "cleanup"',
     ],

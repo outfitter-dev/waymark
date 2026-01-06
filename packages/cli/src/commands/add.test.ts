@@ -10,7 +10,7 @@ import { parseAddArgs, runAddCommand } from "./add";
 
 const SAMPLE_LINE = 42;
 const TODO_HANDLER_REGEX = /todo ::: document handler/;
-const ANY_ID_REGEX = /wm:/;
+const ANY_ID_REGEX = /\[\[[a-z0-9]+\]\]/;
 const JSON_VALIDATION_ERROR_REGEX = /JSON validation failed/;
 
 describe("parseAddArgs", () => {
@@ -34,7 +34,7 @@ describe("parseAddArgs", () => {
       "--order",
       "2",
       "--id",
-      "wm:custom123",
+      "[[custom123]]",
     ]);
 
     expect(parsed.options.write).toBe(false);
@@ -56,7 +56,7 @@ describe("parseAddArgs", () => {
     expect(spec.signals).toEqual({ raised: true, important: true });
     expect(spec.continuations).toEqual(["follow up with team"]);
     expect(spec.order).toBe(2);
-    expect(spec.id).toBe("wm:custom123");
+    expect(spec.id).toBe("[[custom123]]");
   });
 
   test("supports --from for batch insert", () => {
@@ -203,7 +203,7 @@ describe("runAddCommand", () => {
       tags: ["#test", "#validation"],
       mentions: ["@alice", "@bob"],
       continuations: ["first continuation", "second continuation"],
-      id: "wm:custom-id",
+      id: "[[custom-id]]",
     });
     await writeFile(validJsonPath, validJson, "utf8");
 

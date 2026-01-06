@@ -109,7 +109,8 @@ type RemovalMatch = {
   reason: string;
 };
 
-const ID_REGEX = /\bwm:[a-z0-9-]+\b/gi;
+// Match [[hash]], [[hash|alias]], or [[alias]]
+const ID_REGEX = /\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/gi;
 const LINE_SPLIT_REGEX = /\r?\n/;
 const MAX_CONTENT_PATTERN_LENGTH = 512;
 
@@ -480,7 +481,15 @@ function findRecordById(
   records: WaymarkRecord[],
   id: string
 ): WaymarkRecord | undefined {
-  const normalized = id.startsWith("wm:") ? id : `wm:${id}`;
+  // Normalize to [[hash]] format
+  let normalized: string;
+  if (id.startsWith("[[") && id.endsWith("]]")) {
+    normalized = id;
+  } else if (id.startsWith("wm:")) {
+    normalized = `[[${id.slice(3)}]]`;
+  } else {
+    normalized = `[[${id}]]`;
+  }
   return records.find((record) => record.raw.includes(normalized));
 }
 
