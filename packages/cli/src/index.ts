@@ -1025,7 +1025,7 @@ Formatting Rules:
   - Marker case normalized (default: lowercase)
   - Multi-line continuations aligned to parent :::
   - Property ordering: relations after free text
-  - Signal order: ^ before * when combined
+  - Signal order: ~ before * when combined
 
 Before Formatting:
   //todo:::implement auth
@@ -1070,7 +1070,7 @@ See 'wm fmt --prompt' for agent-facing documentation.
     .option("--docs <url>", "add documentation link")
     .option("--source <token>", "add dependency relation (from:#token)")
     .option("--replaces <token>", "add supersedes relation")
-    .option("--signal <signal>", "add signal: ^ (raised) or * (starred)")
+    .option("--signal <signal>", "add signal: ~ (raised) or * (starred)")
     .option("--write, -w", "apply changes to file (default: preview)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
@@ -1093,12 +1093,12 @@ Examples:
   $ echo '{"file":"src/a.ts","line":10,"type":"todo","content":"test"}' | wm add --from -
 
 Signals:
-  ^  Raised (in-progress work, shouldn't merge to main yet)
+  ~  Raised (in-progress work, shouldn't merge to main yet)
   *  Important (high priority)
 
 Types:
   Work:       todo, fix, wip, done, review, test, check
-  Info:       note, context, tldr, this, example, idea, comment
+  Info:       note, context, tldr, about, example, idea, comment
   Caution:    warn, alert, deprecated, temp, hack
   Workflow:   blocked, needs
   Inquiry:    question
@@ -1116,7 +1116,7 @@ See 'wm add --prompt' for agent-facing documentation.
     .argument("[target]", "waymark location (file:line)")
     .option("--id <id>", "waymark ID to edit")
     .option("--type <marker>", "change waymark type")
-    .option("--raised, -R", "add ^ (raised) signal", false)
+    .option("--raised, -R", "add ~ (raised) signal", false)
     .option(
       "--starred",
       "add * (starred) signal to mark as important/valuable",
@@ -1215,7 +1215,7 @@ Filter Criteria Syntax:
   type:<marker>         Match waymark type (todo, fix, note, etc.)
   mention:<actor>       Match mention (@agent, @alice)
   tag:<hashtag>         Match tag (#perf, #sec)
-  signal:^              Match raised waymarks
+  signal:~              Match raised waymarks
   signal:*              Match starred waymarks (important/valuable)
   contains:<text>       Match content containing text
 
@@ -1396,7 +1396,7 @@ See 'wm doctor --prompt' for agent-facing documentation.
     .option("--type <types...>, -t", "filter by waymark type(s)")
     .option("--tag <tags...>", "filter by tag(s)")
     .option("--mention <mentions...>", "filter by mention(s)")
-    .option("--raised, -R", "filter for raised (^) waymarks")
+    .option("--raised, -R", "filter for raised (~) waymarks")
     .option("--starred, -S", "filter for starred (*) waymarks")
     .option("--tldr", "shorthand for --type tldr")
     .option("--graph", "show dependency graph")
@@ -1442,7 +1442,7 @@ Filter Options:
   -t, --type <types...>       Filter by waymark type(s)
   --tag <tags...>             Filter by tag(s)
   --mention <mentions...>     Filter by mention(s)
-  -R, --raised                Filter for raised (^) waymarks
+  -R, --raised                Filter for raised (~) waymarks
   -S, --starred               Filter for starred (*) waymarks
   --tldr                      Shorthand for --type tldr
 

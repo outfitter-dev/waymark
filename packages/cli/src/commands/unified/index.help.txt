@@ -13,7 +13,7 @@ OPTIONS
     -t, --type <marker>     Filter by waymark type (todo, fix, note, etc.)
     -m, --mention <actor>   Filter by mention (@agent, @alice, etc.)
     --tag <tag>             Filter by hashtag (#perf, #sec, etc.)
-    -R, --raised            Show only raised (^) waymarks
+    -R, --raised            Show only raised (~) waymarks
     -S, --starred           Show only important (*) waymarks
 
   Display Modes:

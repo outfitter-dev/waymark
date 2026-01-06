@@ -35,6 +35,13 @@ The canonical reference for waymark syntax, structure, and semantics.
   - [Relation Types](#relation-types)
   - [Dependency Tracking](#dependency-tracking)
   - [Dangling Relations](#dangling-relations)
+- [Waymark IDs](#waymark-ids)
+  - [ID Format](#id-format)
+  - [Hash Generation](#hash-generation)
+  - [Aliases](#aliases)
+  - [Referencing IDs](#referencing-ids)
+  - [ID Normalization](#id-normalization)
+  - [Configuration](#configuration)
 - [Tags (Hashtags)](#tags-hashtags)
   - [Tag Syntax](#tag-syntax)
   - [Namespaces](#namespaces)
@@ -239,7 +246,7 @@ These types are first-class and built into the tooling:
 - `alert` - Important alert
 - `deprecated` - Deprecated code
 - `temp` (alias: `tmp`) - Temporary code
-- `hack` - Workaround or temporary solution
+- `hack` (alias: `stub`) - Workaround or temporary solution
 
 **Workflow**
 
@@ -485,6 +492,43 @@ If a key appears multiple times, the **last value wins**:
 
 Linters warn on duplicates.
 
+### Symbol Binding (`sym:`)
+
+The `sym:` property associates a waymark with a specific code symbol:
+
+```typescript
+// todo ::: sym:handleAuth implement token refresh
+// fix ::: sym:validateInput escape special characters
+// about ::: sym:AuthService manages user sessions
+```
+
+**Purpose**:
+
+- Links waymarks to named symbols (functions, classes, variables)
+- Enables symbol-to-waymark indexing
+- Helps tooling track waymarks across refactors
+- Allows validation that referenced symbols exist
+
+**Value format**: Bare identifier matching `[A-Za-z_][A-Za-z0-9_]*`
+
+**Rules**:
+
+- One `sym:` per waymark (duplicates overwrite)
+- Symbol should exist in the same file or be imported
+- Linters may warn on unresolved symbols
+
+**Extraction**: The `sym` property is stored in the record's `properties` field:
+
+```json
+{
+  "type": "todo",
+  "contentText": "implement token refresh",
+  "properties": {
+    "sym": "handleAuth"
+  }
+}
+```
+
 ---
 
 ## Canonical References
@@ -584,6 +628,136 @@ Linters error on dangling relations.
 
 ---
 
+## Waymark IDs
+
+Waymarks can be assigned stable identifiers using wikilink-style syntax. IDs enable precise cross-references, history tracking, and tooling integration.
+
+### ID Format
+
+IDs use double-bracket notation with three supported forms:
+
+```text
+[[hash]]          - Full ID (7-character alphanumeric hash)
+[[hash|alias]]    - ID with human-readable alias
+[[alias]]         - Draft/alias-only (no hash yet)
+```
+
+**Examples**:
+
+```typescript
+// todo ::: [[a1b2c3d]] implement rate limiting
+// fix ::: [[x9y8z7w|auth-bug]] resolve authentication failure
+// idea ::: [[session-cache]] consider Redis for sessions
+```
+
+### Hash Generation
+
+- **Format**: 7 lowercase alphanumeric characters (`[a-z0-9]{7}`)
+- **Generation**: Deterministic hash derived from waymark content, file path, and line context
+- **Uniqueness**: Repository-wide; collisions are detected and rejected by tooling
+- **Stability**: Hash remains constant unless the waymark is significantly modified
+
+**ID lifecycle**:
+
+1. **Draft**: Start with alias-only `[[my-alias]]` during development
+2. **Assign**: Run `wm id --assign` to generate hashes for draft IDs
+3. **Stable**: Once assigned, `[[a1b2c3d|my-alias]]` persists through refactors
+
+### Aliases
+
+Aliases provide human-readable identifiers alongside the hash:
+
+- **Format**: Lowercase alphanumeric with hyphens (`[a-z0-9-]+`)
+- **Purpose**: Readable references in documentation and conversation
+- **Uniqueness**: Aliases should be unique within a repository but are not enforced as strictly as hashes
+
+```typescript
+// tldr ::: [[f3g4h5j|stripe-webhook]] Stripe webhook handler ref:#payments/stripe
+// todo ::: [[auth-refresh]] implement token refresh from:#auth/service
+```
+
+**Alias conventions**:
+
+- Use kebab-case (`auth-refresh`, not `authRefresh` or `auth_refresh`)
+- Keep aliases short but descriptive (2-4 words)
+- Prefer domain-prefixed aliases for clarity (`auth-login`, `payments-refund`)
+
+### Referencing IDs
+
+Reference waymarks by their ID in relations and content:
+
+```typescript
+// todo ::: implement retry logic see:[[a1b2c3d]]
+// fix ::: address feedback from:[[x9y8z7w|auth-bug]]
+// note ::: supersedes [[old-impl]] with new approach
+```
+
+**Reference forms**:
+
+- `[[hash]]` - Reference by hash (most stable)
+- `[[hash|alias]]` - Reference with alias hint (readable + stable)
+- `[[alias]]` - Reference by alias (readable, resolves to hash)
+
+**In relations**:
+
+Relations can reference waymarks by ID instead of (or in addition to) canonical tokens:
+
+```typescript
+// todo ::: implement caching from:[[a1b2c3d]] see:#cache/redis
+// fix ::: resolve bug replaces:[[old-fix|deprecated-workaround]]
+```
+
+### ID Normalization
+
+Tooling normalizes IDs for consistency:
+
+- Hashes are lowercase
+- Aliases are lowercase with hyphens
+- Whitespace around `|` separator is trimmed
+- Invalid characters are rejected
+
+```typescript
+// Input (non-canonical):
+// todo ::: [[ A1B2C3D | My Alias ]] fix bug
+
+// Output (normalized):
+// todo ::: [[a1b2c3d|my-alias]] fix bug
+```
+
+### Configuration
+
+Control ID behavior in `.waymark/config.toml`:
+
+```toml
+[ids]
+enabled = true              # Enable ID features (default: true)
+auto_assign = false         # Auto-assign hashes on format (default: false)
+track_history = true        # Track ID removals in history.json (default: false)
+alias_required = false      # Require aliases for new IDs (default: false)
+```
+
+### Migration from Legacy Format
+
+The previous `wm:xxx` format is deprecated. Migrate using:
+
+```bash
+wm migrate-ids --write      # Convert wm:xxx to [[xxx]] format
+```
+
+**Before**:
+
+```typescript
+// todo ::: wm:a1b2c3d implement feature
+```
+
+**After**:
+
+```typescript
+// todo ::: [[a1b2c3d]] implement feature
+```
+
+---
+
 ## Tags (Hashtags)
 
 ### Tag Syntax
@@ -632,14 +806,58 @@ rg '#perf'  # Find all performance tags
 
 ### Actor Syntax
 
-Mentions start with `@`:
+Mentions start with `@` followed by a **lowercase letter**:
 
 ```typescript
 // todo ::: @agent implement OAuth flow
 // review ::: @alice check security implications
+// todo ::: @dev-team coordinate rollout
 ```
 
-**Pattern**: `@[A-Za-z0-9._-]+`
+**Pattern**: `@[a-z][A-Za-z0-9._-]*`
+
+The lowercase-first requirement prevents false positives from common `@`-prefixed patterns in code.
+
+### Mention Validation
+
+Parsers must reject patterns that look like mentions but are not:
+
+| Pattern | Example | Why Rejected |
+| ------- | ------- | ------------ |
+| Email addresses | `user@domain.com` | `@` appears mid-word (preceded by non-whitespace) |
+| Decorators | `@Component`, `@Injectable` | Starts with uppercase letter |
+| Scoped packages | `@scope/package`, `@angular/core` | Contains `/` immediately after identifier start |
+| Uppercase handles | `@Alice`, `@ADMIN` | Must start with lowercase |
+
+**Valid mentions**:
+
+```typescript
+// todo ::: @alice implement feature           // Valid: lowercase start
+// todo ::: @agent add caching                 // Valid: lowercase start
+// todo ::: @dev-team review changes           // Valid: lowercase with hyphen
+// todo ::: @bob.smith coordinate rollout      // Valid: lowercase with dot
+```
+
+**Invalid patterns** (not extracted as mentions):
+
+```typescript
+// note ::: contact user@example.com           // Email - NOT a mention
+// note ::: uses @Component decorator          // Decorator - NOT a mention
+// note ::: depends on @angular/core           // Scoped package - NOT a mention
+// note ::: assigned to @Alice                 // Uppercase - NOT a mention
+```
+
+**Mixed content** extracts only valid mentions:
+
+```typescript
+// todo ::: @alice contact user@example.com
+// Extracted mentions: ["@alice"]
+// "user@example.com" is ignored (email pattern)
+
+// note ::: @agent review the @Injectable usage
+// Extracted mentions: ["@agent"]
+// "@Injectable" is ignored (uppercase start)
+```
 
 ### Delegation
 
@@ -696,11 +914,15 @@ interface WaymarkRecord {
     important: boolean;      // true
   };
   type: string;              // "fix"
+  id: {                      // Waymark ID (optional)
+    hash: string | null;     // "a1b2c3d" (7-char alphanumeric)
+    alias: string | null;    // "auth-bug" (human-readable)
+  } | null;
   contentText: string;       // "validate email format"
   properties: Record<string, string>; // { owner: "@alice" }
   relations: Array<{         // [{ kind: "depends", token: "#auth" }]
     kind: string;
-    token: string;
+    token: string;           // "#auth" or "[[a1b2c3d]]"
   }>;
   canonicals: string[];      // ["#auth/service"]
   mentions: string[];        // ["@alice"]
@@ -719,8 +941,11 @@ See `schemas/waymark-record.schema.json` for the authoritative JSON Schema (draf
 - `indent` ≥ 0
 - `type` is required
 - Relations must have `kind` and `token`
-- Tokens match `^#[A-Za-z0-9._/-]+$`
-- Mentions match `^@[A-Za-z0-9._-]+$`
+- Tokens match `^#[A-Za-z0-9._/-]+$` or `^\[\[[a-z0-9-|]+\]\]$` (ID reference)
+- Mentions match `^@[a-z][A-Za-z0-9._-]*$` (must start with lowercase)
+- Symbol bindings (`sym` property) match `^[A-Za-z_][A-Za-z0-9_]*$`
+- ID hashes match `^[a-z0-9]{7}$` (7 lowercase alphanumeric characters)
+- ID aliases match `^[a-z][a-z0-9-]*$` (lowercase kebab-case)
 
 ---
 
@@ -733,21 +958,35 @@ COMMENT       = COMMENT_LEADER ;
 SIGNALS       = ["~"] , ["*"] ;
 MARKER        = LOWER , { LOWER | DIGIT | "_" | "-" } ;
 CONTENT       = { TOKEN | HWS } ;
-TOKEN         = RELATION | PROPERTY | MENTION | HASHTAG | TEXT ;
-RELATION      = REL_KEY, ":", HASH_TOKEN ;
+TOKEN         = WAYMARK_ID | RELATION | SYM_PROP | PROPERTY | MENTION | HASHTAG | TEXT ;
+WAYMARK_ID    = "[[", ID_BODY, "]]" ;
+ID_BODY       = HASH_ID, [ "|", ALIAS ] | ALIAS ;
+HASH_ID       = ALNUM_LOWER, ALNUM_LOWER, ALNUM_LOWER, ALNUM_LOWER, ALNUM_LOWER, ALNUM_LOWER, ALNUM_LOWER ;
+ALIAS         = LOWER, { LOWER | DIGIT | "-" } ;
+ALNUM_LOWER   = LOWER | DIGIT ;
+RELATION      = REL_KEY, ":", ( HASH_TOKEN | ID_REF ) ;
+ID_REF        = "[[", ID_BODY, "]]" ;
 REL_KEY       = "ref" | "see" | "docs" | "from" | "replaces" ;
+SYM_PROP      = "sym", ":", SYMBOL ;
+SYMBOL        = ( ALPHA | "_" ) , { ALNUM | "_" } ;
 PROPERTY      = KEY, ":", VALUE ;
 KEY           = ALPHA , { ALPHA | DIGIT | "_" | "-" } ;
 VALUE         = UNQUOTED | QUOTED ;
 UNQUOTED      = { CHAR_NO_WS_NO_COLON } ;
 QUOTED        = '"' , { CHAR | ESCAPED } , '"' ;
 ESCAPED       = "\\" , ( '"' | "\\" );
-MENTION       = "@" , IDENT ;
+MENTION       = "@" , LOWER , { ALNUM | "_" | "-" | "." } ;
 HASHTAG       = "#" , IDENT_NS ;
 HASH_TOKEN    = "#" , IDENT_NS ;
-IDENT         = ALNUM , { ALNUM | "_" | "-" | "." } ;
 IDENT_NS      = ALNUM , { ALNUM | "_" | "-" | "." | "/" | ":" } ;
 ```
+
+**Key changes from earlier drafts**:
+
+- `WAYMARK_ID` adds wikilink-style ID support (`[[hash]]`, `[[hash|alias]]`, `[[alias]]`)
+- `ID_REF` allows relations to reference IDs (`from:[[a1b2c3d]]`)
+- `SYM_PROP` extracts symbol bindings (`sym:functionName`)
+- `MENTION` requires lowercase first character to avoid decorators (`@Component`) and scoped packages (`@angular/core`)
 
 ---
 
@@ -896,6 +1135,22 @@ export function validateInput(input: string): boolean {
 }
 ```
 
+**With waymark IDs**:
+
+```typescript
+// tldr ::: [[f3g4h5j|auth-service]] authentication service ref:#auth/service
+// todo ::: [[a1b2c3d]] implement token refresh from:#auth/jwt
+// fix ::: [[x9y8z7w|rate-limit-bug]] add rate limiting see:[[a1b2c3d]]
+// note ::: supersedes [[old-auth]] with new OAuth flow
+```
+
+**Draft IDs** (alias-only, hash assigned later):
+
+```typescript
+// todo ::: [[implement-caching]] add Redis caching layer
+// idea ::: [[refactor-auth]] consider splitting auth module
+```
+
 ---
 
 ## Anti-patterns
@@ -937,6 +1192,13 @@ const note = "// todo ::: fix this";  // Not a waymark
 // fix ::: #123  // Ambiguous - issue #123 or tag?
 ```
 
+❌ Use legacy `wm:xxx` ID format (deprecated):
+
+```typescript
+// Bad
+// todo ::: wm:a1b2c3d implement feature  // Use [[a1b2c3d]] instead
+```
+
 **Do**:
 
 ✅ Keep waymarks in non-rendered comments:
@@ -965,6 +1227,15 @@ rg 'ref:#auth'  # See what exists first
 ```typescript
 // Good
 // todo ::: fix bug from:#auth/service
+```
+
+✅ Use wikilink-style IDs:
+
+```typescript
+// Good
+// todo ::: [[a1b2c3d]] implement feature
+// todo ::: [[a1b2c3d|my-feature]] implement feature with alias
+// todo ::: [[my-feature]] draft ID (alias-only)
 ```
 
 ---
@@ -1014,6 +1285,24 @@ If you used earlier waymark syntax:
 ```diff
 - // todo ::: #from:auth
 + // todo ::: from:#auth
+```
+
+### From Legacy ID Format
+
+The `wm:xxx` ID format is deprecated. Use wikilink-style `[[xxx]]` instead:
+
+```diff
+- // todo ::: wm:a1b2c3d implement feature
++ // todo ::: [[a1b2c3d]] implement feature
+
+- // todo ::: wm:a1b2c3d|my-alias implement feature
++ // todo ::: [[a1b2c3d|my-alias]] implement feature
+```
+
+Run the migration command to convert all legacy IDs:
+
+```bash
+wm migrate-ids --write      # Convert wm:xxx to [[xxx]] format
 ```
 
 ---

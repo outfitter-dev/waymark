@@ -48,6 +48,10 @@ export function normalizeRelationToken(token: string): string | null {
   if (isUrl(token)) {
     return token;
   }
+  // Preserve wikilink IDs as-is (e.g., see:[[a1b2c3d]])
+  if (token.startsWith("[[")) {
+    return token;
+  }
   return token.startsWith("#") ? token : `#${token}`;
 }
 

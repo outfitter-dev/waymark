@@ -18,7 +18,7 @@ FORMATTING RULES
   - Marker case normalized (default: lowercase)
   - Multi-line continuations aligned to parent :::
   - Property ordering: relations after free text
-  - Signal order: ^ before * when combined
+  - Signal order: ~ before * when combined
 
 EXAMPLES
   # Preview formatting changes (dry-run)
