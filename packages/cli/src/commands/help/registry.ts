@@ -276,10 +276,10 @@ export const commands: HelpRegistry = {
         description: "Add signal (~ raised, * starred)",
       },
       {
-        name: "raised",
-        alias: "R",
+        name: "flagged",
+        alias: "F",
         type: "boolean",
-        description: "Add raised signal (~)",
+        description: "Add flagged signal (~)",
       },
       {
         name: "starred",
@@ -307,7 +307,7 @@ export const commands: HelpRegistry = {
     examples: [
       'wm add src/auth.ts:42 todo "implement OAuth"',
       'wm add src/db.ts:15 note "assumes UTC" --mention @alice',
-      'wm add src/api.ts:10 todo "add caching" --tag #perf --raised',
+      'wm add src/api.ts:10 todo "add caching" --tag #perf --flagged',
       "wm add --from waymarks.json --write",
     ],
   },
@@ -343,10 +343,10 @@ export const commands: HelpRegistry = {
         description: "Replace content (- reads from stdin)",
       },
       {
-        name: "raised",
-        alias: "R",
+        name: "flagged",
+        alias: "F",
         type: "boolean",
-        description: "Add raised signal (~)",
+        description: "Add flagged signal (~)",
       },
       {
         name: "starred",
@@ -633,7 +633,7 @@ queries, filtering by type/tag/mention, and multiple output formats.
     "wm src/                            # Scan and display all waymarks",
     "wm --type todo                     # Show all TODOs",
     "wm --tldr                          # Show all TLDRs (shorthand)",
-    "wm --type todo --raised            # Show raised TODOs (~todo)",
+    "wm --type todo --flagged           # Show flagged TODOs (~todo)",
     "wm --mention @alice                # Show waymarks mentioning @alice",
     "wm --tag perf                      # Show waymarks tagged #perf",
     "wm --graph                         # Show relation graph",

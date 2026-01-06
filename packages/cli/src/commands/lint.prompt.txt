@@ -138,6 +138,6 @@ COMBINING WITH OTHER COMMANDS
   wm fmt src/auth.ts --write && wm lint src/auth.ts
 
   # Scan for flagged issues, then lint for structure
-  wm src/ --type todo --raised && wm lint src/
+  wm src/ --type todo --flagged && wm lint src/
 
 For human-facing help, use: wm lint --help

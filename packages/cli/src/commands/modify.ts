@@ -860,7 +860,7 @@ function ensureModificationsSpecified(options: ModifyOptions): void {
 
   if (!(hasType || hasSignals || hasContent)) {
     throw new Error(
-      "No modifications specified. Use --type, --raised, --starred, --clear-signals, --content, or run without arguments for interactive prompts."
+      "No modifications specified. Use --type, --flagged, --starred, --clear-signals, --content, or run without arguments for interactive prompts."
     );
   }
 }

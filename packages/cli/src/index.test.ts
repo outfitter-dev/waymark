@@ -570,8 +570,8 @@ describe("Unified command", () => {
     expect(options.contextBefore).toBe(beforeLines);
   });
 
-  test("parseUnifiedArgs detects raised signal filter", () => {
-    const options = parseUnifiedArgs(["--raised", "src/"]);
+  test("parseUnifiedArgs detects flagged signal filter", () => {
+    const options = parseUnifiedArgs(["--flagged", "src/"]);
     expect(options.raised).toBe(true);
   });
 
@@ -584,7 +584,7 @@ describe("Unified command", () => {
     const options = parseUnifiedArgs([
       "--type",
       "todo",
-      "--raised",
+      "--flagged",
       "--tag",
       "perf",
       "src/",

@@ -27,7 +27,7 @@ describe("parseAddArgs", () => {
       "@alice",
       "--property",
       "owner:@alice",
-      "--raised",
+      "--flagged",
       "--starred",
       "--continuation",
       "follow up with team",

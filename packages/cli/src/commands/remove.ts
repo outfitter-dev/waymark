@@ -86,10 +86,10 @@ const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
       }
       state.optionState.jsonl = true;
     },
-    "-R": (state) => {
+    "-F": (state) => {
       state.criteria.signals.raised = true;
     },
-    "--raised": (state) => {
+    "--flagged": (state) => {
       state.criteria.signals.raised = true;
     },
     "-S": (state) => {

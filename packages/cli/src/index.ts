@@ -528,7 +528,7 @@ const MULTI_VALUE_OPTION_FLAGS = [
 ] as const;
 
 const BOOLEAN_OPTION_FLAGS = [
-  { key: "raised", flag: "--raised" },
+  { key: "raised", flag: "--flagged" },
   { key: "starred", flag: "--starred" },
   { key: "tldr", flag: "--tldr" },
   { key: "graph", flag: "--graph" },
@@ -1116,7 +1116,7 @@ See 'wm add --prompt' for agent-facing documentation.
     .argument("[target]", "waymark location (file:line)")
     .option("--id <id>", "waymark ID to edit")
     .option("--type <marker>", "change waymark type")
-    .option("--raised, -R", "add ~ (flagged) signal", false)
+    .option("--flagged, -F", "add ~ (flagged) signal", false)
     .option(
       "--starred",
       "add * (starred) signal to mark as important/valuable",
@@ -1143,7 +1143,7 @@ See 'wm add --prompt' for agent-facing documentation.
       `
 Examples:
   $ wm edit src/auth.ts:42 --type fix                    # Preview type change
-  $ wm edit src/auth.ts:42 --raised --starred           # Preview adding flagged + starred
+  $ wm edit src/auth.ts:42 --flagged --starred           # Preview adding flagged + starred
   $ wm edit --id [[a3k9m2p]] --starred --write          # Apply starred flag by ID
   $ wm edit src/auth.ts:42 --clear-signals --write       # Remove all signals
   $ wm edit src/auth.ts:42 --content "new text" --write
@@ -1396,7 +1396,7 @@ See 'wm doctor --prompt' for agent-facing documentation.
     .option("--type <types...>, -t", "filter by waymark type(s)")
     .option("--tag <tags...>", "filter by tag(s)")
     .option("--mention <mentions...>", "filter by mention(s)")
-    .option("--raised, -R", "filter for flagged (~) waymarks")
+    .option("--flagged, -F", "filter for flagged (~) waymarks")
     .option("--starred, -S", "filter for starred (*) waymarks")
     .option("--tldr", "shorthand for --type tldr")
     .option("--graph", "show dependency graph")
@@ -1435,14 +1435,14 @@ Examples:
   $ wm find src/ --type todo --mention @agent
   $ wm find --graph --json                   # Export dependency graph as JSON
   $ wm find --starred --tag "#sec"           # Find high-priority security issues
-  $ wm find src/ --type todo --type fix --raised --mention @agent
+  $ wm find src/ --type todo --type fix --flagged --mention @agent
   $ wm find --interactive                    # Interactively select a waymark
 
 Filter Options:
   -t, --type <types...>       Filter by waymark type(s)
   --tag <tags...>             Filter by tag(s)
   --mention <mentions...>     Filter by mention(s)
-  -R, --raised                Filter for flagged (~) waymarks
+  -F, --flagged               Filter for flagged (~) waymarks
   -S, --starred               Filter for starred (*) waymarks
   --tldr                      Shorthand for --type tldr
 

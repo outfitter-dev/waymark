@@ -165,7 +165,7 @@ export function handleModeDisplayFlags(
   }
 
   // Signal filters
-  if (token === "--raised" || token === "-R") {
+  if (token === "--flagged" || token === "-F") {
     state.raised = true;
     return true;
   }

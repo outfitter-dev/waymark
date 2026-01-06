@@ -13,7 +13,7 @@ OPTIONS
     -t, --type <marker>     Filter by waymark type (todo, fix, note, etc.)
     -m, --mention <actor>   Filter by mention (@agent, @alice, etc.)
     --tag <tag>             Filter by hashtag (#perf, #sec, etc.)
-    -R, --raised            Show only raised (~) waymarks
+    -F, --flagged           Show only flagged (~) waymarks
     -S, --starred           Show only important (*) waymarks
 
   Display Modes:
@@ -43,7 +43,7 @@ EXAMPLES
   wm --starred --tag "#sec"
 
   # Combine multiple filters
-  wm src/ --type todo --type fix --raised --mention @agent
+  wm src/ --type todo --type fix --flagged --mention @agent
 
 FILTER BEHAVIOR
   Multiple filters of the same type use OR logic:
