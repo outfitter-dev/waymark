@@ -30,9 +30,20 @@ export function splitRelationValues(value: string): string[] {
     .filter((token) => token.length > 0);
 }
 
+// note ::: URL schemes to preserve without # prefix in relation values
+const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
+
+export function isUrl(value: string): boolean {
+  return URL_SCHEME_PATTERN.test(value);
+}
+
 export function normalizeRelationToken(token: string): string | null {
   if (token.length === 0) {
     return null;
+  }
+  // Preserve URLs as-is (e.g., docs:https://example.com)
+  if (isUrl(token)) {
+    return token;
   }
   return token.startsWith("#") ? token : `#${token}`;
 }
