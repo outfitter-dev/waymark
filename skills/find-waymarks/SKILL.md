@@ -65,7 +65,7 @@ wm --type todo --mention @agent --tag security --json
 
 ## Available Filters
 
-- `--type <marker>`: Filter by waymark type (todo, fix, note, tldr, this, etc.)
+- `--type <marker>`: Filter by waymark type (todo, fix, note, tldr, about, etc.)
 - `--mention <actor>`: Filter by mentions (@alice, @agent, etc.)
 - `--tag <tag>`: Filter by hashtags (#perf, #security, etc.)
 - `--flagged`: Show only flagged (~) waymarks (work-in-progress)
@@ -138,7 +138,7 @@ Waymarks use a special syntax starting with `:::`:
 - `fix` - Bug to fix
 - `note` - Important note
 - `tldr` - File/section summary
-- `this` - Reference to current context
+- `about` - Section/block summary
 
 **Signals:**
 

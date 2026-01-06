@@ -3,7 +3,7 @@
 export const SIGIL = ":::" as const;
 
 // Signal constants
-// ~ = flagged (work-in-progress, branch-scoped)
+// ~ = flagged (actively in-progress, branch-scoped)
 // * = starred (important, high-priority)
 export const SIGNALS = {
   flagged: "~",
@@ -27,12 +27,7 @@ export type MarkerDefinition = {
 export const MARKER_DEFINITIONS: MarkerDefinition[] = [
   // Work/Action
   { name: "todo", category: "work", description: "Task to be completed" },
-  {
-    name: "fix",
-    category: "work",
-    aliases: ["fixme"],
-    description: "Bug or issue to resolve",
-  },
+  { name: "fix", category: "work", description: "Bug or issue to resolve" },
   { name: "wip", category: "work", description: "Work currently in progress" },
   { name: "done", category: "work", description: "Completed task" },
   {
@@ -60,7 +55,6 @@ export const MARKER_DEFINITIONS: MarkerDefinition[] = [
   {
     name: "context",
     category: "info",
-    aliases: ["why"],
     description: "Explains reasoning or background",
   },
   {
@@ -104,14 +98,7 @@ export const MARKER_DEFINITIONS: MarkerDefinition[] = [
   {
     name: "temp",
     category: "caution",
-    aliases: ["tmp"],
     description: "Temporary code not for production",
-  },
-  {
-    name: "hack",
-    category: "caution",
-    aliases: ["stub"],
-    description: "Workaround or incomplete implementation",
   },
 
   // Workflow
@@ -127,15 +114,10 @@ export const MARKER_DEFINITIONS: MarkerDefinition[] = [
   },
 
   // Inquiry
-  {
-    name: "question",
-    category: "inquiry",
-    aliases: ["ask"],
-    description: "Question needing answer",
-  },
+  { name: "ask", category: "inquiry", description: "Question needing answer" },
 ];
 
-// Build a flat list of all markers including aliases for backward compatibility
+// Build a flat list of all blessed markers
 // In continuation context, the parser explicitly excludes blessed markers from being
 // treated as property continuations (see parseContinuation in content.ts).
 export const BLESSED_MARKERS = MARKER_DEFINITIONS.flatMap((def) => [
@@ -168,7 +150,6 @@ export function getTypeCategory(type: string): MarkerCategory | undefined {
 export const MARKERS = {
   todo: "todo",
   fix: "fix",
-  fixme: "fixme",
   wip: "wip",
   done: "done",
   review: "review",
@@ -176,7 +157,6 @@ export const MARKERS = {
   check: "check",
   note: "note",
   context: "context",
-  why: "why",
   tldr: "tldr",
   about: "about",
   example: "example",
@@ -186,12 +166,8 @@ export const MARKERS = {
   alert: "alert",
   deprecated: "deprecated",
   temp: "temp",
-  tmp: "tmp",
-  hack: "hack",
-  stub: "stub",
   blocked: "blocked",
   needs: "needs",
-  question: "question",
   ask: "ask",
 } as const;
 

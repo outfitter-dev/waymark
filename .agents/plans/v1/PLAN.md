@@ -719,7 +719,7 @@ The docstring serves TypeScript tooling and API consumers. The waymarks serve yo
 - `.waymark/rules/WAYMARKS.md`
 - `.waymark/rules/DOCSTRING-COMPATIBILITY.md`
 - `.waymark/rules/TLDRs.md`
-- `.waymark/rules/THIS.md`
+- `.waymark/rules/ABOUT.md`
 
 ---
 
