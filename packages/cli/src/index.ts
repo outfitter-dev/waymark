@@ -1065,10 +1065,10 @@ See 'wm fmt --prompt' for agent-facing documentation.
     )
     .option("--tag <tag>", "add hashtag (#perf, #sec) - can be repeated")
     .option("--property <kv>", "add property (owner:@alice) - can be repeated")
-    .option("--ref <token>", "set canonical reference (ref:#auth/core)")
-    .option("--depends <token>", "add dependency relation")
-    .option("--needs <token>", "add needs relation")
-    .option("--blocks <token>", "add blocks relation")
+    .option("--see <token>", "add reference relation (see:#auth/core)")
+    .option("--docs <url>", "add documentation link")
+    .option("--source <token>", "add dependency relation (from:#token)")
+    .option("--replaces <token>", "add supersedes relation")
     .option("--signal <signal>", "add signal: ^ (raised) or * (starred)")
     .option("--write, -w", "apply changes to file (default: preview)", false)
     .option("--json", "output as JSON")
@@ -1087,7 +1087,7 @@ Examples:
   $ wm add src/auth.ts:42 todo "implement rate limiting"
   $ wm add src/db.ts:15 note "assumes UTC" --mention @alice --tag "#time"
   $ wm add src/api.ts:100 fix "validate input" --signal *
-  $ wm add src/pay.ts:200 todo "add retry" --depends "#infra/queue"
+  $ wm add src/pay.ts:200 todo "add retry" --source "#infra/queue"
   $ wm add --from waymarks.json
   $ echo '{"file":"src/a.ts","line":10,"type":"todo","content":"test"}' | wm add --from -
 

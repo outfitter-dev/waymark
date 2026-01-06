@@ -12,11 +12,8 @@ import { logger } from "../utils/logger";
 
 // about :::canonical relation kinds that must have valid targets
 const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
-  "depends",
-  "needs",
-  "blocks",
-  "dupeof",
-  "rel",
+  "from",
+  "replaces",
 ];
 const TLDR_TOP_LINES_MAX = 20;
 // biome-ignore lint/style/noMagicNumbers: bytes per megabyte conversion

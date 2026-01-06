@@ -57,7 +57,7 @@ describe("wrapContent", () => {
   });
 
   test("keeps properties together", () => {
-    const content = "owner:@alice priority:high depends:#auth";
+    const content = "owner:@alice priority:high from:#auth";
     const result = wrapContent(content, { indent: 10, width: 30 });
     // Properties should not be split
     for (const line of result) {

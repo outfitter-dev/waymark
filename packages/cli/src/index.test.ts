@@ -413,14 +413,14 @@ describe("CLI handlers", () => {
 
   test("graph command captures relations", async () => {
     const source = [
-      "// tldr ::: root ref:#docs/root",
-      "// todo ::: follow-up depends:#docs/root",
+      "// tldr ::: root see:#docs/root",
+      "// todo ::: follow-up from:#docs/root",
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
     const edges = await graphRecords([file], defaultContext.config);
     expect(edges).toHaveLength(2);
-    expect(edges[0]?.relation).toBe("ref");
-    expect(edges[1]?.relation).toBe("depends");
+    expect(edges[0]?.relation).toBe("see");
+    expect(edges[1]?.relation).toBe("from");
     await cleanup();
   });
 
@@ -596,8 +596,8 @@ describe("Unified command", () => {
 
   test("runUnifiedCommand handles graph mode", async () => {
     const source = [
-      "// tldr ::: root ref:#test/root",
-      "// todo ::: depends:#test/root",
+      "// tldr ::: root see:#test/root",
+      "// todo ::: from:#test/root",
     ].join("\n");
     const { file, cleanup } = await withTempFile(source);
 

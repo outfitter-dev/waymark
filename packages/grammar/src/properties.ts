@@ -13,12 +13,10 @@ export const RELATION_KIND_MAP: Record<
   string,
   WaymarkRecord["relations"][number]["kind"]
 > = {
-  ref: "ref",
-  rel: "rel",
-  depends: "depends",
-  needs: "needs",
-  blocks: "blocks",
-  dupeof: "dupeof",
+  see: "see",
+  docs: "docs",
+  from: "from",
+  replaces: "replaces",
 };
 
 export function unescapeQuotedValue(value: string): string {
@@ -32,9 +30,20 @@ export function splitRelationValues(value: string): string[] {
     .filter((token) => token.length > 0);
 }
 
+// note ::: URL schemes to preserve without # prefix in relation values
+const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
+
+export function isUrl(value: string): boolean {
+  return URL_SCHEME_PATTERN.test(value);
+}
+
 export function normalizeRelationToken(token: string): string | null {
   if (token.length === 0) {
     return null;
+  }
+  // Preserve URLs as-is (e.g., docs:https://example.com)
+  if (isUrl(token)) {
+    return token;
   }
   return token.startsWith("#") ? token : `#${token}`;
 }
@@ -52,7 +61,7 @@ export function appendRelationTokens(
       continue;
     }
 
-    if (relationKind === "ref") {
+    if (relationKind === "see") {
       canonicalSet.add(normalizedToken);
     }
 
@@ -196,7 +205,7 @@ export function addRelationTokens(
     const normalizedToken = normalizeRelationToken(token);
     if (normalizedToken) {
       if (
-        relationKind === "ref" &&
+        relationKind === "see" &&
         !record.canonicals.includes(normalizedToken)
       ) {
         record.canonicals.push(normalizedToken);

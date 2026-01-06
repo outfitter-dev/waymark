@@ -18,7 +18,7 @@ export type WaymarkRecord = {
   contentText: string;
   properties: Record<string, string>;
   relations: Array<{
-    kind: "ref" | "rel" | "depends" | "needs" | "blocks" | "dupeof";
+    kind: "see" | "docs" | "from" | "replaces";
     token: string;
   }>;
   canonicals: string[];

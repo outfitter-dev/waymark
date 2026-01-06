@@ -31,21 +31,21 @@ describe("parseLine", () => {
 
   test("parses properties, canonicals, relations, mentions, and tags", () => {
     const record = parseLine(
-      "// note ::: summary ref:#docs/prd depends:#core/api owner:@alice #docs/prd",
+      "// note ::: summary see:#docs/prd from:#core/api owner:@alice #docs/prd",
       LINE_TEN,
       { file: "docs/PRD.md" }
     );
 
     expect(record).not.toBeNull();
     expect(record?.properties).toEqual({
-      ref: "#docs/prd",
-      depends: "#core/api",
+      see: "#docs/prd",
+      from: "#core/api",
       owner: "@alice",
     });
     expect(record?.canonicals).toEqual(["#docs/prd"]);
     expect(record?.relations).toEqual([
-      { kind: "ref", token: "#docs/prd" },
-      { kind: "depends", token: "#core/api" },
+      { kind: "see", token: "#docs/prd" },
+      { kind: "from", token: "#core/api" },
     ]);
     expect(record?.mentions).toEqual(["@alice"]);
     expect(record?.tags).toContain("#docs/prd");
@@ -153,7 +153,7 @@ describe("parse", () => {
   test("parses property-as-marker in continuation context", () => {
     const source = [
       "// tldr  ::: payment processor entry point",
-      "// ref   ::: #payments/stripe",
+      "// see   ::: #payments/stripe",
       "// owner ::: @alice",
       "// since ::: 2025-01-01",
     ].join("\n");
@@ -173,7 +173,7 @@ describe("parse", () => {
     expect(record.type).toBe("tldr");
     expect(record.contentText).toBe("payment processor entry point");
     expect(record.properties).toEqual({
-      ref: "#payments/stripe",
+      see: "#payments/stripe",
       owner: "@alice",
       since: "2025-01-01",
     });
@@ -213,7 +213,7 @@ describe("parse", () => {
       "//       ::: with OAuth 2.0 and PKCE",
       "// fixes ::: #auth/login-bug",
       "//       ::: support social logins",
-      "// rel   ::: #auth/session",
+      "// see   ::: #auth/session",
     ].join("\n");
 
     const ExpectedStartLine = 1;
@@ -234,10 +234,10 @@ describe("parse", () => {
     );
     expect(record.properties).toMatchObject({
       fixes: "#auth/login-bug",
-      rel: "#auth/session",
+      see: "#auth/session",
     });
     expect(record.relations).toContainEqual({
-      kind: "rel",
+      kind: "see",
       token: "#auth/session",
     });
     expect(record.startLine).toBe(ExpectedStartLine);
@@ -343,7 +343,7 @@ describe("parse", () => {
   test("property continuations work with various comment leaders", () => {
     const source = [
       "# tldr  ::: Python module for data processing",
-      "# ref   ::: #data/processor",
+      "# see   ::: #data/processor",
       "# owner ::: @bob",
     ].join("\n");
 
@@ -358,7 +358,7 @@ describe("parse", () => {
 
     expect(record.commentLeader).toBe("#");
     expect(record.properties).toMatchObject({
-      ref: "#data/processor",
+      see: "#data/processor",
       owner: "@bob",
     });
   });
