@@ -74,7 +74,7 @@ export function parseSignalsAndType(segment: string): {
 
   const type = trimmed.slice(cursor);
 
-  if (type.includes("~") || type.includes("*")) {
+  if (type.includes("~") || type.includes("*") || type.includes("^")) {
     return {
       type: "",
       signals: { raised: false, important: false },
