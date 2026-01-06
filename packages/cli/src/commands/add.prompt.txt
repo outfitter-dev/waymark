@@ -137,7 +137,7 @@ AUTOMATIC BEHAVIORS
   1. ID Management:
      - Checks if ID system is enabled in config
      - Reserves unique ID if configured
-     - Adds wm:xxxxx to waymark content automatically
+     - Adds [[xxxxx]] to waymark content automatically
 
   2. Formatting:
      - Applies standard formatting rules

@@ -309,7 +309,8 @@ type ModifyCliOptions = {
   prompt?: boolean;
 };
 
-const ID_PATTERN_REGEX = /wm:[a-z0-9-]+/i;
+// Match [[hash]], [[hash|alias]], or [[alias]]
+const ID_PATTERN_REGEX = /\[\[[^\]]+\]\]/i;
 
 async function resolveInteractiveTarget(
   workspaceRoot: string,
@@ -330,7 +331,7 @@ async function resolveInteractiveTarget(
   const target = `${selected.file}:${selected.startLine}`;
   let id: string | undefined;
 
-  if (selected.raw.includes("wm:")) {
+  if (selected.raw.includes("[[")) {
     const idMatch = selected.raw.match(ID_PATTERN_REGEX);
     if (idMatch) {
       id = idMatch[0];
@@ -1143,7 +1144,7 @@ See 'wm add --prompt' for agent-facing documentation.
 Examples:
   $ wm edit src/auth.ts:42 --type fix                    # Preview type change
   $ wm edit src/auth.ts:42 --raised --starred           # Preview signal updates
-  $ wm edit --id wm:a3k9m2p --starred --write           # Apply starred flag by ID
+  $ wm edit --id [[a3k9m2p]] --starred --write          # Apply starred flag by ID
   $ wm edit src/auth.ts:42 --clear-signals --write       # Remove all signals
   $ wm edit src/auth.ts:42 --content "new text" --write
   $ printf "new text" | wm edit src/auth.ts:42 --content - --write
@@ -1179,7 +1180,7 @@ Notes:
     .command("rm")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
-    .option("--id <id>", "remove waymark by ID (wm:xxxxx)")
+    .option("--id <id>", "remove waymark by ID ([[hash]])")
     .option(
       "--from <file>",
       "read removal targets from JSON file (use - for stdin)"
@@ -1198,14 +1199,14 @@ Notes:
       `
 Removal Methods:
   1. By Location:     wm rm src/auth.ts:42
-  2. By ID:           wm rm --id wm:a3k9m2p
+  2. By ID:           wm rm --id [[a3k9m2p]]
   3. By Criteria:     wm rm --criteria "type:todo mention:@agent" src/
   4. From JSON Input: wm rm --from waymarks.json
 
 Examples:
   $ wm rm src/auth.ts:42                      # Preview removal
   $ wm rm src/auth.ts:42 --write              # Actually remove
-  $ wm rm --id wm:a3k9m2p --write             # Remove by ID
+  $ wm rm --id [[a3k9m2p]] --write            # Remove by ID
   $ wm rm --criteria "type:todo mention:@agent" src/ --write
   $ wm rm --from removals.json --write
   $ wm rm src/auth.ts:42 --write --reason "cleanup"

@@ -78,7 +78,8 @@ export type ModifyPayload = {
 };
 
 const LINE_SPLIT_REGEX = /\r?\n/;
-const ID_TRAIL_REGEX = /(wm:[a-z0-9-]+)$/i;
+// Match [[hash]], [[hash|alias]], or [[alias]] at end of content
+const ID_TRAIL_REGEX = /(\[\[[^\]]+\]\])$/i;
 const DEFAULT_MARKERS = ["todo", "fix", "note", "warn", "tldr", "done"];
 
 const DEFAULT_IO: ModifyIo = {
@@ -484,7 +485,13 @@ async function resolveTargetFromId(
 }
 
 function normalizeId(id: string): string {
-  return id.startsWith("wm:") ? id : `wm:${id}`;
+  // Already in [[hash]] or [[hash|alias]] format
+  if (id.startsWith("[[") && id.endsWith("]]")) {
+    return id;
+  }
+  // Strip wm: prefix if present (legacy format)
+  const hash = id.startsWith("wm:") ? id.slice(3) : id;
+  return `[[${hash}]]`;
 }
 
 async function runInteractiveSession(
