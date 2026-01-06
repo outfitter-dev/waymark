@@ -334,7 +334,7 @@ Properties can act as pseudo-markers in continuation context, but **only for kno
 
 ```typescript
 // tldr  ::: payment processor service
-// ref   ::: #payments/core
+// see   ::: #payments/core
 // owner ::: @alice
 // since ::: 2025-01-01
 ```
@@ -346,7 +346,7 @@ Parsed as a single `tldr` waymark with three properties:
   "type": "tldr",
   "contentText": "payment processor service",
   "properties": {
-    "ref": "#payments/core",
+    "see": "#payments/core",
     "owner": "@alice",
     "since": "2025-01-01"
   }
@@ -355,12 +355,17 @@ Parsed as a single `tldr` waymark with three properties:
 
 **Known property keys** that trigger property continuation parsing:
 
-- `ref` - Canonical reference declaration
+- `see` - Related reference
+- `docs` - Documentation reference
+- `from` - Depends on or derived from
+- `replaces` - Supersedes another waymark
 - `owner` - Ownership assignment
 - `since` - Date tracking
-- `until` - Expiration date
+- `fixes` - Issue reference
+- `affects` - Impact scope
 - `priority` - Priority level
 - `status` - Status indicator
+- `sym` - Symbol reference
 
 **Important**: Blessed markers (like `needs` or `blocks`) are NOT treated as property continuations even when followed by `:::`. A line like `// needs ::: something` starts a new waymark, not a continuation:
 
