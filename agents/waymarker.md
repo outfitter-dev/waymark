@@ -80,7 +80,7 @@ For each file, assess:
 
 - Does it have a `tldr :::` waymark?
 - Is the TLDR accurate and well-written?
-- Are there complex sections needing `this :::` markers?
+- Are there complex sections needing `about :::` markers?
 - Are there stale `todo`/`fix` waymarks?
 - Are tags consistent with project conventions?
 

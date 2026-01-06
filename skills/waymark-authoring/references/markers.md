@@ -124,7 +124,7 @@ File-level summary (one per file).
 Section or construct summary.
 
 ```javascript
-// this ::: validates webhook signatures before processing
+// about ::: validates webhook signatures before processing
 export function verifyWebhook() {}
 ```
 

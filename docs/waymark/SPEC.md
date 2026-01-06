@@ -176,7 +176,7 @@ IDENT_NS      = ALNUM , { ALNUM | "_" | "-" | "." | "/" | ":" } ;
 
 ```ts
 // tldr ::: payment processor entry point ref:#payments/stripe-webhook #payments
-// this ::: Stripe webhook verification handler #perf:hotpath
+// about ::: Stripe webhook verification handler #perf:hotpath
 // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
 // review ::: @alice confirm retry strategy #sec:boundary
 // note ::: logs PII-hardened metadata only #docs/logging
@@ -186,13 +186,13 @@ export async function handleWebhook(body: StripePayload) { /* ... */ }
 
 ```md
 <!-- tldr ::: Waymark CLI spec defining v1 scope and requirements #docs/spec -->
-<!-- this ::: workflow overview for installing the CLI -->
+<!-- about ::: workflow overview for installing the CLI -->
 ```
 
 ```py
 def send_email(message: Email) -> None:
     """Send an email using the configured transport."""
-    # this ::: orchestrates outbound email delivery #comm/email
+    # about ::: orchestrates outbound email delivery #comm/email
     transport.send(message)
 ```
 

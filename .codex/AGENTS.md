@@ -19,7 +19,7 @@ Refer to these documentation files for project-specific conventions:
 - `.waymark/rules/WAYMARKS.md` — Waymark grammar, markers, and usage
 - `.waymark/rules/CONVENTIONS.md` — Project-specific waymark conventions
 - `.waymark/rules/TLDRs.md` — Writing TLDR waymarks
-- `.waymark/rules/THIS.md` — Writing `this :::` waymarks
+- `.waymark/rules/ABOUT.md` — Writing `about :::` waymarks
 
 ## Quality Checks
 

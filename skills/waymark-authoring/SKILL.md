@@ -1,6 +1,6 @@
 ---
 name: Waymark Authoring
-description: This skill should be used when the user asks to "add waymarks", "write a waymark", "annotate code", "use waymark syntax", "waymark grammar", "add code comments with :::", or needs guidance on waymark markers, signals, properties, hashtags, mentions, or `this :::` waymarks. Provides comprehensive waymark authoring patterns.
+description: This skill should be used when the user asks to "add waymarks", "write a waymark", "annotate code", "use waymark syntax", "waymark grammar", "add code comments with :::", or needs guidance on waymark markers, signals, properties, hashtags, mentions, or `about :::` waymarks. Provides comprehensive waymark authoring patterns.
 version: 0.1.0
 ---
 
@@ -136,12 +136,12 @@ Assign ownership with mentions after `:::`:
 - `@agent` - Any capable AI assistant
 - Named actors (`@alice`, `@claude`) - Specific assignment
 
-## Writing `this :::` Waymarks
+## Writing `about :::` Waymarks
 
-Use `this :::` to summarize code sections:
+Use `about :::` to summarize code sections:
 
 ```typescript
-// this ::: validates webhook signatures before processing
+// about ::: validates webhook signatures before processing
 export function verifyWebhook(payload: string, signature: string) {
   // ...
 }
@@ -154,7 +154,7 @@ export function verifyWebhook(payload: string, signature: string) {
 - 6-12 words, active voice
 - Update when behavior changes
 
-See `references/this-waymarks.md` for detailed patterns.
+See `references/about-waymarks.md` for detailed patterns.
 
 ## Writing `tldr :::` Waymarks
 
@@ -214,7 +214,7 @@ Use HTML comments in Markdown:
 // *fix ::: critical auth bypass vulnerability
 
 // Section summary
-// this ::: orchestrates email delivery #comm
+// about ::: orchestrates email delivery #comm
 
 // Relations
 // todo ::: fixes:#auth/login add rate limiting

@@ -51,7 +51,7 @@ Examples:
 
 ## Workflow Tips
 
-- When a file’s purpose changes, **update the TLDR first**, then adjust subordinate `this :::` markers.
+- When a file's purpose changes, **update the TLDR first**, then adjust subordinate `about :::` markers.
 - If the TLDR feels hard to write, it’s a signal the file might need refactoring or clearer responsibility.
 - Use `wm --type tldr` to audit TLDR coverage and alignment after large moves (refactors, renames, new packages).
 

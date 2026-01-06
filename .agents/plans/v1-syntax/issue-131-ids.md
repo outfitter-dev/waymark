@@ -12,7 +12,7 @@ Implement wikilink-style IDs and alias lifecycle rules for v1 syntax.
 - ID length scaling: 4-char default, 5-char after 10k IDs, 6-char after 500k IDs (existing IDs never change).
 - Alias collisions warn; strict mode can elevate to error.
 
-## Current hash generation guidance (needs carry‑over/update)
+## Current hash generation guidance (needs carry-over/update)
 
 **Source of truth today:** `packages/core/src/ids.ts`
 

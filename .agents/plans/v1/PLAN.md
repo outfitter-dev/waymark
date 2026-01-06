@@ -687,7 +687,7 @@ Place waymarks **adjacent to** docstrings, never inside them:
  * @param credentials - User login credentials
  * @returns Session token or throws AuthError
  */
-// this ::: orchestrates OAuth flow with PKCE #auth/login
+// about ::: orchestrates OAuth flow with PKCE #auth/login
 // todo ::: @agent add rate limiting #sec:boundary
 export async function authenticate(credentials: Credentials): Promise<Session> {
   // ...

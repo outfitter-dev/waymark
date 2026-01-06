@@ -152,7 +152,7 @@ Categorize issues by severity:
 
 **Info** (consider):
 
-- Files that could benefit from `this :::` markers
+- Files that could benefit from `about :::` markers
 - Opportunities for canonical references
 - Tag namespace consolidation
 
