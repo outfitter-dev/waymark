@@ -302,23 +302,35 @@ Without allowlisting, unknown types trigger lint warnings.
 
 ### Continuation Syntax
 
-Use markerless `:::` lines to continue waymark content:
+Use markerless `:::` lines to continue waymark content across multiple lines:
 
 ```typescript
-// todo ::: refactor authentication flow
-//      ::: preserve backward-compatible API
-//      ::: coordinate deployment with @devops
+// todo ::: implement OAuth flow
+//      ::: with PKCE support
+//      ::: and token refresh
 ```
 
 **Rules**:
 
-- Continuation lines use `:::` without a type
+- Continuation lines use `:::` without a type (markerless)
 - Only valid immediately following a waymark line
-- Context-sensitive: plain `:::` outside waymark context is ignored
+- Context-sensitive: plain `:::` outside waymark context is ignored by parsers
+- Properties and tokens (mentions, tags, relations) can appear on continuation lines
+- Each continuation line inherits the parent waymark's context
+
+**Context sensitivity**: A markerless `:::` only becomes a continuation when the parser is tracking an active waymark. Isolated `:::` lines in code (e.g., random comments containing `:::`) are safely ignored.
+
+```typescript
+// This is NOT a continuation (no preceding waymark):
+// ::: this line is ignored by the parser
+
+// todo ::: this starts a waymark
+//      ::: this IS a valid continuation
+```
 
 ### Property Continuations
 
-Properties can act as pseudo-markers in continuation context:
+Properties can act as pseudo-markers in continuation context, but **only for known property keys**:
 
 ```typescript
 // tldr  ::: payment processor service
@@ -341,25 +353,89 @@ Parsed as a single `tldr` waymark with three properties:
 }
 ```
 
+**Known property keys** that trigger property continuation parsing:
+
+- `ref` - Canonical reference declaration
+- `owner` - Ownership assignment
+- `since` - Date tracking
+- `until` - Expiration date
+- `priority` - Priority level
+- `status` - Status indicator
+
+**Important**: Blessed markers (like `needs` or `blocks`) are NOT treated as property continuations even when followed by `:::`. A line like `// needs ::: something` starts a new waymark, not a continuation:
+
+```typescript
+// todo ::: implement feature
+// needs ::: database migration first  // <-- This is a NEW waymark, not a continuation
+```
+
+### HTML Comment Continuations
+
+Multi-line waymarks in HTML comments require proper closing on each line:
+
+```html
+<!-- tldr ::: component library documentation -->
+<!--       ::: covers setup and API reference -->
+<!--       ::: includes migration guides -->
+```
+
+The formatter ensures each continuation line:
+
+- Preserves the `<!-- ... -->` structure
+- Aligns `:::` with the parent waymark
+- Maintains proper closing `-->`
+
 ### Alignment
 
-Formatters align continuation `:::` with parent waymark by default:
+Formatters align continuation `:::` with the parent waymark's sigil by default:
 
 ```typescript
 // Before formatting:
 // todo ::: long task description
 // ::: continues here
+// ref ::: #some/anchor
 
 // After formatting:
 // todo ::: long task description
 //      ::: continues here
+//  ref ::: #some/anchor
 ```
 
-Configuration:
+The alignment target is the `:::` position in the first line. This creates a visual column that makes multi-line waymarks easier to scan.
+
+**Configuration**:
 
 ```toml
 [format]
-align_continuations = true  # default
+align_continuations = true   # default: align continuation ::: with parent
+space_around_sigil = true    # default: single space before and after :::
+normalize_case = true        # default: lowercase markers
+```
+
+When `align_continuations` is `false`, continuations appear flush with the comment leader:
+
+```typescript
+// With align_continuations = false:
+// todo ::: long task description
+// ::: continues here
+```
+
+### Whitespace Normalization
+
+Parsers tolerate flexible spacing around `:::`:
+
+```typescript
+// All of these parse identically:
+// todo ::: description
+// todo:::description
+// todo  :::  description
+```
+
+Formatters normalize to canonical form (single space before and after `:::` when a marker is present):
+
+```typescript
+// Canonical form:
+// todo ::: description
 ```
 
 ---

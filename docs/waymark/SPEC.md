@@ -28,11 +28,34 @@ For long content use markerless `:::` continuation lines:
 //      ::: coordinate rollout with @devops
 ```
 
+**Continuation rules**:
+
 - Continuation lines use markerless `:::` (no marker before the sigil)
-- Context-sensitive: only valid when following a waymark
-- Formatter aligns continuation `:::` with parent by default
-- Properties can act as pseudo-markers in continuation context
+- Context-sensitive: only valid when following a waymark line
+- Markerless `:::` outside waymark context is ignored by parsers
+- Properties and tokens (mentions, tags) can appear on continuation lines
+- Formatter aligns continuation `:::` with parent by default (configurable)
 - Avoid multi-line content when a concise single-line sentence will do
+
+**Property-as-marker continuations**: Known property keys (`ref`, `owner`, `since`, `until`, `priority`, `status`) can appear as pseudo-markers:
+
+```ts
+// tldr  ::: payment processor service
+// ref   ::: #payments/core
+// owner ::: @alice
+// since ::: 2025-01-01
+```
+
+This parses as a single `tldr` waymark with properties extracted from the continuation lines.
+
+**Important**: Blessed markers like `needs` or `blocks` are NOT treated as property continuations. They always start a new waymark.
+
+**HTML comments**: Each line requires proper `<!-- ... -->` closure:
+
+```html
+<!-- tldr ::: component library documentation -->
+<!--       ::: covers setup and API reference -->
+```
 
 ## 2. Blessed Markers
 
@@ -196,10 +219,33 @@ def send_email(message: Email) -> None:
     transport.send(message)
 ```
 
+**Multi-line continuation examples**:
+
+```ts
+// Text continuation with alignment
+// todo ::: refactor this parser for streaming
+//      ::: preserve backward-compatible API surface
+//      ::: coordinate deployment with @devops
+
+// Property continuation (parsed as single waymark with properties)
+// tldr  ::: payment processor service
+// ref   ::: #payments/core
+// owner ::: @alice
+// since ::: 2025-01-01
+```
+
+```html
+<!-- Multi-line in HTML comments -->
+<!-- tldr ::: component library documentation -->
+<!--       ::: covers setup and API reference -->
+```
+
 ## 9. Implementation Notes
 
 - Parsers should normalize signals to `^` and `*`, lowercase markers, trim extra spaces, and emit structured records matching the `WaymarkRecord` schema in `@waymarks/grammar`.
 - Formatters must enforce a single space around `:::` when a marker is present.
+- Continuation lines are context-sensitive: markerless `:::` is only parsed as a continuation when following a waymark. Isolated `:::` lines are ignored.
+- Property-as-marker continuations only trigger for known property keys (not blessed markers like `needs` or `blocks`).
 - Tooling should warn on unknown markers, duplicate properties, multiple TLDRs per file, and legacy codetag patterns.
 
 This specification is canonical. When the grammar evolves, update `docs/GRAMMAR.md` and `.waymark/rules/WAYMARKS.md` alongside the code so guidance stays aligned.
