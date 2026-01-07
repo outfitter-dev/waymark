@@ -17,6 +17,7 @@ class TestServer {
 }
 
 const TLDR_EXISTS_REGEX = /already contains a tldr waymark/u;
+const LEGACY_ID_REGEX = /Legacy wm:/u;
 const ABOUT_INSERT_LINE = 3;
 const SAMPLE_SOURCE = ["line 1", "line 2", "line 3", "line 4", "line 5"].join(
   "\n"
@@ -165,6 +166,51 @@ describe("handleAddWaymark", () => {
     const updated = await readFile(file, "utf8");
     const [firstLine] = updated.split("\n");
     expect(firstLine).toBe("<!-- idea ::: capture ideas for follow-up -->");
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("appends normalized id when provided", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-"));
+    const file = join(dir, "feature.ts");
+    await writeFile(
+      file,
+      ["export function feature() {", "  return true;", "}"].join("\n"),
+      "utf8"
+    );
+
+    const server = new TestServer();
+    await handleAddWaymark({
+      server,
+      filePath: file,
+      type: "todo",
+      content: "add retry",
+      line: 1,
+      id: "auth-refresh",
+    });
+
+    const updated = await readFile(file, "utf8");
+    const [firstLine] = updated.split("\n");
+    expect(firstLine).toBe("// todo ::: add retry [[auth-refresh]]");
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("rejects legacy wm ids", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-wm-"));
+    const file = join(dir, "legacy.ts");
+    await writeFile(file, ["export const legacy = true;"].join("\n"), "utf8");
+
+    const server = new TestServer();
+    await expect(
+      handleAddWaymark({
+        server,
+        filePath: file,
+        type: "todo",
+        content: "add retry",
+        id: "wm:abc123",
+      })
+    ).rejects.toThrow(LEGACY_ID_REGEX);
 
     await rm(dir, { recursive: true, force: true });
   });

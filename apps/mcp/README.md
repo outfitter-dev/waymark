@@ -65,6 +65,18 @@ const result = await client.callTool({
   }
 });
 
+// Add a waymark with an ID (bare values normalize to [[...]])
+const inserted = await client.callTool({
+  name: 'waymark',
+  arguments: {
+    action: 'add',
+    filePath: 'src/app.ts',
+    type: 'todo',
+    content: 'add retry',
+    id: 'auth-refresh'
+  }
+});
+
 // Drafting guidance lives in agent skills (no MCP prompts).
 ```
 

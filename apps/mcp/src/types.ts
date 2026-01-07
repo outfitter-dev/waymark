@@ -21,6 +21,7 @@ export const addWaymarkInputSchema = configOptionsSchema.extend({
   filePath: z.string().min(1),
   type: z.string().min(1),
   content: z.string().min(1),
+  id: z.string().min(1).optional(),
   line: z.number().int().positive().optional(),
   signals: z
     .object({
@@ -53,6 +54,7 @@ export const waymarkToolInputShape = {
   filePath: addWaymarkInputSchema.shape.filePath.optional(),
   type: addWaymarkInputSchema.shape.type.optional(),
   content: addWaymarkInputSchema.shape.content.optional(),
+  id: addWaymarkInputSchema.shape.id.optional(),
   line: addWaymarkInputSchema.shape.line.optional(),
   signals: addWaymarkInputSchema.shape.signals.optional(),
   topic: helpInputSchema.shape.topic.optional(),
