@@ -1,7 +1,9 @@
 // tldr ::: remove waymarks from files by line, id, or criteria queries
 
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 
 import { parse, type WaymarkRecord } from "@waymarks/grammar";
 import safeRegex from "safe-regex";
@@ -107,6 +109,13 @@ type FileContext = {
 type RemovalMatch = {
   record: WaymarkRecord;
   reason: string;
+};
+
+type PlannedRemoval = {
+  record: WaymarkRecord;
+  reason: string;
+  removedLines: string[];
+  ids: string[];
 };
 
 // Match [[hash]], [[hash|alias]], or [[alias]]
@@ -340,36 +349,33 @@ async function ensureContext(
 }
 
 async function applyMatches(state: RemovalState): Promise<void> {
-  const writeOperations: Promise<void>[] = [];
-
   for (const [filePath, matches] of state.matchesByFile) {
-    await applyMatchesForFile(state, filePath, matches, writeOperations);
+    await applyMatchesForFile(state, filePath, matches);
   }
 
   if (state.dryRun) {
     state.options.logger?.debug("Dry-run mode, skipping writes", {
       matchCount: state.matchesByFile.size,
     });
-  } else {
-    const successfulRemovals = state.results.filter(
-      (r) => r.status === "success"
-    );
-    if (successfulRemovals.length > 0) {
-      state.options.logger?.info("Removed waymarks", {
-        total: state.results.length,
-        successful: successfulRemovals.length,
-        filesModified: state.matchesByFile.size,
-      });
-    }
-    await Promise.all(writeOperations);
+    return;
+  }
+
+  const successfulRemovals = state.results.filter(
+    (r) => r.status === "success"
+  );
+  if (successfulRemovals.length > 0) {
+    state.options.logger?.info("Removed waymarks", {
+      total: state.results.length,
+      successful: successfulRemovals.length,
+      filesModified: state.matchesByFile.size,
+    });
   }
 }
 
 async function applyMatchesForFile(
   state: RemovalState,
   filePath: string,
-  matches: Map<number, RemovalMatch>,
-  writeOperations: Promise<void>[]
+  matches: Map<number, RemovalMatch>
 ): Promise<void> {
   const context = await ensureContext(state, filePath);
   if (!context) {
@@ -381,59 +387,118 @@ async function applyMatchesForFile(
     return;
   }
 
-  const sorted = Array.from(matches.values()).sort(
-    (a, b) => b.record.startLine - a.record.startLine
-  );
-
-  for (const match of sorted) {
-    await removeRecordMatch(state, context, match);
+  const plan = buildRemovalPlan(context, matches);
+  if (plan.errors.length > 0) {
+    state.results.push(...plan.errors);
   }
 
-  if (!state.dryRun) {
-    writeOperations.push(writeBackFile(context));
+  if (plan.removals.length === 0) {
+    return;
   }
-}
 
-async function removeRecordMatch(
-  state: RemovalState,
-  context: FileContext,
-  match: RemovalMatch
-): Promise<void> {
-  const { record } = match;
-  const removedLines = removeRecordFromContext(context, record);
-  if (!removedLines) {
+  if (state.dryRun) {
     state.results.push(
-      errorResult(
-        record.file,
-        record.startLine,
-        `Failed to remove waymark at line ${record.startLine}`
+      ...plan.removals.map((removal) => ({
+        file: removal.record.file,
+        line: removal.record.startLine,
+        removed: removal.removedLines.join(context.originalEol),
+        status: "success",
+      }))
+    );
+    return;
+  }
+
+  try {
+    await writeBackFileAtomic({
+      filePath: context.path,
+      lines: plan.updatedLines,
+      originalEol: context.originalEol,
+      endsWithFinalEol: context.endsWithFinalEol,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    state.results.push(
+      ...plan.removals.map((removal) =>
+        errorResult(
+          removal.record.file,
+          removal.record.startLine,
+          `Failed to write ${filePath}: ${message}`
+        )
       )
     );
     return;
   }
 
-  state.results.push({
-    file: record.file,
-    line: record.startLine,
-    removed: removedLines.join(context.originalEol),
-    status: "success",
-  });
+  state.results.push(
+    ...plan.removals.map((removal) => ({
+      file: removal.record.file,
+      line: removal.record.startLine,
+      removed: removal.removedLines.join(context.originalEol),
+      status: "success",
+    }))
+  );
 
-  if (state.dryRun || !state.options.idManager) {
+  await commitIdRemovals(plan.removals, state.options);
+}
+
+function buildRemovalPlan(
+  context: FileContext,
+  matches: Map<number, RemovalMatch>
+): {
+  updatedLines: string[];
+  removals: PlannedRemoval[];
+  errors: RemovalResult[];
+} {
+  const updatedLines = [...context.lines];
+  const removals: PlannedRemoval[] = [];
+  const errors: RemovalResult[] = [];
+  const sorted = Array.from(matches.values()).sort(
+    (a, b) => b.record.startLine - a.record.startLine
+  );
+
+  for (const match of sorted) {
+    const removedLines = removeRecordFromLines(updatedLines, match.record);
+    if (!removedLines) {
+      errors.push(
+        errorResult(
+          match.record.file,
+          match.record.startLine,
+          `Failed to remove waymark at line ${match.record.startLine}`
+        )
+      );
+      continue;
+    }
+    removals.push({
+      record: match.record,
+      reason: match.reason,
+      removedLines,
+      ids: extractIds(match.record.raw),
+    });
+  }
+
+  return { updatedLines, removals, errors };
+}
+
+async function commitIdRemovals(
+  removals: PlannedRemoval[],
+  options: RemoveOptions
+): Promise<void> {
+  if (!options.idManager) {
     return;
   }
 
-  const ids = extractIds(record.raw);
-  for (const id of ids) {
-    const reason = state.options.reason ?? match.reason;
+  for (const removal of removals) {
+    const reason = options.reason ?? removal.reason;
     const removeOptions: { reason?: string; removedBy?: string } = {};
     if (reason !== undefined) {
       removeOptions.reason = reason;
     }
-    if (state.options.removedBy !== undefined) {
-      removeOptions.removedBy = state.options.removedBy;
+    if (options.removedBy !== undefined) {
+      removeOptions.removedBy = options.removedBy;
     }
-    await state.options.idManager.remove(id, removeOptions);
+    for (const id of removal.ids) {
+      await options.idManager.remove(id, removeOptions);
+    }
   }
 }
 
@@ -602,29 +667,62 @@ function signalsMatch(
   return true;
 }
 
-function removeRecordFromContext(
-  context: FileContext,
+function removeRecordFromLines(
+  lines: string[],
   record: WaymarkRecord
 ): string[] | null {
   const startIndex = record.startLine - 1;
   const endIndex = record.endLine - 1;
-  if (
-    startIndex < 0 ||
-    endIndex >= context.lines.length ||
-    startIndex > endIndex
-  ) {
+  if (startIndex < 0 || endIndex >= lines.length || startIndex > endIndex) {
     return null;
   }
-  return context.lines.splice(startIndex, endIndex - startIndex + 1);
+  return lines.splice(startIndex, endIndex - startIndex + 1);
 }
 
-async function writeBackFile(context: FileContext): Promise<void> {
-  const joined = context.lines.join(context.originalEol);
-  const suffix =
-    context.lines.length > 0 && context.endsWithFinalEol
-      ? context.originalEol
-      : "";
-  await writeFile(context.path, joined + suffix, "utf8");
+async function writeBackFileAtomic(args: {
+  filePath: string;
+  lines: string[];
+  originalEol: string;
+  endsWithFinalEol: boolean;
+}): Promise<void> {
+  const content = buildFileText(
+    args.lines,
+    args.originalEol,
+    args.endsWithFinalEol
+  );
+  await writeFileAtomic(args.filePath, content);
+}
+
+function buildFileText(
+  lines: string[],
+  originalEol: string,
+  endsWithFinalEol: boolean
+): string {
+  const joined = lines.join(originalEol);
+  const suffix = lines.length > 0 && endsWithFinalEol ? originalEol : "";
+  return joined + suffix;
+}
+
+async function writeFileAtomic(
+  filePath: string,
+  contents: string
+): Promise<void> {
+  const dir = dirname(filePath);
+  const tempPath = join(
+    dir,
+    `.waymark-tmp-${basename(filePath)}-${randomUUID()}`
+  );
+
+  try {
+    await writeFile(tempPath, contents, "utf8");
+    await rename(tempPath, filePath);
+  } catch (error) {
+    await unlink(tempPath).catch((unlinkError) => {
+      // note ::: best-effort cleanup, ignore temp unlink failures
+      return unlinkError;
+    });
+    throw error;
+  }
 }
 
 function compileContentPattern(

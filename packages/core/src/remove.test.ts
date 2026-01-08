@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -16,6 +24,9 @@ import {
 async function ensureDir(path: string): Promise<void> {
   await mkdir(path, { recursive: true });
 }
+
+const READ_ONLY_DIR_MODE = 0o555;
+const PERMISSIONS_MODULO = 0o1000;
 
 describe("removeWaymarks", () => {
   let workspace: string;
@@ -152,6 +163,60 @@ describe("removeWaymarks", () => {
     expect(history).toHaveLength(1);
     expect(history[0]?.reason).toBe("cleanup-history-test");
     expect(history[0]?.removedBy).toBe("cli-test");
+  });
+
+  // note ::: ensure transactional removal skips index updates on write failure ref:#core/remove
+  it("does not update the id index when a write fails", async () => {
+    const filePath = join(workspace, "src/locked.ts");
+    await ensureDir(dirname(filePath));
+    const waymarkLine = "// todo ::: secure path [[lock123]]";
+    await writeFile(
+      filePath,
+      ["export const handler = () => {};", waymarkLine, ""].join("\n"),
+      "utf8"
+    );
+
+    const index = new JsonIdIndex({
+      workspaceRoot: workspace,
+      trackHistory: false,
+    });
+    const manager = new WaymarkIdManager(
+      { ...DEFAULT_CONFIG.ids, mode: "auto" },
+      index
+    );
+
+    await index.set({
+      id: "[[lock123]]",
+      file: filePath,
+      line: 2,
+      type: "todo",
+      content: waymarkLine,
+      contentHash: fingerprintContent(waymarkLine),
+      contextHash: fingerprintContext(`${filePath}:2`),
+      updatedAt: Date.now(),
+    });
+
+    const parentDir = dirname(filePath);
+    const originalMode = (await stat(parentDir)).mode % PERMISSIONS_MODULO;
+    await chmod(parentDir, READ_ONLY_DIR_MODE);
+
+    const specs: RemovalSpec[] = [{ id: "[[lock123]]" }];
+    const results = await removeWaymarks(specs, {
+      write: true,
+      idManager: manager,
+    });
+
+    await chmod(parentDir, originalMode);
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.status).toBe("error");
+
+    const indexData = await index.listIds();
+    expect(indexData).toHaveLength(1);
+    expect(indexData[0]?.id).toBe("[[lock123]]");
+
+    const contents = await readFile(filePath, "utf8");
+    expect(contents).toContain("[[lock123]]");
   });
 
   it("removes waymarks matching criteria across files", async () => {
