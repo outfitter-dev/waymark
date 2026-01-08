@@ -2,6 +2,7 @@
 
 import { dirname } from "node:path";
 import type { WaymarkRecord } from "@waymarks/core";
+import { sanitizeInlineText } from "../sanitize";
 
 /**
  * Format a single directory section for tree display
@@ -23,8 +24,9 @@ function formatTreeDirectory(
     const isLastRecord = j === dirRecords.length - 1;
     const prefix = isLast ? "  " : "│ ";
     const branch = isLastRecord ? "└─" : "├─";
+    const content = sanitizeInlineText(record.contentText);
     lines.push(
-      `${prefix}${branch} ${record.file}:${record.startLine}: ${record.type} - ${record.contentText}`
+      `${prefix}${branch} ${record.file}:${record.startLine}: ${record.type} - ${content}`
     );
   }
 

@@ -7,6 +7,7 @@ import {
   TAG_REGEX,
 } from "@waymarks/grammar";
 import chalk from "chalk";
+import { sanitizeInlineText } from "../sanitize";
 
 // Regex for extracting leading whitespace from property matches
 const LEADING_SPACE_REGEX = /^\s*/;
@@ -222,8 +223,9 @@ export function styleFilePath(path: string): string {
  * Order matters: tags first (to avoid conflict with properties containing colons)
  */
 export function styleContent(content: string): string {
+  const sanitized = sanitizeInlineText(content);
   // Mask code blocks to prevent property matching inside them
-  const { masked, blocks } = maskCodeBlocks(content);
+  const { masked, blocks } = maskCodeBlocks(sanitized);
   let result = masked;
 
   // 1. Style #tags first (handles #perf:hotpath before property detection)

@@ -15,6 +15,8 @@ export type UnifiedCommandResult = {
   records?: WaymarkRecord[];
 };
 
+const DEFAULT_CHALK_LEVEL = chalk.level;
+
 /**
  * Unified command handler that intelligently routes to scan/find/map/graph behavior
  * based on flags and arguments provided.
@@ -28,6 +30,8 @@ export async function runUnifiedCommand(
   // Disable chalk colors if --no-color flag is set
   if (noColor) {
     chalk.level = 0;
+  } else {
+    chalk.level = DEFAULT_CHALK_LEVEL;
   }
 
   // Graph mode: extract relation edges

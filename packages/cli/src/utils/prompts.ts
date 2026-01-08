@@ -4,6 +4,7 @@ import type { WaymarkRecord } from "@waymarks/grammar";
 import inquirer from "inquirer";
 import { CliError } from "../errors.ts";
 import { ExitCode } from "../exit-codes.ts";
+import { canPrompt } from "./terminal.ts";
 
 type PromptBlockReason = "no-input" | "no-tty" | undefined;
 
@@ -19,8 +20,7 @@ export function setPromptPolicy(options: {
   noInput?: boolean;
   isTty?: boolean;
 }): void {
-  const isTty =
-    options.isTty ?? Boolean(process.stdin.isTTY && process.stdout.isTTY);
+  const isTty = options.isTty ?? canPrompt();
 
   if (options.noInput) {
     promptPolicy = { allowed: false, reason: "no-input" };

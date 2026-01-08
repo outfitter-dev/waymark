@@ -41,6 +41,7 @@ import {
   selectWaymark,
   setPromptPolicy,
 } from "./utils/prompts.ts";
+import { shouldUseColor } from "./utils/terminal.ts";
 
 const STDOUT = process.stdout;
 const STDERR = process.stderr;
@@ -100,6 +101,23 @@ function handleCommandError(program: Command, error: unknown): never {
   const code =
     exitCode === ExitCode.usageError ? "WAYMARK_USAGE" : "WAYMARK_ERROR";
   return program.error(message, { exitCode, code });
+}
+
+let signalHandlersRegistered = false;
+const SIGINT_EXIT_CODE = 130;
+const SIGTERM_EXIT_CODE = 143;
+
+function registerSignalHandlers(): void {
+  if (signalHandlersRegistered) {
+    return;
+  }
+  signalHandlersRegistered = true;
+  process.once("SIGINT", () => {
+    process.exit(SIGINT_EXIT_CODE);
+  });
+  process.once("SIGTERM", () => {
+    process.exit(SIGTERM_EXIT_CODE);
+  });
 }
 
 // Command handlers extracted for complexity management
@@ -734,6 +752,50 @@ async function handleDoctorCommand(
   }
 }
 
+function parseUnifiedOptions(args: string[]): ReturnType<typeof parseUnifiedArgs> {
+  try {
+    return parseUnifiedArgs(args);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw createUsageError(message);
+  }
+}
+
+function normalizeUnifiedColor(
+  unifiedOptions: ReturnType<typeof parseUnifiedArgs>
+): ReturnType<typeof parseUnifiedArgs> {
+  const useColor = shouldUseColor(Boolean(unifiedOptions.noColor));
+  if (!useColor) {
+    return { ...unifiedOptions, noColor: true };
+  }
+  return unifiedOptions;
+}
+
+async function handleUnifiedInteractiveSelection(
+  options: Record<string, unknown>,
+  result: Awaited<ReturnType<typeof runUnifiedCommand>>
+): Promise<boolean> {
+  if (!options.interactive || !result.records || result.records.length === 0) {
+    return false;
+  }
+  const selected = await selectWaymark({ records: result.records });
+  if (selected) {
+    displaySelectedWaymark(selected);
+  }
+  return true;
+}
+
+function shouldEmitUnifiedOutput(
+  unifiedOptions: ReturnType<typeof parseUnifiedArgs>,
+  options: Record<string, unknown>
+): boolean {
+  const structuredOutput =
+    unifiedOptions.outputFormat === "json" ||
+    unifiedOptions.outputFormat === "jsonl";
+  const quiet = Boolean(options.quiet);
+  return !quiet || structuredOutput;
+}
+
 async function handleUnifiedCommand(
   program: Command,
   paths: string[],
@@ -753,23 +815,14 @@ async function handleUnifiedCommand(
   const context = await createContext(globalOpts);
 
   const args = buildArgsFromOptions(paths, options);
-  let unifiedOptions: ReturnType<typeof parseUnifiedArgs>;
-  try {
-    unifiedOptions = parseUnifiedArgs(args);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw createUsageError(message);
-  }
+  const unifiedOptions = normalizeUnifiedColor(parseUnifiedOptions(args));
   const result = await runUnifiedCommand(unifiedOptions, context);
 
-  // Handle interactive selection
-  if (options.interactive && result.records && result.records.length > 0) {
-    const selected = await selectWaymark({ records: result.records });
-    if (selected) {
-      displaySelectedWaymark(selected);
+  const didSelect = await handleUnifiedInteractiveSelection(options, result);
+  if (!didSelect && result.output.length > 0) {
+    if (shouldEmitUnifiedOutput(unifiedOptions, options)) {
+      writeStdout(result.output);
     }
-  } else if (result.output.length > 0) {
-    writeStdout(result.output);
   }
 }
 
@@ -788,8 +841,6 @@ const COMMAND_ORDER = [
   "update",
   "help",
 ];
-
-const HIDDEN_COMMANDS = ["fmt", "lint"];
 
 /**
  * Sort comparator for commands based on predefined order.
@@ -813,9 +864,7 @@ function compareCommandOrder(a: Command, b: Command): number {
  * Filter and sort commands for help display.
  */
 function getVisibleCommands(commands: readonly Command[]): Command[] {
-  return commands
-    .filter((c) => !HIDDEN_COMMANDS.includes(c.name()))
-    .sort(compareCommandOrder);
+  return commands.filter((c) => !c.hidden).sort(compareCommandOrder);
 }
 
 type OptionSection = {
@@ -1006,10 +1055,10 @@ export async function createProgram(): Promise<Command> {
     .configureHelp({
       formatHelp: buildCustomHelpFormatter(),
     })
-    .option(
-      "--scope <scope>, -s",
-      "config scope (default|project|user)",
-      "default"
+    .addOption(
+      new Option("--scope <scope>, -s", "config scope (default|project|user)")
+        .choices(["default", "project", "user"])
+        .default("default")
     )
     .option("--prompt", "show agent-facing documentation")
     .option("--no-input", "fail if interactive input required")
@@ -1095,7 +1144,7 @@ Note: Use --prompt flag with any command to see agent-facing documentation
 
   // Format command
   program
-    .command("fmt")
+    .command("fmt", { hidden: true })
     .argument("[paths...]", "files or directories to format")
     .option("--write, -w", "write changes to file", false)
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -1352,7 +1401,7 @@ See 'wm rm --prompt' for agent-facing documentation.
 
   // Lint command
   program
-    .command("lint")
+    .command("lint", { hidden: true })
     .argument("[paths...]", "files or directories to lint")
     .option("--json", "output JSON", false)
     .option("--prompt", "show agent-facing prompt instead of help")
@@ -1647,6 +1696,7 @@ See 'wm find --help' for all available options and comprehensive documentation.
 }
 
 if (import.meta.main) {
+  registerSignalHandlers();
   createProgram()
     .then((program) => program.parseAsync(process.argv))
     .catch((error) => {
