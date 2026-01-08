@@ -9,7 +9,8 @@
     "dist",
     "rules",
     "commands",
-    "instructions"
+    "instructions",
+    "skills"
   ],
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun",
