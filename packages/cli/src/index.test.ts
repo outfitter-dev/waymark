@@ -139,6 +139,16 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
+  test("completions command preserves the legacy alias", async () => {
+    const program = await __test.createProgram();
+    const completions = program.commands.find(
+      (command) => command.name() === "completions"
+    );
+
+    expect(completions).toBeDefined();
+    expect(completions?.aliases()).toContain("complete");
+  });
+
   test("scan command respects .gitignore patterns", async () => {
     // Create temp directory structure with .gitignore
     const dir = await mkdtemp(join(tmpdir(), "waymark-gitignore-"));
