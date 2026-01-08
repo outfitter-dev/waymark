@@ -585,9 +585,9 @@ packages/cli/src/commands/skill.ts       # Command handler
 ```bash
 wm skill                         # Show full skill document (markdown)
 wm skill --json                  # Output as parsed JSON
-wm skill --section <name>        # Output specific section
 wm skill list                    # List available sections (commands, references, examples)
-wm skill show <command>          # Show skill info for specific command
+wm skill show <section>          # Show specific section (command or reference)
+wm skill show add                # Show add command documentation
 wm skill show workflows          # Show example workflows
 wm skill show agent-tasks        # Show common agent task patterns
 wm skill show batch-operations   # Show batch operation recipes

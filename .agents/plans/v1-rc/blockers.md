@@ -235,7 +235,7 @@ describe("block comment support", () => {
   it("parses CSS waymarks", () => {
     const result = parseHeader("/* tldr ::: button component styles */");
     expect(result?.type).toBe("tldr");
-    expect(result?.commentStyle).toBe("block");
+    expect(result?.commentLeader).toBe("/*");
   });
 
   it("strips trailing */ from content", () => {

@@ -3,7 +3,7 @@
 # Waymark v1.0-RC Implementation Plan
 
 **Created:** 2026-01-08
-**Derived from:** SPEC.md, gold-standard-synthesis, fresh-eyes-review
+**Derived from:** SPEC.md, gold-standard-synthesis, fresh-eyes-review, 20260108-rc-plan-review, 20260108-rc-plan-opportunities
 **Status:** Ready for execution
 
 ## Overview
@@ -55,7 +55,7 @@ This plan synthesizes findings from three independent senior developer reviews a
 ### Detailed Requirements
 
 See @blockers.md for implementation details and code samples.
-<!-- note ::: block comment tests must assert `commentLeader === "/*"` or add `commentStyle` to ParsedHeader ref:#docs/plan/v1-rc/p0-block-comments #docs/plan #docs -->
+<!-- note ::: block comment tests assert `commentLeader === "/*"` (no new `commentStyle` field) ref:#docs/plan/v1-rc/p0-block-comments #docs/plan #docs -->
 
 ---
 
@@ -215,7 +215,7 @@ See @cli-improvements.md for exit code taxonomy, TTY handling, and Commander mig
 See @documentation.md for specific claims to fix.
 See @skill-structure.md for modular skill architecture.
 See @skill-command.md for CLI interface design.
-<!-- note ::: standardize on `wm skill show <section>`; remove `--section` references across docs/tests ref:#docs/plan/v1-rc/skills-cli #docs/plan #docs -->
+<!-- done ::: standardized on `wm skill show <section>`; `--section` references removed from docs ref:#docs/plan/v1-rc/skills-cli #docs/plan #docs -->
 
 ---
 
@@ -337,16 +337,19 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 | 2026-01-08 | Schema coverage for all outputs (P1) | External tools need stable programmatic contracts |
 | 2026-01-08 | Unified output adapter (P1) | Consistent stdout/stderr routing, JSON/quiet mode enforcement |
 | 2026-01-08 | Contract test suite (P2) | Prevent regressions in IDs/relations across releases |
+| 2026-01-08 | `wm skill show <section>` subcommand | Matches CLI conventions; more discoverable than `--section` flag |
+| 2026-01-08 | Keep `examples/` separate from `references/` | Semantic separation; plan DoD expects distinct directories |
+| 2026-01-08 | Manifest uses top-level keys | Simpler than `structure` wrapper; `commands`, `references`, `examples` at root |
+| 2026-01-08 | `wm skill path` returns directory | Callers can join paths; more flexible than returning SKILL.md path |
+| 2026-01-08 | No `commentStyle` field in ParsedHeader | YAGNI; test assertions on `commentLeader` sufficient |
+| 2026-01-08 | Enforce `program.error()` for RC | RC = compliance-ready; Commander error contract required |
+| 2026-01-08 | Manual argv parsing allowed for RC | Pragmatic; explicit defer note for P4 cleanup |
+| 2026-01-08 | Cache integration deferred | Docs clarified; not blocking RC scope |
+| 2026-01-08 | Mention parsing tightened for RC | RC = compliance-ready; spec alignment required |
 
 ### Open Decisions (Require Resolution)
 
-| Decision | Options | Status |
-|----------|---------|--------|
-| Cache integration | Wire into scan vs remove docs claim | Pending investigation |
-| Spec as source of truth | Formalize derivations (schema/types/help) in CI | Pending design |
-| Mention parsing edge cases | Align mention parsing to spec to avoid false triggers | Pending spec review |
-| Skill manifest shape | `index.json` top-level vs `structure` wrapper | Pending alignment |
-| `wm skill path` output | Return directory vs SKILL.md file path | Pending decision |
+*All resolved as of 2026-01-08.*
 
 ---
 
@@ -364,5 +367,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 - `/Users/mg/Developer/outfitter/waymark/.scratch/gold-standard-recommendations-a.md` - Review recommendations (A)
 - `/Users/mg/Developer/outfitter/waymark/.scratch/gold-standard-recommendations-b.md` - Review recommendations (B)
 - `/Users/mg/Developer/outfitter/waymark/.scratch/gold-standard-recommendations-c.md` - Review recommendations (C)
+- `/Users/mg/Developer/outfitter/waymark/.scratch/commander-gap-analysis.md` - CLI gaps and improvements
+- `/Users/mg/Developer/outfitter/waymark/.scratch/file-size-audit-grammar.md` - Grammar file size audit
 - `/Users/mg/Developer/outfitter/waymark/.scratch/20260108-rc-plan-review.md` - Plan review deltas
 - `/Users/mg/Developer/outfitter/waymark/.scratch/20260108-rc-plan-opportunities.md` - Additional opportunity backlog

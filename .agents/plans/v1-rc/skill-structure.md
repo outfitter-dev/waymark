@@ -114,8 +114,8 @@ commands:
 ## Getting More Help
 
 - Command details: `wm skill show <command>` or `wm <command> --help`
-- JSON schemas: `wm skill --section schemas`
-- Workflows: `wm skill --section workflows`
+- JSON schemas: `wm skill show schemas`
+- Workflows: `wm skill show workflows`
 ```
 
 ---
@@ -266,18 +266,6 @@ key = value
 - Error message patterns
 - Recovery strategies
 - Debugging steps
-
-#### workflows.md
-
-**Purpose:** Multi-command workflow recipes for common tasks.
-
-**Content:**
-
-- Pre-commit validation workflow
-- CI integration workflow
-- Batch migration workflow
-- Codebase audit workflow
-- Agent task delegation workflow
 
 ---
 
@@ -455,19 +443,19 @@ wm skill path
 
 ---
 
-## Open Questions
+## Resolved Questions
 
 1. **Should command aliases be in separate files?**
-   - Recommendation: No, include aliases in frontmatter of primary command
+   - Decision: No, include aliases in frontmatter of primary command
 
 2. **How to handle graph mode documentation?**
-   - Recommendation: Document in `commands/find.md` with `--graph` section
+   - Decision: Document in `commands/find.md` with `--graph` section
 
 3. **Should we include examples in a separate directory?**
-   - Recommendation: No, keep examples inline in command docs. The `references/workflows.md` handles complex multi-command scenarios.
+   - Decision: Yes, keep `examples/` separate from `references/` for semantic clarity
 
 4. **Where does configuration documentation live?**
-   - Recommendation: Each command doc references config relevant to it. A future `references/config.md` could provide complete reference.
+   - Decision: Each command doc references config relevant to it. A future `references/config.md` could provide complete reference.
 
 ---
 

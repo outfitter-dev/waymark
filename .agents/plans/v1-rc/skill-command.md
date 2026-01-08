@@ -289,10 +289,9 @@ git diff --name-only --cached | xargs wm fmt --write
 ```bash
 wm skill                    # Show full skill document (markdown)
 wm skill --json             # Output as JSON with parsed sections
-wm skill --section <name>   # Output specific section
+wm skill show <section>     # Output specific section (command or reference)
 wm skill list               # List available sections
-wm skill show <command>     # Show skill info for specific command
-wm skill path               # Print path to skill file (for agents to read directly)
+wm skill path               # Print path to skill directory (for agents to read directly)
 ```
 
 #### Command Interface
@@ -309,7 +308,6 @@ export function registerSkillCommand(program: Command): void {
     .command("skill")
     .description("Show agent-facing skill documentation")
     .option("--json", "Output as parsed JSON")
-    .option("--section <name>", "Show specific section")
     .action(handleSkill);
 
   skill
@@ -318,14 +316,14 @@ export function registerSkillCommand(program: Command): void {
     .action(handleSkillList);
 
   skill
-    .command("show <command>")
-    .description("Show skill info for a specific command")
+    .command("show <section>")
+    .description("Show specific section (command or reference)")
     .option("--json", "Output as JSON")
     .action(handleSkillShow);
 
   skill
     .command("path")
-    .description("Print path to skill file")
+    .description("Print path to skill directory")
     .action(handleSkillPath);
 }
 ```
@@ -366,10 +364,10 @@ Waymarks are structured comments using the `:::` sigil...
 }
 ```
 
-**Section (`--section commands.add`)**:
+**Show section (`wm skill show add`)**:
 
 ```text
-$ wm skill --section commands.add
+$ wm skill show add
 
 ### add
 
@@ -597,19 +595,19 @@ specific command help.
 
 ---
 
-## Open Questions
+## Resolved Questions
 
 1. **Skill versioning**: Should skill version match CLI version exactly?
-   - Recommendation: Yes, they ship together
+   - Decision: Yes, they ship together
 
 2. **Localization**: Support translated skills?
-   - Recommendation: Not for v1, English only
+   - Decision: Not for v1, English only
 
 3. **Skill discovery**: Should `wm --help` mention `wm skill`?
-   - Recommendation: Yes, add "For agent usage, see: wm skill"
+   - Decision: Yes, add "For agent usage, see: wm skill"
 
 4. **Deprecation timeline**: How long to keep `--prompt`?
-   - Recommendation: Warn for 2 minor versions, remove in next major
+   - Decision: Warn for 2 minor versions, remove in next major
 
 ---
 
