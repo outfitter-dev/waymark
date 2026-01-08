@@ -9,7 +9,8 @@
     "**/.waymark/index",
     ".migrate/**",
     ".agents/.archive/**",
-    ".trail/**"
+    ".trail/**",
+    ".scratch/**"
   ],
   "default": true,
   "fix": true,
