@@ -375,6 +375,97 @@ wm find src/ --json | npx ajv validate -s schemas/waymark-record.schema.json
 
 ---
 
+## P0-5: MCP Todos Concurrency Limits
+
+### Location
+
+`apps/mcp/src/resources/todos.ts`
+
+### Problem
+
+The MCP server's todos resource has no concurrency bounds or result limits when scanning large repositories. This can cause memory exhaustion and timeouts.
+
+```typescript
+// Current (unbounded)
+const results = await scanner.scanPaths(paths); // No limit on results
+// No concurrency control on parallel parsing
+```
+
+### Impact
+
+- Memory blowup in large monorepos (thousands of waymarks)
+- MCP server becomes unresponsive during large scans
+- Agents timeout waiting for results
+- No graceful degradation for constrained environments
+
+### Fix
+
+```typescript
+// apps/mcp/src/resources/todos.ts
+import pLimit from "p-limit";
+
+const MAX_CONCURRENCY = 10;
+const MAX_RESULTS = 1000;
+
+const limit = pLimit(MAX_CONCURRENCY);
+
+export async function scanTodos(paths: string[]) {
+  const results: WaymarkRecord[] = [];
+
+  const tasks = paths.map(path => limit(async () => {
+    if (results.length >= MAX_RESULTS) return; // Early termination
+    const records = await scanner.scanFile(path);
+    results.push(...records.filter(r => r.type === "todo"));
+  }));
+
+  await Promise.all(tasks);
+
+  return {
+    records: results.slice(0, MAX_RESULTS),
+    truncated: results.length >= MAX_RESULTS,
+    scannedPaths: paths.length,
+  };
+}
+```
+
+### Required Tests
+
+```typescript
+// apps/mcp/src/resources/todos.test.ts
+describe("todos resource limits", () => {
+  it("respects MAX_RESULTS limit", async () => {
+    // Create fixture with 1500 waymarks
+    const result = await scanTodos(largePaths);
+    expect(result.records.length).toBeLessThanOrEqual(1000);
+    expect(result.truncated).toBe(true);
+  });
+
+  it("terminates early when limit reached", async () => {
+    const scanCalls: string[] = [];
+    // Mock scanner to track calls
+    const result = await scanTodos(manyPaths);
+    // Should not scan all paths if limit reached early
+    expect(scanCalls.length).toBeLessThan(manyPaths.length);
+  });
+});
+```
+
+### Verification
+
+```bash
+# Create large test fixture
+mkdir -p /tmp/large-repo
+for i in $(seq 1 2000); do
+  echo "// todo ::: item $i" > "/tmp/large-repo/file$i.ts"
+done
+
+# Test MCP response
+echo '{"method": "resources/read", "params": {"uri": "waymark://todos"}}' | waymark-mcp
+# Should return truncated: true with ≤1000 results
+```
+
+---
+
 ## Summary
 
 | Blocker | Fix Complexity | Risk | Impact |
@@ -383,7 +474,8 @@ wm find src/ --json | npx ajv validate -s schemas/waymark-record.schema.json
 | P0-2: ID length mismatch | S (one line) | Low | High |
 | P0-3: Block comment support | S (add leader + strip) | Low | High |
 | P0-4: Schema/runtime drift | S (update enum) | Low | High |
+| P0-5: MCP concurrency limits | M (add guards) | Low | High |
 
-**Total effort:** 4 small changes that can ship in a single PR.
+**Total effort:** 5 changes, 4 small + 1 medium, can ship in 1-2 PRs.
 
 These fixes address the unanimous consensus from all three reviewers and immediately elevate waymark's reliability to release-candidate quality.

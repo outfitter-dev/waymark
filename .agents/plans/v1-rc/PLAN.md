@@ -40,6 +40,8 @@ This plan synthesizes findings from three independent senior developer reviews a
 | Update schema relation kinds | `schemas/waymark-record.schema.json:79` | S | |
 | Add ID determinism test | `packages/core/src/ids.test.ts` | S | |
 | Add block comment parse tests | `packages/grammar/src/tokenizer.test.ts` | S | |
+| Add MCP concurrency limits + result cap | `apps/mcp/src/resources/todos.ts` | M | |
+| Add MCP limit tests | `apps/mcp/src/resources/todos.test.ts` | S | |
 
 ### Definition of Done
 
@@ -47,6 +49,7 @@ This plan synthesizes findings from three independent senior developer reviews a
 - [ ] ID generation produces identical output across fresh manager instances
 - [ ] `/* todo ::: test */` parses to `{ type: "todo", content: "test" }`
 - [ ] Schema validates successfully against CLI JSON output
+- [ ] MCP todos resource returns `truncated: true` when hitting MAX_RESULTS
 
 ### Detailed Requirements
 
@@ -69,6 +72,13 @@ See @blockers.md for implementation details and code samples.
 | Fix mention pattern in schema | `schemas/waymark-record.schema.json:104` | S | |
 | Create spec alignment CI check | `scripts/check-spec-alignment.ts` | M | |
 | Add schema conformance tests | `packages/core/src/` | M | |
+| **Schema Coverage** | | | |
+| Create lint report schema | `schemas/lint-report.schema.json` | S | |
+| Create doctor report schema | `schemas/doctor-report.schema.json` | S | |
+| Create scan result schema | `schemas/scan-result.schema.json` | S | |
+| **Output Consistency** | | | |
+| Create unified output adapter | `packages/cli/src/utils/output.ts` | M | |
+| Migrate commands to output adapter | Multiple files | M | |
 
 ### Definition of Done
 
@@ -76,6 +86,8 @@ See @blockers.md for implementation details and code samples.
 - [ ] Remove with simulated write failure leaves index unchanged
 - [ ] `@Alice` rejected by schema (must be lowercase-first)
 - [ ] CI script validates schema enum matches runtime constants
+- [ ] All `--json` outputs validate against their schemas
+- [ ] `createOutput()` adapter handles result/status/error/warn/debug
 
 ### Detailed Requirements
 
@@ -112,6 +124,11 @@ See @blockers.md for implementation details and code samples.
 | Add SIGINT/SIGTERM handlers | `packages/cli/src/index.ts` | S | |
 | Respect `NO_COLOR` env var | `packages/cli/src/utils/output.ts` | S | |
 | Use `program.error()` consistently | Multiple files | M | |
+| **Contract Tests** | | | |
+| Create contracts test directory | `packages/core/src/__tests__/contracts/` | S | |
+| Add ID stability contract tests | `packages/core/src/__tests__/contracts/ids.test.ts` | M | |
+| Add relation contract tests | `packages/core/src/__tests__/contracts/relations.test.ts` | M | |
+| Add parse/format roundtrip tests | `packages/grammar/src/__tests__/roundtrip.test.ts` | M | |
 
 ### Definition of Done
 
@@ -122,6 +139,7 @@ See @blockers.md for implementation details and code samples.
 - [ ] `wm find | cat` produces no ANSI codes
 - [ ] `NO_COLOR=1 wm find` produces no ANSI codes
 - [ ] Ctrl+C exits cleanly with code 130
+- [ ] Contract tests prevent regressions in ID generation and relations
 
 ### Detailed Requirements
 
@@ -145,6 +163,10 @@ See @cli-improvements.md for exit code taxonomy, TTY handling, and Commander mig
 | Create CONTRIBUTING.md | `CONTRIBUTING.md` | M | |
 | Enhance `wm doctor` checks | `packages/cli/src/commands/doctor.ts` | M | |
 | Add help text snapshot tests | `packages/cli/src/__tests__/` | M | |
+| **Config & Troubleshooting** | | | |
+| Add `wm config --print` command | `packages/cli/src/commands/config.ts` | S | |
+| Document config precedence | `README.md` | S | |
+| Add troubleshooting section | `README.md` | S | |
 | **Agent Documentation Consolidation** | | | |
 | Create modular skill structure | `packages/agents/skills/waymark/` | M | |
 | Create SKILL.md core document | `packages/agents/skills/waymark/SKILL.md` | M | |
@@ -166,6 +188,8 @@ See @cli-improvements.md for exit code taxonomy, TTY handling, and Commander mig
 - [ ] `rg "thin dispatcher" docs/` returns no false claims
 - [ ] CONTRIBUTING.md covers: setup, testing, PR process
 - [ ] `wm doctor` reports cache status and completion state
+- [ ] `wm config --print` shows merged configuration
+- [ ] README troubleshooting covers Bun/npm registry issues
 - [ ] `wm skill` outputs core SKILL.md content
 - [ ] `wm skill show add` outputs command-specific documentation
 - [ ] `wm skill show workflows` outputs example workflows
@@ -266,10 +290,10 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| P0 | Not Started | 0/7 tasks |
-| P1 | Not Started | 0/5 tasks |
-| P2 | Not Started | 0/6 tasks |
-| P3 | Not Started | 0/19 tasks |
+| P0 | Not Started | 0/9 tasks |
+| P1 | Not Started | 0/10 tasks |
+| P2 | Not Started | 0/15 tasks |
+| P3 | Not Started | 0/22 tasks |
 
 ### Blockers
 
@@ -288,6 +312,18 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 | 2026-01-08 | `wm skill` for agent docs | Single source of truth; deprecate `--prompt` flag and delete `.prompt.txt`/`.help.txt` files |
 | 2026-01-08 | Modular skill structure | Progressive disclosure; core SKILL.md (~200 lines) + command docs on-demand; supersedes monolithic cli.md |
 | 2026-01-08 | Add examples/ directory | Replaces .prompt.txt use cases with structured examples; workflows, agent-tasks, batch-operations, integration docs |
+| 2026-01-08 | MCP concurrency limits (P0) | Memory safety in large repos; added after fresh-eyes review |
+| 2026-01-08 | Schema coverage for all outputs (P1) | External tools need stable programmatic contracts |
+| 2026-01-08 | Unified output adapter (P1) | Consistent stdout/stderr routing, JSON/quiet mode enforcement |
+| 2026-01-08 | Contract test suite (P2) | Prevent regressions in IDs/relations across releases |
+
+### Open Decisions (Require Resolution)
+
+| Decision | Options | Status |
+|----------|---------|--------|
+| Cache integration | Wire into scan vs remove docs claim | Pending investigation |
+| Spec as source of truth | Formalize derivations (schema/types/help) in CI | Pending design |
+| Mention parsing edge cases | Align mention parsing to spec to avoid false triggers | Pending spec review |
 
 ---
 
