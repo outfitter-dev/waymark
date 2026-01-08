@@ -50,7 +50,7 @@ export const DEFAULT_CONFIG: WaymarkConfig = {
   },
   ids: {
     mode: "prompt",
-    length: 8,
+    length: 7,
     rememberUserChoice: true,
     trackHistory: true,
     assignOnRefresh: false,

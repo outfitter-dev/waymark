@@ -163,7 +163,7 @@ export class WaymarkIdManager {
   }
 
   private async generateUniqueId(metadata: WaymarkIdMetadata): Promise<string> {
-    const baseInput = `${metadata.file}|${metadata.line}|${metadata.type}|${metadata.content}|${Date.now()}`;
+    const baseInput = `${metadata.file}|${metadata.line}|${metadata.type}|${metadata.content}`;
     let attempt = 0;
     const maxAttempts = 25;
 
