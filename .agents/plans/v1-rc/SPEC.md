@@ -78,6 +78,18 @@ A release candidate (RC) is feature-complete and believed to be production-ready
 | Signal handlers | Handle SIGINT/SIGTERM gracefully | Unix convention (exit 128+signal) |
 | `NO_COLOR` respect | Check env var alongside `--no-color` flag | Standard (no-color.org) |
 
+### Commander Error/Exit Contract (RC)
+
+To keep CLI behavior consistent across commands, Commander must use a single
+error/exit contract during the RC phase:
+
+- **Usage errors** (unknown option/command, missing arguments) must exit with
+  code **2** (`ExitCode.usageError`). This is enforced via `program.exitOverride`
+  and mapping all `commander.*` errors to usage error.
+- **Handled runtime errors** must call `program.error()` with the appropriate
+  `ExitCode` (1/3/4) and a stable error `code` string for tests.
+- `--help`/`--version` exits remain **0**.
+
 ### Deferred to Post-RC (P4)
 
 | Pattern | Description | Why Deferred |
@@ -96,7 +108,7 @@ These patterns violate Commander citizenship and should be fixed:
 
 | Anti-Pattern | Current Location | Correct Pattern |
 |--------------|------------------|-----------------|
-| Manual argv parsing | `add.ts`, `remove.ts` | Use Commander's parsed values |
+| Manual argv parsing | `add.ts`, `remove.ts` | **RC exception**: keep manual parsing until P4 migration |
 | `allowUnknownOption(true)` bypass | `index.ts` | Define all options in Commander |
 | Hardcoded exit codes | Multiple files | Use `EXIT_CODES` constants |
 | Custom hidden command array | `index.ts` | Use `.hideCommand()` |
@@ -109,6 +121,9 @@ The `edit` command demonstrates the target pattern - it uses Commander properly 
 1. **Phase 1** (RC): Define all options in Commander for help text (low risk)
 2. **Phase 2** (P4): Use Commander's parsed values instead of argv extraction
 3. **Phase 3** (P4): Remove custom parsers entirely
+
+For RC, `add` and `rm` may continue manual argv parsing as long as help output
+is defined in Commander and behavior matches the existing contract.
 
 See @cli-improvements.md for implementation details.
 
