@@ -752,7 +752,9 @@ async function handleDoctorCommand(
   }
 }
 
-function parseUnifiedOptions(args: string[]): ReturnType<typeof parseUnifiedArgs> {
+function parseUnifiedOptions(
+  args: string[]
+): ReturnType<typeof parseUnifiedArgs> {
   try {
     return parseUnifiedArgs(args);
   } catch (error) {
@@ -775,7 +777,7 @@ async function handleUnifiedInteractiveSelection(
   options: Record<string, unknown>,
   result: Awaited<ReturnType<typeof runUnifiedCommand>>
 ): Promise<boolean> {
-  if (!options.interactive || !result.records || result.records.length === 0) {
+  if (!(options.interactive && result.records) || result.records.length === 0) {
     return false;
   }
   const selected = await selectWaymark({ records: result.records });
@@ -819,10 +821,12 @@ async function handleUnifiedCommand(
   const result = await runUnifiedCommand(unifiedOptions, context);
 
   const didSelect = await handleUnifiedInteractiveSelection(options, result);
-  if (!didSelect && result.output.length > 0) {
-    if (shouldEmitUnifiedOutput(unifiedOptions, options)) {
-      writeStdout(result.output);
-    }
+  if (
+    !didSelect &&
+    result.output.length > 0 &&
+    shouldEmitUnifiedOutput(unifiedOptions, options)
+  ) {
+    writeStdout(result.output);
   }
 }
 
