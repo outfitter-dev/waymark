@@ -52,13 +52,14 @@ const HELP_TOPICS: Record<string, HelpTopic> = {
       "- filePath: string",
       "- type: string",
       "- content: string",
+      "- id?: string (wikilink [[hash]], [[hash|alias]], [[alias]] or bare)",
       "- line?: number",
       "- signals?: { flagged?: boolean; starred?: boolean }",
       "- configPath?: string",
       "- scope?: default | project | user",
       "",
       "Example:",
-      '{"action":"add","filePath":"src/app.ts","type":"todo","content":"add retry"}',
+      '{"action":"add","filePath":"src/app.ts","type":"todo","content":"add retry","id":"auth-refresh"}',
     ].join("\n"),
   },
 };
@@ -71,7 +72,7 @@ const DEFAULT_HELP = [
   "Actions:",
   "- scan  (paths?, format?, configPath?, scope?)",
   "- graph (paths?, configPath?, scope?)",
-  "- add   (filePath, type, content, line?, signals?)",
+  "- add   (filePath, type, content, id?, line?, signals?)",
   "- help  (topic?)",
   "",
   "Defaults:",
@@ -82,7 +83,7 @@ const DEFAULT_HELP = [
   "Examples:",
   '{"action":"scan"}',
   '{"action":"graph","paths":["src/"]}',
-  '{"action":"add","filePath":"src/app.ts","type":"todo","content":"add retry"}',
+  '{"action":"add","filePath":"src/app.ts","type":"todo","content":"add retry","id":"auth-refresh"}',
   '{"action":"help","topic":"scan"}',
 ].join("\n");
 

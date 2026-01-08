@@ -17,6 +17,9 @@ class TestServer {
 }
 
 const TLDR_EXISTS_REGEX = /already contains a tldr waymark/u;
+const LEGACY_ID_REGEX = /Legacy wm:/u;
+const EMPTY_ID_REGEX = /cannot be empty/u;
+const DIFFERENT_ID_REGEX = /different waymark id/u;
 const ABOUT_INSERT_LINE = 3;
 const SAMPLE_SOURCE = ["line 1", "line 2", "line 3", "line 4", "line 5"].join(
   "\n"
@@ -165,6 +168,151 @@ describe("handleAddWaymark", () => {
     const updated = await readFile(file, "utf8");
     const [firstLine] = updated.split("\n");
     expect(firstLine).toBe("<!-- idea ::: capture ideas for follow-up -->");
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("normalizes provided id to lowercase", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-"));
+    const file = join(dir, "feature.ts");
+    await writeFile(
+      file,
+      ["export function feature() {", "  return true;", "}"].join("\n"),
+      "utf8"
+    );
+
+    const server = new TestServer();
+    await handleAddWaymark({
+      server,
+      filePath: file,
+      type: "todo",
+      content: "add retry",
+      line: 1,
+      id: "Auth-Refresh",
+    });
+
+    const updated = await readFile(file, "utf8");
+    const [firstLine] = updated.split("\n");
+    expect(firstLine).toBe("// todo ::: add retry [[auth-refresh]]");
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("accepts bracketed ids and lowercases them", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-bracket-"));
+    const file = join(dir, "feature.ts");
+    await writeFile(
+      file,
+      ["export function feature() {", "  return true;", "}"].join("\n"),
+      "utf8"
+    );
+
+    const server = new TestServer();
+    await handleAddWaymark({
+      server,
+      filePath: file,
+      type: "todo",
+      content: "add retry",
+      line: 1,
+      id: "[[Auth-Refresh]]",
+    });
+
+    const updated = await readFile(file, "utf8");
+    const [firstLine] = updated.split("\n");
+    expect(firstLine).toBe("// todo ::: add retry [[auth-refresh]]");
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("throws when content already contains a different id", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-conflict-"));
+    const file = join(dir, "feature.ts");
+    await writeFile(
+      file,
+      ["export function feature() {", "  return true;", "}"].join("\n"),
+      "utf8"
+    );
+
+    const server = new TestServer();
+    await expect(
+      handleAddWaymark({
+        server,
+        filePath: file,
+        type: "todo",
+        content: "add retry [[existing-id]]",
+        line: 1,
+        id: "other-id",
+      })
+    ).rejects.toThrow(DIFFERENT_ID_REGEX);
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("trims whitespace around ids", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-trim-"));
+    const file = join(dir, "feature.ts");
+    await writeFile(
+      file,
+      ["export function feature() {", "  return true;", "}"].join("\n"),
+      "utf8"
+    );
+
+    const server = new TestServer();
+    await handleAddWaymark({
+      server,
+      filePath: file,
+      type: "todo",
+      content: "add retry",
+      line: 1,
+      id: "  AUTH  ",
+    });
+
+    const updated = await readFile(file, "utf8");
+    const [firstLine] = updated.split("\n");
+    expect(firstLine).toBe("// todo ::: add retry [[auth]]");
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("rejects empty ids", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-empty-"));
+    const file = join(dir, "feature.ts");
+    await writeFile(
+      file,
+      ["export function feature() {", "  return true;", "}"].join("\n"),
+      "utf8"
+    );
+
+    const server = new TestServer();
+    await expect(
+      handleAddWaymark({
+        server,
+        filePath: file,
+        type: "todo",
+        content: "add retry",
+        line: 1,
+        id: "   ",
+      })
+    ).rejects.toThrow(EMPTY_ID_REGEX);
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("rejects legacy wm ids", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-wm-"));
+    const file = join(dir, "legacy.ts");
+    await writeFile(file, ["export const legacy = true;"].join("\n"), "utf8");
+
+    const server = new TestServer();
+    await expect(
+      handleAddWaymark({
+        server,
+        filePath: file,
+        type: "todo",
+        content: "add retry",
+        id: "wm:abc123",
+      })
+    ).rejects.toThrow(LEGACY_ID_REGEX);
 
     await rm(dir, { recursive: true, force: true });
   });

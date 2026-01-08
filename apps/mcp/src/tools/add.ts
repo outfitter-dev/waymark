@@ -16,6 +16,8 @@ import { normalizePathForOutput } from "../utils/filesystem";
 const EXTENSION_REGEX = /(\.[^.]+)$/u;
 const NEWLINE_SPLIT_REGEX = /\r?\n/u;
 const LEADING_WHITESPACE_REGEX = /^[ \t]*/u;
+const ID_TRAIL_REGEX = /(\[\[[^\]]+\]\])$/i;
+const LEGACY_ID_PREFIX = "wm:";
 
 const COMMENT_STYLE_BY_EXTENSION: Record<string, CommentStyle> = {
   ".c": { leader: "//" },
@@ -83,7 +85,10 @@ export async function handleAdd(
   server: Pick<McpServer, "sendResourceListChanged">
 ): Promise<CallToolResult> {
   const params = addWaymarkInputSchema.parse(input);
-  const { filePath, type, content, line, signals, configPath, scope } = params;
+  const { filePath, type, content, line, signals, id, configPath, scope } =
+    params;
+  const normalizedId = id ? normalizeWaymarkId(id) : undefined;
+  const normalizedContent = applyIdToContent(content, normalizedId);
 
   const absolutePath = resolve(process.cwd(), filePath);
   if (!existsSync(absolutePath)) {
@@ -112,7 +117,7 @@ export async function handleAdd(
   const insertion = _addWaymark({
     source: originalSource,
     type,
-    content,
+    content: normalizedContent,
     ...(line !== undefined ? { line } : {}),
     newline,
     commentStyle,
@@ -133,7 +138,7 @@ export async function handleAdd(
   const insertedRecord = findInsertedRecord({
     records: updatedRecords,
     type: markerLower,
-    content,
+    content: normalizedContent,
     insertedLine: insertion.lineNumber,
   });
 
@@ -144,7 +149,7 @@ export async function handleAdd(
     type: insertedRecord?.type ?? type,
     startLine: insertedRecord?.startLine ?? insertion.lineNumber,
     endLine: insertedRecord?.endLine ?? insertion.lineNumber,
-    content: insertedRecord?.contentText ?? content,
+    content: insertedRecord?.contentText ?? normalizedContent,
     signals: insertedRecord?.signals,
   });
 }
@@ -330,6 +335,56 @@ function toJsonResponse(value: unknown): CallToolResult {
   };
 }
 
+function normalizeWaymarkId(id: string): string {
+  const trimmed = id.trim();
+  if (trimmed.length === 0) {
+    throw new Error("Waymark id cannot be empty.");
+  }
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith(LEGACY_ID_PREFIX)) {
+    throw new Error(
+      "Legacy wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+    );
+  }
+  if (trimmed.startsWith("[[") && trimmed.endsWith("]]")) {
+    const inner = trimmed.slice(2, -2).trim();
+    if (inner.length === 0) {
+      throw new Error(`Invalid waymark id format: ${id}`);
+    }
+    const normalizedInner = inner.toLowerCase();
+    if (normalizedInner.startsWith(LEGACY_ID_PREFIX)) {
+      throw new Error(
+        "Legacy wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+      );
+    }
+    return `[[${normalizedInner}]]`;
+  }
+  return `[[${lower}]]`;
+}
+
+function applyIdToContent(content: string, id?: string): string {
+  const trimmed = content.trim();
+  if (!id) {
+    return trimmed;
+  }
+
+  const match = trimmed.match(ID_TRAIL_REGEX);
+  const existingId = match?.[1];
+  if (existingId) {
+    const normalizedExisting = normalizeWaymarkId(existingId);
+    if (normalizedExisting !== id) {
+      throw new Error(
+        `Content already contains a different waymark id: ${existingId}`
+      );
+    }
+    const base = trimmed.replace(ID_TRAIL_REGEX, "").trimEnd();
+    return base.length > 0
+      ? `${base} ${normalizedExisting}`
+      : normalizedExisting;
+  }
+  return trimmed.length > 0 ? `${trimmed} ${id}` : id;
+}
+
 export const addToolDefinition = {
   title: "Add a waymark",
   description:
@@ -342,6 +397,7 @@ export function handleAddWaymark(params: {
   filePath: string;
   type: string;
   content: string;
+  id?: string | undefined;
   line?: number | undefined;
   signals?: SignalFlags | undefined;
   configPath?: string | undefined;
