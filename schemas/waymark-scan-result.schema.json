@@ -2,76 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://outfitter.dev/schemas/waymark-scan-result.schema.json",
   "title": "WaymarkScanResult",
-  "description": "Result of scanning files for waymarks",
-  "type": "object",
-  "required": ["records", "stats"],
-  "properties": {
-    "records": {
-      "type": "array",
-      "description": "All waymark records found",
-      "items": {
-        "$ref": "waymark-record.schema.json"
-      }
-    },
-    "stats": {
-      "type": "object",
-      "description": "Statistics about the scan",
-      "required": ["filesScanned", "totalWaymarks", "markerCounts"],
-      "properties": {
-        "filesScanned": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Number of files scanned"
-        },
-        "totalWaymarks": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Total number of waymarks found"
-        },
-        "markerCounts": {
-          "type": "object",
-          "description": "Count of waymarks by marker type",
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "scanTimeMs": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Time taken to scan in milliseconds"
-        }
-      },
-      "additionalProperties": false
-    },
-    "errors": {
-      "type": "array",
-      "description": "Errors encountered during scanning",
-      "items": {
-        "type": "object",
-        "required": ["file", "message"],
-        "properties": {
-          "file": {
-            "type": "string",
-            "description": "File where error occurred"
-          },
-          "line": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Line number where error occurred"
-          },
-          "message": {
-            "type": "string",
-            "description": "Error message"
-          },
-          "code": {
-            "type": "string",
-            "description": "Error code (e.g., 'WM001')"
-          }
-        },
-        "additionalProperties": false
-      }
-    }
-  },
-  "additionalProperties": false
+  "description": "JSON array of waymark records from a scan",
+  "type": "array",
+  "items": {
+    "$ref": "waymark-record.schema.json"
+  }
 }

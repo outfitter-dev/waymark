@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://outfitter.dev/schemas/scan-result.schema.json",
+  "$ref": "waymark-scan-result.schema.json"
+}

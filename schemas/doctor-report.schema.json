@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://outfitter.dev/schemas/doctor-report.schema.json",
+  "title": "WaymarkDoctorReport",
+  "description": "Health check report from the waymark CLI",
+  "type": "object",
+  "required": ["healthy", "timestamp", "checks", "issues", "summary"],
+  "$defs": {
+    "diagnosticIssue": {
+      "type": "object",
+      "required": ["severity", "category", "message"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "description": "Severity of the issue"
+        },
+        "category": {
+          "type": "string",
+          "description": "Issue category"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable issue description"
+        },
+        "file": {
+          "type": "string",
+          "description": "File path associated with the issue"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Line number associated with the issue"
+        },
+        "suggestion": {
+          "type": "string",
+          "description": "Suggested remediation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "checkResult": {
+      "type": "object",
+      "required": ["category", "name", "passed", "issues"],
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Check category"
+        },
+        "name": {
+          "type": "string",
+          "description": "Check name"
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "Whether the check passed"
+        },
+        "issues": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagnosticIssue" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "healthy": {
+      "type": "boolean",
+      "description": "Overall health status"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the report was generated"
+    },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/checkResult" }
+    },
+    "issues": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/diagnosticIssue" }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total", "errors", "warnings", "infos"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of issues"
+        },
+        "errors": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of error issues"
+        },
+        "warnings": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of warning issues"
+        },
+        "infos": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of info issues"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
