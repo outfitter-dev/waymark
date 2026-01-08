@@ -121,6 +121,7 @@ See @blockers.md for implementation details and code samples.
 | Centralize TTY/color detection | `packages/cli/src/utils/terminal.ts` | M | |
 | Document exit codes in `--help` | `packages/cli/src/index.ts` | S | |
 | Decide Commander error/exit contract + align SPEC | `packages/cli/src/index.ts`, `.agents/plans/v1-rc/SPEC.md` | S | |
+| Clarify manual argv parsing requirement in SPEC | `.agents/plans/v1-rc/SPEC.md` | S | |
 | **Commander Quick Wins** | | | |
 | Use `.hideCommand()` for fmt/lint | `packages/cli/src/index.ts` | S | |
 | Add `.choices()` to `--scope` | `packages/cli/src/index.ts` | S | |
@@ -129,6 +130,7 @@ See @blockers.md for implementation details and code samples.
 | Use `program.error()` consistently | Multiple files | M | |
 | Sanitize ANSI/control chars in human output | `packages/cli/src/utils/output.ts` | S | |
 | Harden `wm update --command` (warn + allowlist) | `packages/cli/src/commands/update.ts` | S | |
+| Define `--quiet` precedence with JSON output | `packages/cli/src/utils/output.ts` | S | |
 | **Contract Tests** | | | |
 | Create contracts test directory | `packages/core/src/__tests__/contracts/` | S | |
 | Add ID stability contract tests | `packages/core/src/__tests__/contracts/ids.test.ts` | M | |
@@ -143,6 +145,7 @@ See @blockers.md for implementation details and code samples.
 - [ ] `wm --no-input` fails fast when input required
 - [ ] `wm find | cat` produces no ANSI codes
 - [ ] `NO_COLOR=1 wm find` produces no ANSI codes
+- [ ] `wm find --json --quiet` still emits JSON (quiet only affects human output)
 - [ ] Ctrl+C exits cleanly with code 130
 - [ ] Contract tests prevent regressions in ID generation and relations
 
@@ -279,11 +282,12 @@ Phases must be completed in order (P0 before P1, etc.) because:
 
 ### Per-Task Workflow
 
-1. Create branch: `git checkout -b fix/p0-deterministic-ids`
+1. Graphite-synced repos: start with `gt log`; non-Graphite: `git checkout -b fix/p0-deterministic-ids`
 2. Write failing test first (TDD red phase)
 3. Implement fix (TDD green phase)
 4. Run `bun check:all` before commit
-5. PR with reference to this plan
+5. Stage changes, then commit (`gt create` for Graphite; conventional commit otherwise)
+6. PR with reference to this plan
 
 ### Commit Guidelines
 
@@ -308,8 +312,8 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 |-------|--------|------------|
 | P0 | Not Started | 0/10 tasks |
 | P1 | Not Started | 0/10 tasks |
-| P2 | Not Started | 0/18 tasks |
-| P3 | Not Started | 0/24 tasks |
+| P2 | Not Started | 0/20 tasks |
+| P3 | Not Started | 0/25 tasks |
 
 ### Blockers
 
@@ -341,6 +345,8 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 | Cache integration | Wire into scan vs remove docs claim | Pending investigation |
 | Spec as source of truth | Formalize derivations (schema/types/help) in CI | Pending design |
 | Mention parsing edge cases | Align mention parsing to spec to avoid false triggers | Pending spec review |
+| Skill manifest shape | `index.json` top-level vs `structure` wrapper | Pending alignment |
+| `wm skill path` output | Return directory vs SKILL.md file path | Pending decision |
 
 ---
 
@@ -354,3 +360,9 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 - @skill-command.md - `wm skill` command design (problem analysis, CLI interface)
 - @skill-structure.md - Modular skill file structure (supersedes monolithic approach)
 - `/Users/mg/Developer/outfitter/waymark/.scratch/gold-standard-synthesis.md` - Source synthesis
+- `/Users/mg/Developer/outfitter/waymark/.scratch/20260108-fresh-eyes-review.md` - Fresh-eyes review notes
+- `/Users/mg/Developer/outfitter/waymark/.scratch/gold-standard-recommendations-a.md` - Review recommendations (A)
+- `/Users/mg/Developer/outfitter/waymark/.scratch/gold-standard-recommendations-b.md` - Review recommendations (B)
+- `/Users/mg/Developer/outfitter/waymark/.scratch/gold-standard-recommendations-c.md` - Review recommendations (C)
+- `/Users/mg/Developer/outfitter/waymark/.scratch/20260108-rc-plan-review.md` - Plan review deltas
+- `/Users/mg/Developer/outfitter/waymark/.scratch/20260108-rc-plan-opportunities.md` - Additional opportunity backlog
