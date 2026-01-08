@@ -1,4 +1,4 @@
-<!-- tldr ::: phased implementation roadmap for v1.0-rc with clear milestones -->
+<!-- tldr ::: phased implementation roadmap for v1.0-rc with clear milestones ref:#docs/plan/v1-rc #docs/plan #docs -->
 
 # Waymark v1.0-RC Implementation Plan
 
@@ -9,6 +9,7 @@
 ## Overview
 
 This plan synthesizes findings from three independent senior developer reviews and validated fresh-eyes analysis. All reviewers converged on the same critical blockers, providing high confidence in prioritization.
+<!-- note ::: incorporates 2026-01-08 plan review deltas and opportunity backlog ref:#docs/plan/v1-rc/review #docs/plan #docs -->
 
 ## Phase Summary
 
@@ -27,7 +28,7 @@ This plan synthesizes findings from three independent senior developer reviews a
 
 **Goal:** Fix issues that cause incorrect behavior or break the spec contract.
 
-**Milestone:** All four P0 items fixed with tests proving correctness.
+**Milestone:** All P0 items fixed with tests proving correctness.
 
 ### Tasks
 
@@ -37,6 +38,7 @@ This plan synthesizes findings from three independent senior developer reviews a
 | Change ID default length to 7 | `packages/core/src/config.ts:53` | S | |
 | Add `/*` to comment leaders | `packages/grammar/src/tokenizer.ts:5` | S | |
 | Handle trailing `*/` in block comments | `packages/grammar/src/tokenizer.ts` | S | |
+| Align block comment metadata with tests | `packages/grammar/src/tokenizer.test.ts` | S | |
 | Update schema relation kinds | `schemas/waymark-record.schema.json:79` | S | |
 | Add ID determinism test | `packages/core/src/ids.test.ts` | S | |
 | Add block comment parse tests | `packages/grammar/src/tokenizer.test.ts` | S | |
@@ -48,12 +50,12 @@ This plan synthesizes findings from three independent senior developer reviews a
 - [ ] `bun test` passes on all packages
 - [ ] ID generation produces identical output across fresh manager instances
 - [ ] `/* todo ::: test */` parses to `{ type: "todo", content: "test" }`
-- [ ] Schema validates successfully against CLI JSON output
 - [ ] MCP todos resource returns `truncated: true` when hitting MAX_RESULTS
 
 ### Detailed Requirements
 
 See @blockers.md for implementation details and code samples.
+<!-- note ::: block comment tests must assert `commentLeader === "/*"` or add `commentStyle` to ParsedHeader ref:#docs/plan/v1-rc/p0-block-comments #docs/plan #docs -->
 
 ---
 
@@ -94,7 +96,7 @@ See @blockers.md for implementation details and code samples.
 **Transactional remove pattern:**
 
 ```text
-1. Write file to temp path
+1. Write file to temp path (same directory as target to keep rename atomic)
 2. Atomic rename temp -> original
 3. Only then update ID index/history
 4. On any failure, no state changes
@@ -118,12 +120,15 @@ See @blockers.md for implementation details and code samples.
 | Add `--quiet` global flag | `packages/cli/src/index.ts` | S | |
 | Centralize TTY/color detection | `packages/cli/src/utils/terminal.ts` | M | |
 | Document exit codes in `--help` | `packages/cli/src/index.ts` | S | |
+| Decide Commander error/exit contract + align SPEC | `packages/cli/src/index.ts`, `.agents/plans/v1-rc/SPEC.md` | S | |
 | **Commander Quick Wins** | | | |
 | Use `.hideCommand()` for fmt/lint | `packages/cli/src/index.ts` | S | |
 | Add `.choices()` to `--scope` | `packages/cli/src/index.ts` | S | |
 | Add SIGINT/SIGTERM handlers | `packages/cli/src/index.ts` | S | |
 | Respect `NO_COLOR` env var | `packages/cli/src/utils/output.ts` | S | |
 | Use `program.error()` consistently | Multiple files | M | |
+| Sanitize ANSI/control chars in human output | `packages/cli/src/utils/output.ts` | S | |
+| Harden `wm update --command` (warn + allowlist) | `packages/cli/src/commands/update.ts` | S | |
 | **Contract Tests** | | | |
 | Create contracts test directory | `packages/core/src/__tests__/contracts/` | S | |
 | Add ID stability contract tests | `packages/core/src/__tests__/contracts/ids.test.ts` | M | |
@@ -169,6 +174,8 @@ See @cli-improvements.md for exit code taxonomy, TTY handling, and Commander mig
 | Add troubleshooting section | `README.md` | S | |
 | **Agent Documentation Consolidation** | | | |
 | Create modular skill structure | `packages/agents/skills/waymark/` | M | |
+| Canonicalize skill layout + manifest shape | `.agents/plans/v1-rc/skill-structure.md` | S | |
+| Align `wm skill` docs to `show` subcommand | `.agents/plans/v1-rc/skill-command.md` | S | |
 | Create SKILL.md core document | `packages/agents/skills/waymark/SKILL.md` | M | |
 | Create command docs | `packages/agents/skills/waymark/commands/*.md` | M | |
 | Create reference docs | `packages/agents/skills/waymark/references/*.md` | S | |
@@ -179,6 +186,7 @@ See @cli-improvements.md for exit code taxonomy, TTY handling, and Commander mig
 | Create index.json manifest | `packages/agents/skills/waymark/index.json` | S | |
 | Implement skill parser | `packages/cli/src/skills/parser.ts` | S | |
 | Implement `wm skill` command | `packages/cli/src/commands/skill.ts` | M | |
+| Ensure skill assets ship in CLI package | `packages/cli/package.json`, build scripts | S | |
 | Delete `.prompt.txt` and `.help.txt` files | `packages/cli/src/commands/` | S | |
 | Remove `--prompt` flag handling | Various | S | |
 
@@ -197,12 +205,14 @@ See @cli-improvements.md for exit code taxonomy, TTY handling, and Commander mig
 - [ ] `wm skill list` shows available commands, references, and examples
 - [ ] Skill directory structure includes examples/ with all four files
 - [ ] No `.prompt.txt` or `.help.txt` files remain in codebase
+- [ ] CLI package includes skill assets in published artifact
 
 ### Detailed Requirements
 
 See @documentation.md for specific claims to fix.
 See @skill-structure.md for modular skill architecture.
 See @skill-command.md for CLI interface design.
+<!-- note ::: standardize on `wm skill show <section>`; remove `--section` references across docs/tests ref:#docs/plan/v1-rc/skills-cli #docs/plan #docs -->
 
 ---
 
@@ -218,6 +228,13 @@ Migrate `add` and `rm` commands from custom parsing to full Commander.js integra
 |------|------|--------|------------------------|
 | Define all `add` options in Commander | `packages/cli/src/index.ts` | M | Works, help text improvement |
 | Define all `rm` options in Commander | `packages/cli/src/index.ts` | M | Works, help text improvement |
+
+### P5: Post-RC Opportunities (Tracked, not required for v1.0-RC)
+
+| Task | File | Effort | Rationale for Deferral |
+|------|------|--------|------------------------|
+| Add scan performance instrumentation + cache toggle | `packages/cli/src/commands/scan.ts` | M | Perf improvement, not correctness |
+| Extend spec-alignment CI to mention pattern + enums | `scripts/check-spec-alignment.ts` | S | Guardrail, not blocking |
 | Replace argv extraction with Commander values | `add.ts`, `remove.ts` | M | Risk vs benefit for RC |
 | Remove `allowUnknownOption(true)` | `packages/cli/src/index.ts` | M | Depends on above |
 | Add custom FILE:LINE argument parser | `packages/cli/src/utils/` | S | Supporting infrastructure |
@@ -235,7 +252,7 @@ Migrate `add` and `rm` commands from custom parsing to full Commander.js integra
 
 See @cli-improvements.md for detailed migration strategy.
 
-### P5: Architecture Improvements
+### P6: Architecture Improvements
 
 | Task | File | Effort | Rationale for Deferral |
 |------|------|--------|------------------------|
@@ -243,7 +260,6 @@ See @cli-improvements.md for detailed migration strategy.
 | Modularize commands with `.addCommand()` | `packages/cli/src/commands/*/index.ts` | L | Works, code organization |
 | Wire cache into scan path | `packages/core/src/scan.ts` | L | Works without, perf optimization |
 | Multi-line block comment support | `packages/grammar/src/parser.ts` | L | Single-line covers most cases |
-| Bound MCP concurrency | `apps/mcp/src/resources/todos.ts` | M | Document as limitation |
 | Extract shared constants | `packages/grammar/src/constants.ts` | M | Not blocking |
 | Property-based tests | Test files | M | Nice to have |
 
@@ -290,10 +306,10 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| P0 | Not Started | 0/9 tasks |
+| P0 | Not Started | 0/10 tasks |
 | P1 | Not Started | 0/10 tasks |
-| P2 | Not Started | 0/15 tasks |
-| P3 | Not Started | 0/22 tasks |
+| P2 | Not Started | 0/18 tasks |
+| P3 | Not Started | 0/24 tasks |
 
 ### Blockers
 
@@ -312,6 +328,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 | 2026-01-08 | `wm skill` for agent docs | Single source of truth; deprecate `--prompt` flag and delete `.prompt.txt`/`.help.txt` files |
 | 2026-01-08 | Modular skill structure | Progressive disclosure; core SKILL.md (~200 lines) + command docs on-demand; supersedes monolithic cli.md |
 | 2026-01-08 | Add examples/ directory | Replaces .prompt.txt use cases with structured examples; workflows, agent-tasks, batch-operations, integration docs |
+| 2026-01-08 | `wm skill show <section>` interface | Resolve `show` vs `--section` ambiguity across docs and tests |
 | 2026-01-08 | MCP concurrency limits (P0) | Memory safety in large repos; added after fresh-eyes review |
 | 2026-01-08 | Schema coverage for all outputs (P1) | External tools need stable programmatic contracts |
 | 2026-01-08 | Unified output adapter (P1) | Consistent stdout/stderr routing, JSON/quiet mode enforcement |
