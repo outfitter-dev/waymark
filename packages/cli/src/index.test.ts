@@ -18,6 +18,7 @@ import {
 } from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
+import { ExitCode } from "./exit-codes";
 import { runCli } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
@@ -33,8 +34,7 @@ const __test = {
 async function runCliCaptured(
   args: string[]
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  const result = await runCli(args);
-  return { exitCode: result.exitCode, stdout: "", stderr: "" };
+  return await runCli(args);
 }
 
 const defaultContext: CommandContext = {
@@ -1219,6 +1219,27 @@ describe("Commander integration", () => {
 
     expect(receivedOptions?.json).toBe(true);
     expect(receivedOptions?.graph).toBe(true);
+  });
+
+  test("unknown option returns a usage error exit code", async () => {
+    const result = await runCliCaptured(["find", "--definitely-not-a-flag"]);
+    expect(result.exitCode).toBe(ExitCode.usageError);
+  });
+
+  test("no-input fails when format requires confirmation", async () => {
+    const { file, cleanup } = await withTempFile("// todo ::: prompt\n");
+
+    try {
+      const result = await runCliCaptured([
+        "fmt",
+        file,
+        "--write",
+        "--no-input",
+      ]);
+      expect(result.exitCode).toBe(ExitCode.usageError);
+    } finally {
+      await cleanup();
+    }
   });
 });
 

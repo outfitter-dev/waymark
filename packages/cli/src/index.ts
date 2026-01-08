@@ -4,7 +4,7 @@
 
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
-import { Command, Option } from "commander";
+import { Command, CommanderError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import { parseAddArgs, runAddCommand } from "./commands/add.ts";
 import {
@@ -29,12 +29,18 @@ import {
   runUpdateCommand,
   type UpdateCommandOptions,
 } from "./commands/update.ts";
+import { CliError, createUsageError } from "./errors.ts";
+import { ExitCode } from "./exit-codes.ts";
 import type { CommandContext } from "./types.ts";
 import { loadPrompt } from "./utils/content-loader.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
-import { confirmWrite, selectWaymark } from "./utils/prompts.ts";
+import {
+  confirmWrite,
+  selectWaymark,
+  setPromptPolicy,
+} from "./utils/prompts.ts";
 
 const STDOUT = process.stdout;
 const STDERR = process.stderr;
@@ -45,6 +51,55 @@ function writeStdout(message: string): void {
 
 function writeStderr(message: string): void {
   STDERR.write(`${message}\n`);
+}
+
+function resolveCommanderExitCode(error: CommanderError): ExitCode {
+  if (error.exitCode === 0) {
+    return ExitCode.success;
+  }
+  if (error.code.startsWith("commander.")) {
+    return ExitCode.usageError;
+  }
+  return (error.exitCode ?? ExitCode.failure) as ExitCode;
+}
+
+function resolveExitCode(error: unknown): ExitCode {
+  if (error instanceof CliError) {
+    return error.exitCode;
+  }
+  if (error instanceof CommanderError) {
+    return resolveCommanderExitCode(error);
+  }
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    typeof (error as NodeJS.ErrnoException).code === "string"
+  ) {
+    return ExitCode.ioError;
+  }
+  return ExitCode.failure;
+}
+
+function resolveErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+  if (typeof error === "string" && error.trim().length > 0) {
+    return error;
+  }
+  return "Unexpected error";
+}
+
+function handleCommandError(program: Command, error: unknown): never {
+  if (error instanceof CommanderError) {
+    throw error;
+  }
+  const message = resolveErrorMessage(error);
+  const exitCode = resolveExitCode(error);
+  const code =
+    exitCode === ExitCode.usageError ? "WAYMARK_USAGE" : "WAYMARK_ERROR";
+  return program.error(message, { exitCode, code });
 }
 
 // Command handlers extracted for complexity management
@@ -59,8 +114,10 @@ async function handleFormatCommand(
       writeStdout(promptText);
       return;
     }
-    writeStderr("No agent prompt available for this command");
-    process.exit(1);
+    throw new CliError(
+      "No agent prompt available for this command",
+      ExitCode.failure
+    );
   }
 
   const scopeValue = program.opts().scope as string;
@@ -102,7 +159,7 @@ async function handleFormatCommand(
         writeStdout(`${filePath}: formatted (${edits.length} edits)`);
       } else {
         writeStdout("Write cancelled");
-        process.exit(1);
+        throw new CliError("Write cancelled", ExitCode.failure);
       }
     } else {
       writeStdout(formattedText);
@@ -121,8 +178,10 @@ async function handleLintCommand(
       writeStdout(promptText);
       return;
     }
-    writeStderr("No agent prompt available for this command");
-    process.exit(1);
+    throw new CliError(
+      "No agent prompt available for this command",
+      ExitCode.failure
+    );
   }
 
   const scopeValue = program.opts().scope as string;
@@ -156,7 +215,7 @@ async function handleLintCommand(
   ).length;
 
   if (errorCount > 0) {
-    process.exit(1);
+    throw new CliError("Lint errors detected", ExitCode.failure);
   }
 }
 
@@ -171,34 +230,40 @@ async function handleAddCommand(
       writeStdout(promptText);
       return;
     }
-    writeStderr("No agent prompt available for this command");
-    process.exit(1);
+    throw new CliError(
+      "No agent prompt available for this command",
+      ExitCode.failure
+    );
   }
 
   const argvTokens = process.argv.slice(2);
   const commandNames = new Set([command.name(), ...command.aliases()]);
   const commandIndex = argvTokens.findIndex((token) => commandNames.has(token));
   const tokens = commandIndex >= 0 ? argvTokens.slice(commandIndex + 1) : [];
-  const filteredTokens = tokens.filter((token) => token !== "--prompt");
+  const filteredTokens = tokens.filter(
+    (token) => token !== "--prompt" && token !== "--no-input"
+  );
 
   const scopeValue = program.opts().scope as string;
   const globalOpts = { scope: normalizeScope(scopeValue) };
   const context = await createContext(globalOpts);
 
+  let parsed: ReturnType<typeof parseAddArgs>;
   try {
-    const parsed = parseAddArgs(filteredTokens);
-    const result = await runAddCommand(parsed, context);
-
-    if (result.output.length > 0) {
-      writeStdout(result.output);
-    }
-
-    if (result.exitCode !== 0) {
-      process.exit(result.exitCode);
-    }
+    parsed = parseAddArgs(filteredTokens);
   } catch (error) {
-    writeStderr(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    const message = error instanceof Error ? error.message : String(error);
+    throw createUsageError(message);
+  }
+
+  const result = await runAddCommand(parsed, context);
+
+  if (result.output.length > 0) {
+    writeStdout(result.output);
+  }
+
+  if (result.exitCode !== 0) {
+    throw new CliError("Add command failed", ExitCode.failure);
   }
 }
 
@@ -240,8 +305,10 @@ function handlePromptOption(
     writeStdout(promptText);
     return true;
   }
-  writeStderr("No agent prompt available for this command");
-  process.exit(1);
+  throw new CliError(
+    "No agent prompt available for this command",
+    ExitCode.failure
+  );
 }
 
 function extractCommandTokens(_program: Command, command: Command): string[] {
@@ -253,15 +320,15 @@ function extractCommandTokens(_program: Command, command: Command): string[] {
   }
   return argvTokens
     .slice(commandIndex + 1)
-    .filter((token) => token !== "--prompt");
+    .filter((token) => token !== "--prompt" && token !== "--no-input");
 }
 
 function parseRemoveArgsOrExit(tokens: string[]): ParsedRemoveArgs {
   try {
     return parseRemoveArgs(tokens);
   } catch (error) {
-    writeStderr(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    const message = error instanceof Error ? error.message : String(error);
+    throw createUsageError(message);
   }
 }
 
@@ -274,7 +341,7 @@ async function executeRemovalWriteFlow(
     if (preview.output.length > 0) {
       writeStdout(preview.output);
     }
-    process.exit(preview.exitCode);
+    throw new CliError("Remove preview failed", ExitCode.failure);
   }
 
   const structuredOutput = preview.options.json || preview.options.jsonl;
@@ -291,7 +358,7 @@ async function executeRemovalWriteFlow(
   }
 
   if (actual.exitCode !== 0) {
-    process.exit(actual.exitCode);
+    throw new CliError("Remove command failed", ExitCode.failure);
   }
 }
 
@@ -318,14 +385,12 @@ async function resolveInteractiveTarget(
 ): Promise<{ target: string; id?: string | undefined }> {
   const records = await scanRecords([workspaceRoot], config);
   if (records.length === 0) {
-    writeStderr("No waymarks found to edit.");
-    process.exit(1);
+    throw new CliError("No waymarks found to edit.", ExitCode.failure);
   }
 
   const selected = await selectWaymark({ records });
   if (!selected) {
-    writeStderr("No waymark selected.");
-    process.exit(1);
+    throw new CliError("No waymark selected.", ExitCode.failure);
   }
 
   const target = `${selected.file}:${selected.startLine}`;
@@ -427,7 +492,7 @@ async function handleModifyCommand(
   }
 
   if (rawOptions.json && rawOptions.jsonl) {
-    throw new Error("--json and --jsonl cannot be used together");
+    throw createUsageError("--json and --jsonl cannot be used together");
   }
 
   const scopeValue = program.opts().scope as string;
@@ -464,7 +529,7 @@ async function handleModifyCommand(
   }
 
   if (result.exitCode !== 0) {
-    process.exit(result.exitCode);
+    throw new CliError("Edit command failed", ExitCode.failure);
   }
 }
 
@@ -476,7 +541,7 @@ function outputRemovalPreview(
   }
 
   if (preview.exitCode !== 0) {
-    process.exit(preview.exitCode);
+    throw new CliError("Remove preview failed", ExitCode.failure);
   }
 }
 
@@ -517,7 +582,7 @@ async function handleUpdateAction(
   }
 
   if (result.exitCode !== 0) {
-    process.exit(result.exitCode);
+    throw new CliError(result.message ?? "wm update failed", ExitCode.failure);
   }
 }
 
@@ -665,7 +730,7 @@ async function handleDoctorCommand(
 
   // Exit with appropriate code
   if (!report.healthy) {
-    process.exit(1);
+    throw new CliError("Doctor found issues", ExitCode.failure);
   }
 }
 
@@ -680,8 +745,7 @@ async function handleUnifiedCommand(
       writeStdout(promptText);
       return;
     }
-    writeStderr("No agent prompt available");
-    process.exit(1);
+    throw new CliError("No agent prompt available", ExitCode.failure);
   }
 
   const scopeValue = program.opts().scope as string;
@@ -689,7 +753,13 @@ async function handleUnifiedCommand(
   const context = await createContext(globalOpts);
 
   const args = buildArgsFromOptions(paths, options);
-  const unifiedOptions = parseUnifiedArgs(args);
+  let unifiedOptions: ReturnType<typeof parseUnifiedArgs>;
+  try {
+    unifiedOptions = parseUnifiedArgs(args);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw createUsageError(message);
+  }
   const result = await runUnifiedCommand(unifiedOptions, context);
 
   // Handle interactive selection
@@ -756,7 +826,7 @@ type OptionSection = {
 const ROOT_OPTION_SECTIONS: OptionSection[] = [
   {
     title: "Global Options",
-    longs: ["--help", "--version", "--prompt", "--scope"],
+    longs: ["--help", "--version", "--prompt", "--no-input", "--scope"],
   },
   {
     title: "Logging",
@@ -898,6 +968,10 @@ export async function createProgram(): Promise<Command> {
   });
 
   const program = new Command();
+  program.exitOverride((error) => {
+    const exitCode = resolveCommanderExitCode(error);
+    process.exit(exitCode);
+  });
 
   const jsonOption = new Option("--json", "Output as JSON array");
   const jsonlOption = new Option(
@@ -938,6 +1012,7 @@ export async function createProgram(): Promise<Command> {
       "default"
     )
     .option("--prompt", "show agent-facing documentation")
+    .option("--no-input", "fail if interactive input required")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
@@ -947,11 +1022,21 @@ export async function createProgram(): Promise<Command> {
     .option("--no-color", "disable ANSI colors")
     .addHelpText(
       "afterAll",
-      "\nNote: Use --prompt flag with any command to see agent-facing documentation"
+      `
+Exit Codes:
+  0  Success
+  1  Waymark error
+  2  Usage error (invalid flags or arguments)
+  3  Configuration error
+  4  I/O error (file not found, permission denied)
+
+Note: Use --prompt flag with any command to see agent-facing documentation
+`
     )
     .hook("preAction", (thisCommand) => {
       // Configure logger based on flags
       const opts = thisCommand.opts();
+      setPromptPolicy({ noInput: Boolean(opts.noInput) });
       if (opts.debug) {
         logger.level = "debug";
       } else if (opts.verbose) {
@@ -968,37 +1053,44 @@ export async function createProgram(): Promise<Command> {
     .option("--prompt", "show agent-facing prompt instead of help")
     .description("display help for command")
     .action((commandName?: string, options?: { prompt?: boolean }) => {
-      if (options?.prompt) {
-        const promptText = loadPrompt(commandName || "unified");
-        if (promptText) {
-          writeStdout(promptText);
-        } else {
-          writeStderr("No agent prompt available for this command");
-          process.exit(1);
+      try {
+        if (options?.prompt) {
+          const promptText = loadPrompt(commandName || "unified");
+          if (promptText) {
+            writeStdout(promptText);
+          } else {
+            throw new CliError(
+              "No agent prompt available for this command",
+              ExitCode.failure
+            );
+          }
+          return;
         }
-        return;
-      }
 
-      if (!commandName) {
-        program.help();
-        return;
-      }
+        if (!commandName) {
+          program.help();
+          return;
+        }
 
-      const cmd = program.commands.find((c) => c.name() === commandName);
-      if (cmd) {
-        cmd.help();
-        return;
-      }
+        const cmd = program.commands.find((c) => c.name() === commandName);
+        if (cmd) {
+          cmd.help();
+          return;
+        }
 
-      const topicHelp = getTopicHelp(commandName);
-      if (topicHelp) {
-        writeStdout(topicHelp);
-        return;
-      }
+        const topicHelp = getTopicHelp(commandName);
+        if (topicHelp) {
+          writeStdout(topicHelp);
+          return;
+        }
 
-      writeStderr(`Unknown command or topic: ${commandName}`);
-      writeStdout(`Available topics: ${helpTopicNames.join(", ")}`);
-      program.help();
+        if (helpTopicNames.length > 0) {
+          writeStdout(`Available topics: ${helpTopicNames.join(", ")}`);
+        }
+        throw createUsageError(`Unknown command or topic: ${commandName}`);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
     });
 
   // Format command
@@ -1046,8 +1138,7 @@ See 'wm fmt --prompt' for agent-facing documentation.
         try {
           await handleFormatCommand(program, paths, options);
         } catch (error) {
-          writeStderr(error instanceof Error ? error.message : String(error));
-          process.exit(1);
+          handleCommandError(program, error);
         }
       }
     );
@@ -1107,8 +1198,12 @@ See 'wm add --prompt' for agent-facing documentation.
     `
     )
     .action(async function (this: Command, ...actionArgs: unknown[]) {
-      const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
-      await handleAddCommand(program, this, options);
+      try {
+        const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
+        await handleAddCommand(program, this, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
     });
 
   const editCmd = program
@@ -1171,8 +1266,7 @@ Notes:
             : { ...program.opts(), ...options };
         await handleModifyCommand(program, this, target, mergedOptions);
       } catch (error) {
-        writeStderr(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        handleCommandError(program, error);
       }
     });
 
@@ -1230,8 +1324,12 @@ See 'wm rm --prompt' for agent-facing documentation.
     `
     )
     .action(async function (this: Command, ...actionArgs: unknown[]) {
-      const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
-      await handleRemoveCommand(program, this, options);
+      try {
+        const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
+        await handleRemoveCommand(program, this, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
     });
 
   program
@@ -1244,7 +1342,13 @@ See 'wm rm --prompt' for agent-facing documentation.
       "--command <command>",
       "override the underlying update command (defaults to npm)"
     )
-    .action(handleUpdateAction);
+    .action(async (options) => {
+      try {
+        await handleUpdateAction(options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
 
   // Lint command
   program
@@ -1290,8 +1394,7 @@ See 'wm lint --prompt' for agent-facing documentation.
         try {
           await handleLintCommand(program, paths, options);
         } catch (error) {
-          writeStderr(error instanceof Error ? error.message : String(error));
-          process.exit(1);
+          handleCommandError(program, error);
         }
       }
     );
@@ -1318,8 +1421,7 @@ See 'wm lint --prompt' for agent-facing documentation.
         try {
           await runInitCommand(options);
         } catch (error) {
-          writeStderr(error instanceof Error ? error.message : String(error));
-          process.exit(1);
+          handleCommandError(program, error);
         }
       }
     );
@@ -1384,8 +1486,7 @@ See 'wm doctor --prompt' for agent-facing documentation.
       try {
         await handleDoctorCommand(program, { ...options, paths });
       } catch (error) {
-        writeStderr(error instanceof Error ? error.message : String(error));
-        process.exit(2); // Internal error
+        handleCommandError(program, error);
       }
     });
 
@@ -1499,8 +1600,7 @@ See 'wm find --prompt' for agent-facing documentation.
             : { ...program.opts(), ...options };
         await handleUnifiedCommand(program, paths, mergedOptions);
       } catch (error) {
-        writeStderr(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        handleCommandError(program, error);
       }
     });
 
@@ -1524,8 +1624,7 @@ See 'wm find --help' for all available options and comprehensive documentation.
         const mergedOptions = { ...program.opts(), ...options };
         await handleUnifiedCommand(program, paths, mergedOptions);
       } catch (error) {
-        writeStderr(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        handleCommandError(program, error);
       }
     });
 
@@ -1551,26 +1650,68 @@ if (import.meta.main) {
   createProgram()
     .then((program) => program.parseAsync(process.argv))
     .catch((error) => {
-      writeStderr(error instanceof Error ? error.message : String(error));
-      process.exit(1);
+      const message = resolveErrorMessage(error);
+      const exitCode = resolveExitCode(error);
+      writeStderr(message);
+      process.exit(exitCode);
     });
 }
 
 // For testing
-export async function runCli(argv: string[]): Promise<{ exitCode: number }> {
+export async function runCli(argv: string[]): Promise<{
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+}> {
   const previousArgv = [...process.argv];
   const cliArgv = ["node", "wm", ...argv];
   process.argv = [...cliArgv];
+  const stdoutChunks: string[] = [];
+  const stderrChunks: string[] = [];
+  const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+  const originalStderrWrite = process.stderr.write.bind(process.stderr);
 
+  const capture =
+    (chunks: string[]) =>
+    (
+      chunk: string | Uint8Array,
+      encoding?: BufferEncoding,
+      callback?: () => void
+    ): boolean => {
+      const text =
+        typeof chunk === "string"
+          ? chunk
+          : Buffer.from(chunk).toString(encoding ?? "utf8");
+      chunks.push(text);
+      if (callback) {
+        callback();
+      }
+      return true;
+    };
+
+  process.stdout.write = capture(stdoutChunks) as typeof process.stdout.write;
+  process.stderr.write = capture(stderrChunks) as typeof process.stderr.write;
+
+  let exitCode = ExitCode.success;
   try {
     const program = await createProgram();
+    program.exitOverride((error) => {
+      throw error;
+    });
     await program.parseAsync(cliArgv);
-    return { exitCode: 0 };
-  } catch (_error) {
-    return { exitCode: 1 };
+  } catch (error) {
+    exitCode = resolveExitCode(error);
   } finally {
     process.argv = previousArgv;
+    process.stdout.write = originalStdoutWrite;
+    process.stderr.write = originalStderrWrite;
   }
+
+  return {
+    exitCode,
+    stdout: stdoutChunks.join(""),
+    stderr: stderrChunks.join(""),
+  };
 }
 
 export const __test = {

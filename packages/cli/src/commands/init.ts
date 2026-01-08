@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import inquirer from "inquirer";
 import { logger } from "../utils/logger.ts";
+import { assertPromptAllowed } from "../utils/prompts.ts";
 
 type ConfigFormat = "toml" | "jsonc" | "yaml" | "yml";
 type ConfigPreset = "full" | "minimal";
@@ -41,6 +42,7 @@ export async function runInitCommand(
     scope = validateScope(options.scope ?? "project");
     force = options.force ?? false;
   } else {
+    assertPromptAllowed("configuration selection");
     const answers = await inquirer.prompt<{
       format: ConfigFormat;
       preset: ConfigPreset;
