@@ -82,9 +82,7 @@ const schemaRelationKinds = readEnum(schema, [
   "kind",
   "enum",
 ]);
-if (!schemaRelationKinds) {
-  errors.push("Missing relation kind enum in waymark-record.schema.json.");
-} else {
+if (schemaRelationKinds) {
   const runtimeKinds = normalize(Object.values(RELATION_KIND_MAP));
   const schemaKinds = normalize(schemaRelationKinds);
   if (!arraysEqual(schemaKinds, runtimeKinds)) {
@@ -94,6 +92,8 @@ if (!schemaRelationKinds) {
       )}] runtime=[${runtimeKinds.join(", ")}].`
     );
   }
+} else {
+  errors.push("Missing relation kind enum in waymark-record.schema.json.");
 }
 
 const schemaMentionPattern = readString(schema, [

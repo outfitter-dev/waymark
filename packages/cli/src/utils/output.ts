@@ -10,6 +10,12 @@ export type ScanOutputFormat = "text" | "json" | "jsonl";
 function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
   const cleaned: Partial<WaymarkRecord> = { ...record };
 
+  if (cleaned.signals) {
+    const { current: _current, ...signals } = cleaned.signals;
+    // note ::: omit deprecated `current` signal from JSON output
+    cleaned.signals = signals;
+  }
+
   // Remove empty arrays
   if (Array.isArray(cleaned.relations) && cleaned.relations.length === 0) {
     cleaned.relations = undefined as unknown as WaymarkRecord["relations"];
