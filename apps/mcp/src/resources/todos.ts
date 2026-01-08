@@ -53,38 +53,34 @@ async function collectRecords(
   const records: WaymarkRecord[] = [];
   let truncated = false;
 
-  await processWithLimit(
-    filePaths,
-    MAX_TODOS_CONCURRENCY,
-    async (filePath) => {
-      if (records.length >= MAX_TODOS_RESULTS) {
-        truncated = true;
-        return;
-      }
-      const source = await readFile(filePath, "utf8").catch(() => null);
-      if (typeof source !== "string") {
-        return;
-      }
-      const parsed = parse(source, { file: normalizePathForOutput(filePath) });
-      const todos = parsed.filter(
-        (record) => record.type.toLowerCase() === MARKERS.todo
-      );
-      if (todos.length === 0) {
-        return;
-      }
-      const remaining = MAX_TODOS_RESULTS - records.length;
-      if (remaining <= 0) {
-        truncated = true;
-        return;
-      }
-      if (todos.length > remaining) {
-        records.push(...todos.slice(0, remaining));
-        truncated = true;
-        return;
-      }
-      records.push(...todos);
+  await processWithLimit(filePaths, MAX_TODOS_CONCURRENCY, async (filePath) => {
+    if (records.length >= MAX_TODOS_RESULTS) {
+      truncated = true;
+      return;
     }
-  );
+    const source = await readFile(filePath, "utf8").catch(() => null);
+    if (typeof source !== "string") {
+      return;
+    }
+    const parsed = parse(source, { file: normalizePathForOutput(filePath) });
+    const todos = parsed.filter(
+      (record) => record.type.toLowerCase() === MARKERS.todo
+    );
+    if (todos.length === 0) {
+      return;
+    }
+    const remaining = MAX_TODOS_RESULTS - records.length;
+    if (remaining <= 0) {
+      truncated = true;
+      return;
+    }
+    if (todos.length > remaining) {
+      records.push(...todos.slice(0, remaining));
+      truncated = true;
+      return;
+    }
+    records.push(...todos);
+  });
 
   return { records, truncated };
 }
