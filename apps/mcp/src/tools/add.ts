@@ -351,14 +351,15 @@ function normalizeWaymarkId(id: string): string {
     if (inner.length === 0) {
       throw new Error(`Invalid waymark id format: ${id}`);
     }
-    if (inner.toLowerCase().startsWith(LEGACY_ID_PREFIX)) {
+    const normalizedInner = inner.toLowerCase();
+    if (normalizedInner.startsWith(LEGACY_ID_PREFIX)) {
       throw new Error(
         "Legacy wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
       );
     }
-    return `[[${inner}]]`;
+    return `[[${normalizedInner}]]`;
   }
-  return `[[${trimmed}]]`;
+  return `[[${lower}]]`;
 }
 
 function applyIdToContent(content: string, id?: string): string {
