@@ -1537,9 +1537,11 @@ See 'wm find --help' for all available options and comprehensive documentation.
     (cmd) => cmd.name() === "complete"
   );
   if (completeCommand) {
-    // Update the name to 'completions' without backward-compatible alias
+    // note ::: keep `wm complete` as backward-compatible alias ref:#cli/completions
+    // Update the name to 'completions' while preserving the legacy alias
     // biome-ignore lint/suspicious/noExplicitAny: accessing internal Commander.js structure to rename command
     (completeCommand as any)._name = "completions";
+    completeCommand.alias("complete");
   }
 
   return program;
