@@ -5,10 +5,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-import {
-  MAX_TODOS_RESULTS,
-  handleTodosResource,
-} from "./todos";
+import { handleTodosResource, MAX_TODOS_RESULTS } from "./todos";
 
 const EXTRA_TODO_COUNT = 1;
 const SMALL_TODO_COUNT = 2;
@@ -68,13 +65,11 @@ describe("handleTodosResource", () => {
     const workspace = await mkdtemp(join(tmpdir(), "waymark-mcp-todos-"));
     const todoCount = MAX_TODOS_RESULTS + EXTRA_TODO_COUNT;
     try {
-      const lines = Array.from({ length: todoCount }, (_, index) =>
-        `// todo ::: task ${index + TASK_NUMBER_OFFSET}`
+      const lines = Array.from(
+        { length: todoCount },
+        (_, index) => `// todo ::: task ${index + TASK_NUMBER_OFFSET}`
       );
-      await writeFixture(
-        join(workspace, "src", "many.ts"),
-        lines.join("\n")
-      );
+      await writeFixture(join(workspace, "src", "many.ts"), lines.join("\n"));
 
       const response = await withWorkspace(workspace, () =>
         handleTodosResource()
