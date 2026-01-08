@@ -34,6 +34,9 @@ type ChildRunner = (command: string, args: string[]) => Promise<number>;
 
 let customRunner: ChildRunner | undefined;
 
+const NPM_UPDATE_ARGS = ["install", "-g", "@waymarks/cli"];
+const UPDATE_COMMAND_ALLOWLIST = new Set(["npm", "pnpm", "bun", "yarn"]);
+
 export function __setChildRunner(fn?: ChildRunner): void {
   customRunner = fn;
 }
@@ -100,58 +103,147 @@ export function detectInstallMethod(executablePath?: string): InstallDetection {
   };
 }
 
+type CommandResolution = {
+  command: string;
+  commandString: string;
+  error?: string;
+};
+
+function resolveUpdateCommand(commandOverride?: string): CommandResolution {
+  const trimmed = commandOverride?.trim();
+  if (commandOverride && !trimmed) {
+    return {
+      command: "npm",
+      commandString: `npm ${NPM_UPDATE_ARGS.join(" ")}`,
+      error: "Update command cannot be empty.",
+    };
+  }
+
+  const command = (trimmed ?? "npm").toLowerCase();
+  return {
+    command,
+    commandString: `${command} ${NPM_UPDATE_ARGS.join(" ")}`,
+  };
+}
+
+function validateUpdateCommandOverride(
+  command: string,
+  commandOverride?: string
+): string | undefined {
+  if (!commandOverride) {
+    return;
+  }
+
+  if (!UPDATE_COMMAND_ALLOWLIST.has(command)) {
+    return `Unsupported update command "${commandOverride}". Allowed: ${Array.from(UPDATE_COMMAND_ALLOWLIST).join(", ")}`;
+  }
+}
+
+function buildSkippedResult(
+  detection: InstallDetection,
+  commandString: string,
+  message: string,
+  exitCode: number
+): UpdateCommandResult {
+  return {
+    command: commandString,
+    method: detection.method,
+    exitCode,
+    skipped: true,
+    message,
+  };
+}
+
+function getInstallGuardMessage(
+  detection: InstallDetection,
+  force?: boolean
+): string | undefined {
+  if (detection.method === "npm-global" || force) {
+    return;
+  }
+
+  return detection.method === "workspace"
+    ? "wm update currently supports npm global installs. Run with --force if you still want to execute the npm update command."
+    : "Could not detect an npm global install. Re-run with --force to execute anyway.";
+}
+
+async function confirmUpdateCommand(
+  detection: InstallDetection,
+  commandString: string,
+  yes?: boolean
+): Promise<UpdateCommandResult | undefined> {
+  if (yes) {
+    return;
+  }
+
+  const confirmed = await confirm({
+    message: `Run ${commandString} to update wm?`,
+    default: true,
+  });
+
+  if (confirmed) {
+    return;
+  }
+
+  return buildSkippedResult(
+    detection,
+    commandString,
+    "Update cancelled by user",
+    0
+  );
+}
+
 export async function runUpdateCommand(
   options: UpdateCommandOptions = {}
 ): Promise<UpdateCommandResult> {
   const detection = detectInstallMethod();
-  const npmArgs = ["install", "-g", "@waymarks/cli"];
-  const command = options.command ?? "npm";
+  const resolution = resolveUpdateCommand(options.command);
+  if (resolution.error) {
+    return buildSkippedResult(
+      detection,
+      resolution.commandString,
+      resolution.error,
+      1
+    );
+  }
+
+  const { command, commandString } = resolution;
+  const overrideError = validateUpdateCommandOverride(command, options.command);
+  if (overrideError) {
+    return buildSkippedResult(detection, commandString, overrideError, 1);
+  }
+
+  if (options.command && command !== "npm") {
+    logger.warn({ command }, "Using custom update command for wm update");
+  }
 
   if (options.dryRun) {
-    return {
-      command: `${command} ${npmArgs.join(" ")}`,
-      method: detection.method,
-      exitCode: 0,
-      skipped: true,
-      message: `Dry run: ${command} ${npmArgs.join(" ")}`,
-    };
+    return buildSkippedResult(
+      detection,
+      commandString,
+      `Dry run: ${commandString}`,
+      0
+    );
   }
 
-  if (detection.method !== "npm-global" && !options.force) {
-    const message =
-      detection.method === "workspace"
-        ? "wm update currently supports npm global installs. Run with --force if you still want to execute the npm update command."
-        : "Could not detect an npm global install. Re-run with --force to execute anyway.";
-    return {
-      command: `${command} ${npmArgs.join(" ")}`,
-      method: detection.method,
-      exitCode: 1,
-      skipped: true,
-      message,
-    };
+  const installGuardMessage = getInstallGuardMessage(detection, options.force);
+  if (installGuardMessage) {
+    return buildSkippedResult(detection, commandString, installGuardMessage, 1);
   }
 
-  if (!options.yes) {
-    const confirmed = await confirm({
-      message: `Run ${command} ${npmArgs.join(" ")} to update wm?`,
-      default: true,
-    });
-
-    if (!confirmed) {
-      return {
-        command: `${command} ${npmArgs.join(" ")}`,
-        method: detection.method,
-        exitCode: 0,
-        skipped: true,
-        message: "Update cancelled by user",
-      };
-    }
+  const confirmationResult = await confirmUpdateCommand(
+    detection,
+    commandString,
+    options.yes
+  );
+  if (confirmationResult) {
+    return confirmationResult;
   }
 
   logger.info(
     {
       command,
-      args: npmArgs,
+      args: NPM_UPDATE_ARGS,
       cwd: process.cwd(),
       method: detection.method,
       location: detection.binaryPath,
@@ -160,16 +252,16 @@ export async function runUpdateCommand(
   );
 
   try {
-    const exitCode = await runChild(command, npmArgs);
+    const exitCode = await runChild(command, NPM_UPDATE_ARGS);
     return {
-      command: `${command} ${npmArgs.join(" ")}`,
+      command: commandString,
       method: detection.method,
       exitCode,
     };
   } catch (error) {
     logger.error({ error }, "wm update failed to launch npm command");
     return {
-      command: `${command} ${npmArgs.join(" ")}`,
+      command: commandString,
       method: detection.method,
       exitCode: 1,
       message:
