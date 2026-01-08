@@ -54,4 +54,31 @@ describe("runUpdateCommand", () => {
 
     __setChildRunner();
   });
+
+  test("rejects unsupported update commands", async () => {
+    const result = await runUpdateCommand({ command: "rm" });
+    expect(result.exitCode).toBe(1);
+    expect(result.skipped).toBe(true);
+    expect(result.message).toContain("Unsupported update command");
+  });
+
+  test("accepts allowed update command override", async () => {
+    const calls: Array<{ command: string; args: string[] }> = [];
+    __setChildRunner((command, args) => {
+      calls.push({ command, args });
+      return Promise.resolve(0);
+    });
+
+    const result = await runUpdateCommand({
+      command: "pnpm",
+      force: true,
+      yes: true,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(calls[0]?.command).toBe("pnpm");
+    expect(calls[0]?.args).toEqual(["install", "-g", "@waymarks/cli"]);
+
+    __setChildRunner();
+  });
 });
