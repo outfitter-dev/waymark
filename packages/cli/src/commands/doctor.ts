@@ -80,6 +80,14 @@ export async function runDoctorCommand(
   checks.push(...envChecks);
   allIssues.push(...envChecks.flatMap((c) => c.issues));
 
+  const cacheChecks = await checkCacheStatus();
+  checks.push(...cacheChecks);
+  allIssues.push(...cacheChecks.flatMap((c) => c.issues));
+
+  const completionChecks = checkCompletions();
+  checks.push(...completionChecks);
+  allIssues.push(...completionChecks.flatMap((c) => c.issues));
+
   // Waymark integrity checks
   const integrityChecks = await checkWaymarkIntegrity(context, options.paths);
   checks.push(...integrityChecks);
@@ -163,26 +171,6 @@ async function checkConfiguration(
     }
   }
 
-  // Check 3: Cache directory writable
-  try {
-    const cacheHome = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
-    const cacheDir = join(cacheHome, "waymark");
-    if (!existsSync(cacheDir)) {
-      issues.push({
-        severity: "info",
-        category: "configuration",
-        message:
-          "Cache directory does not exist (will be created on first scan)",
-      });
-    }
-  } catch (_error) {
-    issues.push({
-      severity: "warning",
-      category: "configuration",
-      message: "Could not access cache directory",
-    });
-  }
-
   results.push({
     category: "configuration",
     name: "Configuration Health",
@@ -262,6 +250,110 @@ async function checkEnvironment(
   });
 
   return results;
+}
+
+// about ::: reports cache directory and database status [[cli/doctor-cache]]
+async function checkCacheStatus(): Promise<CheckResult[]> {
+  const results: CheckResult[] = [];
+  const issues: DiagnosticIssue[] = [];
+
+  try {
+    const cacheHome = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
+    const cacheDir = join(cacheHome, "waymark");
+    const cacheDb = join(cacheDir, "waymark-cache.db");
+
+    if (!existsSync(cacheDir)) {
+      issues.push({
+        severity: "info",
+        category: "environment",
+        message: "Cache directory not found (will be created on first scan)",
+        suggestion: "Run `wm find` to initialize the cache",
+      });
+    } else if (!existsSync(cacheDb)) {
+      issues.push({
+        severity: "info",
+        category: "environment",
+        message: "Cache directory exists but cache database is missing",
+        suggestion: "Run `wm find` to populate the cache database",
+      });
+    } else {
+      const stats = await stat(cacheDb);
+      const sizeMb = stats.size / BYTES_PER_MB;
+      issues.push({
+        severity: "info",
+        category: "environment",
+        message: `Cache database present (${sizeMb.toFixed(2)} MB)`,
+        file: cacheDb,
+      });
+    }
+  } catch (_error) {
+    issues.push({
+      severity: "warning",
+      category: "environment",
+      message: "Could not access cache directory",
+      suggestion: "Check permissions for the cache directory",
+    });
+  }
+
+  results.push({
+    category: "environment",
+    name: "Cache Status",
+    passed: issues.filter((i) => i.severity === "error").length === 0,
+    issues,
+  });
+
+  return results;
+}
+
+// about ::: reports whether shell completions are installed [[cli/doctor-completions]]
+function checkCompletions(): CheckResult[] {
+  const issues: DiagnosticIssue[] = [];
+  const home = homedir();
+  const targets = [
+    {
+      shell: "zsh",
+      path: join(home, ".local/share/waymark/completions/wm.zsh"),
+    },
+    {
+      shell: "bash",
+      path: join(home, ".local/share/waymark/completions/wm.bash"),
+    },
+    {
+      shell: "fish",
+      path: join(home, ".config/fish/completions/wm.fish"),
+    },
+    {
+      shell: "powershell",
+      path: join(home, ".config/waymark/completions/wm.ps1"),
+    },
+  ];
+
+  const installed = targets.filter((target) => existsSync(target.path));
+
+  if (installed.length === 0) {
+    issues.push({
+      severity: "info",
+      category: "environment",
+      message: "Shell completions are not installed",
+      suggestion: "Run `wm completions <shell>` and source the file",
+    });
+  } else {
+    const shells = installed.map((target) => target.shell).join(", ");
+    issues.push({
+      severity: "info",
+      category: "environment",
+      message: `Shell completions installed for: ${shells}`,
+    });
+  }
+
+  return [
+    {
+      category: "environment",
+      name: "Shell Completions",
+      passed: issues.filter((i) => i.severity === "error").length === 0,
+      issues,
+    },
+  ];
 }
 
 // about ::: validates waymark parsing canonical uniqueness and relation integrity
