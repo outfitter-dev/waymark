@@ -45,6 +45,7 @@ Commands:
   completions|complete          Generate shell completion scripts
   update                        check for and install CLI updates (npm global installs)
   help                          display help for command
+  skill                         show agent-facing skill documentation
 
 
 Topics:
