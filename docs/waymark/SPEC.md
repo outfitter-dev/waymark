@@ -14,7 +14,7 @@ Waymark is a lightweight, comment-based grammar for embedding code-adjacent cont
 - **Signals** (optional): A short prefix modifying the waymark's meaning. The only valid signals are:
   - `~` (tilde) — **flagged**: marks work actively in progress on the current branch; must be cleared before merging.
   - `*` (star) — **starred**: marks high-priority or important items.
-  - When combined, the canonical order is `~*` (e.g., `~*todo`). Double intensity (`**`) and other legacy signals are not part of v1.
+  - When combined, the canonical order is `~*` (e.g., `~*todo`). Double intensity (`**` or `~~`) is not part of v1.
 - **Marker** (required): A single lowercase keyword from the blessed list below.
 - **`:::` sigil**: Exactly three ASCII colons, with one space before and after when a marker is present.
 - **Content**: Free text plus optional properties, tags, and mentions. Parsers tolerate additional spaces but formatters normalize to the canonical shape.
@@ -65,7 +65,7 @@ Only the following markers are considered first-class by the toolchain. Custom m
 ### Work / Action
 
 - `todo`
-- `fix` (legacy alias `fixme` should be migrated to `fix`)
+- `fix`
 - `wip`
 - `done`
 - `review`
@@ -343,26 +343,6 @@ track_history = true        # Track ID removals in history.json (default: false)
 alias_required = false      # Require aliases for new IDs (default: false)
 ```
 
-### Migration from Legacy Format
-
-The previous `wm:xxx` format is deprecated. Migrate using:
-
-```bash
-wm migrate-ids --write      # Convert wm:xxx to [[xxx]] format
-```
-
-**Before**:
-
-```typescript
-// todo ::: wm:a1b2c3d implement feature
-```
-
-**After**:
-
-```typescript
-// todo ::: [[a1b2c3d]] implement feature
-```
-
 ## 8. Grammar Reference
 
 ```ebnf
@@ -446,6 +426,6 @@ def send_email(message: Email) -> None:
 - Formatters must enforce a single space around `:::` when a marker is present.
 - Continuation lines are context-sensitive: markerless `:::` is only parsed as a continuation when following a waymark. Isolated `:::` lines are ignored.
 - Property-as-marker continuations only trigger for known property keys (not blessed markers like `needs` or `blocks`).
-- Tooling should warn on unknown markers, duplicate properties, multiple TLDRs per file, and legacy codetag patterns.
+- Tooling should warn on unknown markers, duplicate properties, multiple TLDRs per file, and codetag patterns.
 
 This specification is canonical. When the grammar evolves, update `docs/GRAMMAR.md` and `.waymark/rules/WAYMARKS.md` alongside the code so guidance stays aligned.

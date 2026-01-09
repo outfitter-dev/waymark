@@ -41,7 +41,7 @@ wm [paths...] [options]            # default command
 | `--json` |  | JSON array output | false |
 | `--jsonl` |  | JSON lines output | false |
 | `--text` |  | Human readable output | true |
-| `--pretty` |  | Deprecated pretty JSON | false |
+| `--pretty` |  | Pretty JSON output | false |
 
 ## Output Formats
 

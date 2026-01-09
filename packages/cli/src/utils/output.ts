@@ -12,7 +12,7 @@ function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
 
   if (cleaned.signals) {
     const { current: _current, ...signals } = cleaned.signals;
-    // note ::: omit deprecated `current` signal from JSON output
+    // note ::: omit `current` signal from JSON output
     cleaned.signals = signals;
   }
 

@@ -159,17 +159,17 @@ describe("CLI handlers", () => {
     }
   });
 
-  test("scan command includes legacy codetags when enabled", async () => {
-    const source = "// TODO: legacy task";
+  test("scan command includes codetags when enabled", async () => {
+    const source = "// TODO: codetag task";
     const { file, cleanup } = await withTempFile(source);
     const records = await scanRecords([file], {
       ...defaultContext.config,
       scan: { ...defaultContext.config.scan, includeCodetags: true },
     });
-    const legacy = records.find((record) => record.legacy);
-    expect(legacy).toBeDefined();
-    expect(legacy?.type).toBe("todo");
-    expect(legacy?.contentText).toBe("legacy task");
+    const codetag = records.find((record) => record.codetag);
+    expect(codetag).toBeDefined();
+    expect(codetag?.type).toBe("todo");
+    expect(codetag?.contentText).toBe("codetag task");
     await cleanup();
   });
 
@@ -185,7 +185,7 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
-  test("completions command preserves the legacy alias", async () => {
+  test("completions command exposes the alias", async () => {
     const program = await __test.createProgram();
     const completions = program.commands.find(
       (command) => command.name() === "completions"
@@ -543,20 +543,20 @@ describe("CLI handlers", () => {
     await cleanup();
   });
 
-  test("lint command detects legacy codetags", async () => {
-    const source = ["// TODO: legacy task", "// note ::: ok"].join("\n");
+  test("lint command detects codetag patterns", async () => {
+    const source = ["// TODO: codetag task", "// note ::: ok"].join("\n");
     const { file, cleanup } = await withTempFile(source);
     const report = await lintFiles(
       [file],
       defaultContext.config.allowTypes,
       defaultContext.config
     );
-    const legacyIssue = report.issues.find(
-      (issue) => issue.rule === "legacy-pattern"
+    const codetagIssue = report.issues.find(
+      (issue) => issue.rule === "codetag-pattern"
     );
-    expect(legacyIssue).toBeDefined();
-    expect(legacyIssue?.severity).toBe("warn");
-    expect(legacyIssue?.line).toBe(1);
+    expect(codetagIssue).toBeDefined();
+    expect(codetagIssue?.severity).toBe("warn");
+    expect(codetagIssue?.line).toBe(1);
     await cleanup();
   });
 });
@@ -1231,13 +1231,13 @@ describe("Commander integration", () => {
     expect(result.stdout).not.toContain("--type <types...>");
   });
 
-  test("implicit command runs without deprecation warning", async () => {
-    const { file, cleanup } = await withTempFile("// todo ::: legacy\n");
+  test("implicit command runs without warnings", async () => {
+    const { file, cleanup } = await withTempFile("// todo ::: example\n");
 
     try {
       const result = await runCliCaptured([file]);
       expect(result.exitCode).toBe(0);
-      expect(result.stderr).not.toContain("deprecated");
+      expect(result.stderr).toBe("");
       expect(result.stdout.length).toBeGreaterThan(0);
     } finally {
       await cleanup();

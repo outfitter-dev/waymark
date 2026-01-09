@@ -663,7 +663,7 @@ const BOOLEAN_OPTION_FLAGS = [
   { key: "json", flag: "--json" },
   { key: "jsonl", flag: "--jsonl" },
   { key: "text", flag: "--text" },
-  { key: "pretty", flag: "--pretty" }, // Pretty-printed JSON (deprecated)
+  { key: "pretty", flag: "--pretty" }, // Pretty-printed JSON output
   { key: "long", flag: "--long" },
   { key: "tree", flag: "--tree" },
   { key: "flat", flag: "--flat" },
@@ -1071,7 +1071,7 @@ function formatCustomHelp(
 
 /**
  * Build custom help formatter for commander.
- * Filters out soft-deprecated commands and reorders visible commands.
+ * Filters out hidden commands and reorders visible commands.
  */
 function buildCustomHelpFormatter() {
   return (cmd: Command, helper: ReturnType<Command["createHelp"]>) => {
@@ -1198,8 +1198,8 @@ Note: For agent-facing documentation, use "wm skill".
     (cmd) => cmd.name() === "complete"
   );
   if (completeCommand) {
-    // note ::: keep `wm complete` as backward-compatible alias ref:#cli/completions
-    // Update the name to 'completions' while preserving the legacy alias
+    // note ::: keep `wm complete` as alias for completions ref:#cli/completions
+    // Update the name to 'completions' while preserving the alias
     // biome-ignore lint/suspicious/noExplicitAny: accessing internal Commander.js structure to rename command
     (completeCommand as any)._name = "completions";
     completeCommand.alias("complete");

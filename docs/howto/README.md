@@ -43,12 +43,12 @@ wm src/
 - Commit `.waymark/config.toml` to share team settings
 - Add `.waymark/index.json` to `.gitignore`
 
-### Converting Legacy Comments
+### Codetag Cleanup
 
-**Goal**: Migrate existing TODO/FIXME comments to waymark syntax.
+**Goal**: Convert existing TODO/FIXME comments to waymark syntax.
 
 ```bash
-# Surface legacy codetags
+# Surface codetag patterns
 wm lint src/
 
 # Normalize updated waymarks after edits
@@ -61,7 +61,7 @@ wm fmt src/ --write
 - `# FIXME: memory leak` → `# fix ::: memory leak`
 - `<!-- NOTE: deprecated -->` → `<!-- note ::: deprecated -->`
 
-Tip: enable `scan.include_codetags = true` in config to include legacy codetags in scans while you migrate.
+Tip: enable `scan.include_codetags = true` in config to include codetag patterns in scans while you convert.
 
 ---
 

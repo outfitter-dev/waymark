@@ -121,7 +121,7 @@ wm skill show add                   # command-specific docs
 wm skill --json                     # structured JSON output
 ```
 
-To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
+To include codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
 
 ```toml
 [scan]
@@ -177,7 +177,7 @@ Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 ```
 
 Run `wm completions` without arguments to list supported shells or emit debugging
-information. Note: `wm complete` is also supported as a backward-compatible alias.
+information. Note: `wm complete` is also supported as an alias.
 
 ### Configuration Precedence
 
@@ -224,7 +224,7 @@ Drafting TLDR/TODO guidance now lives in agent skills (use `wm skill` to browse)
 
 ## Current Focus
 
-The project is mid-rebuild: we are prioritizing documentation, search patterns, and migration guidance before reintroducing heavy tooling. Favor clarity and greppability while we land the v1 toolchain.
+The project is mid-rebuild: we are prioritizing documentation, search patterns, and the v1 toolchain before reintroducing heavy tooling. Favor clarity and greppability while we land the v1 toolchain.
 
 ## Repository Map
 
@@ -232,7 +232,6 @@ The project is mid-rebuild: we are prioritizing documentation, search patterns, 
 - `docs/` – Published documentation, including historical context (`docs/about`) and the grammar reference (`docs/GRAMMAR.md`)
 - `.waymark/` – Project-specific waymark rules and conventions (`.waymark/rules/`)
 - `.agents/` – General agent rules plus symlinks into `.waymark/rules/`
-- `.migrate/` – Archived v1 content retained for research and migration notes
 
 ## Contributing
 

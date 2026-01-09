@@ -354,8 +354,8 @@ const CODETAG_PATTERNS = [
   { regex: /^\s*--\s*FIXME\s*:/i, leader: "--", marker: "fix" },
 ];
 
-const legacyPatternRule: LintRule = {
-  name: "legacy-pattern",
+const codetagPatternRule: LintRule = {
+  name: "codetag-pattern",
   severity: "warn",
   checkFile: ({ filePath, source }) => {
     const issues: LintIssue[] = [];
@@ -363,7 +363,7 @@ const legacyPatternRule: LintRule = {
 
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index] ?? "";
-      // Skip lines that already have waymark sigil - they're valid waymarks, not legacy
+      // Skip lines that already have waymark sigil - they're valid waymarks, not codetags
       if (line.includes(SIGIL)) {
         continue;
       }
@@ -372,9 +372,9 @@ const legacyPatternRule: LintRule = {
           issues.push({
             file: filePath,
             line: index + 1,
-            rule: "legacy-pattern",
+            rule: "codetag-pattern",
             severity: "warn",
-            message: `Legacy codetag found. Consider: "${pattern.leader} ${pattern.marker} :::"`,
+            message: `Codetag found. Consider: "${pattern.leader} ${pattern.marker} :::"`,
           });
         }
       }
@@ -389,7 +389,7 @@ function buildLintRules(): LintRule[] {
     unknownMarkerRule,
     duplicatePropertyRule,
     multipleTldrRule,
-    legacyPatternRule,
+    codetagPatternRule,
   ];
 }
 

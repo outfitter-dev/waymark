@@ -73,7 +73,7 @@ Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 ```
 
 Run `wm completions` without arguments to list supported shells and debugging
-helpers. Note: `wm complete` is also supported as a backward-compatible alias.
+helpers. Note: `wm complete` is also supported as an alias.
 
 ---
 

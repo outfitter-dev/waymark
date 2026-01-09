@@ -64,7 +64,6 @@ The canonical reference for waymark syntax, structure, and semantics.
   - [Markdown](#markdown)
   - [Complex Examples](#complex-examples)
 - [Anti-patterns](#anti-patterns)
-- [Migration Notes](#migration-notes)
 
 ---
 
@@ -767,28 +766,6 @@ track_history = true        # Track ID removals in history.json (default: false)
 alias_required = false      # Require aliases for new IDs (default: false)
 ```
 
-### Migration from Legacy Format
-
-The previous `wm:xxx` format is deprecated. Migrate using:
-
-```bash
-wm migrate-ids --write      # Convert wm:xxx to [[xxx]] format
-```
-
-**Before**:
-
-```typescript
-// todo ::: wm:a1b2c3d implement feature
-```
-
-**After**:
-
-```typescript
-// todo ::: [[a1b2c3d]] implement feature
-```
-
----
-
 ## Tags (Hashtags)
 
 ### Tag Syntax
@@ -1047,7 +1024,7 @@ Parsers must:
 - Unknown markers → warning (`unknown-marker`)
 - Duplicate properties → warning (`duplicate-property`)
 - Multiple TLDRs in a file → error (`multiple-tldr`)
-- Legacy codetag patterns → warning (`legacy-pattern`)
+- Codetag patterns → warning (`codetag-pattern`)
 
 ---
 
@@ -1223,13 +1200,6 @@ const note = "// todo ::: fix this";  // Not a waymark
 // fix ::: #123  // Ambiguous - issue #123 or tag?
 ```
 
-❌ Use legacy `wm:xxx` ID format (deprecated):
-
-```typescript
-// Bad
-// todo ::: wm:a1b2c3d implement feature  // Use [[a1b2c3d]] instead
-```
-
 **Do**:
 
 ✅ Keep waymarks in non-rendered comments:
@@ -1267,73 +1237,6 @@ rg 'ref:#auth'  # See what exists first
 // todo ::: [[a1b2c3d]] implement feature
 // todo ::: [[a1b2c3d|my-feature]] implement feature with alias
 // todo ::: [[my-feature]] draft ID (alias-only)
-```
-
----
-
-## Migration Notes
-
-### From Legacy Comments
-
-**TODO/FIXME conversion**:
-
-```diff
-- // TODO: implement caching
-+ // todo ::: implement caching
-
-- # FIXME: memory leak
-+ # fix ::: memory leak
-
-- <!-- NOTE: deprecated API -->
-+ <!-- note ::: deprecated API -->
-```
-
-Use the `legacy-pattern` lint rule or enable `scan.include_codetags` to surface legacy codetags before converting them.
-
-### From v1 Early Drafts
-
-If you used earlier waymark syntax:
-
-**Bang signals** (`!`, `!!`) → `*`:
-
-```diff
-- // !fix ::: critical bug
-+ // *fix ::: critical bug
-```
-
-**Legacy marker names**:
-
-```diff
-- // FIXME ::: bug
-+ // fix ::: bug
-
-- // TODO ::: task
-+ // todo ::: task
-```
-
-**Property-style hashes**:
-
-```diff
-- // todo ::: #from:auth
-+ // todo ::: from:#auth
-```
-
-### From Legacy ID Format
-
-The `wm:xxx` ID format is deprecated. Use wikilink-style `[[xxx]]` instead:
-
-```diff
-- // todo ::: wm:a1b2c3d implement feature
-+ // todo ::: [[a1b2c3d]] implement feature
-
-- // todo ::: wm:a1b2c3d|my-alias implement feature
-+ // todo ::: [[a1b2c3d|my-alias]] implement feature
-```
-
-Run the migration command to convert all legacy IDs:
-
-```bash
-wm migrate-ids --write      # Convert wm:xxx to [[xxx]] format
 ```
 
 ---

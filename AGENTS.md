@@ -29,8 +29,7 @@ This repository handles the development and maintenance of the Waymark project. 
 ## Historical Context
 
 - Waymarks deliberately unify decades of comment-level anchors (TODOs, MARK, go:build, lint suppressions) into one predictable `:::` sigil. See `docs/about/priors.md` for the catalogue.
-- The v2.0 rewrite is opinionated: fewer signals, curated markers, and no backward-compat guarantees for legacy waymarks. When you encounter v1 syntax, treat it as historical data and prefer translating it.
-- We are still documenting migration paths—favor clarity and grep-first documentation over speculative tooling.
+- The v2.0 rewrite is opinionated: fewer signals and curated markers.
 
 ## Best Practices for This Repository
 
