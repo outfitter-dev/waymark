@@ -1,6 +1,6 @@
 // tldr ::: commander command registration for waymark CLI
 
-import { type Command, InvalidArgumentError } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import { createUsageError } from "../errors.ts";
 import type { ModifyCliOptions } from "../types.ts";
 import { parsePropertyEntry } from "../utils/properties.ts";
@@ -91,8 +91,7 @@ export function registerCommands(
   } = handlers;
 
   // Custom help command
-  program
-    .command("help")
+  const helpCommand = new Command("help")
     .argument("[command]", "command to get help for")
     .description("display help for command")
     .action((commandName?: string) => {
@@ -123,9 +122,10 @@ export function registerCommands(
       }
     });
 
+  program.addCommand(helpCommand);
+
   // Format command
-  program
-    .command("fmt", { hidden: true })
+  const fmtCommand = new Command("fmt")
     .argument("[paths...]", "files or directories to format")
     .option("--write, -w", "write changes to file", false)
     .description("format and normalize waymark syntax in files")
@@ -167,8 +167,9 @@ See 'wm skill show fmt' for agent-facing documentation.
       }
     });
 
-  program
-    .command("add")
+  program.addCommand(fmtCommand, { hidden: true });
+
+  const addCommand = new Command("add")
     .argument("[target]", "waymark location (file:line)")
     .argument("[type]", "waymark type (todo, fix, note, etc.)")
     .argument("[content]", "waymark content text")
@@ -263,8 +264,9 @@ See 'wm skill show add' for agent-facing documentation.
       }
     });
 
-  const editCmd = program
-    .command("edit")
+  program.addCommand(addCommand);
+
+  const editCommand = new Command("edit")
     .argument("[target]", "waymark location (file:line)")
     .option("--id <id>", "waymark ID to edit")
     .option("--type <marker>", "change waymark type")
@@ -288,7 +290,7 @@ See 'wm skill show add' for agent-facing documentation.
     .option("--jsonl", "output as JSON Lines")
     .description("edit existing waymarks");
 
-  editCmd
+  editCommand
     .addHelpText(
       "after",
       `
@@ -326,8 +328,9 @@ Notes:
       }
     });
 
-  program
-    .command("rm")
+  program.addCommand(editCommand);
+
+  const removeCommand = new Command("rm")
     .argument("[targets...]", "waymark locations (file:line)")
     .option("--id <id>", "remove waymark by ID ([[hash]])", collectOption, [])
     .option(
@@ -408,8 +411,9 @@ See 'wm skill show rm' for agent-facing documentation.
       }
     });
 
-  program
-    .command("update")
+  program.addCommand(removeCommand);
+
+  const updateCommand = new Command("update")
     .description("check for and install CLI updates (npm global installs)")
     .option("--dry-run, -n", "print the npm command without executing it")
     .option("--force, -f", "run even if the install method cannot be detected")
@@ -426,9 +430,10 @@ See 'wm skill show rm' for agent-facing documentation.
       }
     });
 
+  program.addCommand(updateCommand);
+
   // Lint command
-  program
-    .command("lint", { hidden: true })
+  const lintCommand = new Command("lint")
     .argument("[paths...]", "files or directories to lint")
     .option("--json", "output JSON", false)
     .description("validate waymark structure and enforce quality rules")
@@ -469,9 +474,10 @@ See 'wm skill show lint' for agent-facing documentation.
       }
     });
 
+  program.addCommand(lintCommand, { hidden: true });
+
   // Init command
-  program
-    .command("init")
+  const initCommand = new Command("init")
     .option(
       "--format <format>, -f",
       "config format (toml|jsonc|yaml|yml)",
@@ -489,8 +495,9 @@ See 'wm skill show lint' for agent-facing documentation.
       }
     });
 
-  program
-    .command("config")
+  program.addCommand(initCommand);
+
+  const configCommand = new Command("config")
     .option("--print", "print merged configuration", false)
     .option("--json", "output compact JSON", false)
     .description("print resolved configuration")
@@ -512,8 +519,9 @@ Examples:
       }
     });
 
-  const skillCommand = program
-    .command("skill")
+  program.addCommand(configCommand);
+
+  const skillCommand = new Command("skill")
     .description("show agent-facing skill documentation")
     .option("--json", "output structured JSON")
     .action(async (options: SkillCommandOptions) => {
@@ -524,8 +532,7 @@ Examples:
       }
     });
 
-  skillCommand
-    .command("show")
+  const skillShowCommand = new Command("show")
     .argument("<section>", "command, reference, or example to display")
     .option("--json", "output structured JSON")
     .description("show a specific skill section")
@@ -537,8 +544,7 @@ Examples:
       }
     });
 
-  skillCommand
-    .command("list")
+  const skillListCommand = new Command("list")
     .description("list available skill sections")
     .action(async () => {
       try {
@@ -548,8 +554,7 @@ Examples:
       }
     });
 
-  skillCommand
-    .command("path")
+  const skillPathCommand = new Command("path")
     .description("print the skill directory path")
     .action(() => {
       try {
@@ -559,9 +564,13 @@ Examples:
       }
     });
 
+  skillCommand.addCommand(skillShowCommand);
+  skillCommand.addCommand(skillListCommand);
+  skillCommand.addCommand(skillPathCommand);
+  program.addCommand(skillCommand);
+
   // Doctor command - health checks and diagnostics (WAY-47)
-  program
-    .command("doctor")
+  const doctorCommand = new Command("doctor")
     .argument("[paths...]", "files or directories to check")
     .option("--strict", "fail on warnings (CI mode)", false)
     .option("--fix", "attempt automatic repairs", false)
@@ -623,9 +632,10 @@ See 'wm skill show doctor' for agent-facing documentation.
       }
     });
 
+  program.addCommand(doctorCommand);
+
   // Find command - explicit scan and filter (WAY-31)
-  program
-    .command("find")
+  const findCommand = new Command("find")
     .argument("[paths...]", "files or directories to scan")
     .option("--type <types...>, -t", "filter by waymark type(s)")
     .option("--tag <tags...>", "filter by tag(s)")
@@ -735,6 +745,8 @@ See 'wm skill show find' for agent-facing documentation.
         handleCommandError(program, error);
       }
     });
+
+  program.addCommand(findCommand);
 
   // Default action - unified command
   program
