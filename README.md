@@ -113,6 +113,7 @@ wm fmt src/ --write               # format waymarks in a directory
 wm lint src/ --json                  # validate waymark types
 wm rm src/auth.ts:42 --write     # remove a waymark
 wm edit src/auth.ts:42 --flagged --write # adjust an existing waymark
+wm config --print                  # print merged configuration
 ```
 
 To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
@@ -156,6 +157,18 @@ Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 Run `wm completions` without arguments to list supported shells or emit debugging
 information. Note: `wm complete` is also supported as a backward-compatible alias.
 
+### Configuration Precedence
+
+Waymark loads configuration with the following precedence (highest wins):
+
+1. `--config <path>` explicit config file
+2. `WAYMARK_CONFIG_PATH` environment variable
+3. Project config: `.waymark/config.(toml|jsonc|yaml|yml)` (walks up from cwd)
+4. User config: `~/.config/waymark/config.(toml|jsonc|yaml|yml)` (or `$XDG_CONFIG_HOME`)
+
+Use `--scope project|user|default` to limit search, and `wm config --print` to
+inspect the merged configuration.
+
 ### MCP Server
 
 Waymark also ships a Model Context Protocol server so agents can consume the same tooling over stdio:
@@ -175,10 +188,17 @@ Drafting TLDR/TODO guidance now lives in agent skills; MCP prompts were removed.
 
 ### Code Structure
 
-- `packages/cli/src/index.ts` is a thin dispatcher that parses global flags and routes commands.
+- `packages/cli/src/index.ts` wires Commander, help formatting, and command routing.
 - Each command lives in `packages/cli/src/commands/<name>.ts` with its own argument parser and executor.
 - Shared utilities reside in `packages/cli/src/utils/` (filesystem expansion, record rendering) and shared CLI types in `packages/cli/src/types.ts`.
 - Tests primarily target the modules directly, while `packages/cli/src/index.test.ts` keeps a lightweight smoke suite.
+
+## Development Quickstart
+
+1. Install Bun **1.2.22** (matches `packageManager` in `package.json`).
+2. Install dependencies: `bun install`
+3. Run tests: `bun test` (or `bun check:all` for lint/typecheck/tests/spec)
+4. Start CLI dev loop: `bun dev:cli`
 
 ## Current Focus
 
@@ -195,6 +215,12 @@ The project is mid-rebuild: we are prioritizing documentation, search patterns, 
 ## Contributing
 
 We follow conventional commits, short-lived branches, and Graphite-managed stacks. Review `.agents/rules/CORE.md` plus the waymark-specific guidance in `.waymark/rules/WAYMARKS.md` and `.waymark/rules/CONVENTIONS.md` before sending patches. When adding docs, include a `<!-- tldr ::: ... -->` preamble and verify new waymarks with `rg ':::'`.
+
+## Troubleshooting
+
+- **Bun/npm registry errors:** verify your registry in `~/.npmrc` and network access. If needed, set `NPM_CONFIG_REGISTRY` or `BUN_CONFIG_REGISTRY`.
+- **`wm` not found after install:** run `bun install` and `bun install:bin` (or `bun dev:cli` for local dev).
+- **Config parse failures:** run `wm config --print` to validate merged config, or `wm doctor` for diagnostics.
 
 ## Questions?
 
