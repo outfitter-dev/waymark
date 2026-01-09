@@ -1,0 +1,33 @@
+{
+  "name": "waymark",
+  "version": "1.0.0-beta.1",
+  "description": "Structured code annotations using the ::: sigil",
+  "entry": "SKILL.md",
+  "commands": {
+    "find": "commands/find.md",
+    "add": "commands/add.md",
+    "edit": "commands/edit.md",
+    "rm": "commands/rm.md",
+    "fmt": "commands/fmt.md",
+    "lint": "commands/lint.md",
+    "init": "commands/init.md",
+    "doctor": "commands/doctor.md"
+  },
+  "references": {
+    "schemas": "references/schemas.md",
+    "exit-codes": "references/exit-codes.md",
+    "errors": "references/errors.md",
+    "workflows": "examples/workflows.md",
+    "agent-tasks": "examples/agent-tasks.md",
+    "batch-operations": "examples/batch-operations.md",
+    "integration": "examples/integration.md"
+  },
+  "triggers": [
+    "waymark",
+    "wm",
+    "code annotations",
+    ":::",
+    "todo markers",
+    "tldr"
+  ]
+}
