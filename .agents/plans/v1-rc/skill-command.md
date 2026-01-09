@@ -8,6 +8,8 @@
 
 > **NOTE:** This document's monolithic `cli.md` approach has been superseded by the modular structure defined in @skill-structure.md. The problem analysis and `wm skill` command interface remain valid; the file structure has been redesigned.
 
+<!-- note ::: implementation shipped 2026-01-09: modular skill docs + wm skill command; legacy --prompt flags removed ref:#docs/plan/v1-rc/skills-cli #docs/plan #docs -->
+
 ---
 
 ## Problem Statement
@@ -83,38 +85,17 @@ packages/agents/skills/waymark/
 └── index.json         # Manifest for programmatic discovery
 ```
 
-This structure uses Markdown with YAML frontmatter, providing:
+This structure uses Markdown with optional frontmatter, providing:
 
 - Human-readable in editors/GitHub
-- Machine-parseable for agents
+- Machine-parseable for agents (metadata lives in `index.json`)
 - Progressive disclosure (core in SKILL.md, details on-demand)
 - Portable (can be extracted to `.claude/skills/` or similar)
 
 ### 2. Skill File Structure
 
 ```markdown
----
-name: waymark
-version: 1.0.0
-description: Structured code annotations for humans and agents
-commands:
-  - find
-  - add
-  - edit
-  - rm
-  - fmt
-  - lint
-  - init
-  - doctor
-capabilities:
-  - scan-waymarks
-  - add-waymarks
-  - edit-waymarks
-  - remove-waymarks
-  - format-waymarks
-  - lint-waymarks
-  - graph-relations
----
+<!-- tldr ::: core skill documentation for waymark CLI agents -->
 
 # Waymark CLI Skill
 
@@ -477,9 +458,8 @@ function parseMarkdownSections(content: string): Record<string, SkillSection> {
 
 ### Phase 3: Deprecate `--prompt` Flag
 
-1. Add deprecation warning to `--prompt` handlers
-2. Have `--prompt` delegate to `wm skill show <command>`
-3. Document migration in changelog
+Completed: removed `--prompt` flag handling and deleted prompt/help assets once
+`wm skill` shipped.
 
 ### Phase 4: Delete Legacy Files
 
@@ -607,7 +587,7 @@ specific command help.
    - Decision: Yes, add "For agent usage, see: wm skill"
 
 4. **Deprecation timeline**: How long to keep `--prompt`?
-   - Decision: Warn for 2 minor versions, remove in next major
+   - Decision: Removed 2026-01-09; use `wm skill` instead
 
 ---
 
@@ -617,34 +597,34 @@ specific command help.
 
 ### Implementation
 
-- [ ] Create `packages/agents/skills/waymark/` directory structure
-- [ ] Create `SKILL.md` core skill document
-- [ ] Create `commands/*.md` for each command
-- [ ] Create `references/*.md` supporting documents
-- [ ] Create `index.json` manifest
-- [ ] Create `parser.ts` for markdown parsing
-- [ ] Create `skill.ts` command handler
-- [ ] Register command in `index.ts`
-- [ ] Add tests for parser
-- [ ] Add tests for command output
+- [x] Create `packages/agents/skills/waymark/` directory structure
+- [x] Create `SKILL.md` core skill document
+- [x] Create `commands/*.md` for each command
+- [x] Create `references/*.md` supporting documents
+- [x] Create `index.json` manifest
+- [x] Create `parser.ts` for markdown parsing
+- [x] Create `skill.ts` command handler
+- [x] Register command in `index.ts`
+- [x] Add tests for parser
+- [x] Add tests for command output
 
 ### Migration
 
 - [ ] Add deprecation warning to `--prompt`
-- [ ] Delete `.prompt.txt` files
-- [ ] Delete `.prompt.ts` files
-- [ ] Delete `.help.txt` files
-- [ ] Delete `.help.ts` files
-- [ ] Remove `--prompt` flag from all commands
-- [ ] Update README to document `wm skill`
+- [x] Delete `.prompt.txt` files
+- [x] Delete `.prompt.ts` files
+- [x] Delete `.help.txt` files
+- [x] Delete `.help.ts` files
+- [x] Remove `--prompt` flag from all commands
+- [x] Update README to document `wm skill`
 - [ ] Update MCP server to expose skill resource
 
 ### Documentation
 
-- [ ] Add `wm skill` to command reference
-- [ ] Update AGENTS.md to reference skill command
-- [ ] Add skill file format documentation
-- [ ] Document how to create project-specific skills
+- [x] Add `wm skill` to command reference
+- [x] Update AGENTS.md to reference skill command
+- [x] Add skill file format documentation
+- [x] Document how to create project-specific skills
 
 ---
 

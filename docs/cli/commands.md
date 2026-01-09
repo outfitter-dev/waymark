@@ -36,6 +36,10 @@ wm src/ --text                       # human-readable formatted text
 # Configuration
 wm init                              # interactive config setup
 wm init --format toml --scope project
+
+# Agent documentation
+wm skill                             # core skill docs
+wm skill show add                    # command-specific docs
 ```
 
 ---
@@ -53,6 +57,7 @@ wm init --format toml --scope project
   - [Lint](#lint)
   - [Init](#init)
   - [Add/Remove/Edit](#addremoveedit)
+  - [Skill](#skill)
   - [Help](#help)
 - [Configuration](#configuration)
   - [Config Files](#config-files)
@@ -360,6 +365,21 @@ wm rm src/auth.ts:42 --reason "cleanup" --write
 wm edit src/auth.ts:42 --flagged --write
 wm edit src/auth.ts:42 --starred --write
 wm edit src/auth.ts:42 --clear-signals --write
+```
+
+### Skill
+
+`wm skill` provides the agent-facing documentation bundle that replaced the
+legacy `.prompt.txt` files.
+
+```bash
+wm skill                 # core skill documentation
+wm skill list            # list available sections
+wm skill show add        # command-specific docs
+wm skill show workflows  # example workflows
+wm skill show skill-format   # skill file format
+wm skill show project-skills # project-specific skills
+wm skill --json          # structured JSON
 ```
 
 ### Help

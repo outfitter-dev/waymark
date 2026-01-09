@@ -17,6 +17,8 @@
     "schemas": "references/schemas.md",
     "exit-codes": "references/exit-codes.md",
     "errors": "references/errors.md",
+    "skill-format": "references/skill-format.md",
+    "project-skills": "references/project-skills.md",
     "workflows": "examples/workflows.md",
     "agent-tasks": "examples/agent-tasks.md",
     "batch-operations": "examples/batch-operations.md",

@@ -339,7 +339,7 @@ wm skill path
 
 1. **Skill loading:** `wm skill` reads SKILL.md, `wm skill show <name>` reads from commands/ or references/
 2. **Fallback:** If command not found in commands/, check references/
-3. **JSON output:** Parse frontmatter + markdown sections into structured JSON
+3. **JSON output:** Parse markdown sections into structured JSON (frontmatter optional)
 4. **Path command:** Useful for agents that want to read files directly
 
 ---
@@ -360,7 +360,7 @@ wm skill path
 ### Content Transformation
 
 1. Convert ALL-CAPS sections to Markdown headings
-2. Add YAML frontmatter
+2. Add `<!-- tldr ::: ... -->` preamble (frontmatter optional; metadata in `index.json`)
 3. Convert plain text lists to Markdown tables
 4. Add command-specific exit codes
 5. Link to reference documents instead of duplicating schemas
@@ -384,12 +384,12 @@ wm skill path
 - Command docs load on-demand
 - References shared across commands (DRY)
 
-### Why Markdown with Frontmatter?
+### Why Markdown (Frontmatter Optional)?
 
 1. **Human readable** - Developers can browse in GitHub/editors
-2. **Machine parseable** - YAML frontmatter provides structured metadata
+2. **Machine parseable** - Optional frontmatter plus `index.json` for metadata
 3. **Portable** - Can be copied to `.claude/skills/` or other skill loaders
-4. **Standard** - Matches Claude skill conventions
+4. **Compatible** - Keeps `<!-- tldr ::: ... -->` at the top of each file
 
 ### Why index.json?
 
@@ -403,50 +403,50 @@ wm skill path
 
 ### Phase 1: Structure Setup
 
-- [ ] Create `packages/agents/skills/waymark/` directory
-- [ ] Create `SKILL.md` with core content
-- [ ] Create `commands/` directory
-- [ ] Create `references/` directory
-- [ ] Create `index.json` manifest
+- [x] Create `packages/agents/skills/waymark/` directory
+- [x] Create `SKILL.md` with core content
+- [x] Create `commands/` directory
+- [x] Create `references/` directory
+- [x] Create `index.json` manifest
 
 ### Phase 2: Content Migration
 
-- [ ] Migrate `add.prompt.txt` to `commands/add.md`
-- [ ] Migrate `edit.prompt.txt` to `commands/edit.md`
-- [ ] Migrate `remove.prompt.txt` to `commands/rm.md`
-- [ ] Migrate `format.prompt.txt` to `commands/fmt.md`
-- [ ] Migrate `lint.prompt.txt` to `commands/lint.md`
-- [ ] Create `commands/find.md` (new, from unified prompt)
-- [ ] Create `commands/init.md` (new)
-- [ ] Create `commands/doctor.md` (new)
+- [x] Migrate `add.prompt.txt` to `commands/add.md`
+- [x] Migrate `edit.prompt.txt` to `commands/edit.md`
+- [x] Migrate `remove.prompt.txt` to `commands/rm.md`
+- [x] Migrate `format.prompt.txt` to `commands/fmt.md`
+- [x] Migrate `lint.prompt.txt` to `commands/lint.md`
+- [x] Create `commands/find.md` (new, from unified prompt)
+- [x] Create `commands/init.md` (new)
+- [x] Create `commands/doctor.md` (new)
 
 ### Phase 3: Reference Documents
 
-- [ ] Create `references/schemas.md`
-- [ ] Create `references/exit-codes.md`
-- [ ] Create `references/errors.md`
-- [ ] Create `references/workflows.md`
+- [x] Create `references/schemas.md`
+- [x] Create `references/exit-codes.md`
+- [x] Create `references/errors.md`
+- [x] Create `examples/workflows.md`
 
 ### Phase 4: CLI Integration
 
-- [ ] Update `wm skill` to read from modular structure
-- [ ] Implement `wm skill show <command>`
-- [ ] Implement `wm skill list`
-- [ ] Update JSON output to reflect modular structure
+- [x] Update `wm skill` to read from modular structure
+- [x] Implement `wm skill show <command>`
+- [x] Implement `wm skill list`
+- [x] Update JSON output to reflect modular structure
 
 ### Phase 5: Cleanup
 
-- [ ] Delete `.prompt.txt` files
-- [ ] Delete `.prompt.ts` wrapper files
-- [ ] Delete `.help.txt` files
-- [ ] Remove `--prompt` flag handling
+- [x] Delete `.prompt.txt` files
+- [x] Delete `.prompt.ts` wrapper files
+- [x] Delete `.help.txt` files
+- [x] Remove `--prompt` flag handling
 
 ---
 
 ## Resolved Questions
 
 1. **Should command aliases be in separate files?**
-   - Decision: No, include aliases in frontmatter of primary command
+   - Decision: No; document aliases in the command docs and treat `index.json` as the canonical lookup table
 
 2. **How to handle graph mode documentation?**
    - Decision: Document in `commands/find.md` with `--graph` section

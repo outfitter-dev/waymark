@@ -107,6 +107,12 @@ wm src/ --text                       # human-readable formatted text
 # Configuration
 wm init                              # interactive setup
 wm init --format toml --scope project
+
+# Agent documentation
+wm skill                             # core skill docs
+wm skill show add                    # command-specific docs
+wm skill show skill-format           # skill file format
+wm skill show project-skills         # project-specific skills
 ```
 
 ---
@@ -204,6 +210,11 @@ wm help add
 
 # Topic help
 wm help syntax
+
+# Agent documentation
+wm skill
+wm skill show workflows
+wm skill show skill-format
 ```
 
 **Resources**:
