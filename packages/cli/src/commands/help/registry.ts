@@ -515,6 +515,33 @@ export const commands: HelpRegistry = {
       "wm init --preset minimal --force      # Overwrite with minimal config",
     ],
   },
+  config: {
+    name: "config",
+    usage: "wm config --print [options]",
+    description:
+      "Print resolved configuration (defaults merged with project/user or explicit config).",
+    flags: [
+      {
+        name: "print",
+        type: "boolean",
+        description: "Print merged configuration",
+      },
+      {
+        name: "json",
+        type: "boolean",
+        description: "Output compact JSON",
+      },
+      commonFlags.config,
+      commonFlags.scope,
+      commonFlags.help,
+    ],
+    examples: [
+      "wm config --print                     # Show merged configuration",
+      "wm --scope user config --print        # Show user config",
+      "wm --config ./custom.toml config --print",
+      "wm config --print --json              # Output compact JSON",
+    ],
+  },
   update: {
     name: "update",
     usage: "wm update [options]",
