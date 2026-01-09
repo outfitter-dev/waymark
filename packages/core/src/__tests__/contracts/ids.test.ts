@@ -13,6 +13,7 @@ import {
   WaymarkIdManager,
   type WaymarkIdMetadata,
 } from "../../ids.ts";
+import type { WaymarkIdConfig } from "../../types.ts";
 
 const WORKSPACE_PREFIX = "waymark-contract-ids-";
 
@@ -46,7 +47,7 @@ describe("ID contracts", () => {
 
     try {
       const metadata = buildMetadata();
-      const config = { ...DEFAULT_CONFIG.ids, mode: "auto" };
+      const config: WaymarkIdConfig = { ...DEFAULT_CONFIG.ids, mode: "auto" };
       const managerA = new WaymarkIdManager(
         config,
         new JsonIdIndex({ workspaceRoot: workspaceA })
@@ -73,7 +74,11 @@ describe("ID contracts", () => {
 
     try {
       const metadata = buildMetadata();
-      const config = { ...DEFAULT_CONFIG.ids, mode: "auto", length: 9 };
+      const config: WaymarkIdConfig = {
+        ...DEFAULT_CONFIG.ids,
+        mode: "auto",
+        length: 9,
+      };
       const manager = new WaymarkIdManager(
         config,
         new JsonIdIndex({ workspaceRoot: workspace })
