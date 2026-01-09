@@ -238,10 +238,10 @@ rg '\*tldr\s*:::'                 # prioritized summaries
 CLI equivalents:
 
 ```bash
-waymark find --actor @agent
-waymark find --signal *
-waymark find #perf:hotpath
-waymark find --file-category docs --type tldr
+wm find . --mention @agent
+wm find . --starred
+wm find . --tag #perf:hotpath
+wm find docs/ --type tldr
 ```
 
 ## 7. Waymark IDs
