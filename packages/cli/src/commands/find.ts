@@ -8,7 +8,7 @@ import { handleMentionFlag } from "../utils/flags/mention";
 import { handleTagFlag } from "../utils/flags/tag";
 import { handleTldrFlag } from "../utils/flags/tldr";
 import { handleTypeFlag } from "../utils/flags/type";
-import { scanRecords } from "./scan";
+import { type ScanRuntimeOptions, scanRecords } from "./scan";
 
 export type FindCommandOptions = {
   filePath: string;
@@ -17,6 +17,7 @@ export type FindCommandOptions = {
   mentions?: string[];
   outputFormat?: "json" | "jsonl";
   config: WaymarkConfig;
+  scanOptions?: ScanRuntimeOptions;
 };
 
 /**
@@ -25,8 +26,8 @@ export type FindCommandOptions = {
 export async function findRecords(
   options: FindCommandOptions
 ): Promise<WaymarkRecord[]> {
-  const { filePath, types, tags, mentions, config } = options;
-  const records = await scanRecords([filePath], config);
+  const { filePath, types, tags, mentions, config, scanOptions } = options;
+  const records = await scanRecords([filePath], config, scanOptions);
 
   const query: Parameters<typeof searchRecords>[1] = {};
   if (types && types.length > 0) {

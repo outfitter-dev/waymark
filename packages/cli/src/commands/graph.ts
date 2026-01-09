@@ -6,15 +6,23 @@ import {
   type WaymarkRecord,
 } from "@waymarks/core";
 
-import { scanRecords } from "./scan";
+import { type ScanRuntimeOptions, scanRecords } from "./scan";
 
 export type ParsedGraphArgs = {
   filePaths: string[];
   json: boolean;
 };
 
-export async function graphRecords(filePaths: string[], config: WaymarkConfig) {
-  const records: WaymarkRecord[] = await scanRecords(filePaths, config);
+export async function graphRecords(
+  filePaths: string[],
+  config: WaymarkConfig,
+  scanOptions?: ScanRuntimeOptions
+) {
+  const records: WaymarkRecord[] = await scanRecords(
+    filePaths,
+    config,
+    scanOptions
+  );
   return buildRelationGraph(records).edges;
 }
 
