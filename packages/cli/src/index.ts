@@ -172,31 +172,31 @@ type OptionDescriptor<T> = {
   flag: string;
 };
 
-const ADD_VALUE_OPTIONS: Array<OptionDescriptor<AddCommanderOptions>> = [
+const ADD_VALUE_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
   { key: "from", flag: "--from" },
   { key: "type", flag: "--type" },
   { key: "content", flag: "--content" },
   { key: "position", flag: "--position" },
 ];
 
-const ADD_ARRAY_OPTIONS: Array<OptionDescriptor<AddCommanderOptions>> = [
+const ADD_ARRAY_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
   { key: "mention", flag: "--mention" },
   { key: "tag", flag: "--tag" },
   { key: "property", flag: "--property" },
   { key: "continuation", flag: "--continuation" },
 ];
 
-const ADD_TAIL_VALUE_OPTIONS: Array<OptionDescriptor<AddCommanderOptions>> = [
+const ADD_TAIL_VALUE_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
   { key: "order", flag: "--order" },
   { key: "id", flag: "--id" },
 ];
 
-const ADD_POSITION_FLAGS: Array<OptionDescriptor<AddCommanderOptions>> = [
+const ADD_POSITION_FLAGS: OptionDescriptor<AddCommanderOptions>[] = [
   { key: "before", flag: "--before" },
   { key: "after", flag: "--after" },
 ];
 
-const ADD_BOOLEAN_OPTIONS: Array<OptionDescriptor<AddCommanderOptions>> = [
+const ADD_BOOLEAN_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
   { key: "flagged", flag: "--flagged" },
   { key: "starred", flag: "--starred" },
   { key: "write", flag: "--write" },
@@ -204,30 +204,29 @@ const ADD_BOOLEAN_OPTIONS: Array<OptionDescriptor<AddCommanderOptions>> = [
   { key: "jsonl", flag: "--jsonl" },
 ];
 
-const REMOVE_ID_OPTIONS: Array<OptionDescriptor<RemoveCommanderOptions>> = [
+const REMOVE_ID_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
   { key: "id", flag: "--id" },
 ];
 
-const REMOVE_VALUE_OPTIONS: Array<OptionDescriptor<RemoveCommanderOptions>> = [
+const REMOVE_VALUE_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
   { key: "from", flag: "--from" },
   { key: "reason", flag: "--reason" },
   { key: "type", flag: "--type" },
 ];
 
-const REMOVE_ARRAY_OPTIONS: Array<OptionDescriptor<RemoveCommanderOptions>> = [
+const REMOVE_ARRAY_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
   { key: "tag", flag: "--tag" },
   { key: "mention", flag: "--mention" },
   { key: "property", flag: "--property" },
   { key: "file", flag: "--file" },
 ];
 
-const REMOVE_TAIL_VALUE_OPTIONS: Array<OptionDescriptor<RemoveCommanderOptions>> =
-  [
-    { key: "contentPattern", flag: "--content-pattern" },
-    { key: "contains", flag: "--contains" },
-  ];
+const REMOVE_TAIL_VALUE_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
+  { key: "contentPattern", flag: "--content-pattern" },
+  { key: "contains", flag: "--contains" },
+];
 
-const REMOVE_BOOLEAN_OPTIONS: Array<OptionDescriptor<RemoveCommanderOptions>> = [
+const REMOVE_BOOLEAN_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
   { key: "flagged", flag: "--flagged" },
   { key: "starred", flag: "--starred" },
   { key: "write", flag: "--write" },
@@ -255,7 +254,7 @@ function appendPositionalArgs(
 function appendValueOptions<T extends object>(
   tokens: string[],
   options: T,
-  descriptors: Array<OptionDescriptor<T>>
+  descriptors: OptionDescriptor<T>[]
 ): void {
   for (const { key, flag } of descriptors) {
     const value = options[key];
@@ -269,7 +268,7 @@ function appendValueOptions<T extends object>(
 function appendArrayOptions<T extends object>(
   tokens: string[],
   options: T,
-  descriptors: Array<OptionDescriptor<T>>
+  descriptors: OptionDescriptor<T>[]
 ): void {
   for (const { key, flag } of descriptors) {
     for (const value of normalizeOptionValues(options[key])) {
@@ -281,7 +280,7 @@ function appendArrayOptions<T extends object>(
 function appendBooleanOptions<T extends object>(
   tokens: string[],
   options: T,
-  descriptors: Array<OptionDescriptor<T>>
+  descriptors: OptionDescriptor<T>[]
 ): void {
   for (const { key, flag } of descriptors) {
     if (options[key]) {
