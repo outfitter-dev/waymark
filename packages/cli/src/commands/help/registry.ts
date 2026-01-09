@@ -542,6 +542,28 @@ export const commands: HelpRegistry = {
       "wm config --print --json              # Output compact JSON",
     ],
   },
+  skill: {
+    name: "skill",
+    usage: "wm skill [options] [subcommand]",
+    description:
+      "Show agent-facing skill documentation (core, commands, references, and examples).",
+    flags: [
+      {
+        name: "json",
+        type: "boolean",
+        description: "Output structured JSON",
+      },
+      commonFlags.help,
+    ],
+    examples: [
+      "wm skill                            # Show core skill documentation",
+      "wm skill show add                   # Show add command docs",
+      "wm skill show workflows             # Show workflow examples",
+      "wm skill list                       # List available sections",
+      "wm skill --json                     # JSON output of all sections",
+      "wm skill show add --json            # JSON output for one section",
+    ],
+  },
   update: {
     name: "update",
     usage: "wm update [options]",

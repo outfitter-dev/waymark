@@ -27,6 +27,13 @@ import {
   runRemoveCommand,
 } from "./commands/remove.ts";
 import { scanRecords } from "./commands/scan.ts";
+import {
+  runSkillCommand,
+  runSkillListCommand,
+  runSkillPathCommand,
+  runSkillShowCommand,
+  type SkillCommandOptions,
+} from "./commands/skill.ts";
 import { runUnifiedCommand } from "./commands/unified/index.ts";
 import { parseUnifiedArgs } from "./commands/unified/parser.ts";
 import {
@@ -627,6 +634,41 @@ async function handleConfigCommand(
   if (result.exitCode !== 0) {
     throw new CliError("Config command failed", ExitCode.failure);
   }
+}
+
+function handleSkillResult(
+  result: Awaited<ReturnType<typeof runSkillCommand>>,
+  failureMessage: string
+): void {
+  if (result.output.length > 0) {
+    writeStdout(result.output);
+  }
+  if (result.exitCode !== 0) {
+    throw new CliError(failureMessage, ExitCode.failure);
+  }
+}
+
+async function handleSkillCommand(options: SkillCommandOptions): Promise<void> {
+  const result = await runSkillCommand(options);
+  handleSkillResult(result, "Skill command failed");
+}
+
+async function handleSkillShowCommand(
+  section: string,
+  options: SkillCommandOptions
+): Promise<void> {
+  const result = await runSkillShowCommand(section, options);
+  handleSkillResult(result, "Skill show failed");
+}
+
+async function handleSkillListCommand(): Promise<void> {
+  const result = await runSkillListCommand();
+  handleSkillResult(result, "Skill list failed");
+}
+
+function handleSkillPathCommand(): void {
+  const result = runSkillPathCommand();
+  handleSkillResult(result, "Skill path failed");
 }
 
 const MULTI_VALUE_OPTION_FLAGS = [
@@ -1528,6 +1570,53 @@ Examples:
     .action(async (options: ConfigCommandOptions) => {
       try {
         await handleConfigCommand(program, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  const skillCommand = program
+    .command("skill")
+    .description("show agent-facing skill documentation")
+    .option("--json", "output structured JSON")
+    .action(async (options: SkillCommandOptions) => {
+      try {
+        await handleSkillCommand(options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  skillCommand
+    .command("show")
+    .argument("<section>", "command, reference, or example to display")
+    .option("--json", "output structured JSON")
+    .description("show a specific skill section")
+    .action(async (section: string, options: SkillCommandOptions) => {
+      try {
+        await handleSkillShowCommand(section, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  skillCommand
+    .command("list")
+    .description("list available skill sections")
+    .action(async () => {
+      try {
+        await handleSkillListCommand();
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  skillCommand
+    .command("path")
+    .description("print the skill directory path")
+    .action(() => {
+      try {
+        handleSkillPathCommand();
       } catch (error) {
         handleCommandError(program, error);
       }
