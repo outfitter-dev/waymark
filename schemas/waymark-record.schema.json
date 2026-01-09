@@ -116,9 +116,9 @@
       "type": "string",
       "description": "Raw source text of the waymark"
     },
-    "legacy": {
+    "codetag": {
       "type": "boolean",
-      "description": "Whether this record was parsed from a legacy codetag pattern"
+      "description": "Whether this record was parsed from a codetag pattern"
     }
   },
   "additionalProperties": false

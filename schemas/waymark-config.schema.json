@@ -47,7 +47,7 @@
         "includeCodetags": {
           "type": "boolean",
           "default": false,
-          "description": "Include legacy TODO/FIXME/NOTE codetags in scan results"
+          "description": "Include TODO/FIXME/NOTE codetag patterns in scan results"
         }
       },
       "additionalProperties": false
@@ -105,7 +105,7 @@
         "type": "array",
         "items": {
           "type": "string",
-          "pattern": "^@[A-Za-z0-9._-]+$"
+          "pattern": "^@[a-z][A-Za-z0-9/_-]*$"
         }
       }
     }

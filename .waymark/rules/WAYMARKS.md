@@ -36,7 +36,7 @@ Only the following markers are considered first-class by the toolchain. Custom m
 ### Work / Action
 
 - `todo`
-- `fix` (alias: `fixme` when migrating legacy content)
+- `fix`
 - `wip`
 - `done`
 - `review`
@@ -181,7 +181,7 @@ waymark find --file-category docs --type tldr
 - Do not place waymarks inside rendered documentation sections (e.g., Markdown body). Use HTML comments instead.
 - Avoid numeric-only hashtags, which collide with issue references.
 - Do not hand-edit generated caches; they will be overwritten by tooling.
-- Legacy patterns (`TODO:`, `fix:`, `priority:high`, `#owner:@alice`, etc.) should be migrated to the new grammar. Use the `legacy-pattern` lint rule or enable `scan.include_codetags` to surface them.
+- Codetag patterns (`TODO:`, `fix:`, `priority:high`, `#owner:@alice`, etc.) should be expressed using waymark syntax. Use the `codetag-pattern` lint rule or enable `scan.include_codetags` to surface them.
 
 ## 11. Reference Examples
 

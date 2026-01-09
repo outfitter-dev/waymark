@@ -61,7 +61,7 @@ wm lint src/
 - `wm add <file:line> <type> <content>` - Insert waymarks into files
 - `wm edit <file:line>` - Edit existing waymarks
 - `wm rm <file:line>` - Remove waymarks from files
-- `wm lint [paths...]` - Validate waymark structure and surface legacy codetags
+- `wm lint [paths...]` - Validate waymark structure and surface codetag patterns
 - `wm init` - Initialize waymark configuration
 - `wm update` - Check for and install CLI updates
 
@@ -96,7 +96,7 @@ wm completions powershell > ~/.config/waymark/completions/wm.ps1
 Add-Content $PROFILE "`n. ~/.config/waymark/completions/wm.ps1"
 ```
 
-Run `wm completions` with no arguments to see the supported shells. Note: `wm complete` is also supported as a backward-compatible alias.
+Run `wm completions` with no arguments to see the supported shells. Note: `wm complete` is also supported as an alias.
 
 ## Documentation
 

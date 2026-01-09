@@ -11,4 +11,4 @@ Guidelines:
 Examples:
   // todo ::: add request signing for webhook payloads #security
   // ~todo ::: refactor cache invalidation @alice
-  // *todo ::: ship v2 migration guide #docs
+  // *todo ::: ship v2 guide refresh #docs

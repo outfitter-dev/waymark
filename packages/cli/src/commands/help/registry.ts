@@ -47,7 +47,7 @@ const commonFlags = {
   pretty: {
     name: "pretty",
     type: "boolean",
-    description: "(deprecated: use --text) Output as pretty-printed JSON",
+    description: "Output as pretty-printed JSON",
   },
   long: {
     name: "long",

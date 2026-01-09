@@ -10,7 +10,7 @@ import {
 
 describe("MARKER_DEFINITIONS contract", () => {
   test("includes 'about' marker for section summaries", () => {
-    // about ::: section/block summary marker (replaces legacy 'this')
+    // about ::: section/block summary marker (replaces 'this')
     const aboutDef = MARKER_DEFINITIONS.find((def) => def.name === "about");
     expect(aboutDef).toBeDefined();
     expect(aboutDef?.category).toBe("info");

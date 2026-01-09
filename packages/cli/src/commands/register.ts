@@ -451,7 +451,7 @@ Lint Rules:
   duplicate-property   Duplicate property key (warn)
   unknown-marker       Unknown marker (warn)
   multiple-tldr        Multiple tldr in file (error)
-  legacy-pattern       Legacy codetag pattern (warn)
+  codetag-pattern      Codetag pattern (warn)
 
 Exit Codes:
   0   No errors (warnings allowed)
@@ -665,10 +665,7 @@ See 'wm skill show doctor' for agent-facing documentation.
     .option("--limit <n>, -n", "limit number of results", Number.parseInt)
     .option("--page <n>", "page number (with --limit)", Number.parseInt)
     .option("--interactive", "interactively select a waymark")
-    .option(
-      "--pretty",
-      "(deprecated: use --text) output as pretty-printed JSON"
-    )
+    .option("--pretty", "output as pretty-printed JSON")
     .description("scan and filter waymarks in files or directories")
     .addHelpText(
       "after",
@@ -721,11 +718,11 @@ Pagination:
   -n, --limit <n>             Limit number of results
   --page <n>                  Page number (with --limit)
 
-Output Formats:
+  Output Formats:
   --json                      (global) Compact JSON array
   --jsonl                     (global) Newline-delimited JSON (one record per line)
   --text                      (global) Human-readable formatted text (default)
-  --pretty                    (deprecated: use --text)
+  --pretty                    Pretty-printed JSON
 
 See 'wm skill show find' for agent-facing documentation.
     `

@@ -309,7 +309,7 @@ Test individual modules in isolation:
 import { parseHeader } from './tokenizer.ts';
 
 test('parseHeader extracts signals and marker', () => {
-  const result = parseHeader('// ^*todo ::: fix bug');
+  const result = parseHeader('// ~*todo ::: fix bug');
   expect(result).toMatchObject({
     marker: 'todo',
     signals: { flagged: true, starred: true },

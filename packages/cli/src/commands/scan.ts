@@ -33,7 +33,7 @@ export type ScanRuntimeOptions = {
   metrics?: ScanMetrics;
 };
 
-type LegacyPattern = {
+type CodetagPattern = {
   regex: RegExp;
   leader: string;
   marker: string;
@@ -41,7 +41,7 @@ type LegacyPattern = {
 
 const INDENT_MATCH_PATTERN = /^\s*/;
 
-const LEGACY_CODETAG_PATTERNS: LegacyPattern[] = [
+const CODETAG_PATTERNS: CodetagPattern[] = [
   { regex: /^\s*\/\/\s*TODO\s*:\s*(.*)$/i, leader: "//", marker: "todo" },
   { regex: /^\s*\/\/\s*FIXME\s*:\s*(.*)$/i, leader: "//", marker: "fix" },
   { regex: /^\s*\/\/\s*NOTE\s*:\s*(.*)$/i, leader: "//", marker: "note" },
@@ -54,7 +54,7 @@ const LEGACY_CODETAG_PATTERNS: LegacyPattern[] = [
   { regex: /^\s*--\s*FIXME\s*:\s*(.*)$/i, leader: "--", marker: "fix" },
 ];
 
-function buildLegacyRecord(args: {
+function buildCodetagRecord(args: {
   filePath: string;
   line: string;
   lineNumber: number;
@@ -74,23 +74,23 @@ function buildLegacyRecord(args: {
   parsed.endLine = lineNumber;
   parsed.raw = line;
   parsed.contentText = content.trim();
-  parsed.legacy = true;
+  parsed.codetag = true;
   return parsed;
 }
 
-function scanLegacyCodetags(source: string, filePath: string): WaymarkRecord[] {
+function scanCodetags(source: string, filePath: string): WaymarkRecord[] {
   const records: WaymarkRecord[] = [];
   const lines = source.split("\n");
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index] ?? "";
-    for (const pattern of LEGACY_CODETAG_PATTERNS) {
+    for (const pattern of CODETAG_PATTERNS) {
       const match = line.match(pattern.regex);
       if (!match) {
         continue;
       }
       const content = match[1] ?? "";
-      const record = buildLegacyRecord({
+      const record = buildCodetagRecord({
         filePath,
         line,
         lineNumber: index + 1,
@@ -144,7 +144,7 @@ export async function scanRecords(
 
       const parsed = parse(source, { file: filePath });
       if (config.scan?.includeCodetags) {
-        parsed.push(...scanLegacyCodetags(source, filePath));
+        parsed.push(...scanCodetags(source, filePath));
       }
       records.push(...parsed);
       parsedFiles += 1;
@@ -201,7 +201,7 @@ export function parseScanArgs(argv: string[]): ParsedScanArgs {
     "--json": "json",
     "--jsonl": "jsonl",
     "--text": "text",
-    "--pretty": "text", // Pretty-printed JSON (deprecated - use --json with jq for formatting)
+    "--pretty": "text", // Pretty-printed JSON output
   };
 
   for (const arg of argv) {

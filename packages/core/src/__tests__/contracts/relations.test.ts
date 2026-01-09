@@ -8,7 +8,7 @@ import { normalizeRelations } from "../../normalize.ts";
 describe("relation contracts", () => {
   it("normalizes relation kinds and tokens consistently", () => {
     const source =
-      "// todo ::: validate relations see:Alpha docs:Spec from:Source replaces:Legacy";
+      "// todo ::: validate relations see:Alpha docs:Spec from:Source replaces:Beta";
     const records = parse(source, { file: "src/contracts.ts" });
 
     expect(records).toHaveLength(1);
@@ -21,7 +21,7 @@ describe("relation contracts", () => {
     expect(normalized).toEqual([
       { kind: "docs", token: "#spec" },
       { kind: "from", token: "#source" },
-      { kind: "replaces", token: "#legacy" },
+      { kind: "replaces", token: "#beta" },
       { kind: "see", token: "#alpha" },
     ]);
   });

@@ -9,7 +9,6 @@ export type WaymarkRecord = {
   indent: number;
   commentLeader: string | null;
   signals: {
-    /** @deprecated use `flagged` */
     current?: boolean;
     flagged: boolean;
     starred: boolean;
@@ -25,7 +24,7 @@ export type WaymarkRecord = {
   mentions: string[];
   tags: string[];
   raw: string;
-  legacy?: boolean;
+  codetag?: boolean;
 };
 
 export type ParseOptions = {

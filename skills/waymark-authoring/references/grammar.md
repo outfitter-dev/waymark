@@ -40,7 +40,7 @@ Two signals are valid: `~` (flagged) and `*` (starred):
 
 **Invalid signals:**
 
-- `^` (deprecated - was "flagged" in v0)
+- `^` (not valid)
 - `!`, `!!`, `?` (never valid)
 - `**` (double star invalid)
 - `*~` (wrong order - use `~*`)

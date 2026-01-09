@@ -17,7 +17,7 @@ class TestServer {
 }
 
 const TLDR_EXISTS_REGEX = /already contains a tldr waymark/u;
-const LEGACY_ID_REGEX = /Legacy wm:/u;
+const WM_ID_REGEX = /wm:/u;
 const EMPTY_ID_REGEX = /cannot be empty/u;
 const DIFFERENT_ID_REGEX = /different waymark id/u;
 const ABOUT_INSERT_LINE = 3;
@@ -298,10 +298,10 @@ describe("handleAddWaymark", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("rejects legacy wm ids", async () => {
+  test("rejects wm ids", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-wm-"));
-    const file = join(dir, "legacy.ts");
-    await writeFile(file, ["export const legacy = true;"].join("\n"), "utf8");
+    const file = join(dir, "wm-id.ts");
+    await writeFile(file, ["export const sample = true;"].join("\n"), "utf8");
 
     const server = new TestServer();
     await expect(
@@ -312,7 +312,7 @@ describe("handleAddWaymark", () => {
         content: "add retry",
         id: "wm:abc123",
       })
-    ).rejects.toThrow(LEGACY_ID_REGEX);
+    ).rejects.toThrow(WM_ID_REGEX);
 
     await rm(dir, { recursive: true, force: true });
   });

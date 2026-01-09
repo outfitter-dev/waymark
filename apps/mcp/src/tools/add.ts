@@ -17,7 +17,7 @@ const EXTENSION_REGEX = /(\.[^.]+)$/u;
 const NEWLINE_SPLIT_REGEX = /\r?\n/u;
 const LEADING_WHITESPACE_REGEX = /^[ \t]*/u;
 const ID_TRAIL_REGEX = /(\[\[[^\]]+\]\])$/i;
-const LEGACY_ID_PREFIX = "wm:";
+const WM_ID_PREFIX = "wm:";
 
 const COMMENT_STYLE_BY_EXTENSION: Record<string, CommentStyle> = {
   ".c": { leader: "//" },
@@ -341,9 +341,9 @@ function normalizeWaymarkId(id: string): string {
     throw new Error("Waymark id cannot be empty.");
   }
   const lower = trimmed.toLowerCase();
-  if (lower.startsWith(LEGACY_ID_PREFIX)) {
+  if (lower.startsWith(WM_ID_PREFIX)) {
     throw new Error(
-      "Legacy wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+      "wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
     );
   }
   if (trimmed.startsWith("[[") && trimmed.endsWith("]]")) {
@@ -352,9 +352,9 @@ function normalizeWaymarkId(id: string): string {
       throw new Error(`Invalid waymark id format: ${id}`);
     }
     const normalizedInner = inner.toLowerCase();
-    if (normalizedInner.startsWith(LEGACY_ID_PREFIX)) {
+    if (normalizedInner.startsWith(WM_ID_PREFIX)) {
       throw new Error(
-        "Legacy wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+        "wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
       );
     }
     return `[[${normalizedInner}]]`;
@@ -392,7 +392,7 @@ export const addToolDefinition = {
   inputSchema: addWaymarkInputSchema.shape,
 } as const;
 
-// Wrapper for test compatibility
+// Wrapper for tests
 export function handleAddWaymark(params: {
   filePath: string;
   type: string;

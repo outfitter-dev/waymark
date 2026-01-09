@@ -12,7 +12,7 @@ Complete documentation for all `wm` commands, configuration, filtering, and work
 # Scan and display waymarks
 wm src/                              # all waymarks in src/
 wm src/ --type todo                  # filter by type
-wm src/ --flagged                     # only ^ (work-in-progress)
+wm src/ --flagged                     # only ~ (work-in-progress)
 wm src/ --starred                    # only * (high-priority)
 
 # Graph mode: relation edges
@@ -203,7 +203,7 @@ wm src/ --type todo
 wm src/ --type fix --type wip
 
 # Filter by signals
-wm src/ --flagged                     # only ^ waymarks
+wm src/ --flagged                     # only ~ waymarks
 wm src/ --starred                    # only * waymarks
 
 # Filter by tags
@@ -317,7 +317,7 @@ wm lint src/ --config-path .waymark/config.toml
 - Unknown markers (unless allowlisted)
 - Duplicate properties (including continuation properties)
 - Multiple `tldr` waymarks in a single file
-- Legacy codetag patterns (`TODO:`, `FIXME:`, `NOTE:`), with suggested replacements
+- Codetag patterns (`TODO:`, `FIXME:`, `NOTE:`), with suggested replacements
 
 ### Init
 
@@ -370,7 +370,7 @@ wm edit src/auth.ts:42 --clear-signals --write
 ### Skill
 
 `wm skill` provides the agent-facing documentation bundle that replaced the
-legacy `.prompt.txt` files.
+`.prompt.txt` files.
 
 ```bash
 wm skill                 # core skill documentation
@@ -580,7 +580,7 @@ wm src/ --type todo --type fix        # OR logic (todo OR fix)
 Filter by signals:
 
 ```bash
-wm src/ --flagged                      # only ^ waymarks
+wm src/ --flagged                      # only ~ waymarks
 wm src/ --starred                     # only * waymarks
 wm src/ --flagged --starred            # both flagged AND starred
 ```
@@ -802,7 +802,7 @@ wm src/ --mention @agents             # matches all agent handles
 - Unknown types: Add to `allow_types` in config
 - Duplicate properties: Remove duplicates or move to a continuation property line
 - Multiple TLDRs: Keep a single `tldr` per file
-- Legacy codetags: Replace `TODO:`/`FIXME:`/`NOTE:` with `todo :::`/`fix :::`/`note :::`
+- Codetags: Replace `TODO:`/`FIXME:`/`NOTE:` with `todo :::`/`fix :::`/`note :::`
 
 ### Format Not Working
 

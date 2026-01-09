@@ -384,7 +384,7 @@ Write tests first, then implementation:
 ```typescript
 // Step 1: Write failing test
 test('parseHeader extracts signals and marker', () => {
-  const result = parseHeader('// ^*todo ::: fix bug');
+  const result = parseHeader('// ~*todo ::: fix bug');
   expect(result.marker).toBe('todo');
   expect(result.signals.flagged).toBe(true);
   expect(result.signals.starred).toBe(true);
