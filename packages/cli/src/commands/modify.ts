@@ -15,6 +15,7 @@ import {
 import inquirer from "inquirer";
 
 import type { CommandContext } from "../types.ts";
+import { parseFileLineTarget } from "../utils/file-line.ts";
 import { logger } from "../utils/logger.ts";
 import { assertPromptAllowed } from "../utils/prompts.ts";
 import { readStream } from "../utils/stdin.ts";
@@ -450,22 +451,10 @@ async function resolveTarget(
     throw new Error("Target argument is required when --id is not provided");
   }
 
-  const parsed = parseFileLine(targetArg);
-  return parsed;
-}
-
-function parseFileLine(value: string): ModifyTarget {
-  const colonIndex = value.lastIndexOf(":");
-  if (colonIndex === -1) {
-    throw new Error(`Invalid target format: ${value}`);
-  }
-  const file = value.slice(0, colonIndex);
-  const lineRaw = value.slice(colonIndex + 1);
-  const line = Number.parseInt(lineRaw, 10);
-  if (!Number.isFinite(line) || line <= 0) {
-    throw new Error(`Invalid line number in target: ${value}`);
-  }
-  return { file, line };
+  return parseFileLineTarget(targetArg, {
+    missingSeparator: `Invalid target format: ${targetArg}`,
+    invalidLine: `Invalid line number in target: ${targetArg}`,
+  });
 }
 
 async function resolveTargetFromId(

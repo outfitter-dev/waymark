@@ -11,9 +11,11 @@ import {
 import { ZodError, z } from "zod";
 
 import type { CommandContext } from "../types.ts";
+import { parseFileLineTarget } from "../utils/file-line.ts";
 import { expandInputPaths } from "../utils/fs.ts";
 import { createIdManager } from "../utils/id-manager.ts";
 import { logger } from "../utils/logger.ts";
+import { parsePropertyEntry } from "../utils/properties.ts";
 import { readFromStdin } from "../utils/stdin.ts";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
@@ -31,6 +33,29 @@ export type RemoveCommandOptions = {
   jsonl: boolean;
   from?: string;
   reason?: string;
+};
+
+export type RemoveCommandInputOptions = {
+  id?: string[] | string;
+  from?: string;
+  reason?: string;
+  type?: string;
+  tag?: string[] | string;
+  mention?: string[] | string;
+  property?: string[] | string;
+  file?: string[] | string;
+  contentPattern?: string;
+  contains?: string;
+  flagged?: boolean;
+  starred?: boolean;
+  write?: boolean;
+  json?: boolean;
+  jsonl?: boolean;
+};
+
+export type RemoveCommandInput = {
+  targets: string[];
+  options: RemoveCommandInputOptions;
 };
 
 const RemoveCommandOptionsSchema = z
@@ -66,86 +91,6 @@ type RemoveParseState = {
   from?: string;
 };
 
-const SIMPLE_FLAG_HANDLERS: Record<string, (state: RemoveParseState) => void> =
-  {
-    "-w": (state) => {
-      state.optionState.write = true;
-    },
-    "--write": (state) => {
-      state.optionState.write = true;
-    },
-    "--json": (state) => {
-      if (state.optionState.jsonl) {
-        throw new Error("--json and --jsonl are mutually exclusive");
-      }
-      state.optionState.json = true;
-    },
-    "--jsonl": (state) => {
-      if (state.optionState.json) {
-        throw new Error("--json and --jsonl are mutually exclusive");
-      }
-      state.optionState.jsonl = true;
-    },
-    "-F": (state) => {
-      state.criteria.signals.flagged = true;
-    },
-    "--flagged": (state) => {
-      state.criteria.signals.flagged = true;
-    },
-    "-S": (state) => {
-      state.criteria.signals.starred = true;
-    },
-    "--starred": (state) => {
-      state.criteria.signals.starred = true;
-    },
-  };
-
-const VALUE_FLAG_HANDLERS: Record<
-  string,
-  (state: RemoveParseState, value: string) => void
-> = {
-  "--from": (state, value) => {
-    state.from = value;
-  },
-  "--id": (state, value) => {
-    state.ids.push(value);
-  },
-  "--type": (state, value) => {
-    state.criteria.type = value;
-  },
-  "--tag": (state, value) => {
-    state.criteria.tags.push(value);
-  },
-  "--mention": (state, value) => {
-    state.criteria.mentions.push(value);
-  },
-  "--property": (state, value) => {
-    const separatorIndex =
-      value.indexOf("=") >= 0 ? value.indexOf("=") : value.indexOf(":");
-    if (separatorIndex === -1) {
-      throw new Error("--property expects key=value or key:value format");
-    }
-    const key = value.slice(0, separatorIndex).trim();
-    const propValue = value.slice(separatorIndex + 1).trim();
-    if (!(key && propValue)) {
-      throw new Error("--property expects key=value or key:value format");
-    }
-    state.criteria.properties[key] = propValue;
-  },
-  "--file": (state, value) => {
-    state.filePatterns.push(value);
-  },
-  "--content-pattern": (state, value) => {
-    state.criteria.contentPattern = value;
-  },
-  "--contains": (state, value) => {
-    state.criteria.contains = value;
-  },
-  "--reason": (state, value) => {
-    state.optionState.reason = value;
-  },
-};
-
 function createInitialState(): RemoveParseState {
   return {
     positional: [],
@@ -165,58 +110,54 @@ function createInitialState(): RemoveParseState {
   };
 }
 
-export function parseRemoveArgs(argv: string[]): ParsedRemoveArgs {
+export function buildRemoveArgs(input: RemoveCommandInput): ParsedRemoveArgs {
   const state = createInitialState();
-  let cursor = 0;
-  while (cursor < argv.length) {
-    const token = argv[cursor];
-    if (token === undefined) {
-      break;
-    }
+  const { targets, options } = input;
 
-    if (!token.startsWith("--")) {
-      state.positional.push(token);
-      cursor += 1;
-      continue;
-    }
-    cursor = processFlag(token, argv, cursor + 1, state);
+  state.positional = targets.map((target) => String(target));
+  state.ids = normalizeOptionValues(options.id);
+  state.filePatterns = normalizeOptionValues(options.file);
+  state.criteria.tags = normalizeOptionValues(options.tag);
+  state.criteria.mentions = normalizeOptionValues(options.mention);
+  state.criteria.type = options.type;
+  state.criteria.contentPattern = options.contentPattern;
+  state.criteria.contains = options.contains;
+
+  const properties: Record<string, string> = {};
+  for (const property of normalizeOptionValues(options.property)) {
+    const parsed = parsePropertyEntry(property);
+    properties[parsed.key] = parsed.value;
+  }
+  state.criteria.properties = properties;
+
+  if (options.flagged) {
+    state.criteria.signals.flagged = true;
+  }
+  if (options.starred) {
+    state.criteria.signals.starred = true;
+  }
+
+  state.optionState.write = Boolean(options.write);
+  state.optionState.json = Boolean(options.json);
+  state.optionState.jsonl = Boolean(options.jsonl);
+  if (options.reason) {
+    state.optionState.reason = options.reason;
+  }
+  if (options.from !== undefined) {
+    state.from = options.from;
   }
 
   return finalizeRemoveState(state);
 }
 
-function processFlag(
-  flag: string,
-  argv: string[],
-  cursor: number,
-  state: RemoveParseState
-): number {
-  const simpleHandler = SIMPLE_FLAG_HANDLERS[flag];
-  if (simpleHandler) {
-    simpleHandler(state);
-    return cursor;
+function normalizeOptionValues(value: unknown): string[] {
+  if (value === undefined || value === null) {
+    return [];
   }
-
-  const valueHandler = VALUE_FLAG_HANDLERS[flag];
-  if (valueHandler) {
-    const { value, nextCursor } = readFlagValue(argv, cursor, flag);
-    valueHandler(state, value);
-    return nextCursor;
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item));
   }
-
-  throw new Error(`Unknown flag: ${flag}`);
-}
-
-function readFlagValue(
-  argv: string[],
-  cursor: number,
-  flag: string
-): { value: string; nextCursor: number } {
-  const value = argv[cursor];
-  if (value === undefined || value.startsWith("--")) {
-    throw new Error(`Flag ${flag} requires a value`);
-  }
-  return { value, nextCursor: cursor + 1 };
+  return [String(value)];
 }
 
 function finalizeRemoveState(state: RemoveParseState): ParsedRemoveArgs {
@@ -255,17 +196,10 @@ function finalizeRemoveState(state: RemoveParseState): ParsedRemoveArgs {
 }
 
 function parseFileLineToken(token: string): RemovalSpec {
-  const colonIndex = token.lastIndexOf(":");
-  if (colonIndex === -1) {
-    throw new Error("Positional arguments must be FILE:LINE");
-  }
-  const file = token.slice(0, colonIndex).trim();
-  const lineValue = token.slice(colonIndex + 1).trim();
-  const line = Number.parseInt(lineValue, 10);
-  if (!file || Number.isNaN(line) || line <= 0) {
-    throw new Error("Invalid positional argument; expected FILE:LINE");
-  }
-  return { file, line };
+  return parseFileLineTarget(token, {
+    missingSeparator: "Positional arguments must be FILE:LINE",
+    invalidLine: "Invalid positional argument; expected FILE:LINE",
+  });
 }
 
 function buildCriteriaSpec(state: RemoveParseState): RemovalSpec | undefined {
