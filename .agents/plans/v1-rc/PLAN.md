@@ -4,7 +4,7 @@
 
 **Created:** 2026-01-08
 **Derived from:** SPEC.md, gold-standard-synthesis, fresh-eyes-review, 20260108-rc-plan-review, 20260108-rc-plan-opportunities
-**Status:** In progress (implementation complete through P3; verification in progress)
+**Status:** In progress (implementation complete through P6; verification in progress)
 
 ## Overview
 
@@ -22,7 +22,7 @@ This plan synthesizes findings from three independent senior developer reviews a
 
 **Total estimated time:** 1.5-2 weeks
 
-<!-- note ::: P0-P3 tasks implemented in current stack as of 2026-01-09; remaining work is verification, polish, and any post-RC scope ref:#docs/plan/v1-rc/status #docs/plan #docs -->
+<!-- note ::: P0-P6 tasks implemented in current stack as of 2026-01-09; remaining work is verification and polish ref:#docs/plan/v1-rc/status #docs/plan #docs -->
 
 ---
 
@@ -231,31 +231,33 @@ See @skill-command.md for CLI interface design.
 
 ## Future Phases (Post-RC)
 
-These are explicitly deferred but documented for planning:
+These were explicitly deferred but are now implemented in the current stack:
 
 ### P4: Commander.js Full Migration
+<!-- done ::: P4 tasks implemented in the current stack; Commander now owns add/rm option definitions and validation ref:#docs/plan/v1-rc/p4 #docs/plan #docs -->
 
 Migrate `add` and `rm` commands from custom parsing to full Commander.js integration. The `edit` command already demonstrates the target pattern.
 
 | Task | File | Effort | Rationale for Deferral |
 |------|------|--------|------------------------|
-| Define all `add` options in Commander | `packages/cli/src/index.ts` | M | Works, help text improvement |
-| Define all `rm` options in Commander | `packages/cli/src/index.ts` | M | Works, help text improvement |
+| Define all `add` options in Commander | `packages/cli/src/commands/register.ts` | M | Works, help text improvement |
+| Define all `rm` options in Commander | `packages/cli/src/commands/register.ts` | M | Works, help text improvement |
 
 ### P5: Post-RC Opportunities (Tracked, not required for v1.0-RC)
+<!-- done ::: P5 opportunities implemented in the current stack (scan metrics, spec alignment, argv cleanup, spinners, update notices) ref:#docs/plan/v1-rc/p5 #docs/plan #docs -->
 
 | Task | File | Effort | Rationale for Deferral |
 |------|------|--------|------------------------|
 | Add scan performance instrumentation + cache toggle | `packages/cli/src/commands/scan.ts` | M | Perf improvement, not correctness |
 | Extend spec-alignment CI to mention pattern + enums | `scripts/check-spec-alignment.ts` | S | Guardrail, not blocking |
-| Replace argv extraction with Commander values | `add.ts`, `remove.ts` | M | Risk vs benefit for RC |
-| Remove `allowUnknownOption(true)` | `packages/cli/src/index.ts` | M | Depends on above |
-| Add custom FILE:LINE argument parser | `packages/cli/src/utils/` | S | Supporting infrastructure |
+| Replace argv extraction with Commander values | `packages/cli/src/commands/register.ts` | M | Risk vs benefit for RC |
+| Remove `allowUnknownOption(true)` | `packages/cli/src/program.ts` | M | Depends on above |
+| Add custom FILE:LINE argument parser | `packages/cli/src/utils/file-line.ts` | S | Supporting infrastructure |
 | Remove `parseAddArgs()` custom parser | `packages/cli/src/commands/add.ts` | M | Final cleanup |
 | Remove `parseRemoveArgs()` custom parser | `packages/cli/src/commands/remove.ts` | M | Final cleanup |
-| Use `InvalidArgumentError` for validation | Multiple files | S | Better error messages |
-| Add progress spinners (`ora`) | Multiple files | M | Polish, not critical |
-| Add update notifications | `packages/cli/src/index.ts` | S | Polish, not critical |
+| Use `InvalidArgumentError` for validation | `packages/cli/src/commands/register.ts` | S | Better error messages |
+| Add progress spinners (`ora`) | `packages/cli/src/utils/spinner.ts` | M | Polish, not critical |
+| Add update notifications | `packages/cli/src/program.ts` | S | Polish, not critical |
 
 **Migration phases:**
 
@@ -266,15 +268,16 @@ Migrate `add` and `rm` commands from custom parsing to full Commander.js integra
 See @cli-improvements.md for detailed migration strategy.
 
 ### P6: Architecture Improvements
+<!-- done ::: P6 architecture improvements implemented in the current stack (CLI entry split, addCommand modularization, block continuations, property tests) ref:#docs/plan/v1-rc/p6 #docs/plan #docs -->
 
 | Task | File | Effort | Rationale for Deferral |
 |------|------|--------|------------------------|
 | Reduce CLI entry to <500 lines | `packages/cli/src/index.ts` | L | Commands already modular |
-| Modularize commands with `.addCommand()` | `packages/cli/src/commands/*/index.ts` | L | Works, code organization |
-| Wire cache into scan path | `packages/core/src/scan.ts` | L | Works without, perf optimization |
+| Modularize commands with `.addCommand()` | `packages/cli/src/commands/register.ts` | L | Works, code organization |
+| Wire cache into scan path | `packages/cli/src/commands/scan.ts` | L | Works without, perf optimization |
 | Multi-line block comment support | `packages/grammar/src/parser.ts` | L | Single-line covers most cases |
 | Extract shared constants | `packages/grammar/src/constants.ts` | M | Not blocking |
-| Property-based tests | Test files | M | Nice to have |
+| Property-based tests | `packages/core/src/__tests__/properties/normalize.test.ts` | M | Nice to have |
 
 See @file-structure.md for detailed split recommendations.
 
@@ -324,6 +327,9 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 | P1 | Implemented | 10/10 tasks |
 | P2 | Implemented | 20/20 tasks |
 | P3 | Implemented | 25/25 tasks |
+| P4 | Implemented | 2/2 tasks |
+| P5 | Implemented | 10/10 tasks |
+| P6 | Implemented | 6/6 tasks |
 
 ### Blockers
 

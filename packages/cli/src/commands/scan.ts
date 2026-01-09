@@ -115,7 +115,7 @@ export async function scanRecords(
   const files = await expandInputPaths(filePaths, config);
   const records: WaymarkRecord[] = [];
   const cache = createCache(options);
-  const cacheEnabled = Boolean(cache);
+  const cacheEnabled = cache !== undefined;
   const startTime = performance.now();
   let parsedFiles = 0;
   let cachedFiles = 0;
@@ -127,9 +127,9 @@ export async function scanRecords(
         ? await stat(filePath).catch(() => null)
         : null;
       if (
-        cacheEnabled &&
+        cache &&
         fileStats &&
-        !cache?.isFileStale(filePath, fileStats.mtimeMs, fileStats.size)
+        !cache.isFileStale(filePath, fileStats.mtimeMs, fileStats.size)
       ) {
         records.push(...cache.findByFile(filePath));
         cachedFiles += 1;
@@ -149,7 +149,7 @@ export async function scanRecords(
       records.push(...parsed);
       parsedFiles += 1;
 
-      if (cacheEnabled && fileStats) {
+      if (cache && fileStats) {
         cache.replaceFileWaymarks({
           filePath,
           mtime: fileStats.mtimeMs,

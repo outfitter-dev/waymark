@@ -119,9 +119,15 @@ export function buildRemoveArgs(input: RemoveCommandInput): ParsedRemoveArgs {
   state.filePatterns = normalizeOptionValues(options.file);
   state.criteria.tags = normalizeOptionValues(options.tag);
   state.criteria.mentions = normalizeOptionValues(options.mention);
-  state.criteria.type = options.type;
-  state.criteria.contentPattern = options.contentPattern;
-  state.criteria.contains = options.contains;
+  if (options.type !== undefined) {
+    state.criteria.type = options.type;
+  }
+  if (options.contentPattern !== undefined) {
+    state.criteria.contentPattern = options.contentPattern;
+  }
+  if (options.contains !== undefined) {
+    state.criteria.contains = options.contains;
+  }
 
   const properties: Record<string, string> = {};
   for (const property of normalizeOptionValues(options.property)) {

@@ -29,7 +29,7 @@ function serializeConfig(
 export function runConfigCommand(
   context: CommandContext,
   options: ConfigCommandOptions = {}
-): Promise<ConfigCommandResult> {
+): ConfigCommandResult {
   if (!options.print) {
     throw createUsageError("Config command requires --print.");
   }
