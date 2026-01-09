@@ -269,14 +269,7 @@ async function checkCacheStatus(): Promise<CheckResult[]> {
         message: "Cache directory not found (will be created on first scan)",
         suggestion: "Run `wm find` to initialize the cache",
       });
-    } else if (!existsSync(cacheDb)) {
-      issues.push({
-        severity: "info",
-        category: "environment",
-        message: "Cache directory exists but cache database is missing",
-        suggestion: "Run `wm find` to populate the cache database",
-      });
-    } else {
+    } else if (existsSync(cacheDb)) {
       const stats = await stat(cacheDb);
       const sizeMb = stats.size / BYTES_PER_MB;
       issues.push({
@@ -284,6 +277,13 @@ async function checkCacheStatus(): Promise<CheckResult[]> {
         category: "environment",
         message: `Cache database present (${sizeMb.toFixed(2)} MB)`,
         file: cacheDb,
+      });
+    } else {
+      issues.push({
+        severity: "info",
+        category: "environment",
+        message: "Cache directory exists but cache database is missing",
+        suggestion: "Run `wm find` to populate the cache database",
       });
     }
   } catch (_error) {
