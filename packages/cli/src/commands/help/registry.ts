@@ -16,11 +16,6 @@ const commonFlags = {
     type: "boolean",
     description: "Show version number",
   },
-  prompt: {
-    name: "prompt",
-    type: "boolean",
-    description: "Show agent-facing prompt instead of executing",
-  },
   config: {
     name: "config",
     type: "string",
@@ -140,12 +135,7 @@ export const commands: HelpRegistry = {
     usage: "wm fmt <paths...> [options]",
     description:
       "Format waymark comments in a file, normalizing spacing, case, and alignment.",
-    flags: [
-      commonFlags.write,
-      commonFlags.config,
-      commonFlags.prompt,
-      commonFlags.help,
-    ],
+    flags: [commonFlags.write, commonFlags.config, commonFlags.help],
     examples: [
       "wm fmt src/index.ts                # Preview formatting changes",
       "wm fmt src/index.ts --write        # Apply formatting changes",
@@ -158,12 +148,7 @@ export const commands: HelpRegistry = {
     usage: "wm lint <file...> [options]",
     description:
       "Validate waymark types against configured allowlist and grammar rules.",
-    flags: [
-      commonFlags.json,
-      commonFlags.config,
-      commonFlags.prompt,
-      commonFlags.help,
-    ],
+    flags: [commonFlags.json, commonFlags.config, commonFlags.help],
     examples: [
       "wm lint src/                       # Lint all files in src/",
       "wm lint src/*.ts                   # Lint TypeScript files",
@@ -202,8 +187,8 @@ export const commands: HelpRegistry = {
       {
         name: "content",
         type: "string",
-        placeholder: "text|-",
-        description: "Waymark content (use '-' to read from stdin)",
+        placeholder: "text",
+        description: "Waymark content text",
       },
       {
         name: "position",
@@ -240,40 +225,10 @@ export const commands: HelpRegistry = {
         description: "Add property (repeatable)",
       },
       {
-        name: "see",
-        type: "string",
-        placeholder: "token",
-        description: "Add reference relation (repeatable, creates canonical)",
-      },
-      {
-        name: "docs",
-        type: "string",
-        placeholder: "url",
-        description: "Add documentation link (repeatable)",
-      },
-      {
-        name: "source",
-        type: "string",
-        placeholder: "token",
-        description: "Add dependency relation (from:#token, repeatable)",
-      },
-      {
-        name: "replaces",
-        type: "string",
-        placeholder: "token",
-        description: "Add supersedes relation (repeatable)",
-      },
-      {
         name: "continuation",
         type: "string",
         placeholder: "text",
         description: "Add continuation line (repeatable)",
-      },
-      {
-        name: "signal",
-        type: "string",
-        placeholder: "~|*",
-        description: "Add signal (~ flagged, * starred)",
       },
       {
         name: "flagged",
@@ -301,7 +256,6 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -361,7 +315,6 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -440,7 +393,7 @@ export const commands: HelpRegistry = {
       },
       {
         name: "flagged",
-        alias: "R",
+        alias: "F",
         type: "boolean",
         description: "Filter by flagged signal (~)",
       },
@@ -450,28 +403,16 @@ export const commands: HelpRegistry = {
         type: "boolean",
         description: "Filter by starred signal (*)",
       },
-      {
-        name: "yes",
-        alias: "y",
-        type: "boolean",
-        description: "Skip confirmation prompt",
-      },
-      {
-        name: "confirm",
-        type: "boolean",
-        description: "Force confirmation prompt",
-      },
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
       "wm rm src/auth.ts:42                  # Preview removal",
       "wm rm src/auth.ts:42 --write          # Actually remove",
       "wm rm --id [[a3k9m2p]] --write        # Remove by ID",
-      "wm rm --type todo --tag #wip --write --yes  # Batch removal",
+      "wm rm --type todo --tag #wip --file src/ --write  # Batch removal",
       'wm rm src/auth.ts:42 --write --reason "cleanup"',
     ],
   },
@@ -540,6 +481,28 @@ export const commands: HelpRegistry = {
       "wm --scope user config --print        # Show user config",
       "wm --config ./custom.toml config --print",
       "wm config --print --json              # Output compact JSON",
+    ],
+  },
+  skill: {
+    name: "skill",
+    usage: "wm skill [options] [subcommand]",
+    description:
+      "Show agent-facing skill documentation (core, commands, references, and examples).",
+    flags: [
+      {
+        name: "json",
+        type: "boolean",
+        description: "Output structured JSON",
+      },
+      commonFlags.help,
+    ],
+    examples: [
+      "wm skill                            # Show core skill documentation",
+      "wm skill show add                   # Show add command docs",
+      "wm skill show workflows             # Show workflow examples",
+      "wm skill list                       # List available sections",
+      "wm skill --json                     # JSON output of all sections",
+      "wm skill show add --json            # JSON output for one section",
     ],
   },
   update: {
@@ -652,7 +615,6 @@ queries, filtering by type/tag/mention, and multiple output formats.
     commonFlags.page,
     commonFlags.config,
     commonFlags.scope,
-    commonFlags.prompt,
     commonFlags.help,
     commonFlags.version,
   ],

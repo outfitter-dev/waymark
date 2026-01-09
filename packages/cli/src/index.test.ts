@@ -1011,10 +1011,13 @@ describe("Commander integration", () => {
     expect(receivedOptions?.graph).toBe(true);
   });
 
-  test("add command forwards --json flag to parser", async () => {
+  test("add command forwards --json flag to builder", async () => {
     const addModule = await import("./commands/add");
     const contextModule = await import("./utils/context");
-    const parseSpy = spyOn(addModule, "parseAddArgs");
+    const buildSpy = spyOn(addModule, "buildAddArgs").mockReturnValue({
+      specs: [],
+      options: { write: false, json: true, jsonl: false },
+    });
     const runSpy = spyOn(addModule, "runAddCommand").mockResolvedValue({
       results: [],
       summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
@@ -1034,14 +1037,14 @@ describe("Commander integration", () => {
         "--json",
       ]);
       expect(result.exitCode).toBe(0);
-      expect(parseSpy).toHaveBeenCalled();
-      const tokens = parseSpy.mock.calls[0]?.[0] ?? [];
-      expect(tokens).toContain("--json");
+      expect(buildSpy).toHaveBeenCalled();
+      const input = buildSpy.mock.calls[0]?.[0];
+      expect(input?.options.json).toBe(true);
       expect(runSpy).toHaveBeenCalled();
       const parsedArgs = runSpy.mock.calls[0]?.[0];
       expect(parsedArgs?.options.json).toBe(true);
     } finally {
-      parseSpy.mockRestore();
+      buildSpy.mockRestore();
       runSpy.mockRestore();
       contextSpy.mockRestore();
     }
@@ -1095,10 +1098,17 @@ describe("Commander integration", () => {
     }
   });
 
-  test("rm command forwards --json flag to parser", async () => {
+  test("rm command forwards --json flag to builder", async () => {
     const removeModule = await import("./commands/remove");
     const contextModule = await import("./utils/context");
-    const parseSpy = spyOn(removeModule, "parseRemoveArgs");
+    const buildSpy = spyOn(removeModule, "buildRemoveArgs").mockReturnValue({
+      specs: [],
+      options: {
+        write: false,
+        json: true,
+        jsonl: false,
+      },
+    });
     const runSpy = spyOn(removeModule, "runRemoveCommand").mockResolvedValue({
       results: [],
       summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
@@ -1117,14 +1127,14 @@ describe("Commander integration", () => {
     try {
       const result = await runCliCaptured(["rm", "src/sample.ts:1", "--json"]);
       expect(result.exitCode).toBe(0);
-      expect(parseSpy).toHaveBeenCalled();
-      const tokens = parseSpy.mock.calls[0]?.[0] ?? [];
-      expect(tokens).toContain("--json");
+      expect(buildSpy).toHaveBeenCalled();
+      const input = buildSpy.mock.calls[0]?.[0];
+      expect(input?.options.json).toBe(true);
       expect(runSpy).toHaveBeenCalled();
       const parsedArgs = runSpy.mock.calls[0]?.[0];
       expect(parsedArgs?.options.json).toBe(true);
     } finally {
-      parseSpy.mockRestore();
+      buildSpy.mockRestore();
       runSpy.mockRestore();
       contextSpy.mockRestore();
     }

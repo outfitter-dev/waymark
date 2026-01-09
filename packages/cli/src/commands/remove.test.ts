@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { JsonIdIndex, resolveConfig } from "@waymarks/core";
 
 import type { CommandContext } from "../types";
-import { parseRemoveArgs, runRemoveCommand } from "./remove";
+import { buildRemoveArgs, runRemoveCommand } from "./remove";
 
 const JSON_VALIDATION_ERROR_REGEX = /JSON validation failed/;
 
@@ -14,21 +14,18 @@ async function ensureDir(path: string): Promise<void> {
   await mkdir(path, { recursive: true });
 }
 
-describe("parseRemoveArgs", () => {
+describe("buildRemoveArgs", () => {
   test("parses positional file:line arguments and ids", () => {
-    const parsed = parseRemoveArgs([
-      "src/auth.ts:10",
-      "--id",
-      "[[abc]]",
-      "--type",
-      "todo",
-      "--tag",
-      "#cleanup",
-      "--file",
-      "src/auth.ts",
-      "--contains",
-      "cleanup",
-    ]);
+    const parsed = buildRemoveArgs({
+      targets: ["src/auth.ts:10"],
+      options: {
+        id: ["[[abc]]"],
+        type: "todo",
+        tag: ["#cleanup"],
+        file: ["src/auth.ts"],
+        contains: "cleanup",
+      },
+    });
 
     const ExpectedSpecCount = 3;
     expect(parsed.specs).toHaveLength(ExpectedSpecCount);
@@ -50,7 +47,7 @@ describe("runRemoveCommand", () => {
     workspace = await mkdtemp(join(tmpdir(), "waymark-remove-cli-"));
     await ensureDir(join(workspace, ".waymark"));
     context = {
-      config: resolveConfig(),
+      config: resolveConfig({ ids: { mode: "auto" } }),
       workspaceRoot: workspace,
       globalOptions: {},
     };
@@ -74,11 +71,10 @@ describe("runRemoveCommand", () => {
       "utf8"
     );
 
-    const parsed = parseRemoveArgs([
-      "--write",
-      `${filePath}:1`,
-      `${filePath}:3`,
-    ]);
+    const parsed = buildRemoveArgs({
+      targets: [`${filePath}:1`, `${filePath}:3`],
+      options: { write: true },
+    });
 
     const preview = await runRemoveCommand(parsed, context, {
       writeOverride: false,
@@ -121,7 +117,10 @@ describe("runRemoveCommand", () => {
       updatedAt: Date.now(),
     });
 
-    const parsed = parseRemoveArgs(["--write", "--id", "[[test-456]]"]);
+    const parsed = buildRemoveArgs({
+      targets: [],
+      options: { write: true, id: ["[[test-456]]"] },
+    });
 
     const actual = await runRemoveCommand(parsed, context, {
       writeOverride: true,
@@ -160,7 +159,10 @@ describe("runRemoveCommand", () => {
     const jsonPath = join(workspace, "removals.json");
     await writeFile(jsonPath, JSON.stringify(spec), "utf8");
 
-    const parsed = parseRemoveArgs(["--from", jsonPath, "--write", "--json"]);
+    const parsed = buildRemoveArgs({
+      targets: [],
+      options: { from: jsonPath, write: true, json: true },
+    });
     const actual = await runRemoveCommand(parsed, context, {
       writeOverride: true,
     });
@@ -183,7 +185,10 @@ describe("runRemoveCommand", () => {
     });
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
-    const parsed = parseRemoveArgs(["--from", invalidJsonPath]);
+    const parsed = buildRemoveArgs({
+      targets: [],
+      options: { from: invalidJsonPath },
+    });
 
     await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
       JSON_VALIDATION_ERROR_REGEX
@@ -199,7 +204,10 @@ describe("runRemoveCommand", () => {
     });
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
-    const parsed = parseRemoveArgs(["--from", invalidJsonPath]);
+    const parsed = buildRemoveArgs({
+      targets: [],
+      options: { from: invalidJsonPath },
+    });
 
     await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
       JSON_VALIDATION_ERROR_REGEX
@@ -216,7 +224,10 @@ describe("runRemoveCommand", () => {
     });
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
-    const parsed = parseRemoveArgs(["--from", invalidJsonPath]);
+    const parsed = buildRemoveArgs({
+      targets: [],
+      options: { from: invalidJsonPath },
+    });
 
     await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
       JSON_VALIDATION_ERROR_REGEX
@@ -252,12 +263,10 @@ describe("runRemoveCommand", () => {
     });
     await writeFile(validJsonPath, validJson, "utf8");
 
-    const parsed = parseRemoveArgs([
-      "--from",
-      validJsonPath,
-      "--write",
-      "--json",
-    ]);
+    const parsed = buildRemoveArgs({
+      targets: [],
+      options: { from: validJsonPath, write: true, json: true },
+    });
 
     const result = await runRemoveCommand(parsed, context, {
       writeOverride: true,

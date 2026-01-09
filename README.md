@@ -114,6 +114,11 @@ wm lint src/ --json                  # validate waymark types
 wm rm src/auth.ts:42 --write     # remove a waymark
 wm edit src/auth.ts:42 --flagged --write # adjust an existing waymark
 wm config --print                  # print merged configuration
+
+# Agent documentation
+wm skill                            # core skill documentation
+wm skill show add                   # command-specific docs
+wm skill --json                     # structured JSON output
 ```
 
 To include legacy codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
@@ -125,7 +130,24 @@ include_codetags = true
 
 When ID history tracking is enabled (`ids.track_history = true`), removals are recorded in `.waymark/history.json` with `removedAt`, `removedBy`, and optional `reason` metadata (via `wm rm --reason`).
 
-The CLI relies on the core formatter and parser helpers exported from `@waymarks/core`. Cache refresh happens implicitly when `waymark scan` touches a file; no separate cache command is required.
+The CLI relies on the core formatter and parser helpers exported from `@waymarks/core`.
+
+### Cache Usage
+
+The SQLite cache infrastructure exists but CLI scans do not populate it yet. Cache
+integration is planned for a future release. For now, the cache is available
+programmatically via `@waymarks/core` (see `WaymarkCache`), and `wm doctor` reports
+cache directory health.
+
+### Exit Codes
+
+| Code | Meaning |
+| --- | --- |
+| 0 | Success |
+| 1 | Waymark error (lint failures, parse errors) |
+| 2 | Usage error (invalid arguments) |
+| 3 | Configuration error |
+| 4 | I/O error (file not found, permission denied) |
 
 #### Shell Completions
 
@@ -184,7 +206,7 @@ The server advertises a compact surface area:
 - **Resources**
   - `waymark://todos` – filtered list of every `todo` waymark detected.
 
-Drafting TLDR/TODO guidance now lives in agent skills; MCP prompts were removed. Tools accept the same configuration options as the CLI (`configPath`, `scope`) so agents respect local project settings. The server streams JSON over stdout/stdin; see `apps/mcp/src/index.ts` for the exact schemas.
+Drafting TLDR/TODO guidance now lives in agent skills (use `wm skill` to browse). MCP prompts were removed. Tools accept the same configuration options as the CLI (`configPath`, `scope`) so agents respect local project settings. The server streams JSON over stdout/stdin; see `apps/mcp/src/index.ts` for the exact schemas.
 
 ### Code Structure
 

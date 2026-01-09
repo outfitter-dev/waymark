@@ -4,9 +4,18 @@
 
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
-import { Command, CommanderError, Option } from "commander";
+import {
+  Command,
+  CommanderError,
+  InvalidArgumentError,
+  Option,
+} from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
-import { parseAddArgs, runAddCommand } from "./commands/add.ts";
+import {
+  type AddCommandInputOptions,
+  buildAddArgs,
+  runAddCommand,
+} from "./commands/add.ts";
 import {
   type ConfigCommandOptions,
   runConfigCommand,
@@ -22,11 +31,19 @@ import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
 import {
+  buildRemoveArgs,
   type ParsedRemoveArgs,
-  parseRemoveArgs,
+  type RemoveCommandInputOptions,
   runRemoveCommand,
 } from "./commands/remove.ts";
 import { scanRecords } from "./commands/scan.ts";
+import {
+  runSkillCommand,
+  runSkillListCommand,
+  runSkillPathCommand,
+  runSkillShowCommand,
+  type SkillCommandOptions,
+} from "./commands/skill.ts";
 import { runUnifiedCommand } from "./commands/unified/index.ts";
 import { parseUnifiedArgs } from "./commands/unified/parser.ts";
 import {
@@ -36,7 +53,6 @@ import {
 import { CliError, createUsageError } from "./errors.ts";
 import { ExitCode } from "./exit-codes.ts";
 import type { CommandContext, GlobalOptions } from "./types.ts";
-import { loadPrompt } from "./utils/content-loader.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
@@ -45,6 +61,7 @@ import {
   selectWaymark,
   setPromptPolicy,
 } from "./utils/prompts.ts";
+import { parsePropertyEntry } from "./utils/properties.ts";
 import { shouldUseColor } from "./utils/terminal.ts";
 
 const STDOUT = process.stdout;
@@ -109,6 +126,50 @@ function resolveErrorMessage(error: unknown): string {
   return "Unexpected error";
 }
 
+function collectOption(value: string, previous: string[] = []): string[] {
+  return [...previous, value];
+}
+
+function collectValidatedOption(
+  parser: (value: string) => string
+): (value: string, previous?: string[]) => string[] {
+  return (value: string, previous: string[] = []) => [
+    ...previous,
+    parser(value),
+  ];
+}
+
+function resolveCommandOptions<T extends object>(command: Command): T {
+  return typeof command.optsWithGlobals === "function"
+    ? (command.optsWithGlobals() as T)
+    : (command.opts() as T);
+}
+
+function parsePositionOption(value: string): string {
+  if (value !== "before" && value !== "after") {
+    throw new InvalidArgumentError("--position must be 'before' or 'after'");
+  }
+  return value;
+}
+
+function parseOrderOption(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    throw new InvalidArgumentError("--order expects an integer");
+  }
+  return parsed;
+}
+
+function validatePropertyOption(value: string): string {
+  try {
+    parsePropertyEntry(value);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new InvalidArgumentError(message);
+  }
+  return value;
+}
+
 function handleCommandError(program: Command, error: unknown): never {
   if (error instanceof CommanderError) {
     throw error;
@@ -141,20 +202,8 @@ function registerSignalHandlers(): void {
 async function handleFormatCommand(
   program: Command,
   paths: string[],
-  options: { write?: boolean; prompt?: boolean }
+  options: { write?: boolean }
 ): Promise<void> {
-  if (options.prompt) {
-    const promptText = loadPrompt("format");
-    if (promptText) {
-      writeStdout(promptText);
-      return;
-    }
-    throw new CliError(
-      "No agent prompt available for this command",
-      ExitCode.failure
-    );
-  }
-
   const context = await createContext(resolveGlobalOptions(program));
 
   // If no paths provided, default to current directory
@@ -203,20 +252,8 @@ async function handleFormatCommand(
 async function handleLintCommand(
   program: Command,
   paths: string[],
-  options: { json?: boolean; prompt?: boolean }
+  options: { json?: boolean }
 ): Promise<void> {
-  if (options.prompt) {
-    const promptText = loadPrompt("lint");
-    if (promptText) {
-      writeStdout(promptText);
-      return;
-    }
-    throw new CliError(
-      "No agent prompt available for this command",
-      ExitCode.failure
-    );
-  }
-
   const context = await createContext(resolveGlobalOptions(program));
 
   // If no paths provided, default to current directory
@@ -252,34 +289,16 @@ async function handleLintCommand(
 
 async function handleAddCommand(
   program: Command,
-  command: Command,
-  options: { prompt?: boolean }
+  command: Command
 ): Promise<void> {
-  if (options.prompt) {
-    const promptText = loadPrompt("add");
-    if (promptText) {
-      writeStdout(promptText);
-      return;
-    }
-    throw new CliError(
-      "No agent prompt available for this command",
-      ExitCode.failure
-    );
-  }
-
-  const argvTokens = process.argv.slice(2);
-  const commandNames = new Set([command.name(), ...command.aliases()]);
-  const commandIndex = argvTokens.findIndex((token) => commandNames.has(token));
-  const tokens = commandIndex >= 0 ? argvTokens.slice(commandIndex + 1) : [];
-  const filteredTokens = tokens.filter(
-    (token) => token !== "--prompt" && token !== "--no-input"
-  );
-
+  const args = command.args.map((arg) => String(arg));
+  const [targetArg, typeArg, contentArg] = args;
+  const options = resolveCommandOptions<AddCommandInputOptions>(command);
   const context = await createContext(resolveGlobalOptions(program));
 
-  let parsed: ReturnType<typeof parseAddArgs>;
+  let parsed: ReturnType<typeof buildAddArgs>;
   try {
-    parsed = parseAddArgs(filteredTokens);
+    parsed = buildAddArgs({ targetArg, typeArg, contentArg, options });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw createUsageError(message);
@@ -298,17 +317,19 @@ async function handleAddCommand(
 
 async function handleRemoveCommand(
   program: Command,
-  command: Command,
-  options: { prompt?: boolean }
+  command: Command
 ): Promise<void> {
-  if (handlePromptOption("remove", options)) {
-    return;
-  }
-
-  const filteredTokens = extractCommandTokens(program, command);
+  const targets = command.args.map((arg) => String(arg));
+  const options = resolveCommandOptions<RemoveCommandInputOptions>(command);
   const context = await createContext(resolveGlobalOptions(program));
 
-  const parsedArgs = parseRemoveArgsOrExit(filteredTokens);
+  let parsedArgs: ReturnType<typeof buildRemoveArgs>;
+  try {
+    parsedArgs = buildRemoveArgs({ targets, options });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw createUsageError(message);
+  }
   const preview = await runRemoveCommand(parsedArgs, context, {
     writeOverride: false,
   });
@@ -319,45 +340,6 @@ async function handleRemoveCommand(
   }
 
   outputRemovalPreview(preview);
-}
-
-function handlePromptOption(
-  key: "remove" | "edit",
-  options: { prompt?: boolean }
-): boolean {
-  if (!options.prompt) {
-    return false;
-  }
-  const promptText = loadPrompt(key);
-  if (promptText) {
-    writeStdout(promptText);
-    return true;
-  }
-  throw new CliError(
-    "No agent prompt available for this command",
-    ExitCode.failure
-  );
-}
-
-function extractCommandTokens(_program: Command, command: Command): string[] {
-  const argvTokens = process.argv.slice(2);
-  const names = new Set([command.name(), ...command.aliases()]);
-  const commandIndex = argvTokens.findIndex((token) => names.has(token));
-  if (commandIndex === -1) {
-    return [];
-  }
-  return argvTokens
-    .slice(commandIndex + 1)
-    .filter((token) => token !== "--prompt" && token !== "--no-input");
-}
-
-function parseRemoveArgsOrExit(tokens: string[]): ParsedRemoveArgs {
-  try {
-    return parseRemoveArgs(tokens);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw createUsageError(message);
-  }
 }
 
 async function executeRemovalWriteFlow(
@@ -401,7 +383,6 @@ type ModifyCliOptions = {
   json?: boolean;
   jsonl?: boolean;
   interactive?: boolean;
-  prompt?: boolean;
 };
 
 // Match [[hash]], [[hash|alias]], or [[alias]]
@@ -515,10 +496,6 @@ async function handleModifyCommand(
   target: string | undefined,
   rawOptions: ModifyCliOptions
 ): Promise<void> {
-  if (handlePromptOption("edit", rawOptions)) {
-    return;
-  }
-
   if (rawOptions.json && rawOptions.jsonl) {
     throw createUsageError("--json and --jsonl cannot be used together");
   }
@@ -627,6 +604,41 @@ async function handleConfigCommand(
   if (result.exitCode !== 0) {
     throw new CliError("Config command failed", ExitCode.failure);
   }
+}
+
+function handleSkillResult(
+  result: Awaited<ReturnType<typeof runSkillCommand>>,
+  failureMessage: string
+): void {
+  if (result.output.length > 0) {
+    writeStdout(result.output);
+  }
+  if (result.exitCode !== 0) {
+    throw new CliError(failureMessage, ExitCode.failure);
+  }
+}
+
+async function handleSkillCommand(options: SkillCommandOptions): Promise<void> {
+  const result = await runSkillCommand(options);
+  handleSkillResult(result, "Skill command failed");
+}
+
+async function handleSkillShowCommand(
+  section: string,
+  options: SkillCommandOptions
+): Promise<void> {
+  const result = await runSkillShowCommand(section, options);
+  handleSkillResult(result, "Skill show failed");
+}
+
+async function handleSkillListCommand(): Promise<void> {
+  const result = await runSkillListCommand();
+  handleSkillResult(result, "Skill list failed");
+}
+
+function handleSkillPathCommand(): void {
+  const result = runSkillPathCommand();
+  handleSkillResult(result, "Skill path failed");
 }
 
 const MULTI_VALUE_OPTION_FLAGS = [
@@ -827,15 +839,6 @@ async function handleUnifiedCommand(
   paths: string[],
   options: Record<string, unknown>
 ): Promise<void> {
-  if (options.prompt) {
-    const promptText = loadPrompt("unified");
-    if (promptText) {
-      writeStdout(promptText);
-      return;
-    }
-    throw new CliError("No agent prompt available", ExitCode.failure);
-  }
-
   const context = await createContext(resolveGlobalOptions(program));
 
   const args = buildArgsFromOptions(paths, options);
@@ -863,6 +866,7 @@ const COMMAND_ORDER = [
   "lint",
   "init",
   "config",
+  "skill",
   "doctor",
   "completions",
   "update",
@@ -902,14 +906,7 @@ type OptionSection = {
 const ROOT_OPTION_SECTIONS: OptionSection[] = [
   {
     title: "Global Options",
-    longs: [
-      "--help",
-      "--version",
-      "--prompt",
-      "--no-input",
-      "--scope",
-      "--config",
-    ],
+    longs: ["--help", "--version", "--no-input", "--scope", "--config"],
   },
   {
     title: "Logging",
@@ -1095,7 +1092,6 @@ export async function createProgram(): Promise<Command> {
         .default("default")
     )
     .option("--config <path>", "load additional config file (JSON/YAML/TOML)")
-    .option("--prompt", "show agent-facing documentation")
     .option("--no-input", "fail if interactive input required")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
@@ -1114,7 +1110,7 @@ Exit Codes:
   3  Configuration error
   4  I/O error (file not found, permission denied)
 
-Note: Use --prompt flag with any command to see agent-facing documentation
+Note: For agent-facing documentation, use "wm skill".
 `
     )
     .hook("preAction", (thisCommand) => {
@@ -1130,27 +1126,13 @@ Note: Use --prompt flag with any command to see agent-facing documentation
       }
     });
 
-  // Custom help command that supports --prompt
+  // Custom help command
   program
     .command("help")
     .argument("[command]", "command to get help for")
-    .option("--prompt", "show agent-facing prompt instead of help")
     .description("display help for command")
-    .action((commandName?: string, options?: { prompt?: boolean }) => {
+    .action((commandName?: string) => {
       try {
-        if (options?.prompt) {
-          const promptText = loadPrompt(commandName || "unified");
-          if (promptText) {
-            writeStdout(promptText);
-          } else {
-            throw new CliError(
-              "No agent prompt available for this command",
-              ExitCode.failure
-            );
-          }
-          return;
-        }
-
         if (!commandName) {
           program.help();
           return;
@@ -1182,7 +1164,6 @@ Note: Use --prompt flag with any command to see agent-facing documentation
     .command("fmt", { hidden: true })
     .argument("[paths...]", "files or directories to format")
     .option("--write, -w", "write changes to file", false)
-    .option("--prompt", "show agent-facing prompt instead of help")
     .description("format and normalize waymark syntax in files")
     .addHelpText(
       "after",
@@ -1211,45 +1192,73 @@ After Formatting:
   // todo ::: implement auth
   // *fix ::: validate input
 
-See 'wm fmt --prompt' for agent-facing documentation.
+See 'wm skill show fmt' for agent-facing documentation.
     `
     )
-    .action(
-      async (
-        paths: string[],
-        options: { write?: boolean; prompt?: boolean }
-      ) => {
-        try {
-          await handleFormatCommand(program, paths, options);
-        } catch (error) {
-          handleCommandError(program, error);
-        }
+    .action(async (paths: string[], options: { write?: boolean }) => {
+      try {
+        await handleFormatCommand(program, paths, options);
+      } catch (error) {
+        handleCommandError(program, error);
       }
-    );
+    });
 
   program
     .command("add")
-    .allowUnknownOption(true)
-    .allowExcessArguments(true)
+    .argument("[target]", "waymark location (file:line)")
+    .argument("[type]", "waymark type (todo, fix, note, etc.)")
+    .argument("[content]", "waymark content text")
     .option(
       "--from <file>",
       "read waymark(s) from JSON/JSONL file (use - for stdin)"
     )
+    .option("--type <type>", "set waymark type when not provided positionally")
+    .option(
+      "--content <text>",
+      "set waymark content when not provided positionally"
+    )
+    .option(
+      "--position <position>",
+      "insert relative to line (before or after)",
+      parsePositionOption
+    )
+    .option("--before", "insert before target line")
+    .option("--after", "insert after target line")
     .option(
       "--mention <actor>",
-      "add mention (@agent, @alice) - can be repeated"
+      "add mention (@agent, @alice) - can be repeated",
+      collectOption,
+      []
     )
-    .option("--tag <tag>", "add hashtag (#perf, #sec) - can be repeated")
-    .option("--property <kv>", "add property (owner:@alice) - can be repeated")
-    .option("--see <token>", "add reference relation (see:#auth/core)")
-    .option("--docs <url>", "add documentation link")
-    .option("--source <token>", "add dependency relation (from:#token)")
-    .option("--replaces <token>", "add supersedes relation")
-    .option("--signal <signal>", "add signal: ~ (flagged) or * (starred)")
+    .option(
+      "--tag <tag>",
+      "add hashtag (#perf, #sec) - can be repeated",
+      collectOption,
+      []
+    )
+    .option(
+      "--property <kv>",
+      "add property (owner:@alice) - can be repeated",
+      collectValidatedOption(validatePropertyOption),
+      []
+    )
+    .option(
+      "--continuation <text>",
+      "add continuation line (repeatable)",
+      collectOption,
+      []
+    )
+    .option(
+      "--order <n>",
+      "insertion order for batch operations",
+      parseOrderOption
+    )
+    .option("--id <id>", "reserve specific ID ([[abcdef]])")
+    .option("--flagged, -F", "add flagged (~) signal")
+    .option("--starred", "add starred (*) signal")
     .option("--write, -w", "apply changes to file (default: preview)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
-    .option("--prompt", "show agent-facing prompt instead of help")
     .description("add waymarks into files")
     .addHelpText(
       "after",
@@ -1262,8 +1271,9 @@ Arguments:
 Examples:
   $ wm add src/auth.ts:42 todo "implement rate limiting"
   $ wm add src/db.ts:15 note "assumes UTC" --mention @alice --tag "#time"
-  $ wm add src/api.ts:100 fix "validate input" --signal *
-  $ wm add src/pay.ts:200 todo "add retry" --source "#infra/queue"
+  $ wm add src/api.ts:100 fix "validate input" --flagged
+  $ wm add src/pay.ts:200 todo "add retry" --tag "#infra/queue"
+  $ wm add src/auth.ts:10 todo "insert above" --before
   $ wm add --from waymarks.json
   $ echo '{"file":"src/a.ts","line":10,"type":"todo","content":"test"}' | wm add --from -
 
@@ -1278,13 +1288,12 @@ Types:
   Workflow:   blocked, needs
   Inquiry:    question
 
-See 'wm add --prompt' for agent-facing documentation.
+See 'wm skill show add' for agent-facing documentation.
     `
     )
-    .action(async function (this: Command, ...actionArgs: unknown[]) {
+    .action(async function (this: Command, ..._actionArgs: unknown[]) {
       try {
-        const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
-        await handleAddCommand(program, this, options);
+        await handleAddCommand(program, this);
       } catch (error) {
         handleCommandError(program, error);
       }
@@ -1313,7 +1322,6 @@ See 'wm add --prompt' for agent-facing documentation.
     )
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
-    .option("--prompt", "show agent-facing prompt instead of help")
     .description("edit existing waymarks");
 
   editCmd
@@ -1356,21 +1364,40 @@ Notes:
 
   program
     .command("rm")
-    .allowUnknownOption(true)
-    .allowExcessArguments(true)
-    .option("--id <id>", "remove waymark by ID ([[hash]])")
+    .argument("[targets...]", "waymark locations (file:line)")
+    .option("--id <id>", "remove waymark by ID ([[hash]])", collectOption, [])
     .option(
       "--from <file>",
       "read removal targets from JSON file (use - for stdin)"
     )
     .option("--reason <text>", "record a removal reason in history")
-    .option("--criteria <query>", "remove waymarks matching filter criteria")
+    .option("--type <marker>", "filter by waymark type")
+    .option("--tag <tag>", "filter by tag (repeatable)", collectOption, [])
+    .option(
+      "--mention <actor>",
+      "filter by mention (repeatable)",
+      collectOption,
+      []
+    )
+    .option(
+      "--property <kv>",
+      "filter by property (repeatable)",
+      collectValidatedOption(validatePropertyOption),
+      []
+    )
+    .option(
+      "--file <path>",
+      "filter by file path (repeatable)",
+      collectOption,
+      []
+    )
+    .option("--content-pattern <regex>", "filter by content regex")
+    .option("--contains <text>", "filter by content substring")
+    .option("--flagged, -F", "filter by flagged signal (~)")
+    .option("--starred, -S", "filter by starred signal (*)")
     .option("--write, -w", "actually remove (default is preview)", false)
-    .option("--yes, -y", "skip confirmation prompt", false)
-    .option("--confirm", "always show confirmation (even with --write)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
-    .option("--prompt", "show agent-facing prompt instead of help")
     .description("remove waymarks from files")
     .addHelpText(
       "after",
@@ -1378,39 +1405,40 @@ Notes:
 Removal Methods:
   1. By Location:     wm rm src/auth.ts:42
   2. By ID:           wm rm --id [[a3k9m2p]]
-  3. By Criteria:     wm rm --criteria "type:todo mention:@agent" src/
+  3. By Filter:       wm rm --type todo --mention @agent --file src/
   4. From JSON Input: wm rm --from waymarks.json
 
 Examples:
   $ wm rm src/auth.ts:42                      # Preview removal
   $ wm rm src/auth.ts:42 --write              # Actually remove
   $ wm rm --id [[a3k9m2p]] --write            # Remove by ID
-  $ wm rm --criteria "type:todo mention:@agent" src/ --write
+  $ wm rm --type todo --mention @agent --file src/ --write
   $ wm rm --from removals.json --write
   $ wm rm src/auth.ts:42 --write --reason "cleanup"
 
-Filter Criteria Syntax:
-  type:<marker>         Match waymark type (todo, fix, note, etc.)
-  mention:<actor>       Match mention (@agent, @alice)
-  tag:<hashtag>         Match tag (#perf, #sec)
-  signal:~              Match flagged waymarks
-  signal:*              Match starred waymarks (important/valuable)
-  contains:<text>       Match content containing text
+Filter Flags:
+  --type <marker>       Match waymark type (todo, fix, note, etc.)
+  --mention <actor>     Match mention (@agent, @alice)
+  --tag <hashtag>       Match tag (#perf, #sec)
+  --property <kv>       Match property key:value
+  --file <path>         Limit to matching file paths
+  --contains <text>     Match content containing text
+  --content-pattern <r> Match content using regex pattern
+  --flagged             Match flagged waymarks
+  --starred             Match starred waymarks (important/valuable)
 
 Safety Features:
   - Default mode is preview (shows what would be removed)
   - --write flag required for actual removal
-  - Confirmation prompt before removing (unless --yes)
   - Multi-line waymarks removed atomically
   - Removed waymarks tracked in .waymark/history.json (with optional --reason)
 
-See 'wm rm --prompt' for agent-facing documentation.
+See 'wm skill show rm' for agent-facing documentation.
     `
     )
-    .action(async function (this: Command, ...actionArgs: unknown[]) {
+    .action(async function (this: Command, ..._actionArgs: unknown[]) {
       try {
-        const options = (actionArgs.at(-1) ?? {}) as { prompt?: boolean };
-        await handleRemoveCommand(program, this, options);
+        await handleRemoveCommand(program, this);
       } catch (error) {
         handleCommandError(program, error);
       }
@@ -1439,7 +1467,6 @@ See 'wm rm --prompt' for agent-facing documentation.
     .command("lint", { hidden: true })
     .argument("[paths...]", "files or directories to lint")
     .option("--json", "output JSON", false)
-    .option("--prompt", "show agent-facing prompt instead of help")
     .description("validate waymark structure and enforce quality rules")
     .addHelpText(
       "after",
@@ -1467,21 +1494,16 @@ Example Output:
   src/auth.ts:34:1 - warn duplicate-property: Duplicate property key 'owner'
   ✖ 2 errors, 1 warning
 
-See 'wm lint --prompt' for agent-facing documentation.
+See 'wm skill show lint' for agent-facing documentation.
     `
     )
-    .action(
-      async (
-        paths: string[],
-        options: { json?: boolean; prompt?: boolean }
-      ) => {
-        try {
-          await handleLintCommand(program, paths, options);
-        } catch (error) {
-          handleCommandError(program, error);
-        }
+    .action(async (paths: string[], options: { json?: boolean }) => {
+      try {
+        await handleLintCommand(program, paths, options);
+      } catch (error) {
+        handleCommandError(program, error);
       }
-    );
+    });
 
   // Init command
   program
@@ -1528,6 +1550,53 @@ Examples:
     .action(async (options: ConfigCommandOptions) => {
       try {
         await handleConfigCommand(program, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  const skillCommand = program
+    .command("skill")
+    .description("show agent-facing skill documentation")
+    .option("--json", "output structured JSON")
+    .action(async (options: SkillCommandOptions) => {
+      try {
+        await handleSkillCommand(options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  skillCommand
+    .command("show")
+    .argument("<section>", "command, reference, or example to display")
+    .option("--json", "output structured JSON")
+    .description("show a specific skill section")
+    .action(async (section: string, options: SkillCommandOptions) => {
+      try {
+        await handleSkillShowCommand(section, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  skillCommand
+    .command("list")
+    .description("list available skill sections")
+    .action(async () => {
+      try {
+        await handleSkillListCommand();
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  skillCommand
+    .command("path")
+    .description("print the skill directory path")
+    .action(() => {
+      try {
+        handleSkillPathCommand();
       } catch (error) {
         handleCommandError(program, error);
       }
@@ -1586,7 +1655,7 @@ Exit Codes:
   1  Errors found or warnings in --strict mode
   2  Internal/tooling error
 
-See 'wm doctor --prompt' for agent-facing documentation.
+See 'wm skill show doctor' for agent-facing documentation.
     `
     )
     .action(async (paths: string[], options: DoctorCommandOptions) => {
@@ -1633,7 +1702,6 @@ See 'wm doctor --prompt' for agent-facing documentation.
       "--pretty",
       "(deprecated: use --text) output as pretty-printed JSON"
     )
-    .option("--prompt", "show agent-facing prompt instead of help")
     .description("scan and filter waymarks in files or directories")
     .addHelpText(
       "after",
@@ -1692,7 +1760,7 @@ Output Formats:
   --text                      (global) Human-readable formatted text (default)
   --pretty                    (deprecated: use --text)
 
-See 'wm find --prompt' for agent-facing documentation.
+See 'wm skill show find' for agent-facing documentation.
     `
     )
     .action(async function (
