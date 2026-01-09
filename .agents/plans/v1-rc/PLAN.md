@@ -4,7 +4,7 @@
 
 **Created:** 2026-01-08
 **Derived from:** SPEC.md, gold-standard-synthesis, fresh-eyes-review, 20260108-rc-plan-review, 20260108-rc-plan-opportunities
-**Status:** Ready for execution
+**Status:** In progress (implementation complete through P3; verification in progress)
 
 ## Overview
 
@@ -21,6 +21,8 @@ This plan synthesizes findings from three independent senior developer reviews a
 | **P3** | Documentation | 2-3 days | Quickstart, accurate docs |
 
 **Total estimated time:** 1.5-2 weeks
+
+<!-- note ::: P0-P3 tasks implemented in current stack as of 2026-01-09; remaining work is verification, polish, and any post-RC scope ref:#docs/plan/v1-rc/status #docs/plan #docs -->
 
 ---
 
@@ -44,6 +46,8 @@ This plan synthesizes findings from three independent senior developer reviews a
 | Add block comment parse tests | `packages/grammar/src/tokenizer.test.ts` | S | |
 | Add MCP concurrency limits + result cap | `apps/mcp/src/resources/todos.ts` | M | |
 | Add MCP limit tests | `apps/mcp/src/resources/todos.test.ts` | S | |
+
+<!-- done ::: P0 tasks implemented with tests in the current stack ref:#docs/plan/v1-rc/p0 #docs/plan #docs -->
 
 ### Definition of Done
 
@@ -81,6 +85,8 @@ See @blockers.md for implementation details and code samples.
 | **Output Consistency** | | | |
 | Create unified output adapter | `packages/cli/src/utils/output.ts` | M | |
 | Migrate commands to output adapter | Multiple files | M | |
+
+<!-- done ::: P1 tasks implemented with schema alignment + JSON validation in the current stack ref:#docs/plan/v1-rc/p1 #docs/plan #docs -->
 
 ### Definition of Done
 
@@ -137,6 +143,8 @@ See @blockers.md for implementation details and code samples.
 | Add relation contract tests | `packages/core/src/__tests__/contracts/relations.test.ts` | M | |
 | Add parse/format roundtrip tests | `packages/grammar/src/__tests__/roundtrip.test.ts` | M | |
 
+<!-- done ::: P2 tasks implemented (exit codes, terminal behavior, contracts) in the current stack ref:#docs/plan/v1-rc/p2 #docs/plan #docs -->
+
 ### Definition of Done
 
 - [ ] `wm lint bad-file.ts; echo $?` returns 1
@@ -192,6 +200,8 @@ See @cli-improvements.md for exit code taxonomy, TTY handling, and Commander mig
 | Ensure skill assets ship in CLI package | `packages/cli/package.json`, build scripts | S | |
 | Delete `.prompt.txt` and `.help.txt` files | `packages/cli/src/commands/` | S | |
 | Remove `--prompt` flag handling | Various | S | |
+
+<!-- done ::: P3 tasks implemented (docs, config, skill consolidation) in the current stack ref:#docs/plan/v1-rc/p3 #docs/plan #docs -->
 
 ### Definition of Done
 
@@ -310,10 +320,10 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| P0 | Not Started | 0/10 tasks |
-| P1 | Not Started | 0/10 tasks |
-| P2 | Not Started | 0/20 tasks |
-| P3 | Not Started | 0/25 tasks |
+| P0 | Implemented | 10/10 tasks |
+| P1 | Implemented | 10/10 tasks |
+| P2 | Implemented | 20/20 tasks |
+| P3 | Implemented | 25/25 tasks |
 
 ### Blockers
 

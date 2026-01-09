@@ -330,23 +330,23 @@ Add to CI:
 
 ### Must Fix (P3)
 
-- [ ] Add development quickstart to README
-- [ ] Document Bun version requirement
-- [ ] Create CONTRIBUTING.md
-- [ ] Fix or remove "thin dispatcher" claims
-- [ ] Clarify cache behavior claims
-- [ ] Fix or document `wm complete` alias status
-- [ ] Create `examples/` directory in skill structure
-  - [ ] `examples/workflows.md` - Multi-command recipes
-  - [ ] `examples/agent-tasks.md` - Common agent patterns
-  - [ ] `examples/batch-operations.md` - Bulk operations
-  - [ ] `examples/integration.md` - MCP, CI/CD, editor integration
+- [x] Add development quickstart to README
+- [x] Document Bun version requirement
+- [x] Create CONTRIBUTING.md
+- [x] Fix or remove "thin dispatcher" claims
+- [x] Clarify cache behavior claims
+- [x] Fix or document `wm complete` alias status
+- [x] Create `examples/` directory in skill structure
+  - [x] `examples/workflows.md` - Multi-command recipes
+  - [x] `examples/agent-tasks.md` - Common agent patterns
+  - [x] `examples/batch-operations.md` - Bulk operations
+  - [x] `examples/integration.md` - MCP, CI/CD, editor integration
 
 ### Should Fix
 
-- [ ] Add "Waymarks Are Not Docstrings" section
-- [ ] Document exit codes in README
-- [ ] Add help snapshot tests
+- [x] Add "Waymarks Are Not Docstrings" section
+- [x] Document exit codes in README
+- [x] Add help snapshot tests
 - [ ] Verify all README examples work
 - [ ] Verify `wm skill show` works for all example sections
 
@@ -354,7 +354,7 @@ Add to CI:
 
 - [ ] Add automated docs verification script
 - [ ] Create architecture diagram
-- [ ] Add troubleshooting section
+- [x] Add troubleshooting section
 - [ ] Document MCP server setup
 
 ---

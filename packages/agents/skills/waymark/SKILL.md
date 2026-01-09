@@ -83,5 +83,7 @@ Markers (examples):
 
 - Command docs: `wm skill show <command>`
 - References: `wm skill show schemas` or `wm skill show exit-codes`
+- Skill format: `wm skill show skill-format`
+- Project-specific skills: `wm skill show project-skills`
 - Examples: `wm skill show workflows`
 - CLI help: `wm <command> --help`
