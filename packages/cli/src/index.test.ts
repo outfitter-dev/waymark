@@ -11,7 +11,7 @@ import { expandFormatPaths, formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
 import type { ModifyPayload } from "./commands/modify";
-import { parseScanArgs, scanRecords } from "./commands/scan";
+import { parseScanArgs, scanRecords, type ScanMetrics } from "./commands/scan";
 import {
   runUnifiedCommand,
   type UnifiedCommandResult,
@@ -111,6 +111,52 @@ describe("CLI handlers", () => {
     expect(records).toHaveLength(2);
     expect(records[0]?.type).toBe("todo");
     await cleanup();
+  });
+
+  test("scan command caches results when enabled", async () => {
+    const source = "// todo ::: cached";
+    const { file, cleanup } = await withTempFile(source);
+    const cacheRoot = join(process.cwd(), "test-cache");
+    await mkdir(cacheRoot, { recursive: true });
+    const cacheDir = await mkdtemp(join(cacheRoot, "scan-cache-"));
+    const cachePath = join(cacheDir, "waymark-cache.db");
+
+    try {
+      const firstMetrics: ScanMetrics = {
+        totalFiles: 0,
+        parsedFiles: 0,
+        cachedFiles: 0,
+        skippedFiles: 0,
+        durationMs: 0,
+      };
+      const first = await scanRecords([file], defaultContext.config, {
+        cache: true,
+        cachePath,
+        metrics: firstMetrics,
+      });
+      expect(first).toHaveLength(1);
+      expect(firstMetrics.parsedFiles).toBe(1);
+      expect(firstMetrics.cachedFiles).toBe(0);
+
+      const secondMetrics: ScanMetrics = {
+        totalFiles: 0,
+        parsedFiles: 0,
+        cachedFiles: 0,
+        skippedFiles: 0,
+        durationMs: 0,
+      };
+      const second = await scanRecords([file], defaultContext.config, {
+        cache: true,
+        cachePath,
+        metrics: secondMetrics,
+      });
+      expect(second).toHaveLength(1);
+      expect(secondMetrics.cachedFiles).toBe(1);
+      expect(secondMetrics.parsedFiles).toBe(0);
+    } finally {
+      await rm(cacheDir, { recursive: true, force: true });
+      await cleanup();
+    }
   });
 
   test("scan command includes legacy codetags when enabled", async () => {

@@ -134,10 +134,10 @@ The CLI relies on the core formatter and parser helpers exported from `@waymarks
 
 ### Cache Usage
 
-The SQLite cache infrastructure exists but CLI scans do not populate it yet. Cache
-integration is planned for a future release. For now, the cache is available
-programmatically via `@waymarks/core` (see `WaymarkCache`), and `wm doctor` reports
-cache directory health.
+The CLI can populate and reuse the SQLite cache for faster repeated scans by
+passing the global `--cache` flag (disabled by default). The cache is also
+available programmatically via `@waymarks/core` (see `WaymarkCache`), and
+`wm doctor` reports cache directory health.
 
 ### Exit Codes
 

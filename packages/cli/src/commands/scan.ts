@@ -1,15 +1,36 @@
 // tldr ::: scan command helpers for waymark CLI
 
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { performance } from "node:perf_hooks";
 
-import { parse, type WaymarkConfig, type WaymarkRecord } from "@waymarks/core";
+import {
+  parse,
+  type WaymarkConfig,
+  type WaymarkRecord,
+  WaymarkCache,
+} from "@waymarks/core";
 
 import { expandInputPaths } from "../utils/fs";
+import { logger } from "../utils/logger";
 import type { ScanOutputFormat } from "../utils/output";
 
 export type ParsedScanArgs = {
   filePaths: string[];
   format?: ScanOutputFormat;
+};
+
+export type ScanMetrics = {
+  totalFiles: number;
+  parsedFiles: number;
+  cachedFiles: number;
+  skippedFiles: number;
+  durationMs: number;
+};
+
+export type ScanRuntimeOptions = {
+  cache?: boolean;
+  cachePath?: string;
+  metrics?: ScanMetrics;
 };
 
 type LegacyPattern = {
@@ -88,23 +109,83 @@ function scanLegacyCodetags(source: string, filePath: string): WaymarkRecord[] {
 
 export async function scanRecords(
   filePaths: string[],
-  config: WaymarkConfig
+  config: WaymarkConfig,
+  options: ScanRuntimeOptions = {}
 ): Promise<WaymarkRecord[]> {
   const files = await expandInputPaths(filePaths, config);
   const records: WaymarkRecord[] = [];
+  const cache = createCache(options);
+  const cacheEnabled = Boolean(cache);
+  const startTime = performance.now();
+  let parsedFiles = 0;
+  let cachedFiles = 0;
+  let skippedFiles = 0;
 
-  for (const filePath of files) {
-    const source = await readFile(filePath, "utf8").catch(() => null);
-    if (typeof source !== "string") {
-      continue;
+  try {
+    for (const filePath of files) {
+      const fileStats = cacheEnabled
+        ? await stat(filePath).catch(() => null)
+        : null;
+      if (
+        cacheEnabled &&
+        fileStats &&
+        !cache?.isFileStale(filePath, fileStats.mtimeMs, fileStats.size)
+      ) {
+        records.push(...cache.findByFile(filePath));
+        cachedFiles += 1;
+        continue;
+      }
+
+      const source = await readFile(filePath, "utf8").catch(() => null);
+      if (typeof source !== "string") {
+        skippedFiles += 1;
+        continue;
+      }
+
+      const parsed = parse(source, { file: filePath });
+      if (config.scan?.includeCodetags) {
+        parsed.push(...scanLegacyCodetags(source, filePath));
+      }
+      records.push(...parsed);
+      parsedFiles += 1;
+
+      if (cacheEnabled && fileStats) {
+        cache.replaceFileWaymarks({
+          filePath,
+          mtime: fileStats.mtimeMs,
+          size: fileStats.size,
+          records: parsed,
+        });
+      }
     }
-    records.push(...parse(source, { file: filePath }));
-    if (config.scan?.includeCodetags) {
-      records.push(...scanLegacyCodetags(source, filePath));
-    }
+  } finally {
+    cache?.close();
   }
 
+  const durationMs = Math.round(performance.now() - startTime);
+  const metrics: ScanMetrics = {
+    totalFiles: files.length,
+    parsedFiles,
+    cachedFiles,
+    skippedFiles,
+    durationMs,
+  };
+  if (options.metrics) {
+    Object.assign(options.metrics, metrics);
+  }
+  logger.debug({ cache: cacheEnabled, ...metrics }, "scan completed");
+
   return records;
+}
+
+function createCache(options: ScanRuntimeOptions): WaymarkCache | undefined {
+  if (!options.cache) {
+    return;
+  }
+  if (options.cachePath) {
+    return new WaymarkCache({ dbPath: options.cachePath });
+  }
+  return new WaymarkCache();
 }
 
 export function parseScanArgs(argv: string[]): ParsedScanArgs {

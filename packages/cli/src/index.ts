@@ -36,7 +36,7 @@ import {
   type RemoveCommandInputOptions,
   runRemoveCommand,
 } from "./commands/remove.ts";
-import { scanRecords } from "./commands/scan.ts";
+import { type ScanRuntimeOptions, scanRecords } from "./commands/scan.ts";
 import {
   runSkillCommand,
   runSkillListCommand,
@@ -81,10 +81,12 @@ function resolveGlobalOptions(program: Command): GlobalOptions {
   const configPathRaw = typeof opts.config === "string" ? opts.config : "";
   const configPath =
     configPathRaw.trim().length > 0 ? configPathRaw : undefined;
+  const cacheEnabled = Boolean(opts.cache);
 
   return {
     scope: normalizeScope(scopeValue),
     ...(configPath ? { configPath } : {}),
+    ...(cacheEnabled ? { cache: true } : {}),
   };
 }
 
@@ -390,9 +392,10 @@ const ID_PATTERN_REGEX = /\[\[[^\]]+\]\]/i;
 
 async function resolveInteractiveTarget(
   workspaceRoot: string,
-  config: WaymarkConfig
+  config: WaymarkConfig,
+  scanOptions?: ScanRuntimeOptions
 ): Promise<{ target: string; id?: string | undefined }> {
-  const records = await scanRecords([workspaceRoot], config);
+  const records = await scanRecords([workspaceRoot], config, scanOptions);
   if (records.length === 0) {
     throw new CliError("No waymarks found to edit.", ExitCode.failure);
   }
@@ -513,7 +516,9 @@ async function handleModifyCommand(
 
   if (interactiveOverride === true && !resolvedTarget && !resolvedId) {
     const { target: interactiveTarget, id: interactiveId } =
-      await resolveInteractiveTarget(context.workspaceRoot, context.config);
+      await resolveInteractiveTarget(context.workspaceRoot, context.config, {
+        cache: context.globalOptions.cache,
+      });
     resolvedTarget = interactiveTarget;
     resolvedId = interactiveId;
   }
@@ -1092,6 +1097,7 @@ export async function createProgram(): Promise<Command> {
         .default("default")
     )
     .option("--config <path>", "load additional config file (JSON/YAML/TOML)")
+    .option("--cache", "use scan cache for faster repeated runs")
     .option("--no-input", "fail if interactive input required")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
