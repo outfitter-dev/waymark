@@ -16,11 +16,6 @@ const commonFlags = {
     type: "boolean",
     description: "Show version number",
   },
-  prompt: {
-    name: "prompt",
-    type: "boolean",
-    description: "Show agent-facing prompt instead of executing",
-  },
   config: {
     name: "config",
     type: "string",
@@ -143,7 +138,6 @@ export const commands: HelpRegistry = {
     flags: [
       commonFlags.write,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -161,7 +155,6 @@ export const commands: HelpRegistry = {
     flags: [
       commonFlags.json,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -301,7 +294,6 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -361,7 +353,6 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -464,7 +455,6 @@ export const commands: HelpRegistry = {
       commonFlags.json,
       commonFlags.jsonl,
       commonFlags.config,
-      commonFlags.prompt,
       commonFlags.help,
     ],
     examples: [
@@ -674,7 +664,6 @@ queries, filtering by type/tag/mention, and multiple output formats.
     commonFlags.page,
     commonFlags.config,
     commonFlags.scope,
-    commonFlags.prompt,
     commonFlags.help,
     commonFlags.version,
   ],
