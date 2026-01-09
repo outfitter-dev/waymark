@@ -6,36 +6,30 @@ import { join } from "node:path";
 import { resolveConfig } from "@waymarks/core";
 
 import type { CommandContext } from "../types";
-import { parseAddArgs, runAddCommand } from "./add";
+import { buildAddArgs, runAddCommand } from "./add";
 
 const SAMPLE_LINE = 42;
 const TODO_HANDLER_REGEX = /todo ::: document handler/;
 const ANY_ID_REGEX = /\[\[[a-z0-9]+\]\]/;
 const JSON_VALIDATION_ERROR_REGEX = /JSON validation failed/;
 
-describe("parseAddArgs", () => {
+describe("buildAddArgs", () => {
   test("parses inline arguments", () => {
-    const parsed = parseAddArgs([
-      `src/auth.ts:${SAMPLE_LINE}`,
-      "--type",
-      "todo",
-      "--content",
-      "add rate limiting",
-      "--tag",
-      "#security",
-      "--mention",
-      "@alice",
-      "--property",
-      "owner:@alice",
-      "--flagged",
-      "--starred",
-      "--continuation",
-      "follow up with team",
-      "--order",
-      "2",
-      "--id",
-      "[[custom123]]",
-    ]);
+    const parsed = buildAddArgs({
+      targetArg: `src/auth.ts:${SAMPLE_LINE}`,
+      options: {
+        type: "todo",
+        content: "add rate limiting",
+        tag: ["#security"],
+        mention: ["@alice"],
+        property: ["owner:@alice"],
+        flagged: true,
+        starred: true,
+        continuation: ["follow up with team"],
+        order: "2",
+        id: "[[custom123]]",
+      },
+    });
 
     expect(parsed.options.write).toBe(false);
     expect(parsed.options.json).toBe(false);
@@ -60,7 +54,9 @@ describe("parseAddArgs", () => {
   });
 
   test("supports --from for batch insert", () => {
-    const parsed = parseAddArgs(["--from", "batch.json", "--json"]);
+    const parsed = buildAddArgs({
+      options: { from: "batch.json", json: true },
+    });
     expect(parsed.options.from).toBe("batch.json");
     expect(parsed.options.json).toBe(true);
     expect(parsed.specs).toHaveLength(0);
@@ -86,17 +82,14 @@ describe("runAddCommand", () => {
       encoding: "utf8",
     });
 
-    const parsed = parseAddArgs([
-      `${sourcePath}:1`,
-      "--type",
-      "todo",
-      "--content",
-      "document handler",
-      "--write",
-    ]);
-
-    // Ensure write flag set for runAddCommand
-    parsed.options.write = true;
+    const parsed = buildAddArgs({
+      targetArg: `${sourcePath}:1`,
+      options: {
+        type: "todo",
+        content: "document handler",
+        write: true,
+      },
+    });
 
     const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
@@ -134,7 +127,9 @@ describe("runAddCommand", () => {
     });
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
-    const parsed = parseAddArgs(["--from", invalidJsonPath]);
+    const parsed = buildAddArgs({
+      options: { from: invalidJsonPath },
+    });
     const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
@@ -163,7 +158,9 @@ describe("runAddCommand", () => {
     });
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
-    const parsed = parseAddArgs(["--from", invalidJsonPath]);
+    const parsed = buildAddArgs({
+      options: { from: invalidJsonPath },
+    });
     const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
@@ -207,7 +204,9 @@ describe("runAddCommand", () => {
     });
     await writeFile(validJsonPath, validJson, "utf8");
 
-    const parsed = parseAddArgs(["--from", validJsonPath, "--write", "--json"]);
+    const parsed = buildAddArgs({
+      options: { from: validJsonPath, write: true, json: true },
+    });
     const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
@@ -241,7 +240,9 @@ describe("runAddCommand", () => {
     ]);
     await writeFile(batchJsonPath, batchJson, "utf8");
 
-    const parsed = parseAddArgs(["--from", batchJsonPath, "--write"]);
+    const parsed = buildAddArgs({
+      options: { from: batchJsonPath, write: true },
+    });
     const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
@@ -276,7 +277,9 @@ describe("runAddCommand", () => {
     });
     await writeFile(wrapperJsonPath, wrapperJson, "utf8");
 
-    const parsed = parseAddArgs(["--from", wrapperJsonPath, "--write"]);
+    const parsed = buildAddArgs({
+      options: { from: wrapperJsonPath, write: true },
+    });
     const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
@@ -315,7 +318,9 @@ describe("runAddCommand", () => {
     );
 
     try {
-      const parsed = parseAddArgs(["--from", "-", "--write"]);
+      const parsed = buildAddArgs({
+        options: { from: "-", write: true },
+      });
       const config = resolveConfig({ ids: { mode: "auto" } });
       const context: CommandContext = {
         config,

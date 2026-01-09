@@ -11,8 +11,10 @@ import {
 import { ZodError, z } from "zod";
 
 import type { CommandContext } from "../types.ts";
+import { parseFileLineTarget } from "../utils/file-line.ts";
 import { createIdManager } from "../utils/id-manager.ts";
 import { logger } from "../utils/logger.ts";
+import { parsePropertyEntry } from "../utils/properties.ts";
 import { readFromStdin } from "../utils/stdin.ts";
 
 export type AddSummary = {
@@ -29,63 +31,58 @@ export type AddCommandOptions = {
   from?: string;
 };
 
+export type AddCommandInputOptions = {
+  from?: string;
+  type?: string;
+  content?: string;
+  position?: string;
+  before?: boolean;
+  after?: boolean;
+  mention?: string[] | string;
+  tag?: string[] | string;
+  property?: string[] | string;
+  continuation?: string[] | string;
+  order?: string | number;
+  id?: string;
+  flagged?: boolean;
+  starred?: boolean;
+  write?: boolean;
+  json?: boolean;
+  jsonl?: boolean;
+};
+
+export type AddCommandInput = {
+  targetArg?: string;
+  typeArg?: string;
+  contentArg?: string;
+  options: AddCommandInputOptions;
+};
+
 export type ParsedAddArgs = {
   specs: InsertionSpec[];
   options: AddCommandOptions;
 };
 
-export function parseAddArgs(argv: string[]): ParsedAddArgs {
-  const state: InsertParseState = {
-    optionState: {
-      write: false,
-      json: false,
-      jsonl: false,
-    },
-    tags: [],
-    mentions: [],
-    continuations: [],
-    properties: {},
-    signals: { flagged: false, starred: false },
-  };
+export function buildAddArgs(input: AddCommandInput): ParsedAddArgs {
+  const state = createInitialState();
+  const { options } = input;
 
-  let cursor = 0;
-  while (cursor < argv.length) {
-    const token = argv[cursor];
-    if (token === undefined) {
-      break;
-    }
-    cursor += 1;
+  assertAddOptionConflicts(options, input.typeArg, input.contentArg);
+  applyOptionFlags(state, options);
+  applyPositionalFields(state, input, options);
+  applyPositionOptions(state, options);
+  applyMetadata(state, options);
+  applySignalFlags(state, options);
+  applyOrderAndId(state, options);
 
-    if (!token.startsWith("--")) {
-      handlePositionalToken(token, state);
-      continue;
-    }
-
-    const valueHandler = VALUE_FLAG_HANDLERS[token];
-    if (valueHandler) {
-      const [value, nextCursor] = readNextValue(argv, cursor, token);
-      cursor = nextCursor;
-      valueHandler(state, value);
-      continue;
-    }
-
-    const flagHandler = SIMPLE_FLAG_HANDLERS[token];
-    if (flagHandler) {
-      flagHandler(state);
-      continue;
-    }
-
-    throw new Error(`Unknown flag: ${token}`);
-  }
-
-  const options = buildInsertOptions(state);
+  const insertOptions = buildInsertOptions(state);
   if (state.from !== undefined) {
     validateFromMode(state);
-    return { specs: [], options };
+    return { specs: [], options: insertOptions };
   }
 
   const spec = buildInsertionSpec(state);
-  return { specs: [spec], options };
+  return { specs: [spec], options: insertOptions };
 }
 
 type InsertParseState = {
@@ -104,119 +101,136 @@ type InsertParseState = {
   from?: string;
 };
 
-const VALUE_FLAG_HANDLERS: Record<
-  string,
-  (state: InsertParseState, value: string) => void
-> = {
-  "--from": (state, value) => {
-    state.from = value;
-  },
-  "--type": (state, value) => {
-    state.type = value;
-  },
-  "--content": (state, value) => {
-    state.content = value;
-  },
-  "--position": (state, value) => {
-    if (value !== "before" && value !== "after") {
-      throw new Error("--position must be 'before' or 'after'");
-    }
-    state.position = value;
-  },
-  "--tag": (state, value) => {
-    state.tags.push(value);
-  },
-  "--mention": (state, value) => {
-    state.mentions.push(value);
-  },
-  "--property": (state, value) => {
-    const separatorIndex =
-      value.indexOf("=") >= 0 ? value.indexOf("=") : value.indexOf(":");
-    if (separatorIndex === -1) {
-      throw new Error("--property expects key=value or key:value format");
-    }
-    const key = value.slice(0, separatorIndex).trim();
-    const propValue = value.slice(separatorIndex + 1).trim();
-    if (!(key && propValue)) {
-      throw new Error("--property expects key=value or key:value format");
-    }
-    state.properties[key] = propValue;
-  },
-  "--continuation": (state, value) => {
-    state.continuations.push(value);
-  },
-  "--order": (state, value) => {
-    const parsed = Number.parseInt(value, 10);
-    if (!Number.isFinite(parsed)) {
-      throw new Error("--order expects an integer");
-    }
-    state.order = parsed;
-  },
-  "--id": (state, value) => {
-    state.id = value;
-  },
-};
-
-const SIMPLE_FLAG_HANDLERS: Record<string, (state: InsertParseState) => void> =
-  {
-    "--write": (state) => {
-      state.optionState.write = true;
+function createInitialState(): InsertParseState {
+  return {
+    optionState: {
+      write: false,
+      json: false,
+      jsonl: false,
     },
-    "--json": (state) => {
-      if (state.optionState.jsonl) {
-        throw new Error("--json and --jsonl are mutually exclusive");
-      }
-      state.optionState.json = true;
-    },
-    "--jsonl": (state) => {
-      if (state.optionState.json) {
-        throw new Error("--json and --jsonl are mutually exclusive");
-      }
-      state.optionState.jsonl = true;
-    },
-    "--before": (state) => {
-      state.position = "before";
-    },
-    "--after": (state) => {
-      state.position = "after";
-    },
-    "--flagged": (state) => {
-      state.signals.flagged = true;
-    },
-    "--starred": (state) => {
-      state.signals.starred = true;
-    },
+    tags: [],
+    mentions: [],
+    continuations: [],
+    properties: {},
+    signals: { flagged: false, starred: false },
   };
-
-function readNextValue(
-  argv: string[],
-  cursor: number,
-  flag: string
-): [string, number] {
-  const value = argv[cursor];
-  if (value === undefined || value.startsWith("--")) {
-    throw new Error(`Flag ${flag} requires a value`);
-  }
-  return [value, cursor + 1];
 }
 
-function handlePositionalToken(token: string, state: InsertParseState): void {
-  if (state.from !== undefined) {
-    throw new Error("Cannot mix positional arguments with --from");
+function assertAddOptionConflicts(
+  options: AddCommandInputOptions,
+  typeArg?: string,
+  contentArg?: string
+): void {
+  if (options.position && (options.before || options.after)) {
+    throw new Error("Use --position or --before/--after (not both).");
   }
-  if (!state.fileLine) {
-    state.fileLine = token;
+  if (options.before && options.after) {
+    throw new Error("Cannot combine --before and --after.");
+  }
+  if (options.type && typeArg) {
+    throw new Error("Cannot combine --type with positional <type>.");
+  }
+  if (options.content && contentArg) {
+    throw new Error("Cannot combine --content with positional <content>.");
+  }
+}
+
+function applyOptionFlags(
+  state: InsertParseState,
+  options: AddCommandInputOptions
+): void {
+  state.optionState.write = Boolean(options.write);
+  state.optionState.json = Boolean(options.json);
+  state.optionState.jsonl = Boolean(options.jsonl);
+  if (options.from !== undefined) {
+    state.from = options.from;
+  }
+}
+
+function applyPositionalFields(
+  state: InsertParseState,
+  input: AddCommandInput,
+  options: AddCommandInputOptions
+): void {
+  state.fileLine = input.targetArg;
+  state.type = options.type ?? input.typeArg;
+  state.content = options.content ?? input.contentArg;
+}
+
+function applyPositionOptions(
+  state: InsertParseState,
+  options: AddCommandInputOptions
+): void {
+  if (options.position) {
+    assertValidPosition(options.position);
+    state.position = options.position;
     return;
   }
-  if (!state.type) {
-    state.type = token;
-    return;
+  if (options.before) {
+    state.position = "before";
   }
-  if (!state.content) {
-    state.content = token;
-    return;
+  if (options.after) {
+    state.position = "after";
   }
-  throw new Error(`Unexpected positional argument: ${token}`);
+}
+
+function assertValidPosition(value: string): void {
+  if (value !== "before" && value !== "after") {
+    throw new Error("--position must be 'before' or 'after'");
+  }
+}
+
+function applyMetadata(
+  state: InsertParseState,
+  options: AddCommandInputOptions
+): void {
+  state.tags = normalizeOptionValues(options.tag);
+  state.mentions = normalizeOptionValues(options.mention);
+  state.continuations = normalizeOptionValues(options.continuation);
+  state.properties = parseProperties(options.property);
+}
+
+function parseProperties(value: unknown): Record<string, string> {
+  const properties: Record<string, string> = {};
+  for (const property of normalizeOptionValues(value)) {
+    const parsed = parsePropertyEntry(property);
+    properties[parsed.key] = parsed.value;
+  }
+  return properties;
+}
+
+function applySignalFlags(
+  state: InsertParseState,
+  options: AddCommandInputOptions
+): void {
+  state.signals.flagged = Boolean(options.flagged);
+  state.signals.starred = Boolean(options.starred);
+}
+
+function applyOrderAndId(
+  state: InsertParseState,
+  options: AddCommandInputOptions
+): void {
+  if (options.order !== undefined && options.order !== null) {
+    const parsedOrder = Number.parseInt(String(options.order), 10);
+    if (!Number.isFinite(parsedOrder)) {
+      throw new Error("--order expects an integer");
+    }
+    state.order = parsedOrder;
+  }
+  if (options.id) {
+    state.id = String(options.id);
+  }
+}
+
+function normalizeOptionValues(value: unknown): string[] {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item));
+  }
+  return [String(value)];
 }
 
 function validateFromMode(state: InsertParseState): void {
@@ -261,17 +275,10 @@ function ensureRequiredFields(state: InsertParseState): {
 }
 
 function parseFileLine(value: string): { file: string; line: number } {
-  const colonIndex = value.lastIndexOf(":");
-  if (colonIndex === -1) {
-    throw new Error("Positional argument must be FILE:LINE");
-  }
-  const file = value.slice(0, colonIndex).trim();
-  const lineValue = value.slice(colonIndex + 1).trim();
-  const line = Number.parseInt(lineValue, 10);
-  if (!file || Number.isNaN(line) || line <= 0) {
-    throw new Error("Invalid FILE:LINE positional argument");
-  }
-  return { file, line };
+  return parseFileLineTarget(value, {
+    missingSeparator: "Positional argument must be FILE:LINE",
+    invalidLine: "Invalid FILE:LINE positional argument",
+  });
 }
 
 function buildInsertionSpec(state: InsertParseState): InsertionSpec {

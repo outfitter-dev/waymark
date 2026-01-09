@@ -6,7 +6,11 @@ import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
 import { Command, CommanderError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
-import { parseAddArgs, runAddCommand } from "./commands/add.ts";
+import {
+  type AddCommandInputOptions,
+  buildAddArgs,
+  runAddCommand,
+} from "./commands/add.ts";
 import {
   type ConfigCommandOptions,
   runConfigCommand,
@@ -22,8 +26,9 @@ import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
 import {
+  buildRemoveArgs,
   type ParsedRemoveArgs,
-  parseRemoveArgs,
+  type RemoveCommandInputOptions,
   runRemoveCommand,
 } from "./commands/remove.ts";
 import { scanRecords } from "./commands/scan.ts";
@@ -115,243 +120,14 @@ function resolveErrorMessage(error: unknown): string {
   return "Unexpected error";
 }
 
-type AddCommanderOptions = {
-  from?: string;
-  type?: string;
-  content?: string;
-  position?: string;
-  before?: boolean;
-  after?: boolean;
-  mention?: string[] | string;
-  tag?: string[] | string;
-  property?: string[] | string;
-  continuation?: string[] | string;
-  order?: string | number;
-  id?: string;
-  flagged?: boolean;
-  starred?: boolean;
-  write?: boolean;
-  json?: boolean;
-  jsonl?: boolean;
-};
-
-type RemoveCommanderOptions = {
-  id?: string[] | string;
-  from?: string;
-  reason?: string;
-  type?: string;
-  tag?: string[] | string;
-  mention?: string[] | string;
-  property?: string[] | string;
-  file?: string[] | string;
-  contentPattern?: string;
-  contains?: string;
-  flagged?: boolean;
-  starred?: boolean;
-  write?: boolean;
-  json?: boolean;
-  jsonl?: boolean;
-};
-
 function collectOption(value: string, previous: string[] = []): string[] {
   return [...previous, value];
 }
-
-function normalizeOptionValues(value: unknown): string[] {
-  if (value === undefined || value === null) {
-    return [];
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item));
-  }
-  return [String(value)];
-}
-
-type OptionDescriptor<T> = {
-  key: keyof T;
-  flag: string;
-};
-
-const ADD_VALUE_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
-  { key: "from", flag: "--from" },
-  { key: "type", flag: "--type" },
-  { key: "content", flag: "--content" },
-  { key: "position", flag: "--position" },
-];
-
-const ADD_ARRAY_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
-  { key: "mention", flag: "--mention" },
-  { key: "tag", flag: "--tag" },
-  { key: "property", flag: "--property" },
-  { key: "continuation", flag: "--continuation" },
-];
-
-const ADD_TAIL_VALUE_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
-  { key: "order", flag: "--order" },
-  { key: "id", flag: "--id" },
-];
-
-const ADD_POSITION_FLAGS: OptionDescriptor<AddCommanderOptions>[] = [
-  { key: "before", flag: "--before" },
-  { key: "after", flag: "--after" },
-];
-
-const ADD_BOOLEAN_OPTIONS: OptionDescriptor<AddCommanderOptions>[] = [
-  { key: "flagged", flag: "--flagged" },
-  { key: "starred", flag: "--starred" },
-  { key: "write", flag: "--write" },
-  { key: "json", flag: "--json" },
-  { key: "jsonl", flag: "--jsonl" },
-];
-
-const REMOVE_ID_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
-  { key: "id", flag: "--id" },
-];
-
-const REMOVE_VALUE_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
-  { key: "from", flag: "--from" },
-  { key: "reason", flag: "--reason" },
-  { key: "type", flag: "--type" },
-];
-
-const REMOVE_ARRAY_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
-  { key: "tag", flag: "--tag" },
-  { key: "mention", flag: "--mention" },
-  { key: "property", flag: "--property" },
-  { key: "file", flag: "--file" },
-];
-
-const REMOVE_TAIL_VALUE_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
-  { key: "contentPattern", flag: "--content-pattern" },
-  { key: "contains", flag: "--contains" },
-];
-
-const REMOVE_BOOLEAN_OPTIONS: OptionDescriptor<RemoveCommanderOptions>[] = [
-  { key: "flagged", flag: "--flagged" },
-  { key: "starred", flag: "--starred" },
-  { key: "write", flag: "--write" },
-  { key: "json", flag: "--json" },
-  { key: "jsonl", flag: "--jsonl" },
-];
 
 function resolveCommandOptions<T extends object>(command: Command): T {
   return typeof command.optsWithGlobals === "function"
     ? (command.optsWithGlobals() as T)
     : (command.opts() as T);
-}
-
-function appendPositionalArgs(
-  tokens: string[],
-  values: Array<string | undefined>
-): void {
-  for (const value of values) {
-    if (value) {
-      tokens.push(value);
-    }
-  }
-}
-
-function appendValueOptions<T extends object>(
-  tokens: string[],
-  options: T,
-  descriptors: OptionDescriptor<T>[]
-): void {
-  for (const { key, flag } of descriptors) {
-    const value = options[key];
-    if (value === undefined || value === null) {
-      continue;
-    }
-    tokens.push(flag, String(value));
-  }
-}
-
-function appendArrayOptions<T extends object>(
-  tokens: string[],
-  options: T,
-  descriptors: OptionDescriptor<T>[]
-): void {
-  for (const { key, flag } of descriptors) {
-    for (const value of normalizeOptionValues(options[key])) {
-      tokens.push(flag, value);
-    }
-  }
-}
-
-function appendBooleanOptions<T extends object>(
-  tokens: string[],
-  options: T,
-  descriptors: OptionDescriptor<T>[]
-): void {
-  for (const { key, flag } of descriptors) {
-    if (options[key]) {
-      tokens.push(flag);
-    }
-  }
-}
-
-function assertAddOptionConflicts(
-  options: AddCommanderOptions,
-  typeArg?: string,
-  contentArg?: string
-): void {
-  const conflicts = [
-    {
-      when: Boolean(options.position && (options.before || options.after)),
-      message: "Use --position or --before/--after (not both).",
-    },
-    {
-      when: Boolean(options.before && options.after),
-      message: "Cannot combine --before and --after.",
-    },
-    {
-      when: Boolean(options.type && typeArg),
-      message: "Cannot combine --type with positional <type>.",
-    },
-    {
-      when: Boolean(options.content && contentArg),
-      message: "Cannot combine --content with positional <content>.",
-    },
-  ];
-
-  for (const conflict of conflicts) {
-    if (conflict.when) {
-      throw createUsageError(conflict.message);
-    }
-  }
-}
-
-function buildAddArgsFromCommander(command: Command): string[] {
-  const args = command.args.map((arg) => String(arg));
-  const [targetArg, typeArg, contentArg] = args;
-  const options = resolveCommandOptions<AddCommanderOptions>(command);
-
-  assertAddOptionConflicts(options, typeArg, contentArg);
-
-  const tokens: string[] = [];
-  appendPositionalArgs(tokens, [targetArg, typeArg, contentArg]);
-  appendValueOptions(tokens, options, ADD_VALUE_OPTIONS);
-  if (!options.position) {
-    appendBooleanOptions(tokens, options, ADD_POSITION_FLAGS);
-  }
-  appendArrayOptions(tokens, options, ADD_ARRAY_OPTIONS);
-  appendValueOptions(tokens, options, ADD_TAIL_VALUE_OPTIONS);
-  appendBooleanOptions(tokens, options, ADD_BOOLEAN_OPTIONS);
-
-  return tokens;
-}
-
-function buildRemoveArgsFromCommander(command: Command): string[] {
-  const targets = command.args.map((arg) => String(arg));
-  const options = resolveCommandOptions<RemoveCommanderOptions>(command);
-  const tokens: string[] = [...targets];
-
-  appendArrayOptions(tokens, options, REMOVE_ID_OPTIONS);
-  appendValueOptions(tokens, options, REMOVE_VALUE_OPTIONS);
-  appendArrayOptions(tokens, options, REMOVE_ARRAY_OPTIONS);
-  appendValueOptions(tokens, options, REMOVE_TAIL_VALUE_OPTIONS);
-  appendBooleanOptions(tokens, options, REMOVE_BOOLEAN_OPTIONS);
-
-  return tokens;
 }
 
 function handleCommandError(program: Command, error: unknown): never {
@@ -475,12 +251,14 @@ async function handleAddCommand(
   program: Command,
   command: Command
 ): Promise<void> {
-  const tokens = buildAddArgsFromCommander(command);
+  const args = command.args.map((arg) => String(arg));
+  const [targetArg, typeArg, contentArg] = args;
+  const options = resolveCommandOptions<AddCommandInputOptions>(command);
   const context = await createContext(resolveGlobalOptions(program));
 
-  let parsed: ReturnType<typeof parseAddArgs>;
+  let parsed: ReturnType<typeof buildAddArgs>;
   try {
-    parsed = parseAddArgs(tokens);
+    parsed = buildAddArgs({ targetArg, typeArg, contentArg, options });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw createUsageError(message);
@@ -501,10 +279,17 @@ async function handleRemoveCommand(
   program: Command,
   command: Command
 ): Promise<void> {
-  const filteredTokens = buildRemoveArgsFromCommander(command);
+  const targets = command.args.map((arg) => String(arg));
+  const options = resolveCommandOptions<RemoveCommandInputOptions>(command);
   const context = await createContext(resolveGlobalOptions(program));
 
-  const parsedArgs = parseRemoveArgsOrExit(filteredTokens);
+  let parsedArgs: ReturnType<typeof buildRemoveArgs>;
+  try {
+    parsedArgs = buildRemoveArgs({ targets, options });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw createUsageError(message);
+  }
   const preview = await runRemoveCommand(parsedArgs, context, {
     writeOverride: false,
   });
@@ -515,15 +300,6 @@ async function handleRemoveCommand(
   }
 
   outputRemovalPreview(preview);
-}
-
-function parseRemoveArgsOrExit(tokens: string[]): ParsedRemoveArgs {
-  try {
-    return parseRemoveArgs(tokens);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw createUsageError(message);
-  }
 }
 
 async function executeRemovalWriteFlow(
