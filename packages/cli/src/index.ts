@@ -4,7 +4,7 @@
 
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
-import { Command, CommanderError, Option } from "commander";
+import { Command, CommanderError, InvalidArgumentError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import {
   type AddCommandInputOptions,
@@ -51,6 +51,7 @@ import type { CommandContext, GlobalOptions } from "./types.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
+import { parsePropertyEntry } from "./utils/properties.ts";
 import {
   confirmWrite,
   selectWaymark,
@@ -124,10 +125,44 @@ function collectOption(value: string, previous: string[] = []): string[] {
   return [...previous, value];
 }
 
+function collectValidatedOption(
+  parser: (value: string) => string
+): (value: string, previous?: string[]) => string[] {
+  return (value: string, previous: string[] = []) => [
+    ...previous,
+    parser(value),
+  ];
+}
+
 function resolveCommandOptions<T extends object>(command: Command): T {
   return typeof command.optsWithGlobals === "function"
     ? (command.optsWithGlobals() as T)
     : (command.opts() as T);
+}
+
+function parsePositionOption(value: string): string {
+  if (value !== "before" && value !== "after") {
+    throw new InvalidArgumentError("--position must be 'before' or 'after'");
+  }
+  return value;
+}
+
+function parseOrderOption(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    throw new InvalidArgumentError("--order expects an integer");
+  }
+  return parsed;
+}
+
+function validatePropertyOption(value: string): string {
+  try {
+    parsePropertyEntry(value);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new InvalidArgumentError(message);
+  }
+  return value;
 }
 
 function handleCommandError(program: Command, error: unknown): never {
@@ -1179,7 +1214,8 @@ See 'wm skill show fmt' for agent-facing documentation.
     )
     .option(
       "--position <position>",
-      "insert relative to line (before or after)"
+      "insert relative to line (before or after)",
+      parsePositionOption
     )
     .option("--before", "insert before target line")
     .option("--after", "insert after target line")
@@ -1198,7 +1234,7 @@ See 'wm skill show fmt' for agent-facing documentation.
     .option(
       "--property <kv>",
       "add property (owner:@alice) - can be repeated",
-      collectOption,
+      collectValidatedOption(validatePropertyOption),
       []
     )
     .option(
@@ -1207,7 +1243,7 @@ See 'wm skill show fmt' for agent-facing documentation.
       collectOption,
       []
     )
-    .option("--order <n>", "insertion order for batch operations")
+    .option("--order <n>", "insertion order for batch operations", parseOrderOption)
     .option("--id <id>", "reserve specific ID ([[abcdef]])")
     .option("--flagged, -F", "add flagged (~) signal")
     .option("--starred", "add starred (*) signal")
@@ -1337,7 +1373,7 @@ Notes:
     .option(
       "--property <kv>",
       "filter by property (repeatable)",
-      collectOption,
+      collectValidatedOption(validatePropertyOption),
       []
     )
     .option(
