@@ -76,7 +76,7 @@
         "required": ["kind", "token"],
         "properties": {
           "kind": {
-            "enum": ["ref", "rel", "depends", "needs", "blocks", "dupeof"],
+            "enum": ["see", "docs", "from", "replaces"],
             "description": "Type of relation"
           },
           "token": {
