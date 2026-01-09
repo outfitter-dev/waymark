@@ -2,7 +2,7 @@
 
 import { SIGIL } from "./constants";
 
-const COMMENT_LEADERS = ["<!--", "//", "--", "#"] as const;
+const COMMENT_LEADERS = ["<!--", "//", "--", "#", "/*"] as const;
 const ANY_WHITESPACE_REGEX = /\s/;
 const LEADING_WHITESPACE_REGEX = /^\s*/;
 
@@ -99,7 +99,13 @@ export function parseHeader(line: string): ParsedHeader | null {
     return null;
   }
 
-  const afterLeader = trimmed.slice(commentLeader.length);
+  let afterLeader = trimmed.slice(commentLeader.length);
+  if (commentLeader === "/*") {
+    const closeIndex = afterLeader.lastIndexOf("*/");
+    if (closeIndex !== -1) {
+      afterLeader = afterLeader.slice(0, closeIndex).trimEnd();
+    }
+  }
   const sigilIndex = afterLeader.indexOf(SIGIL);
   if (sigilIndex === -1) {
     return null;
