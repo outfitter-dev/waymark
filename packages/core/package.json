@@ -27,6 +27,7 @@
     "zod": "4.1.12"
   },
   "devDependencies": {
-    "@types/bun": "1.2.22"
+    "@types/bun": "1.2.22",
+    "fast-check": "4.5.3"
   }
 }
