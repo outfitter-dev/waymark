@@ -402,7 +402,7 @@ async function applyMatchesForFile(
         file: removal.record.file,
         line: removal.record.startLine,
         removed: removal.removedLines.join(context.originalEol),
-        status: "success",
+        status: "success" as const,
       }))
     );
     return;
@@ -434,7 +434,7 @@ async function applyMatchesForFile(
       file: removal.record.file,
       line: removal.record.startLine,
       removed: removal.removedLines.join(context.originalEol),
-      status: "success",
+      status: "success" as const,
     }))
   );
 
