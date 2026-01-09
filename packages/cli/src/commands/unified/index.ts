@@ -6,7 +6,7 @@ import type { CommandContext } from "../../types";
 import { formatRecords } from "../../utils/display";
 import { renderRecords } from "../../utils/output";
 import { graphRecords } from "../graph";
-import { scanRecords } from "../scan";
+import { type ScanRuntimeOptions, scanRecords } from "../scan";
 import { applyFilters } from "./filters";
 import type { UnifiedCommandOptions } from "./types";
 
@@ -26,6 +26,10 @@ export async function runUnifiedCommand(
   context: CommandContext
 ): Promise<UnifiedCommandResult> {
   const { filePaths, isGraphMode, outputFormat, noColor } = options;
+  const scanOptions: ScanRuntimeOptions =
+    context.globalOptions.cache === undefined
+      ? {}
+      : { cache: context.globalOptions.cache };
 
   // Disable chalk colors if --no-color flag is set
   if (noColor) {
@@ -36,9 +40,7 @@ export async function runUnifiedCommand(
 
   // Graph mode: extract relation edges
   if (isGraphMode) {
-    const edges = await graphRecords(filePaths, context.config, {
-      cache: context.globalOptions.cache,
-    });
+    const edges = await graphRecords(filePaths, context.config, scanOptions);
     if (outputFormat === "json") {
       return { output: JSON.stringify(edges) };
     }
@@ -57,9 +59,7 @@ export async function runUnifiedCommand(
   }
 
   // Scan + filter mode (find behavior)
-  const records = await scanRecords(filePaths, context.config, {
-    cache: context.globalOptions.cache,
-  });
+  const records = await scanRecords(filePaths, context.config, scanOptions);
   const filtered = applyFilters(records, options);
 
   // If JSON output requested, use renderRecords

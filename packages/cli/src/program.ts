@@ -5,6 +5,7 @@ import type { WaymarkConfig } from "@waymarks/core";
 import { Command, CommanderError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import {
+  type AddCommandInput,
   type AddCommandInputOptions,
   buildAddArgs,
   runAddCommand,
@@ -289,7 +290,17 @@ async function handleAddCommand(
 
   let parsed: ReturnType<typeof buildAddArgs>;
   try {
-    parsed = buildAddArgs({ targetArg, typeArg, contentArg, options });
+    const addInput: AddCommandInput = { options };
+    if (targetArg !== undefined) {
+      addInput.targetArg = targetArg;
+    }
+    if (typeArg !== undefined) {
+      addInput.typeArg = typeArg;
+    }
+    if (contentArg !== undefined) {
+      addInput.contentArg = contentArg;
+    }
+    parsed = buildAddArgs(addInput);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw createUsageError(message);
@@ -491,10 +502,16 @@ async function handleModifyCommand(
   let resolvedId = rawOptions.id;
 
   if (interactiveOverride === true && !resolvedTarget && !resolvedId) {
+    const interactiveOptions =
+      context.globalOptions.cache === undefined
+        ? {}
+        : { cache: context.globalOptions.cache };
     const { target: interactiveTarget, id: interactiveId } =
-      await resolveInteractiveTarget(context.workspaceRoot, context.config, {
-        cache: context.globalOptions.cache,
-      });
+      await resolveInteractiveTarget(
+        context.workspaceRoot,
+        context.config,
+        interactiveOptions
+      );
     resolvedTarget = interactiveTarget;
     resolvedId = interactiveId;
   }
@@ -896,6 +913,8 @@ const COMMAND_ORDER = [
   "help",
 ];
 
+const HIDDEN_COMMANDS = new Set(["fmt", "lint"]);
+
 /**
  * Sort comparator for commands based on predefined order.
  */
@@ -918,7 +937,9 @@ function compareCommandOrder(a: Command, b: Command): number {
  * Filter and sort commands for help display.
  */
 function getVisibleCommands(commands: readonly Command[]): Command[] {
-  return commands.filter((c) => !c.hidden).sort(compareCommandOrder);
+  return commands
+    .filter((command) => !HIDDEN_COMMANDS.has(command.name()))
+    .sort(compareCommandOrder);
 }
 
 type OptionSection = {
@@ -1234,7 +1255,7 @@ export async function runCli(argv: string[]): Promise<{
   process.stdout.write = capture(stdoutChunks) as typeof process.stdout.write;
   process.stderr.write = capture(stderrChunks) as typeof process.stderr.write;
 
-  let exitCode = ExitCode.success;
+  let exitCode: ExitCode = ExitCode.success;
   try {
     const program = await createProgram();
     program.exitOverride((error) => {

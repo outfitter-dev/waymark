@@ -152,9 +152,17 @@ function applyPositionalFields(
   input: AddCommandInput,
   options: AddCommandInputOptions
 ): void {
-  state.fileLine = input.targetArg;
-  state.type = options.type ?? input.typeArg;
-  state.content = options.content ?? input.contentArg;
+  if (input.targetArg !== undefined) {
+    state.fileLine = input.targetArg;
+  }
+  const resolvedType = options.type ?? input.typeArg;
+  if (resolvedType !== undefined) {
+    state.type = resolvedType;
+  }
+  const resolvedContent = options.content ?? input.contentArg;
+  if (resolvedContent !== undefined) {
+    state.content = resolvedContent;
+  }
 }
 
 function applyPositionOptions(
@@ -174,7 +182,9 @@ function applyPositionOptions(
   }
 }
 
-function assertValidPosition(value: string): void {
+function assertValidPosition(
+  value: string
+): asserts value is "before" | "after" {
   if (value !== "before" && value !== "after") {
     throw new Error("--position must be 'before' or 'after'");
   }

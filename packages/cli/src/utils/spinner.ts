@@ -5,7 +5,6 @@ import ora from "ora";
 import { shouldUseColor } from "./terminal.ts";
 
 export type SpinnerHandle = {
-  isEnabled: boolean;
   start: () => void;
   stop: () => void;
   succeed: (text?: string) => void;
@@ -23,7 +22,6 @@ const noop = (..._args: unknown[]): void => {
 };
 
 const noopSpinner: SpinnerHandle = {
-  isEnabled: false,
   start: noop,
   stop: noop,
   succeed: noop,
@@ -35,11 +33,12 @@ export function createSpinner(options: SpinnerOptions): SpinnerHandle {
     return noopSpinner;
   }
 
+  const color = shouldUseColor(options.noColor) ? "cyan" : undefined;
   const spinner = ora({
     text: options.text,
-    color: shouldUseColor(options.noColor) ? "cyan" : undefined,
+    ...(color ? { color } : {}),
     stream: process.stderr,
   });
 
-  return spinner as SpinnerHandle;
+  return spinner;
 }
