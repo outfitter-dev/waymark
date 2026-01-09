@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "bun:test";
 import { parse, type WaymarkRecord } from "@waymarks/grammar";
-import { formatText } from "../../../core/src/format.ts";
+import { formatText } from "../../format.ts";
 
 const SOURCE = [
   "// TODO  ::: Review docs see:Alpha priority:high #perf @alice",
