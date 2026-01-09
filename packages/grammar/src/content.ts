@@ -10,6 +10,7 @@ import type { WaymarkRecord } from "./types";
 
 const LEADING_SPACES_REGEX = /^\s+/;
 const HTML_COMMENT_CLOSE_REGEX = /\s*-->\s*$/;
+const BLOCK_COMMENT_CLOSE_REGEX = /\s*\*\/\s*$/;
 
 export type ContentSegment = {
   text: string;
@@ -33,6 +34,23 @@ export function stripHtmlCommentClosure(
   return content;
 }
 
+export function stripBlockCommentClosure(
+  content: string,
+  commentLeader: string
+): string {
+  if (commentLeader === "/*") {
+    return content.replace(BLOCK_COMMENT_CLOSE_REGEX, "");
+  }
+  return content;
+}
+
+function stripCommentClosure(content: string, commentLeader: string): string {
+  return stripBlockCommentClosure(
+    stripHtmlCommentClosure(content, commentLeader),
+    commentLeader
+  );
+}
+
 export function processContentSegment(
   segment: string,
   commentLeader: string
@@ -40,19 +58,23 @@ export function processContentSegment(
   let working = segment;
 
   working = working.replace(LEADING_SPACES_REGEX, "");
-  working = stripHtmlCommentClosure(working, commentLeader);
+  working = stripCommentClosure(working, commentLeader);
 
   let closes = false;
   const closingIndex = working.lastIndexOf(SIGIL);
   if (closingIndex >= 0) {
     const afterSigil = working.slice(closingIndex + SIGIL.length).trim();
-    if (afterSigil.length === 0 || afterSigil === "-->") {
+    if (
+      afterSigil.length === 0 ||
+      afterSigil === "-->" ||
+      afterSigil === "*/"
+    ) {
       closes = true;
       working = working.slice(0, closingIndex);
     }
   }
 
-  working = stripHtmlCommentClosure(working, commentLeader);
+  working = stripCommentClosure(working, commentLeader);
 
   return {
     text: working.trim(),
@@ -66,11 +88,12 @@ export function parseContinuation(
   inWaymarkContext: boolean
 ): ContinuationResult | null {
   const trimmed = line.trimStart();
-  if (!trimmed.startsWith(commentLeader)) {
+  const continuationLeader = resolveContinuationLeader(trimmed, commentLeader);
+  if (!continuationLeader) {
     return null;
   }
 
-  const afterLeader = trimmed.slice(commentLeader.length);
+  const afterLeader = trimmed.slice(continuationLeader.length);
 
   // Check if this line contains ::: (the sigil)
   const sigilIndex = afterLeader.indexOf(SIGIL);
@@ -101,7 +124,7 @@ export function parseContinuation(
     // Check if it's a known property key
     if (PROPERTY_KEYS.has(lowerKey)) {
       // This is a property continuation
-      const strippedValue = stripHtmlCommentClosure(afterSigil, commentLeader);
+      const strippedValue = stripCommentClosure(afterSigil, commentLeader);
       const propertyValue = strippedValue.trim();
       return {
         type: "property",
@@ -121,6 +144,26 @@ export function parseContinuation(
   }
 
   // Otherwise, this line has a marker and shouldn't be treated as a continuation
+  return null;
+}
+
+function resolveContinuationLeader(
+  trimmed: string,
+  commentLeader: string
+): string | null {
+  if (trimmed.startsWith(commentLeader)) {
+    return commentLeader;
+  }
+
+  if (commentLeader === "/*") {
+    if (trimmed.startsWith("*/")) {
+      return null;
+    }
+    if (trimmed.startsWith("*")) {
+      return "*";
+    }
+  }
+
   return null;
 }
 

@@ -36,7 +36,9 @@ export async function runUnifiedCommand(
 
   // Graph mode: extract relation edges
   if (isGraphMode) {
-    const edges = await graphRecords(filePaths, context.config);
+    const edges = await graphRecords(filePaths, context.config, {
+      cache: context.globalOptions.cache,
+    });
     if (outputFormat === "json") {
       return { output: JSON.stringify(edges) };
     }
@@ -55,7 +57,9 @@ export async function runUnifiedCommand(
   }
 
   // Scan + filter mode (find behavior)
-  const records = await scanRecords(filePaths, context.config);
+  const records = await scanRecords(filePaths, context.config, {
+    cache: context.globalOptions.cache,
+  });
   const filtered = applyFilters(records, options);
 
   // If JSON output requested, use renderRecords

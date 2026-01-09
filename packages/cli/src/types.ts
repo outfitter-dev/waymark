@@ -9,6 +9,7 @@ export type GlobalOptions = {
   configPath?: string;
   scope?: CliScopeOption;
   logLevel?: LogLevel;
+  cache?: boolean;
 };
 
 export type CommandContext = {

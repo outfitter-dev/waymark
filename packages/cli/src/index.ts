@@ -36,7 +36,7 @@ import {
   type RemoveCommandInputOptions,
   runRemoveCommand,
 } from "./commands/remove.ts";
-import { scanRecords } from "./commands/scan.ts";
+import { type ScanRuntimeOptions, scanRecords } from "./commands/scan.ts";
 import {
   runSkillCommand,
   runSkillListCommand,
@@ -62,6 +62,7 @@ import {
   setPromptPolicy,
 } from "./utils/prompts.ts";
 import { parsePropertyEntry } from "./utils/properties.ts";
+import { createSpinner } from "./utils/spinner.ts";
 import { shouldUseColor } from "./utils/terminal.ts";
 
 const STDOUT = process.stdout;
@@ -75,16 +76,31 @@ function writeStderr(message: string): void {
   STDERR.write(`${message}\n`);
 }
 
+function shouldEnableSpinner(options: {
+  quiet?: boolean;
+  structuredOutput?: boolean;
+}): boolean {
+  if (options.structuredOutput) {
+    return false;
+  }
+  if (options.quiet) {
+    return false;
+  }
+  return Boolean(process.stderr.isTTY);
+}
+
 function resolveGlobalOptions(program: Command): GlobalOptions {
   const opts = program.opts();
   const scopeValue = typeof opts.scope === "string" ? opts.scope : "default";
   const configPathRaw = typeof opts.config === "string" ? opts.config : "";
   const configPath =
     configPathRaw.trim().length > 0 ? configPathRaw : undefined;
+  const cacheEnabled = Boolean(opts.cache);
 
   return {
     scope: normalizeScope(scopeValue),
     ...(configPath ? { configPath } : {}),
+    ...(cacheEnabled ? { cache: true } : {}),
   };
 }
 
@@ -255,15 +271,31 @@ async function handleLintCommand(
   options: { json?: boolean }
 ): Promise<void> {
   const context = await createContext(resolveGlobalOptions(program));
+  const programOpts = program.opts();
 
   // If no paths provided, default to current directory
   const pathsToLint = paths.length > 0 ? paths : ["."];
 
-  const report = await runLint(
-    pathsToLint,
-    context.config.allowTypes,
-    context.config
-  );
+  const spinner = createSpinner({
+    enabled: shouldEnableSpinner({
+      quiet: Boolean(programOpts.quiet),
+      structuredOutput: Boolean(options.json),
+    }),
+    text: "Linting waymarks...",
+    noColor: Boolean(programOpts.noColor),
+  });
+
+  spinner.start();
+  let report: Awaited<ReturnType<typeof runLint>>;
+  try {
+    report = await runLint(
+      pathsToLint,
+      context.config.allowTypes,
+      context.config
+    );
+  } finally {
+    spinner.stop();
+  }
 
   if (options.json) {
     writeStdout(JSON.stringify(report));
@@ -390,9 +422,10 @@ const ID_PATTERN_REGEX = /\[\[[^\]]+\]\]/i;
 
 async function resolveInteractiveTarget(
   workspaceRoot: string,
-  config: WaymarkConfig
+  config: WaymarkConfig,
+  scanOptions?: ScanRuntimeOptions
 ): Promise<{ target: string; id?: string | undefined }> {
-  const records = await scanRecords([workspaceRoot], config);
+  const records = await scanRecords([workspaceRoot], config, scanOptions);
   if (records.length === 0) {
     throw new CliError("No waymarks found to edit.", ExitCode.failure);
   }
@@ -513,7 +546,9 @@ async function handleModifyCommand(
 
   if (interactiveOverride === true && !resolvedTarget && !resolvedId) {
     const { target: interactiveTarget, id: interactiveId } =
-      await resolveInteractiveTarget(context.workspaceRoot, context.config);
+      await resolveInteractiveTarget(context.workspaceRoot, context.config, {
+        cache: context.globalOptions.cache,
+      });
     resolvedTarget = interactiveTarget;
     resolvedId = interactiveId;
   }
@@ -772,7 +807,22 @@ async function handleDoctorCommand(
   const programOpts = program.opts();
   const context = await createContext(resolveGlobalOptions(program));
 
-  const report = await runDoctorCommand(context, options);
+  const spinner = createSpinner({
+    enabled: shouldEnableSpinner({
+      quiet: Boolean(programOpts.quiet),
+      structuredOutput: Boolean(options.json || programOpts.json),
+    }),
+    text: "Running diagnostics...",
+    noColor: Boolean(programOpts.noColor),
+  });
+
+  spinner.start();
+  let report: Awaited<ReturnType<typeof runDoctorCommand>>;
+  try {
+    report = await runDoctorCommand(context, options);
+  } finally {
+    spinner.stop();
+  }
 
   // Output based on format (check both local and global options)
   if (options.json || programOpts.json) {
@@ -843,7 +893,25 @@ async function handleUnifiedCommand(
 
   const args = buildArgsFromOptions(paths, options);
   const unifiedOptions = normalizeUnifiedColor(parseUnifiedOptions(args));
-  const result = await runUnifiedCommand(unifiedOptions, context);
+  const structuredOutput =
+    unifiedOptions.outputFormat === "json" ||
+    unifiedOptions.outputFormat === "jsonl";
+  const spinner = createSpinner({
+    enabled: shouldEnableSpinner({
+      quiet: Boolean(options.quiet),
+      structuredOutput,
+    }),
+    text: "Scanning waymarks...",
+    noColor: Boolean(unifiedOptions.noColor),
+  });
+
+  spinner.start();
+  let result: Awaited<ReturnType<typeof runUnifiedCommand>>;
+  try {
+    result = await runUnifiedCommand(unifiedOptions, context);
+  } finally {
+    spinner.stop();
+  }
 
   const didSelect = await handleUnifiedInteractiveSelection(options, result);
   if (
@@ -1092,6 +1160,7 @@ export async function createProgram(): Promise<Command> {
         .default("default")
     )
     .option("--config <path>", "load additional config file (JSON/YAML/TOML)")
+    .option("--cache", "use scan cache for faster repeated runs")
     .option("--no-input", "fail if interactive input required")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")

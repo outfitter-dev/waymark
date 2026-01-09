@@ -218,6 +218,35 @@ describe("parse", () => {
     );
   });
 
+  test("parses multi-line block comment continuations", () => {
+    const source = [
+      "/* todo ::: document block comment support",
+      " * ::: keeps continuation lines aligned",
+      " * ::: trims closer */",
+      "const noop = true;",
+    ].join("\n");
+
+    const records = parse(source, { file: "src/styles.css" });
+    expect(records).toHaveLength(1);
+    const record = records[0];
+
+    expect(record).toBeDefined();
+    if (!record) {
+      throw new Error("expected waymark record for block comment");
+    }
+
+    expect(record.commentLeader).toBe("/*");
+    expect(record.startLine).toBe(LINE_ONE);
+    expect(record.endLine).toBe(LINE_THREE);
+    expect(record.contentText).toBe(
+      [
+        "document block comment support",
+        "keeps continuation lines aligned",
+        "trims closer",
+      ].join("\n")
+    );
+  });
+
   test("parses property-as-marker in continuation context", () => {
     const source = [
       "// tldr  ::: payment processor entry point",
