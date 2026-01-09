@@ -135,11 +135,7 @@ export const commands: HelpRegistry = {
     usage: "wm fmt <paths...> [options]",
     description:
       "Format waymark comments in a file, normalizing spacing, case, and alignment.",
-    flags: [
-      commonFlags.write,
-      commonFlags.config,
-      commonFlags.help,
-    ],
+    flags: [commonFlags.write, commonFlags.config, commonFlags.help],
     examples: [
       "wm fmt src/index.ts                # Preview formatting changes",
       "wm fmt src/index.ts --write        # Apply formatting changes",
@@ -152,11 +148,7 @@ export const commands: HelpRegistry = {
     usage: "wm lint <file...> [options]",
     description:
       "Validate waymark types against configured allowlist and grammar rules.",
-    flags: [
-      commonFlags.json,
-      commonFlags.config,
-      commonFlags.help,
-    ],
+    flags: [commonFlags.json, commonFlags.config, commonFlags.help],
     examples: [
       "wm lint src/                       # Lint all files in src/",
       "wm lint src/*.ts                   # Lint TypeScript files",
