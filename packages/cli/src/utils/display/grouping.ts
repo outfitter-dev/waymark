@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 import type { WaymarkRecord } from "@waymarks/core";
 import type { GroupBy } from "../../commands/unified/types";
 import { formatRecordSimple } from "./formatters/text";
+import { sanitizeInlineText } from "./sanitize";
 import type { DisplayOptions } from "./types";
 
 /**
@@ -86,7 +87,7 @@ export function formatGrouped(
   for (const groupKey of groupKeys) {
     const groupItems = grouped.get(groupKey) || [];
 
-    lines.push(`\n=== ${groupKey} ===\n`);
+    lines.push(`\n=== ${sanitizeInlineText(groupKey)} ===\n`);
 
     for (const record of groupItems) {
       lines.push(formatRecordSimple(record));

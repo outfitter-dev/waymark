@@ -2,6 +2,7 @@
 
 import { readFileSync } from "node:fs";
 import type { WaymarkRecord } from "@waymarks/core";
+import { sanitizeInlineText } from "../sanitize";
 import type { DisplayOptions } from "../types";
 
 /** Default line number width (3 digits = column 4 for colon) */
@@ -15,7 +16,8 @@ export function formatRecordSimple(record: WaymarkRecord): string {
     (record.signals.flagged ? "~" : "") + (record.signals.starred ? "*" : "");
   // Pad line numbers to 3 digits (aligned to column 4) unless > 999
   const lineStr = String(record.startLine).padStart(LINE_NUMBER_WIDTH, " ");
-  return `${record.file}:${lineStr}: // ${signals}${record.type} ::: ${record.contentText}`;
+  const content = sanitizeInlineText(record.contentText);
+  return `${record.file}:${lineStr}: // ${signals}${record.type} ::: ${content}`;
 }
 
 /**
@@ -45,7 +47,7 @@ export function formatRecordWithContext(
 
     for (let i = startLine; i <= endLine; i++) {
       const lineNum = i + 1;
-      const content = fileLines[i];
+      const content = sanitizeInlineText(fileLines[i] ?? "");
       const paddedLineNum = String(lineNum).padStart(lineWidth, " ");
       lines.push(`${paddedLineNum}: ${content}`);
     }

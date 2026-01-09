@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://outfitter.dev/schemas/lint-report.schema.json",
+  "title": "WaymarkLintReport",
+  "description": "Lint report from the waymark CLI",
+  "type": "object",
+  "required": ["issues"],
+  "properties": {
+    "issues": {
+      "type": "array",
+      "description": "Lint issues found in the scanned files",
+      "items": {
+        "type": "object",
+        "required": ["file", "line", "rule", "severity", "message"],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "File path where the issue was found"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Line number where the issue was found"
+          },
+          "rule": {
+            "type": "string",
+            "description": "Lint rule identifier"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["warn", "error"],
+            "description": "Severity of the lint issue"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable description of the issue"
+          },
+          "type": {
+            "type": "string",
+            "description": "Waymark marker type associated with the issue"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

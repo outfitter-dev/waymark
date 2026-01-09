@@ -37,6 +37,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@types/bun": "^1.2.22",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
     "lefthook": "^1.13.4",
     "markdownlint-cli2": "^0.18.1",
     "pino": "9.13.0",

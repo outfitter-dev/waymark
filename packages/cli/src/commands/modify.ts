@@ -16,6 +16,7 @@ import inquirer from "inquirer";
 
 import type { CommandContext } from "../types.ts";
 import { logger } from "../utils/logger.ts";
+import { assertPromptAllowed } from "../utils/prompts.ts";
 import { readStream } from "../utils/stdin.ts";
 
 export type ModifyOptions = {
@@ -498,6 +499,7 @@ async function runInteractiveSession(
   baseContent: string,
   options: ModifyOptions
 ): Promise<ModifyOptions> {
+  assertPromptAllowed("interactive editing");
   logger.info(
     "Interactive mode: Backspace on an empty input to go back. Press Esc to cancel."
   );

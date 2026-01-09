@@ -1,6 +1,7 @@
 // tldr ::: long format display for waymark records showing all properties
 
 import type { WaymarkRecord } from "@waymarks/core";
+import { sanitizeInlineText } from "../sanitize";
 
 /**
  * Format records with long display (all properties shown)
@@ -14,28 +15,40 @@ export function formatLong(records: WaymarkRecord[]): string {
     lines.push(
       `  Signals: flagged=${record.signals.flagged}, starred=${record.signals.starred}`
     );
-    lines.push(`  Content: ${record.contentText}`);
+    lines.push(`  Content: ${sanitizeInlineText(record.contentText)}`);
 
     if (Object.keys(record.properties).length > 0) {
       lines.push("  Properties:");
       for (const [key, value] of Object.entries(record.properties)) {
-        lines.push(`    ${key}: ${value}`);
+        lines.push(
+          `    ${sanitizeInlineText(key)}: ${sanitizeInlineText(value)}`
+        );
       }
     }
 
     if (record.relations.length > 0) {
       lines.push("  Relations:");
       for (const rel of record.relations) {
-        lines.push(`    ${rel.kind}: ${rel.token}`);
+        lines.push(
+          `    ${sanitizeInlineText(rel.kind)}: ${sanitizeInlineText(rel.token)}`
+        );
       }
     }
 
     if (record.mentions.length > 0) {
-      lines.push(`  Mentions: ${record.mentions.join(", ")}`);
+      lines.push(
+        `  Mentions: ${record.mentions
+          .map((mention) => sanitizeInlineText(mention))
+          .join(", ")}`
+      );
     }
 
     if (record.tags.length > 0) {
-      lines.push(`  Tags: ${record.tags.join(", ")}`);
+      lines.push(
+        `  Tags: ${record.tags
+          .map((tag) => sanitizeInlineText(tag))
+          .join(", ")}`
+      );
     }
 
     lines.push(""); // Blank line between records

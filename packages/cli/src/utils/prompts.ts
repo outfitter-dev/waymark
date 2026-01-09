@@ -2,6 +2,55 @@
 
 import type { WaymarkRecord } from "@waymarks/grammar";
 import inquirer from "inquirer";
+import { CliError } from "../errors.ts";
+import { ExitCode } from "../exit-codes.ts";
+import { canPrompt } from "./terminal.ts";
+
+type PromptBlockReason = "no-input" | "no-tty" | undefined;
+
+type PromptPolicy = {
+  allowed: boolean;
+  reason?: PromptBlockReason;
+};
+
+let promptPolicy: PromptPolicy = { allowed: true };
+
+// note ::: central prompt policy for --no-input enforcement [[cli/no-input]]
+export function setPromptPolicy(options: {
+  noInput?: boolean;
+  isTty?: boolean;
+}): void {
+  const isTty = options.isTty ?? canPrompt();
+
+  if (options.noInput) {
+    promptPolicy = { allowed: false, reason: "no-input" };
+    return;
+  }
+
+  if (!isTty) {
+    promptPolicy = { allowed: false, reason: "no-tty" };
+    return;
+  }
+
+  promptPolicy = { allowed: true };
+}
+
+export function assertPromptAllowed(action: string): void {
+  if (promptPolicy.allowed) {
+    return;
+  }
+
+  const reason = promptPolicy.reason;
+  const details =
+    reason === "no-input"
+      ? "because --no-input was specified"
+      : "because the terminal is not interactive";
+
+  throw new CliError(
+    `Cannot prompt for ${action} ${details}.`,
+    ExitCode.usageError
+  );
+}
 
 export type ConfirmOptions = {
   message: string;
@@ -9,6 +58,7 @@ export type ConfirmOptions = {
 };
 
 export async function confirm(options: ConfirmOptions): Promise<boolean> {
+  assertPromptAllowed("confirmation");
   const { confirmed } = await inquirer.prompt<{ confirmed: boolean }>([
     {
       type: "confirm",
@@ -53,6 +103,7 @@ type WaymarkChoice = {
 export async function selectWaymark(
   options: SelectWaymarkOptions
 ): Promise<WaymarkRecord | undefined> {
+  assertPromptAllowed("selection");
   const { records, pageSize = 15 } = options;
 
   if (records.length === 0) {
