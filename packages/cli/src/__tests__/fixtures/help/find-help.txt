@@ -1,0 +1,31 @@
+wm find [options] [paths...]
+scan and filter waymarks in files or directories
+
+Arguments:
+  paths                                   files or directories to scan
+
+
+Options:
+  --type <types...>, -t                   filter by waymark type(s)
+  --tag <tags...>                         filter by tag(s)
+  --mention <mentions...>                 filter by mention(s)
+  --flagged, -F                           filter for flagged (~) waymarks
+  --starred, -S                           filter for starred (*) waymarks
+  --tldr                                  shorthand for --type tldr
+  --graph                                 show dependency graph
+  --long                                  show detailed record information
+  --tree                                  group output by directory structure
+  --flat                                  show flat list (default)
+  --compact                               compact output format
+  --no-wrap                               disable line wrapping
+  --group <by>                            group by: file, dir, type
+  --sort <by>                             sort by: file, line, type, modified
+  --context <n>, -C                       show N lines of context
+  --after <n>, -A, --after-context <n>    show N lines after match
+  --before <n>, -B, --before-context <n>  show N lines before match
+  --limit <n>, -n                         limit number of results
+  --page <n>                              page number (with --limit)
+  --interactive                           interactively select a waymark
+  --pretty                                (deprecated: use --text) output as pretty-printed JSON
+  --prompt                                show agent-facing prompt instead of help
+  --help, -h                              display help for command
