@@ -5,9 +5,9 @@ import { performance } from "node:perf_hooks";
 
 import {
   parse,
+  WaymarkCache,
   type WaymarkConfig,
   type WaymarkRecord,
-  WaymarkCache,
 } from "@waymarks/core";
 
 import { expandInputPaths } from "../utils/fs";

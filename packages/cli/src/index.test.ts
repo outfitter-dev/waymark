@@ -11,7 +11,7 @@ import { expandFormatPaths, formatFile } from "./commands/fmt";
 import { graphRecords } from "./commands/graph";
 import { lintFiles } from "./commands/lint";
 import type { ModifyPayload } from "./commands/modify";
-import { parseScanArgs, scanRecords, type ScanMetrics } from "./commands/scan";
+import { parseScanArgs, type ScanMetrics, scanRecords } from "./commands/scan";
 import {
   runUnifiedCommand,
   type UnifiedCommandResult,
