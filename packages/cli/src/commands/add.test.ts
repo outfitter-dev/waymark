@@ -135,7 +135,7 @@ describe("runAddCommand", () => {
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
     const parsed = parseAddArgs(["--from", invalidJsonPath]);
-    const config = resolveConfig({});
+    const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
       workspaceRoot: testWorkspace,
@@ -164,7 +164,7 @@ describe("runAddCommand", () => {
     await writeFile(invalidJsonPath, invalidJson, "utf8");
 
     const parsed = parseAddArgs(["--from", invalidJsonPath]);
-    const config = resolveConfig({});
+    const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
       workspaceRoot: testWorkspace,
@@ -208,7 +208,7 @@ describe("runAddCommand", () => {
     await writeFile(validJsonPath, validJson, "utf8");
 
     const parsed = parseAddArgs(["--from", validJsonPath, "--write", "--json"]);
-    const config = resolveConfig({});
+    const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
       workspaceRoot: testWorkspace,
@@ -242,7 +242,7 @@ describe("runAddCommand", () => {
     await writeFile(batchJsonPath, batchJson, "utf8");
 
     const parsed = parseAddArgs(["--from", batchJsonPath, "--write"]);
-    const config = resolveConfig({});
+    const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
       workspaceRoot: testWorkspace,
@@ -277,7 +277,7 @@ describe("runAddCommand", () => {
     await writeFile(wrapperJsonPath, wrapperJson, "utf8");
 
     const parsed = parseAddArgs(["--from", wrapperJsonPath, "--write"]);
-    const config = resolveConfig({});
+    const config = resolveConfig({ ids: { mode: "auto" } });
     const context: CommandContext = {
       config,
       workspaceRoot: testWorkspace,
@@ -316,7 +316,7 @@ describe("runAddCommand", () => {
 
     try {
       const parsed = parseAddArgs(["--from", "-", "--write"]);
-      const config = resolveConfig({});
+      const config = resolveConfig({ ids: { mode: "auto" } });
       const context: CommandContext = {
         config,
         workspaceRoot: testWorkspace,

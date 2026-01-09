@@ -50,7 +50,7 @@ describe("runRemoveCommand", () => {
     workspace = await mkdtemp(join(tmpdir(), "waymark-remove-cli-"));
     await ensureDir(join(workspace, ".waymark"));
     context = {
-      config: resolveConfig(),
+      config: resolveConfig({ ids: { mode: "auto" } }),
       workspaceRoot: workspace,
       globalOptions: {},
     };

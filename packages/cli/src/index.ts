@@ -1173,17 +1173,31 @@ See 'wm skill show fmt' for agent-facing documentation.
       "--from <file>",
       "read waymark(s) from JSON/JSONL file (use - for stdin)"
     )
+    .option("--type <type>", "set waymark type when not provided positionally")
+    .option(
+      "--content <text>",
+      "set waymark content when not provided positionally"
+    )
+    .option(
+      "--position <position>",
+      "insert relative to line (before or after)"
+    )
+    .option("--before", "insert before target line")
+    .option("--after", "insert after target line")
     .option(
       "--mention <actor>",
       "add mention (@agent, @alice) - can be repeated"
     )
     .option("--tag <tag>", "add hashtag (#perf, #sec) - can be repeated")
     .option("--property <kv>", "add property (owner:@alice) - can be repeated")
-    .option("--see <token>", "add reference relation (see:#auth/core)")
-    .option("--docs <url>", "add documentation link")
-    .option("--source <token>", "add dependency relation (from:#token)")
-    .option("--replaces <token>", "add supersedes relation")
-    .option("--signal <signal>", "add signal: ~ (flagged) or * (starred)")
+    .option(
+      "--continuation <text>",
+      "add continuation line (repeatable)"
+    )
+    .option("--order <n>", "insertion order for batch operations")
+    .option("--id <id>", "reserve specific ID ([[abcdef]])")
+    .option("--flagged, -F", "add flagged (~) signal")
+    .option("--starred", "add starred (*) signal")
     .option("--write, -w", "apply changes to file (default: preview)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
@@ -1199,8 +1213,9 @@ Arguments:
 Examples:
   $ wm add src/auth.ts:42 todo "implement rate limiting"
   $ wm add src/db.ts:15 note "assumes UTC" --mention @alice --tag "#time"
-  $ wm add src/api.ts:100 fix "validate input" --signal *
-  $ wm add src/pay.ts:200 todo "add retry" --source "#infra/queue"
+  $ wm add src/api.ts:100 fix "validate input" --flagged
+  $ wm add src/pay.ts:200 todo "add retry" --tag "#infra/queue"
+  $ wm add src/auth.ts:10 todo "insert above" --before
   $ wm add --from waymarks.json
   $ echo '{"file":"src/a.ts","line":10,"type":"todo","content":"test"}' | wm add --from -
 
@@ -1299,10 +1314,16 @@ Notes:
       "read removal targets from JSON file (use - for stdin)"
     )
     .option("--reason <text>", "record a removal reason in history")
-    .option("--criteria <query>", "remove waymarks matching filter criteria")
+    .option("--type <marker>", "filter by waymark type")
+    .option("--tag <tag>", "filter by tag (repeatable)")
+    .option("--mention <actor>", "filter by mention (repeatable)")
+    .option("--property <kv>", "filter by property (repeatable)")
+    .option("--file <path>", "filter by file path (repeatable)")
+    .option("--content-pattern <regex>", "filter by content regex")
+    .option("--contains <text>", "filter by content substring")
+    .option("--flagged, -F", "filter by flagged signal (~)")
+    .option("--starred, -S", "filter by starred signal (*)")
     .option("--write, -w", "actually remove (default is preview)", false)
-    .option("--yes, -y", "skip confirmation prompt", false)
-    .option("--confirm", "always show confirmation (even with --write)", false)
     .option("--json", "output as JSON")
     .option("--jsonl", "output as JSON Lines")
     .description("remove waymarks from files")
@@ -1312,29 +1333,31 @@ Notes:
 Removal Methods:
   1. By Location:     wm rm src/auth.ts:42
   2. By ID:           wm rm --id [[a3k9m2p]]
-  3. By Criteria:     wm rm --criteria "type:todo mention:@agent" src/
+  3. By Filter:       wm rm --type todo --mention @agent --file src/
   4. From JSON Input: wm rm --from waymarks.json
 
 Examples:
   $ wm rm src/auth.ts:42                      # Preview removal
   $ wm rm src/auth.ts:42 --write              # Actually remove
   $ wm rm --id [[a3k9m2p]] --write            # Remove by ID
-  $ wm rm --criteria "type:todo mention:@agent" src/ --write
+  $ wm rm --type todo --mention @agent --file src/ --write
   $ wm rm --from removals.json --write
   $ wm rm src/auth.ts:42 --write --reason "cleanup"
 
-Filter Criteria Syntax:
-  type:<marker>         Match waymark type (todo, fix, note, etc.)
-  mention:<actor>       Match mention (@agent, @alice)
-  tag:<hashtag>         Match tag (#perf, #sec)
-  signal:~              Match flagged waymarks
-  signal:*              Match starred waymarks (important/valuable)
-  contains:<text>       Match content containing text
+Filter Flags:
+  --type <marker>       Match waymark type (todo, fix, note, etc.)
+  --mention <actor>     Match mention (@agent, @alice)
+  --tag <hashtag>       Match tag (#perf, #sec)
+  --property <kv>       Match property key:value
+  --file <path>         Limit to matching file paths
+  --contains <text>     Match content containing text
+  --content-pattern <r> Match content using regex pattern
+  --flagged             Match flagged waymarks
+  --starred             Match starred waymarks (important/valuable)
 
 Safety Features:
   - Default mode is preview (shows what would be removed)
   - --write flag required for actual removal
-  - Confirmation prompt before removing (unless --yes)
   - Multi-line waymarks removed atomically
   - Removed waymarks tracked in .waymark/history.json (with optional --reason)
 
