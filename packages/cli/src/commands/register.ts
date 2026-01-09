@@ -1,13 +1,13 @@
 // tldr ::: commander command registration for waymark CLI
 
-import { Command, InvalidArgumentError } from "commander";
+import { type Command, InvalidArgumentError } from "commander";
 import { createUsageError } from "../errors.ts";
 import type { ModifyCliOptions } from "../types.ts";
+import { parsePropertyEntry } from "../utils/properties.ts";
 import type { ConfigCommandOptions } from "./config.ts";
 import type { DoctorCommandOptions } from "./doctor.ts";
 import { getTopicHelp, helpTopicNames } from "./help/index.ts";
 import type { SkillCommandOptions } from "./skill.ts";
-import { parsePropertyEntry } from "../utils/properties.ts";
 
 const POSITION_ERROR = "--position must be 'before' or 'after'";
 const ORDER_ERROR = "--order expects an integer";

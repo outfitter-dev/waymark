@@ -23,6 +23,7 @@ import { helpTopicNames } from "./commands/help/index.ts";
 import { runInitCommand } from "./commands/init.ts";
 import { lintFiles as runLint } from "./commands/lint.ts";
 import { type ModifyOptions, runModifyCommand } from "./commands/modify.ts";
+import { registerCommands } from "./commands/register.ts";
 import {
   buildRemoveArgs,
   type ParsedRemoveArgs,
@@ -43,10 +44,13 @@ import {
   runUpdateCommand,
   type UpdateCommandOptions,
 } from "./commands/update.ts";
-import { registerCommands } from "./commands/register.ts";
 import { CliError, createUsageError } from "./errors.ts";
 import { ExitCode } from "./exit-codes.ts";
-import type { CommandContext, GlobalOptions, ModifyCliOptions } from "./types.ts";
+import type {
+  CommandContext,
+  GlobalOptions,
+  ModifyCliOptions,
+} from "./types.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
