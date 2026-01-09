@@ -4,7 +4,12 @@
 
 import tab from "@bomb.sh/tab/commander";
 import type { WaymarkConfig } from "@waymarks/core";
-import { Command, CommanderError, InvalidArgumentError, Option } from "commander";
+import {
+  Command,
+  CommanderError,
+  InvalidArgumentError,
+  Option,
+} from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import {
   type AddCommandInputOptions,
@@ -51,12 +56,12 @@ import type { CommandContext, GlobalOptions } from "./types.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
-import { parsePropertyEntry } from "./utils/properties.ts";
 import {
   confirmWrite,
   selectWaymark,
   setPromptPolicy,
 } from "./utils/prompts.ts";
+import { parsePropertyEntry } from "./utils/properties.ts";
 import { shouldUseColor } from "./utils/terminal.ts";
 
 const STDOUT = process.stdout;
@@ -1243,7 +1248,11 @@ See 'wm skill show fmt' for agent-facing documentation.
       collectOption,
       []
     )
-    .option("--order <n>", "insertion order for batch operations", parseOrderOption)
+    .option(
+      "--order <n>",
+      "insertion order for batch operations",
+      parseOrderOption
+    )
     .option("--id <id>", "reserve specific ID ([[abcdef]])")
     .option("--flagged, -F", "add flagged (~) signal")
     .option("--starred", "add starred (*) signal")
