@@ -8,6 +8,10 @@ import { Command, CommanderError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import { parseAddArgs, runAddCommand } from "./commands/add.ts";
 import {
+  type ConfigCommandOptions,
+  runConfigCommand,
+} from "./commands/config.ts";
+import {
   type DoctorCommandOptions,
   formatDoctorReport,
   runDoctorCommand,
@@ -31,7 +35,7 @@ import {
 } from "./commands/update.ts";
 import { CliError, createUsageError } from "./errors.ts";
 import { ExitCode } from "./exit-codes.ts";
-import type { CommandContext } from "./types.ts";
+import type { CommandContext, GlobalOptions } from "./types.ts";
 import { loadPrompt } from "./utils/content-loader.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
@@ -52,6 +56,19 @@ function writeStdout(message: string): void {
 
 function writeStderr(message: string): void {
   STDERR.write(`${message}\n`);
+}
+
+function resolveGlobalOptions(program: Command): GlobalOptions {
+  const opts = program.opts();
+  const scopeValue = typeof opts.scope === "string" ? opts.scope : "default";
+  const configPathRaw = typeof opts.config === "string" ? opts.config : "";
+  const configPath =
+    configPathRaw.trim().length > 0 ? configPathRaw : undefined;
+
+  return {
+    scope: normalizeScope(scopeValue),
+    ...(configPath ? { configPath } : {}),
+  };
 }
 
 function resolveCommanderExitCode(error: CommanderError): ExitCode {
@@ -138,9 +155,7 @@ async function handleFormatCommand(
     );
   }
 
-  const scopeValue = program.opts().scope as string;
-  const globalOpts = { scope: normalizeScope(scopeValue) };
-  const context = await createContext(globalOpts);
+  const context = await createContext(resolveGlobalOptions(program));
 
   // If no paths provided, default to current directory
   const pathsToFormat = paths.length > 0 ? paths : ["."];
@@ -202,9 +217,7 @@ async function handleLintCommand(
     );
   }
 
-  const scopeValue = program.opts().scope as string;
-  const globalOpts = { scope: normalizeScope(scopeValue) };
-  const context = await createContext(globalOpts);
+  const context = await createContext(resolveGlobalOptions(program));
 
   // If no paths provided, default to current directory
   const pathsToLint = paths.length > 0 ? paths : ["."];
@@ -262,9 +275,7 @@ async function handleAddCommand(
     (token) => token !== "--prompt" && token !== "--no-input"
   );
 
-  const scopeValue = program.opts().scope as string;
-  const globalOpts = { scope: normalizeScope(scopeValue) };
-  const context = await createContext(globalOpts);
+  const context = await createContext(resolveGlobalOptions(program));
 
   let parsed: ReturnType<typeof parseAddArgs>;
   try {
@@ -295,8 +306,7 @@ async function handleRemoveCommand(
   }
 
   const filteredTokens = extractCommandTokens(program, command);
-  const scopeValue = program.opts().scope as string;
-  const context = await createContext({ scope: normalizeScope(scopeValue) });
+  const context = await createContext(resolveGlobalOptions(program));
 
   const parsedArgs = parseRemoveArgsOrExit(filteredTokens);
   const preview = await runRemoveCommand(parsedArgs, context, {
@@ -513,14 +523,13 @@ async function handleModifyCommand(
     throw createUsageError("--json and --jsonl cannot be used together");
   }
 
-  const scopeValue = program.opts().scope as string;
   const interactiveOverride = determineInteractiveOverride(
     command,
     target,
     rawOptions
   );
 
-  const context = await createContext({ scope: normalizeScope(scopeValue) });
+  const context = await createContext(resolveGlobalOptions(program));
 
   let resolvedTarget = target;
   let resolvedId = rawOptions.id;
@@ -601,6 +610,22 @@ async function handleUpdateAction(
 
   if (result.exitCode !== 0) {
     throw new CliError(result.message ?? "wm update failed", ExitCode.failure);
+  }
+}
+
+async function handleConfigCommand(
+  program: Command,
+  options: ConfigCommandOptions
+): Promise<void> {
+  const context = await createContext(resolveGlobalOptions(program));
+  const result = await runConfigCommand(context, options);
+
+  if (result.output.length > 0) {
+    writeStdout(result.output);
+  }
+
+  if (result.exitCode !== 0) {
+    throw new CliError("Config command failed", ExitCode.failure);
   }
 }
 
@@ -733,8 +758,7 @@ async function handleDoctorCommand(
   options: DoctorCommandOptions
 ): Promise<void> {
   const programOpts = program.opts();
-  const globalOpts = { scope: normalizeScope(programOpts.scope as string) };
-  const context = await createContext(globalOpts);
+  const context = await createContext(resolveGlobalOptions(program));
 
   const report = await runDoctorCommand(context, options);
 
@@ -812,9 +836,7 @@ async function handleUnifiedCommand(
     throw new CliError("No agent prompt available", ExitCode.failure);
   }
 
-  const scopeValue = program.opts().scope as string;
-  const globalOpts = { scope: normalizeScope(scopeValue) };
-  const context = await createContext(globalOpts);
+  const context = await createContext(resolveGlobalOptions(program));
 
   const args = buildArgsFromOptions(paths, options);
   const unifiedOptions = normalizeUnifiedColor(parseUnifiedOptions(args));
@@ -840,6 +862,7 @@ const COMMAND_ORDER = [
   "fmt",
   "lint",
   "init",
+  "config",
   "doctor",
   "completions",
   "update",
@@ -879,7 +902,14 @@ type OptionSection = {
 const ROOT_OPTION_SECTIONS: OptionSection[] = [
   {
     title: "Global Options",
-    longs: ["--help", "--version", "--prompt", "--no-input", "--scope"],
+    longs: [
+      "--help",
+      "--version",
+      "--prompt",
+      "--no-input",
+      "--scope",
+      "--config",
+    ],
   },
   {
     title: "Logging",
@@ -1064,6 +1094,7 @@ export async function createProgram(): Promise<Command> {
         .choices(["default", "project", "user"])
         .default("default")
     )
+    .option("--config <path>", "load additional config file (JSON/YAML/TOML)")
     .option("--prompt", "show agent-facing documentation")
     .option("--no-input", "fail if interactive input required")
     .option("--verbose", "enable verbose logging (info level)")
@@ -1478,6 +1509,29 @@ See 'wm lint --prompt' for agent-facing documentation.
         }
       }
     );
+
+  program
+    .command("config")
+    .option("--print", "print merged configuration", false)
+    .option("--json", "output compact JSON", false)
+    .description("print resolved configuration")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm config --print                 # Show merged configuration
+  $ wm --scope user config --print    # Show user-level configuration
+  $ wm --config ./custom.toml config --print
+  $ wm config --print --json          # Output compact JSON
+      `
+    )
+    .action(async (options: ConfigCommandOptions) => {
+      try {
+        await handleConfigCommand(program, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
 
   // Doctor command - health checks and diagnostics (WAY-47)
   program
