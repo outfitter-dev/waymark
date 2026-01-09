@@ -1,0 +1,51 @@
+wm [options] [command] [paths...]
+Waymark CLI - scan, filter, format, and manage waymarks
+
+Quick Start:
+  wm [paths...]             Scan and filter waymarks (default: current directory)
+  wm find --graph           Show dependency graph
+  wm fmt <file> --write     Format waymarks in file
+  wm rm <file:line> --write Remove waymark from file
+  wm init                   Initialize waymark configuration
+
+Global Options:
+  --version, -v                 output the current version
+  --prompt                      show agent-facing documentation
+  --no-input                    fail if interactive input required
+  --scope <scope>, -s           config scope (default|project|user) (choices: "default", "project", "user", default: "default")
+  --config <path>               load additional config file (JSON/YAML/TOML)
+
+
+Logging:
+  --verbose                     enable verbose logging (info level)
+  --debug                       enable debug logging
+  --quiet, -q                   only show errors
+
+
+Output Formats:
+  --json                        Output as JSON array
+  --jsonl                       Output as JSON Lines (newline-delimited)
+  --text                        Output as human-readable formatted text
+
+
+Color:
+  --no-color                    disable ANSI colors
+
+
+Commands:
+  find                          scan and filter waymarks in files or directories
+  add                           add waymarks into files
+  edit                          edit existing waymarks
+  rm                            remove waymarks from files
+  fmt                           format and normalize waymark syntax in files
+  lint                          validate waymark structure and enforce quality rules
+  init                          initialize waymark configuration
+  config                        print resolved configuration
+  doctor                        run health checks and diagnostics
+  completions|complete          Generate shell completion scripts
+  update                        check for and install CLI updates (npm global installs)
+  help                          display help for command
+
+
+Topics:
+  Run 'wm help <topic>' for syntax guides (syntax, tldr, todo, signals, tags)
