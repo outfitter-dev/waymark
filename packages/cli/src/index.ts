@@ -240,9 +240,7 @@ async function handleAddCommand(
   const commandNames = new Set([command.name(), ...command.aliases()]);
   const commandIndex = argvTokens.findIndex((token) => commandNames.has(token));
   const tokens = commandIndex >= 0 ? argvTokens.slice(commandIndex + 1) : [];
-  const filteredTokens = tokens.filter(
-    (token) => token !== "--no-input"
-  );
+  const filteredTokens = tokens.filter((token) => token !== "--no-input");
 
   const context = await createContext(resolveGlobalOptions(program));
 
@@ -292,7 +290,9 @@ function extractCommandTokens(_program: Command, command: Command): string[] {
   if (commandIndex === -1) {
     return [];
   }
-  return argvTokens.slice(commandIndex + 1).filter((token) => token !== "--no-input");
+  return argvTokens
+    .slice(commandIndex + 1)
+    .filter((token) => token !== "--no-input");
 }
 
 function parseRemoveArgsOrExit(tokens: string[]): ParsedRemoveArgs {
@@ -868,13 +868,7 @@ type OptionSection = {
 const ROOT_OPTION_SECTIONS: OptionSection[] = [
   {
     title: "Global Options",
-    longs: [
-      "--help",
-      "--version",
-      "--no-input",
-      "--scope",
-      "--config",
-    ],
+    longs: ["--help", "--version", "--no-input", "--scope", "--config"],
   },
   {
     title: "Logging",
@@ -1163,18 +1157,13 @@ After Formatting:
 See 'wm skill show fmt' for agent-facing documentation.
     `
     )
-    .action(
-      async (
-        paths: string[],
-        options: { write?: boolean }
-      ) => {
-        try {
-          await handleFormatCommand(program, paths, options);
-        } catch (error) {
-          handleCommandError(program, error);
-        }
+    .action(async (paths: string[], options: { write?: boolean }) => {
+      try {
+        await handleFormatCommand(program, paths, options);
+      } catch (error) {
+        handleCommandError(program, error);
       }
-    );
+    });
 
   program
     .command("add")
@@ -1229,7 +1218,7 @@ Types:
 See 'wm skill show add' for agent-facing documentation.
     `
     )
-    .action(async function (this: Command, ...actionArgs: unknown[]) {
+    .action(async function (this: Command, ..._actionArgs: unknown[]) {
       try {
         await handleAddCommand(program, this);
       } catch (error) {
@@ -1352,7 +1341,7 @@ Safety Features:
 See 'wm skill show rm' for agent-facing documentation.
     `
     )
-    .action(async function (this: Command, ...actionArgs: unknown[]) {
+    .action(async function (this: Command, ..._actionArgs: unknown[]) {
       try {
         await handleRemoveCommand(program, this);
       } catch (error) {
@@ -1413,18 +1402,13 @@ Example Output:
 See 'wm skill show lint' for agent-facing documentation.
     `
     )
-    .action(
-      async (
-        paths: string[],
-        options: { json?: boolean }
-      ) => {
-        try {
-          await handleLintCommand(program, paths, options);
-        } catch (error) {
-          handleCommandError(program, error);
-        }
+    .action(async (paths: string[], options: { json?: boolean }) => {
+      try {
+        await handleLintCommand(program, paths, options);
+      } catch (error) {
+        handleCommandError(program, error);
       }
-    );
+    });
 
   // Init command
   program
