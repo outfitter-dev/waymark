@@ -64,7 +64,11 @@ export function processContentSegment(
   const closingIndex = working.lastIndexOf(SIGIL);
   if (closingIndex >= 0) {
     const afterSigil = working.slice(closingIndex + SIGIL.length).trim();
-    if (afterSigil.length === 0 || afterSigil === "-->" || afterSigil === "*/") {
+    if (
+      afterSigil.length === 0 ||
+      afterSigil === "-->" ||
+      afterSigil === "*/"
+    ) {
       closes = true;
       working = working.slice(0, closingIndex);
     }
