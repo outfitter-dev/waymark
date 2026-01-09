@@ -4,7 +4,7 @@
 
 ## Synopsis
 
-Remove waymarks by location, ID, or filter criteria. Preview by default.
+Remove waymarks by location, ID, or filters. Preview by default.
 
 ## Syntax
 
@@ -12,7 +12,7 @@ Remove waymarks by location, ID, or filter criteria. Preview by default.
 wm rm <file:line> [options]
 wm rm --id <id> [options]
 wm rm --from <json-file> [options]
-wm rm [filters] <paths...> [options]
+wm rm --type <type> --file <path> [options]
 ```
 
 ## Options
@@ -21,17 +21,17 @@ wm rm [filters] <paths...> [options]
 | --- | --- | --- | --- |
 | `--id <id>` |  | Remove by ID | none |
 | `--from <file>` |  | Read JSON input (use `-` for stdin) | none |
-| `--criteria <query>` |  | Filter query string | none |
 | `--type <type>` |  | Filter by type | none |
 | `--mention <mention>` |  | Filter by mention | none |
 | `--tag <tag>` |  | Filter by tag | none |
-| `--flagged` |  | Filter flagged | false |
-| `--starred` |  | Filter starred | false |
-| `--contains <text>` |  | Filter by content | none |
+| `--property <kv>` |  | Filter by property | none |
+| `--file <path>` |  | Filter by file path | none |
+| `--content-pattern <regex>` |  | Filter by content regex | none |
+| `--contains <text>` |  | Filter by content substring | none |
+| `--flagged` | `-F` | Filter flagged | false |
+| `--starred` | `-S` | Filter starred | false |
 | `--reason <text>` |  | Record removal reason | none |
 | `--write` | `-w` | Apply removal | false |
-| `--yes` | `-y` | Skip confirmation prompt | false |
-| `--confirm` |  | Always prompt | false |
 | `--json` |  | JSON array output | false |
 | `--jsonl` |  | JSON lines output | false |
 
@@ -41,7 +41,7 @@ wm rm [filters] <paths...> [options]
 wm rm src/auth.ts:42
 wm rm src/auth.ts:42 --write --reason "cleanup"
 wm rm --id [[a3k9m2p]] --write
-wm rm --type done . --write
+wm rm --type done --file src/ --write
 cat removals.json | wm rm --from - --write --json
 ```
 

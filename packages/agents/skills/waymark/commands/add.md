@@ -19,21 +19,26 @@ wm add --from <json-file>
 | --- | --- | --- |
 | `<file:line>` | Yes* | Target location (required unless `--from`) |
 | `<type>` | Yes* | Waymark type (todo, fix, note, tldr, etc.) |
-| `<content>` | Yes* | Content text (use `-` to read stdin) |
+| `<content>` | Yes* | Content text |
 
 ## Options
 
 | Option | Short | Description | Default |
 | --- | --- | --- | --- |
 | `--from <file>` |  | Read JSON/JSONL input (use `-` for stdin) | none |
+| `--type <type>` |  | Set type when not provided positionally | none |
+| `--content <text>` |  | Set content when not provided positionally | none |
+| `--position <before\|after>` |  | Insert relative to the line | none |
+| `--before` |  | Shorthand for `--position before` | false |
+| `--after` |  | Shorthand for `--position after` | false |
 | `--mention <actor>` |  | Add mention(s) | none |
 | `--tag <tag>` |  | Add tag(s) | none |
 | `--property <kv>` |  | Add property key:value | none |
-| `--ref <token>` |  | Set canonical reference | none |
-| `--source <token>` |  | Add dependency relation | none |
-| `--see <token>` |  | Add reference relation | none |
-| `--replaces <token>` |  | Add replaces relation | none |
-| `--signal <~\|*>` |  | Add flagged/starred signals | none |
+| `--continuation <text>` |  | Add continuation line | none |
+| `--flagged` | `-F` | Add flagged signal | false |
+| `--starred` |  | Add starred signal | false |
+| `--order <n>` |  | Insertion order (batch) | none |
+| `--id <id>` |  | Reserve specific ID | none |
 | `--write` | `-w` | Apply changes (default preview) | false |
 | `--json` |  | JSON array output | false |
 | `--jsonl` |  | JSON lines output | false |

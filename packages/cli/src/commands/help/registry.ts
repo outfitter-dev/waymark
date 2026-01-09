@@ -187,8 +187,8 @@ export const commands: HelpRegistry = {
       {
         name: "content",
         type: "string",
-        placeholder: "text|-",
-        description: "Waymark content (use '-' to read from stdin)",
+        placeholder: "text",
+        description: "Waymark content text",
       },
       {
         name: "position",
@@ -225,40 +225,10 @@ export const commands: HelpRegistry = {
         description: "Add property (repeatable)",
       },
       {
-        name: "see",
-        type: "string",
-        placeholder: "token",
-        description: "Add reference relation (repeatable, creates canonical)",
-      },
-      {
-        name: "docs",
-        type: "string",
-        placeholder: "url",
-        description: "Add documentation link (repeatable)",
-      },
-      {
-        name: "source",
-        type: "string",
-        placeholder: "token",
-        description: "Add dependency relation (from:#token, repeatable)",
-      },
-      {
-        name: "replaces",
-        type: "string",
-        placeholder: "token",
-        description: "Add supersedes relation (repeatable)",
-      },
-      {
         name: "continuation",
         type: "string",
         placeholder: "text",
         description: "Add continuation line (repeatable)",
-      },
-      {
-        name: "signal",
-        type: "string",
-        placeholder: "~|*",
-        description: "Add signal (~ flagged, * starred)",
       },
       {
         name: "flagged",
@@ -423,7 +393,7 @@ export const commands: HelpRegistry = {
       },
       {
         name: "flagged",
-        alias: "R",
+        alias: "F",
         type: "boolean",
         description: "Filter by flagged signal (~)",
       },
@@ -432,17 +402,6 @@ export const commands: HelpRegistry = {
         alias: "S",
         type: "boolean",
         description: "Filter by starred signal (*)",
-      },
-      {
-        name: "yes",
-        alias: "y",
-        type: "boolean",
-        description: "Skip confirmation prompt",
-      },
-      {
-        name: "confirm",
-        type: "boolean",
-        description: "Force confirmation prompt",
       },
       commonFlags.json,
       commonFlags.jsonl,
@@ -453,7 +412,7 @@ export const commands: HelpRegistry = {
       "wm rm src/auth.ts:42                  # Preview removal",
       "wm rm src/auth.ts:42 --write          # Actually remove",
       "wm rm --id [[a3k9m2p]] --write        # Remove by ID",
-      "wm rm --type todo --tag #wip --write --yes  # Batch removal",
+      "wm rm --type todo --tag #wip --file src/ --write  # Batch removal",
       'wm rm src/auth.ts:42 --write --reason "cleanup"',
     ],
   },
