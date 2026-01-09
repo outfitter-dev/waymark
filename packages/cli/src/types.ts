@@ -17,3 +17,16 @@ export type CommandContext = {
   globalOptions: GlobalOptions;
   workspaceRoot: string;
 };
+
+export type ModifyCliOptions = {
+  id?: string;
+  type?: string;
+  content?: string;
+  flagged?: boolean;
+  starred?: boolean;
+  clearSignals?: boolean;
+  write?: boolean;
+  json?: boolean;
+  jsonl?: boolean;
+  interactive?: boolean;
+};
