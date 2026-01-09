@@ -12,6 +12,7 @@ import {
   WaymarkIdManager,
   type WaymarkIdMetadata,
 } from "./ids.ts";
+import type { WaymarkIdConfig } from "./types.ts";
 
 const DEFAULT_ID_LENGTH = 7;
 
@@ -35,7 +36,7 @@ describe("WaymarkIdManager", () => {
     const workspaceB = await createWorkspace();
 
     try {
-      const idConfig = { ...DEFAULT_CONFIG.ids, mode: "auto" };
+      const idConfig: WaymarkIdConfig = { ...DEFAULT_CONFIG.ids, mode: "auto" };
       const metadata: WaymarkIdMetadata = {
         file: "/repo/src/app.ts",
         line: 12,

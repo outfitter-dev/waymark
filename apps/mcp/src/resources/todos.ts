@@ -11,23 +11,24 @@ import {
   normalizePathForOutput,
 } from "../utils/filesystem";
 
+export const MAX_TODOS_CONCURRENCY = 8;
+export const MAX_TODOS_RESULTS = 2000;
+
 export async function handleTodosResource() {
-  const { records } = await collectRecords(["."], {});
-  const todos = records
-    .filter((record) => record.type.toLowerCase() === MARKERS.todo)
-    .map((record) => ({
-      file: record.file,
-      line: record.startLine,
-      content: record.contentText,
-      raw: record.raw,
-    }));
+  const { records, truncated } = await collectRecords(["."], {});
+  const todos = records.map((record) => ({
+    file: record.file,
+    line: record.startLine,
+    content: record.contentText,
+    raw: record.raw,
+  }));
 
   return {
     contents: [
       {
         uri: TODOS_RESOURCE_URI,
         mimeType: "application/json",
-        text: JSON.stringify(todos, null, 2),
+        text: JSON.stringify({ todos, truncated }, null, 2),
       },
     ],
   };
@@ -36,10 +37,10 @@ export async function handleTodosResource() {
 async function collectRecords(
   inputs: string[],
   options: { configPath?: string; scope?: string }
-): Promise<{ records: WaymarkRecord[] }> {
+): Promise<{ records: WaymarkRecord[]; truncated: boolean }> {
   let filePaths = await expandInputPaths(inputs);
   if (filePaths.length === 0) {
-    return { records: [] };
+    return { records: [], truncated: false };
   }
 
   const config = await loadConfig({
@@ -50,18 +51,38 @@ async function collectRecords(
   filePaths = applySkipPaths(filePaths, config.skipPaths ?? []);
 
   const records: WaymarkRecord[] = [];
-  await Promise.all(
-    filePaths.map(async (filePath) => {
-      const source = await readFile(filePath, "utf8").catch(() => null);
-      if (typeof source !== "string") {
-        return;
-      }
-      const parsed = parse(source, { file: normalizePathForOutput(filePath) });
-      records.push(...parsed);
-    })
-  );
+  let truncated = false;
 
-  return { records };
+  await processWithLimit(filePaths, MAX_TODOS_CONCURRENCY, async (filePath) => {
+    if (records.length >= MAX_TODOS_RESULTS) {
+      truncated = true;
+      return;
+    }
+    const source = await readFile(filePath, "utf8").catch(() => null);
+    if (typeof source !== "string") {
+      return;
+    }
+    const parsed = parse(source, { file: normalizePathForOutput(filePath) });
+    const todos = parsed.filter(
+      (record) => record.type.toLowerCase() === MARKERS.todo
+    );
+    if (todos.length === 0) {
+      return;
+    }
+    const remaining = MAX_TODOS_RESULTS - records.length;
+    if (remaining <= 0) {
+      truncated = true;
+      return;
+    }
+    if (todos.length > remaining) {
+      records.push(...todos.slice(0, remaining));
+      truncated = true;
+      return;
+    }
+    records.push(...todos);
+  });
+
+  return { records, truncated };
 }
 
 export const todosResourceDefinition = {
@@ -70,3 +91,25 @@ export const todosResourceDefinition = {
   description: "All todo waymarks discovered in the repository",
   mimeType: "application/json",
 };
+
+async function processWithLimit(
+  filePaths: string[],
+  limit: number,
+  handler: (filePath: string) => Promise<void>
+): Promise<void> {
+  if (filePaths.length === 0) {
+    return;
+  }
+  const queue = [...filePaths];
+  const workerCount = Math.min(limit, queue.length);
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (queue.length > 0) {
+      const filePath = queue.shift();
+      if (!filePath) {
+        return;
+      }
+      await handler(filePath);
+    }
+  });
+  await Promise.all(workers);
+}
