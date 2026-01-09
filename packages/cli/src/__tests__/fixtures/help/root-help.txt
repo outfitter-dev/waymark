@@ -10,7 +10,6 @@ Quick Start:
 
 Global Options:
   --version, -v                 output the current version
-  --prompt                      show agent-facing documentation
   --no-input                    fail if interactive input required
   --scope <scope>, -s           config scope (default|project|user) (choices: "default", "project", "user", default: "default")
   --config <path>               load additional config file (JSON/YAML/TOML)
@@ -41,11 +40,11 @@ Commands:
   lint                          validate waymark structure and enforce quality rules
   init                          initialize waymark configuration
   config                        print resolved configuration
+  skill                         show agent-facing skill documentation
   doctor                        run health checks and diagnostics
   completions|complete          Generate shell completion scripts
   update                        check for and install CLI updates (npm global installs)
   help                          display help for command
-  skill                         show agent-facing skill documentation
 
 
 Topics:

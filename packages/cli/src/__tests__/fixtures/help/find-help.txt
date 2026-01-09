@@ -27,5 +27,4 @@ Options:
   --page <n>                              page number (with --limit)
   --interactive                           interactively select a waymark
   --pretty                                (deprecated: use --text) output as pretty-printed JSON
-  --prompt                                show agent-facing prompt instead of help
   --help, -h                              display help for command
