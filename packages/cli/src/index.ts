@@ -3,9 +3,9 @@
 // tldr ::: waymark CLI entrypoint bootstrap
 
 import {
-  __test as programTest,
   createProgram as programCreateProgram,
   runCli as programRunCli,
+  __test as programTest,
   runMain,
 } from "./program.ts";
 
