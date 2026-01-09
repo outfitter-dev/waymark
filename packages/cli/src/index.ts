@@ -62,6 +62,7 @@ import {
   setPromptPolicy,
 } from "./utils/prompts.ts";
 import { parsePropertyEntry } from "./utils/properties.ts";
+import { createSpinner } from "./utils/spinner.ts";
 import { shouldUseColor } from "./utils/terminal.ts";
 
 const STDOUT = process.stdout;
@@ -73,6 +74,19 @@ function writeStdout(message: string): void {
 
 function writeStderr(message: string): void {
   STDERR.write(`${message}\n`);
+}
+
+function shouldEnableSpinner(options: {
+  quiet?: boolean;
+  structuredOutput?: boolean;
+}): boolean {
+  if (options.structuredOutput) {
+    return false;
+  }
+  if (options.quiet) {
+    return false;
+  }
+  return Boolean(process.stderr.isTTY);
 }
 
 function resolveGlobalOptions(program: Command): GlobalOptions {
@@ -257,15 +271,31 @@ async function handleLintCommand(
   options: { json?: boolean }
 ): Promise<void> {
   const context = await createContext(resolveGlobalOptions(program));
+  const programOpts = program.opts();
 
   // If no paths provided, default to current directory
   const pathsToLint = paths.length > 0 ? paths : ["."];
 
-  const report = await runLint(
-    pathsToLint,
-    context.config.allowTypes,
-    context.config
-  );
+  const spinner = createSpinner({
+    enabled: shouldEnableSpinner({
+      quiet: Boolean(programOpts.quiet),
+      structuredOutput: Boolean(options.json),
+    }),
+    text: "Linting waymarks...",
+    noColor: Boolean(programOpts.noColor),
+  });
+
+  spinner.start();
+  let report: Awaited<ReturnType<typeof runLint>>;
+  try {
+    report = await runLint(
+      pathsToLint,
+      context.config.allowTypes,
+      context.config
+    );
+  } finally {
+    spinner.stop();
+  }
 
   if (options.json) {
     writeStdout(JSON.stringify(report));
@@ -777,7 +807,22 @@ async function handleDoctorCommand(
   const programOpts = program.opts();
   const context = await createContext(resolveGlobalOptions(program));
 
-  const report = await runDoctorCommand(context, options);
+  const spinner = createSpinner({
+    enabled: shouldEnableSpinner({
+      quiet: Boolean(programOpts.quiet),
+      structuredOutput: Boolean(options.json || programOpts.json),
+    }),
+    text: "Running diagnostics...",
+    noColor: Boolean(programOpts.noColor),
+  });
+
+  spinner.start();
+  let report: Awaited<ReturnType<typeof runDoctorCommand>>;
+  try {
+    report = await runDoctorCommand(context, options);
+  } finally {
+    spinner.stop();
+  }
 
   // Output based on format (check both local and global options)
   if (options.json || programOpts.json) {
@@ -848,7 +893,25 @@ async function handleUnifiedCommand(
 
   const args = buildArgsFromOptions(paths, options);
   const unifiedOptions = normalizeUnifiedColor(parseUnifiedOptions(args));
-  const result = await runUnifiedCommand(unifiedOptions, context);
+  const structuredOutput =
+    unifiedOptions.outputFormat === "json" ||
+    unifiedOptions.outputFormat === "jsonl";
+  const spinner = createSpinner({
+    enabled: shouldEnableSpinner({
+      quiet: Boolean(options.quiet),
+      structuredOutput,
+    }),
+    text: "Scanning waymarks...",
+    noColor: Boolean(unifiedOptions.noColor),
+  });
+
+  spinner.start();
+  let result: Awaited<ReturnType<typeof runUnifiedCommand>>;
+  try {
+    result = await runUnifiedCommand(unifiedOptions, context);
+  } finally {
+    spinner.stop();
+  }
 
   const didSelect = await handleUnifiedInteractiveSelection(options, result);
   if (
