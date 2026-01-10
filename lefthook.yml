@@ -12,3 +12,5 @@ pre-push:
   commands:
     quality-gates:
       run: bun run lint && bun run typecheck && bun run test
+    cleanup:
+      run: rm -rf .waymark-test
