@@ -40,7 +40,7 @@ wm src/
 
 - Start with TLDRs on key files only
 - Use `wm src/ --type tldr` to see all file summaries
-- Commit `.waymark/config.toml` to share team settings
+- Commit `.waymark/config.yaml` to share team settings
 - Add `.waymark/index.json` to `.gitignore`
 
 ### Codetag Cleanup
@@ -151,13 +151,20 @@ wm src/ --type todo | grep -v '@'
 
 **Goal**: Filter by team or role.
 
-**Setup** (`.waymark/config.toml`):
+**Setup** (`.waymark/config.yaml`):
 
-```toml
-[groups]
-backend = ["@alice", "@bob"]
-frontend = ["@charlie", "@dana"]
-agents = ["@agent", "@claude", "@cursor"]
+```yaml
+groups:
+  backend:
+    - "@alice"
+    - "@bob"
+  frontend:
+    - "@charlie"
+    - "@dana"
+  agents:
+    - "@agent"
+    - "@claude"
+    - "@cursor"
 ```
 
 **Usage**:

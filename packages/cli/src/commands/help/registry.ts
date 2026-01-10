@@ -20,7 +20,7 @@ const commonFlags = {
     name: "config",
     type: "string",
     placeholder: "path",
-    description: "Load additional config file (JSON/YAML/TOML)",
+    description: "Load additional config file (YAML)",
   },
   scope: {
     name: "scope",
@@ -426,7 +426,7 @@ export const commands: HelpRegistry = {
         name: "format",
         alias: "f",
         type: "string",
-        placeholder: "toml|jsonc|yaml|yml",
+        placeholder: "yaml|yml",
         description: "Config file format",
       },
       {
@@ -452,7 +452,7 @@ export const commands: HelpRegistry = {
     ],
     examples: [
       "wm init                               # Interactive prompts",
-      "wm init --format toml --scope project # Create project config",
+      "wm init --format yaml --scope project # Create project config",
       "wm init --preset minimal --force      # Overwrite with minimal config",
     ],
   },
@@ -479,7 +479,7 @@ export const commands: HelpRegistry = {
     examples: [
       "wm config --print                     # Show merged configuration",
       "wm --scope user config --print        # Show user config",
-      "wm --config ./custom.toml config --print",
+      "wm --config ./custom.yaml config --print",
       "wm config --print --json              # Output compact JSON",
     ],
   },

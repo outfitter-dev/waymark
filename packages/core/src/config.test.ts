@@ -26,14 +26,10 @@ test("loadConfigFromDisk returns defaults when no config exists", async () => {
   });
 });
 
-test("loadConfigFromDisk parses explicit JSONC config", async () => {
-  await withTempDir("waymark-config-jsonc-", async (dir) => {
-    const filePath = join(dir, "custom.jsonc");
-    await writeFile(
-      filePath,
-      `// comment line\n{"type_case": "uppercase"}\n`,
-      "utf8"
-    );
+test("loadConfigFromDisk parses explicit YAML config", async () => {
+  await withTempDir("waymark-config-yaml-", async (dir) => {
+    const filePath = join(dir, "custom.yaml");
+    await writeFile(filePath, "type_case: uppercase\n", "utf8");
 
     const config = await loadConfigFromDisk({
       cwd: dir,
@@ -65,15 +61,15 @@ test("project scope reads .waymark/config.* up the tree", async () => {
   });
 });
 
-test("default scope discovers .waymark/config.* file", async () => {
+test("default scope discovers .waymark/config.yaml file", async () => {
   await withTempDir("waymark-config-default-", async (dir) => {
     const repoRoot = join(dir, "repo");
     const nestedDir = join(repoRoot, "src");
     await mkdir(nestedDir, { recursive: true });
     await mkdir(join(repoRoot, ".waymark"), { recursive: true });
     await writeFile(
-      join(repoRoot, ".waymark", "config.toml"),
-      'type_case = "uppercase"\n',
+      join(repoRoot, ".waymark", "config.yaml"),
+      "type_case: uppercase\n",
       "utf8"
     );
 
@@ -106,8 +102,8 @@ test("user scope reads from XDG_CONFIG_HOME", async () => {
     const configDir = join(dir, "waymark");
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      join(configDir, "config.toml"),
-      'skip_paths = ["**/build/**"]\n',
+      join(configDir, "config.yaml"),
+      'skip_paths:\n  - "**/build/**"\n',
       "utf8"
     );
 

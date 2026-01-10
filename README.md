@@ -123,9 +123,9 @@ wm skill --json                     # structured JSON output
 
 To include codetags (TODO/FIXME/NOTE/etc.) in scans, enable:
 
-```toml
-[scan]
-include_codetags = true
+```yaml
+scan:
+  include_codetags: true
 ```
 
 When ID history tracking is enabled (`ids.track_history = true`), removals are recorded in `.waymark/history.json` with `removedAt`, `removedBy`, and optional `reason` metadata (via `wm rm --reason`).
@@ -185,8 +185,8 @@ Waymark loads configuration with the following precedence (highest wins):
 
 1. `--config <path>` explicit config file
 2. `WAYMARK_CONFIG_PATH` environment variable
-3. Project config: `.waymark/config.(toml|jsonc|yaml|yml)` (walks up from cwd)
-4. User config: `~/.config/waymark/config.(toml|jsonc|yaml|yml)` (or `$XDG_CONFIG_HOME`)
+3. Project config: `.waymark/config.yaml` or `.waymark/config.yml` (walks up from cwd)
+4. User config: `~/.config/waymark/config.yaml` or `.yml` (or `$XDG_CONFIG_HOME`)
 
 Use `--scope project|user|default` to limit search, and `wm config --print` to
 inspect the merged configuration.

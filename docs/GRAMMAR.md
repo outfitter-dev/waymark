@@ -327,8 +327,13 @@ function verifySignature(payload: string, signature: string): boolean {
 
 Custom types are allowed but require configuration:
 
-```toml
-allow_types = ["todo", "fix", "note", "custom", "mytodo"]
+```yaml
+allow_types:
+  - todo
+  - fix
+  - note
+  - custom
+  - mytodo
 ```
 
 Without allowlisting, unknown types trigger lint warnings.
@@ -447,11 +452,11 @@ The alignment target is the `:::` position in the first line. This creates a vis
 
 **Configuration**:
 
-```toml
-[format]
-align_continuations = true   # default: align continuation ::: with parent
-space_around_sigil = true    # default: single space before and after :::
-normalize_case = true        # default: lowercase markers
+```yaml
+format:
+  align_continuations: true # default: align continuation ::: with parent
+  space_around_sigil: true # default: single space before and after :::
+  normalize_case: true # default: lowercase markers
 ```
 
 When `align_continuations` is `false`, continuations appear flush with the comment leader:
@@ -756,14 +761,14 @@ Tooling normalizes IDs for consistency:
 
 ### Configuration
 
-Control ID behavior in `.waymark/config.toml`:
+Control ID behavior in `.waymark/config.yaml`:
 
-```toml
-[ids]
-enabled = true              # Enable ID features (default: true)
-auto_assign = false         # Auto-assign hashes on format (default: false)
-track_history = true        # Track ID removals in history.json (default: false)
-alias_required = false      # Require aliases for new IDs (default: false)
+```yaml
+ids:
+  enabled: true # Enable ID features (default: true)
+  auto_assign: false # Auto-assign hashes on format (default: false)
+  track_history: true # Track ID removals in history.json (default: false)
+  alias_required: false # Require aliases for new IDs (default: false)
 ```
 
 ## Tags (Hashtags)
@@ -887,11 +892,19 @@ Mentions later in the sentence indicate involvement without ownership:
 
 Define groups in configuration:
 
-```toml
-[groups]
-agents = ["@agent", "@claude", "@codex", "@cursor"]
-backend = ["@alice", "@bob"]
-frontend = ["@charlie", "@dana"]
+```yaml
+groups:
+  agents:
+    - "@agent"
+    - "@claude"
+    - "@codex"
+    - "@cursor"
+  backend:
+    - "@alice"
+    - "@bob"
+  frontend:
+    - "@charlie"
+    - "@dana"
 ```
 
 Use in searches:

@@ -35,7 +35,7 @@ wm src/ --text                       # human-readable formatted text
 
 # Configuration
 wm init                              # interactive config setup
-wm init --format toml --scope project
+wm init --format yaml --scope project
 
 # Agent documentation
 wm skill                             # core skill docs
@@ -286,7 +286,7 @@ wm fmt src/**/*.ts --write
 wm fmt src/ --write
 
 # Format with specific config
-wm fmt src/ --write --config-path .waymark/config.toml
+wm fmt src/ --write --config-path .waymark/config.yaml
 ```
 
 **What it does:**
@@ -309,7 +309,7 @@ wm lint src/
 wm lint src/ --json
 
 # With specific config
-wm lint src/ --config-path .waymark/config.toml
+wm lint src/ --config-path .waymark/config.yaml
 ```
 
 **What it checks:**
@@ -328,7 +328,7 @@ Bootstrap waymark configuration:
 wm init
 
 # Non-interactive with flags
-wm init --format toml --scope project --preset full
+wm init --format yaml --scope project --preset full
 
 # Overwrite existing
 wm init --force
@@ -336,7 +336,7 @@ wm init --force
 
 **Options:**
 
-- `--format` — Config format: `toml`, `jsonc`, `yaml`, `yml` (default: `toml`)
+- `--format` — Config format: `yaml`, `yml` (default: `yaml`)
 - `--preset` — Config preset: `full`, `minimal` (default: `full`)
 - `--scope` — Config scope: `project`, `user` (default: `project`)
 - `--force` — Overwrite existing config
@@ -405,18 +405,16 @@ wm help syntax
 
 ### Config Files
 
-Waymark supports multiple config formats:
+Waymark uses YAML for configuration:
 
-- **TOML** (preferred): `.waymark/config.toml`
-- **JSONC** (JSON with comments): `.waymark/config.jsonc`
-- **YAML**: `.waymark/config.yaml` or `.waymark/config.yml`
+- `.waymark/config.yaml` or `.waymark/config.yml`
 
 Config files are discovered in this order:
 
 1. Explicit path via `--config-path` flag
 2. `WAYMARK_CONFIG_PATH` environment variable
-3. Project config: `.waymark/config.*` (searches for `.toml`, `.jsonc`, `.yaml`, `.yml` in that order)
-4. User config: `~/.config/waymark/config.*`
+3. Project config: `.waymark/config.yaml` or `.waymark/config.yml`
+4. User config: `~/.config/waymark/config.yaml` or `.yml`
 5. Built-in defaults
 
 ### Scopes
@@ -441,56 +439,67 @@ Config files are discovered in this order:
 
 ### Common Settings
 
-Example TOML config:
+Example YAML config:
 
-```toml
-type_case = "lowercase"              # lowercase | uppercase
-id_scope = "repo"                    # repo | file
+```yaml
+type_case: lowercase # lowercase | uppercase
+id_scope: repo # repo | file
 
-allow_types = [
-  "todo", "fix", "wip", "done",
-  "note", "context", "tldr", "this",
-  "warn", "deprecated"
-]
+allow_types:
+  - todo
+  - fix
+  - wip
+  - done
+  - note
+  - context
+  - tldr
+  - this
+  - warn
+  - deprecated
 
-skip_paths = [
-  "**/dist/**",
-  "**/.git/**",
-  "**/node_modules/**"
-]
+skip_paths:
+  - "**/dist/**"
+  - "**/.git/**"
+  - "**/node_modules/**"
 
-include_paths = []
-respect_gitignore = true
+include_paths: []
+respect_gitignore: true
 
-[scan]
-include_codetags = false
+scan:
+  include_codetags: false
 
-[format]
-space_around_sigil = true
-normalize_case = true
-align_continuations = true
+format:
+  space_around_sigil: true
+  normalize_case: true
+  align_continuations: true
 
-[lint]
-duplicate_property = "warn"          # warn | error | ignore
-unknown_marker = "warn"
+lint:
+  duplicate_property: warn # warn | error | ignore
+  unknown_marker: warn
 
-[ids]
-mode = "prompt"                      # auto | prompt | off | manual
-length = 8
-remember_user_choice = true
-track_history = true
-assign_on_refresh = false
+ids:
+  mode: prompt # auto | prompt | off | manual
+  length: 8
+  remember_user_choice: true
+  track_history: true
+  assign_on_refresh: false
 
-[index]
-refresh_triggers = ["manual"]
-auto_refresh_after_minutes = 10
+index:
+  refresh_triggers:
+    - manual
+  auto_refresh_after_minutes: 10
 
-[groups]
-agents = [
-  "@agent", "@claude", "@codex",
-  "@cursor", "@copilot", "@devin"
-]
-eng = ["@alice", "@bob"]
+groups:
+  agents:
+    - "@agent"
+    - "@claude"
+    - "@codex"
+    - "@cursor"
+    - "@copilot"
+    - "@devin"
+  eng:
+    - "@alice"
+    - "@bob"
 ```
 
 ---
@@ -820,7 +829,7 @@ wm src/ --mention @agents             # matches all agent handles
 
 **Solutions**:
 
-- Verify config file format (valid TOML/JSONC/YAML)
+- Verify config file format (valid YAML)
 - Check config discovery order (explicit path > env var > project > user)
 - Use `--config-path` to override discovery
 

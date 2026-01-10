@@ -5,8 +5,6 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, extname, join, resolve } from "node:path";
 
-import stripJsonComments from "strip-json-comments";
-import { parse as parseToml } from "toml";
 import { parse as parseYaml } from "yaml";
 
 import type {
@@ -78,12 +76,7 @@ export type LoadConfigOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-const CONFIG_FILENAMES = [
-  "config.toml", // Preferred format
-  "config.jsonc",
-  "config.yaml",
-  "config.yml",
-];
+const CONFIG_FILENAMES = ["config.yaml", "config.yml"];
 
 // Deep merge utility for config resolution
 function deepMerge(
@@ -215,18 +208,7 @@ async function readConfigOverrides(
       return normalizeConfigShape(parseYaml(raw));
     }
 
-    if (ext === ".toml") {
-      return normalizeConfigShape(parseToml(raw));
-    }
-
-    if (ext === ".jsonc") {
-      const text = stripJsonComments(raw);
-      return normalizeConfigShape(JSON.parse(text));
-    }
-
-    throw new Error(
-      `Unsupported config format: ${ext}. Use .toml, .jsonc, .yaml, or .yml`
-    );
+    throw new Error(`Unsupported config format: ${ext}. Use .yaml or .yml`);
   } catch (error) {
     throw new Error(
       `Unable to parse config at ${filePath}: ${
