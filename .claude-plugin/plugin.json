@@ -1,7 +1,10 @@
 {
   "name": "waymark",
-  "version": "0.1.0",
+  "version": "1.0.0-beta.1",
   "description": "Waymark annotation grammar and tooling for code-adjacent context",
+  "commands": ["./packages/agents/commands/"],
+  "skills": ["./packages/agents/skills/"],
+  "agents": ["./packages/agents/agents/"],
   "author": {
     "name": "Matt Galligan",
     "url": "https://github.com/galligan"
