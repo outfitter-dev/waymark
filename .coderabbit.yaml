@@ -38,7 +38,7 @@ knowledge_base:
       - "/**/AGENTS.md"
       - "/**/CLAUDE.md"
       - "/.agents/rules/**/*.md"
-      - "/.waymark/rules/**/*.md"
+      - "/packages/agents/skills/**/*.md"
 
   linear:
     usage: enabled

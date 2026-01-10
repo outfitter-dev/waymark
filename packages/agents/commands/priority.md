@@ -15,7 +15,7 @@ Starred items: !`wm find . --starred --text 2>/dev/null || rg '\*\w+\s*:::' -n`
 
 ## Instructions
 
-Load the `find-waymarks` skill for waymark discovery and filtering.
+Load the `waymark-cli` skill for waymark discovery and filtering.
 
 1. Parse the injected starred waymark data above
 2. Categorize by marker type:

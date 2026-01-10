@@ -22,7 +22,7 @@ Existing waymarks: !`[ -f "$1" ] && (wm find "$1" --text 2>/dev/null || rg ':::'
 
 ## Instructions
 
-Load the `waymark-authoring` skill for grammar and marker guidance.
+Load the `using-waymarks` skill for grammar and marker guidance.
 
 ### Step 1: Context Gathering
 

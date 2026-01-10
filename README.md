@@ -230,12 +230,12 @@ The project is mid-rebuild: we are prioritizing documentation, search patterns, 
 
 - `docs/waymark/SPEC.md` – Source of truth for grammar, tooling, and packaging
 - `docs/` – Published documentation, including historical context (`docs/about`) and the grammar reference (`docs/GRAMMAR.md`)
-- `.waymark/` – Project-specific waymark rules and conventions (`.waymark/rules/`)
-- `.agents/` – General agent rules plus symlinks into `.waymark/rules/`
+- `packages/agents/skills/` – Agent skills including `using-waymarks` and `waymark-cli`
+- `.agents/` – General agent rules for development conventions
 
 ## Contributing
 
-We follow conventional commits, short-lived branches, and Graphite-managed stacks. Review `.agents/rules/CORE.md` plus the waymark-specific guidance in `.waymark/rules/WAYMARKS.md` and `.waymark/rules/CONVENTIONS.md` before sending patches. When adding docs, include a `<!-- tldr ::: ... -->` preamble and verify new waymarks with `rg ':::'`.
+We follow conventional commits, short-lived branches, and Graphite-managed stacks. Review `.agents/rules/CORE.md` and load the `using-waymarks` skill (or run `wm skill`) for waymark guidance before sending patches. When adding docs, include a `<!-- tldr ::: ... -->` preamble and verify new waymarks with `rg ':::'`.
 
 ## Troubleshooting
 

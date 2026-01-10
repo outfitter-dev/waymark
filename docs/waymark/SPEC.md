@@ -128,7 +128,7 @@ Properties are `key:value` pairs in the content region. Keys match `[A-Za-z][A-Z
 ### Free-form Properties
 
 - Additional properties (e.g., `owner:@alice`, `since:2025-09-01`) are allowed. Duplicates are overwritten by the last occurrence.
-- Avoid introducing new property keys without documenting them in `.waymark/rules/conventions.md`.
+- Avoid introducing new property keys without documenting them in project configuration.
 
 ### Symbol Binding
 
@@ -428,4 +428,4 @@ def send_email(message: Email) -> None:
 - Property-as-marker continuations only trigger for known property keys (not blessed markers like `needs` or `blocks`).
 - Tooling should warn on unknown markers, duplicate properties, multiple TLDRs per file, and codetag patterns.
 
-This specification is canonical. When the grammar evolves, update `docs/GRAMMAR.md` and `.waymark/rules/WAYMARKS.md` alongside the code so guidance stays aligned.
+This specification is canonical. When the grammar evolves, update `docs/GRAMMAR.md` and the `using-waymarks` skill in `packages/agents/skills/using-waymarks/` alongside the code so guidance stays aligned.

@@ -10,7 +10,7 @@ import {
 } from "./skill.ts";
 
 const skillDir = fileURLToPath(
-  new URL("../../../agents/skills/waymark", import.meta.url)
+  new URL("../../../agents/skills/waymark-cli", import.meta.url)
 );
 
 describe("skill command", () => {

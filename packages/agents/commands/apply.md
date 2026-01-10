@@ -21,7 +21,7 @@ Plan document: !`cat .waymark/plan.md 2>/dev/null | head -200`
 
 ## Instructions
 
-Load the `waymark-authoring` skill for grammar guidance.
+Load the `using-waymarks` skill for grammar guidance.
 
 ### Phase 1: Load Plan
 
