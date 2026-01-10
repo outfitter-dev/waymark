@@ -14,8 +14,8 @@ const skillsToSync = ["waymark-cli", "using-waymarks"];
 await mkdir(targetRoot, { recursive: true });
 
 for (const skill of skillsToSync) {
-	const sourceDir = join(agentsSkillsDir, skill);
-	const targetDir = join(targetRoot, skill);
-	await rm(targetDir, { recursive: true, force: true });
-	await cp(sourceDir, targetDir, { recursive: true });
+  const sourceDir = join(agentsSkillsDir, skill);
+  const targetDir = join(targetRoot, skill);
+  await rm(targetDir, { recursive: true, force: true });
+  await cp(sourceDir, targetDir, { recursive: true });
 }

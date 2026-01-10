@@ -186,7 +186,9 @@ function parseFrontmatterYaml(frontmatter: string): Record<string, string> {
   const result: Record<string, string> = {};
   for (const line of frontmatter.split("\n")) {
     const colonIndex = line.indexOf(":");
-    if (colonIndex === -1) continue;
+    if (colonIndex === -1) {
+      continue;
+    }
     const key = line.slice(0, colonIndex).trim();
     const value = line.slice(colonIndex + 1).trim();
     if (key && value) {
@@ -202,7 +204,9 @@ function parseFrontmatterYaml(frontmatter: string): Record<string, string> {
  * @returns Sorted list of markdown file basenames without extension.
  */
 function discoverMarkdownFiles(dir: string): string[] {
-  if (!existsSync(dir)) return [];
+  if (!existsSync(dir)) {
+    return [];
+  }
   return readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
     .map((entry) => basename(entry.name, ".md"))
@@ -266,7 +270,12 @@ export async function loadSkillSection(
  */
 export async function loadSkillData(skillDir: string): Promise<SkillData> {
   const manifest = await loadSkillManifest(skillDir);
-  const core = await loadSkillSection(skillDir, "core", "core", SKILL_ENTRY_FILE);
+  const core = await loadSkillSection(
+    skillDir,
+    "core",
+    "core",
+    SKILL_ENTRY_FILE
+  );
 
   const commands: Record<string, SkillSection> = {};
   const references: Record<string, SkillSection> = {};
