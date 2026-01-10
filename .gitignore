@@ -63,13 +63,6 @@ packages/core/test-cache/waymark.db*
 .scratch/
 SCRATCHPAD.md
 
-# Beads local state (issues.jsonl is tracked)
-.beads/*.db
-.beads/*.db-*
-.beads/daemon.*
-.beads/bd.sock
-.beads/metadata.json
-
 # Local Claude settings
 .claude/settings.local.json
 

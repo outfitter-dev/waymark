@@ -6,6 +6,7 @@ Instructions tailored for the Waymark repository.
 
 - Linear Team ID: `bf82309c-7e23-4a19-890d-a36b4ecad5c3`
 - Linear Team Name: `Waymark`
+- Linear Team Key: `WAY`
 
 ## Overview
 
