@@ -2,6 +2,7 @@
 
 import type { WaymarkRecord } from "@waymarks/grammar";
 
+/** Query options for filtering waymark records. */
 export type SearchQuery = {
   markers?: string[];
   tags?: string[];
@@ -11,6 +12,7 @@ export type SearchQuery = {
   predicate?: (record: WaymarkRecord) => boolean;
 };
 
+/** Filter waymark records using marker, tag, mention, and text criteria. */
 export function searchRecords(
   records: WaymarkRecord[],
   query: SearchQuery = {}

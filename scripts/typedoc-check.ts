@@ -68,7 +68,7 @@ const PACKAGES: Record<PackageKey, PackageConfig> = {
   },
 };
 
-const DEFAULT_ENFORCED_PACKAGES: PackageKey[] = [];
+const DEFAULT_ENFORCED_PACKAGES: PackageKey[] = ["core"];
 
 const DOC_KINDS: ReflectionKind[] = [
   ReflectionKind.Class,

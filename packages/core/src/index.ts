@@ -1,5 +1,6 @@
 // tldr ::: core waymark utilities with caching and scanning
 
+/** Current version of the core package. */
 export const version = "1.0.0-beta.1";
 
 export type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";

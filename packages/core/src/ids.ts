@@ -11,6 +11,7 @@ const BASE36_RADIX = 36;
 import type { IdIndexEntry, JsonIdIndex } from "./id-index.ts";
 import type { WaymarkIdConfig } from "./types.ts";
 
+/** Metadata used to generate and persist waymark IDs. */
 export type WaymarkIdMetadata = {
   file: string;
   line: number;
@@ -22,6 +23,7 @@ export type WaymarkIdMetadata = {
   sourceType?: IdIndexEntry["sourceType"];
 };
 
+/** Manages waymark ID generation and persistence using the JSON index. */
 export class WaymarkIdManager {
   private readonly config: WaymarkIdConfig;
   private readonly index: JsonIdIndex;
@@ -196,10 +198,12 @@ export class WaymarkIdManager {
   }
 }
 
+/** Hash normalized waymark content for ID matching. */
 export function fingerprintContent(content: string): string {
   return createHash("sha256").update(content.trim()).digest("hex");
 }
 
+/** Hash surrounding context for ID matching. */
 export function fingerprintContext(context: string): string {
   return createHash("sha256").update(context).digest("hex");
 }

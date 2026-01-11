@@ -20,9 +20,10 @@ const RemovalSignalsSchema = z
   })
   .strict();
 
+/** Signal filters used when selecting waymarks to remove. */
 export type RemovalSignals = z.infer<typeof RemovalSignalsSchema>;
 
-// Define the Zod schema for RemovalCriteria
+/** Zod schema describing removal criteria filters. */
 export const RemovalCriteriaSchema = z
   .object({
     type: z.string().optional(),
@@ -49,10 +50,10 @@ export const RemovalCriteriaSchema = z
     { message: "At least one criteria field must be provided" }
   );
 
-// Infer the type from the schema for consistency
+/** Parsed criteria used to match waymarks for removal. */
 export type RemovalCriteria = z.infer<typeof RemovalCriteriaSchema>;
 
-// Define the Zod schema for RemovalSpec
+/** Zod schema describing a removal request. */
 export const RemovalSpecSchema = z
   .object({
     file: z.string().optional(),
@@ -78,9 +79,10 @@ export const RemovalSpecSchema = z
     }
   );
 
-// Infer the type from the schema for consistency
+/** Parsed removal request for one or more waymarks. */
 export type RemovalSpec = z.infer<typeof RemovalSpecSchema>;
 
+/** Result for a single removal attempt. */
 export type RemovalResult = {
   file: string;
   line: number;
@@ -89,6 +91,7 @@ export type RemovalResult = {
   error?: string;
 };
 
+/** Options that control how removals are applied and written. */
 export type RemoveOptions = {
   write?: boolean;
   config?: WaymarkConfig;
@@ -131,6 +134,7 @@ type RemovalState = {
   dryRun: boolean;
 };
 
+/** Remove waymarks matching specs, optionally writing changes to disk. */
 export async function removeWaymarks(
   specs: RemovalSpec[],
   options: RemoveOptions = {}

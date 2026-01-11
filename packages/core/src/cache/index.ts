@@ -23,10 +23,12 @@ import {
   replaceFileWaymarks,
 } from "./writes.ts";
 
+/** Options for configuring the on-disk waymark cache. */
 export type WaymarkCacheOptions = {
   dbPath?: string;
 };
 
+/** SQLite-backed cache for storing waymark records and query indexes. */
 export class WaymarkCache {
   private readonly db: Database;
   private readonly dbPath: string;

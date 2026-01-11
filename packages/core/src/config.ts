@@ -16,6 +16,7 @@ import type {
   WaymarkLintConfig,
 } from "./types";
 
+/** Default configuration values for waymark operations. */
 export const DEFAULT_CONFIG: WaymarkConfig = {
   typeCase: "lowercase",
   idScope: "repo",
@@ -61,12 +62,15 @@ export const DEFAULT_CONFIG: WaymarkConfig = {
   },
 } as const satisfies WaymarkConfig;
 
+/** Options for resolving a full config from partial overrides. */
 export type ResolveConfigOptions = {
   overrides?: PartialWaymarkConfig;
 };
 
+/** Indicates which configuration scope should be loaded. */
 export type ConfigScope = "default" | "project" | "user";
 
+/** Inputs for loading configuration from disk. */
 export type LoadConfigOptions = {
   cwd?: string;
   scope?: ConfigScope;
@@ -125,6 +129,7 @@ function deepMerge(
   return result;
 }
 
+/** Merge overrides into the default configuration. */
 export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
   if (!overrides) {
     return cloneConfig(DEFAULT_CONFIG);
@@ -133,10 +138,12 @@ export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
   return deepMerge(DEFAULT_CONFIG, overrides);
 }
 
+/** Clone a config object to avoid mutation side effects. */
 export function cloneConfig(config: WaymarkConfig): WaymarkConfig {
   return structuredClone(config);
 }
 
+/** Load configuration from explicit path, env path, or scoped defaults. */
 export async function loadConfigFromDisk(
   options: LoadConfigOptions = {}
 ): Promise<WaymarkConfig> {

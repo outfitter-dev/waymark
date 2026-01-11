@@ -4,8 +4,10 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
+/** Source categories for IDs tracked in the index. */
 export type WaymarkIdSourceType = "cli" | "mcp" | "api" | "manual";
 
+/** Stored metadata for a single waymark ID. */
 export type IdIndexEntry = {
   id: string;
   file: string;
@@ -19,11 +21,13 @@ export type IdIndexEntry = {
   updatedAt: number;
 };
 
+/** Stored metadata for a scanned file. */
 export type FileIndexEntry = {
   hash?: string | null;
   lastSeen: string;
 };
 
+/** Serialized index payload stored on disk. */
 export type IdIndexData = {
   version: number;
   ids: Record<string, IdIndexEntry>;
@@ -40,17 +44,20 @@ const DEFAULT_INDEX: IdIndexData = {
   metadata: {},
 };
 
+/** Options for configuring the JSON index location and history. */
 export type JsonIdIndexOptions = {
   workspaceRoot: string;
   trackHistory?: boolean;
 };
 
+/** Historic entry recorded when an ID is removed. */
 export interface HistoryEntry extends IdIndexEntry {
   removedAt: string;
   removedBy?: string;
   reason?: string;
 }
 
+/** JSON-backed index for waymark IDs and file metadata. */
 export class JsonIdIndex {
   private readonly indexPath: string;
   private readonly historyPath: string;

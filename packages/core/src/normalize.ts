@@ -2,14 +2,17 @@
 
 import type { WaymarkRecord } from "@waymarks/grammar";
 
+/** Options for normalizing waymark types. */
 export type NormalizeTypeOptions = {
   normalizeCase?: boolean;
 };
 
+/** Options for normalizing entire waymark records. */
 export type NormalizeRecordOptions = {
   type?: NormalizeTypeOptions;
 };
 
+/** Normalize a waymark type string. */
 export function normalizeType(
   type: string,
   options: NormalizeTypeOptions = {}
@@ -26,6 +29,7 @@ export function normalizeType(
   return trimmed;
 }
 
+/** Normalize waymark properties by sorting keys. */
 export function normalizeProperties(
   properties: WaymarkRecord["properties"]
 ): WaymarkRecord["properties"] {
@@ -37,6 +41,7 @@ export function normalizeProperties(
   return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
 }
 
+/** Normalize relation tokens and ordering. */
 export function normalizeRelations(
   relations: WaymarkRecord["relations"]
 ): WaymarkRecord["relations"] {
@@ -58,6 +63,7 @@ export function normalizeRelations(
     });
 }
 
+/** Normalize tags by trimming, lowercasing, and sorting. */
 export function normalizeTags(tags: WaymarkRecord["tags"]): string[] {
   if (tags.length === 0) {
     return [];
@@ -71,6 +77,7 @@ export function normalizeTags(tags: WaymarkRecord["tags"]): string[] {
   );
 }
 
+/** Normalize canonical references by formatting and sorting. */
 export function normalizeCanonicals(
   canonicals: WaymarkRecord["canonicals"]
 ): string[] {
@@ -81,6 +88,7 @@ export function normalizeCanonicals(
   return sortUnique(canonicals.map(normalizeCanonicalToken));
 }
 
+/** Normalize mentions by trimming and sorting. */
 export function normalizeMentions(
   mentions: WaymarkRecord["mentions"]
 ): string[] {
@@ -95,6 +103,7 @@ export function normalizeMentions(
   );
 }
 
+/** Normalize a full waymark record for stable comparisons. */
 export function normalizeRecord(
   record: WaymarkRecord,
   options: NormalizeRecordOptions = {}

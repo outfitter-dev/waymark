@@ -21,6 +21,7 @@ const HTML_COMMENT_CLOSE_REGEX = /\s*--!?>\s*$/;
 const CONTEXT_BEFORE_LINES = 2;
 const CONTEXT_AFTER_LINES = 3;
 
+/** Zod schema for validating edit inputs. */
 export const EditSpecSchema = z
   .object({
     file: z.string().min(1).optional(),
@@ -68,13 +69,16 @@ export const EditSpecSchema = z
     }
   );
 
+/** Validated edit specification for a waymark record. */
 export type EditSpec = z.infer<typeof EditSpecSchema>;
 
+/** Options for editing a waymark, including optional ID management. */
 export type EditOptions = EditSpec & {
   idManager?: WaymarkIdManager;
   logger?: CoreLogger;
 };
 
+/** Result of applying edits to a waymark in a file. */
 export type EditResult = {
   file: string;
   before: WaymarkRecord;
@@ -96,6 +100,7 @@ type ResolvedTarget = {
   id?: string;
 };
 
+/** Edit a waymark in place, optionally writing changes to disk. */
 export async function editWaymark(
   options: EditOptions,
   config?: WaymarkConfig
