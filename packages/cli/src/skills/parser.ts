@@ -4,6 +4,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse as parseYaml } from "yaml";
 import { extractFrontmatter } from "./frontmatter.ts";
 import {
   SKILL_ENTRY_FILE,
@@ -83,24 +84,37 @@ export function resolveSkillDir(): string {
 }
 
 /**
- * Parse simple YAML key-value pairs from frontmatter content.
+ * Safely cast a value to a record type.
+ * @param value - Unknown value to cast.
+ * @returns Record if value is an object, empty record otherwise.
+ */
+function asRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return value as Record<string, unknown>;
+}
+
+/**
+ * Parse YAML frontmatter content using the yaml library.
  * @param frontmatter - Raw frontmatter string without delimiters.
+ * @param sourcePath - Source file path for error reporting.
  * @returns Record of parsed key-value pairs.
  */
-function parseFrontmatterYaml(frontmatter: string): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const line of frontmatter.split("\n")) {
-    const colonIndex = line.indexOf(":");
-    if (colonIndex === -1) {
-      continue;
-    }
-    const key = line.slice(0, colonIndex).trim();
-    const value = line.slice(colonIndex + 1).trim();
-    if (key && value) {
-      result[key] = value;
-    }
+function parseFrontmatterYaml(
+  frontmatter: string,
+  sourcePath: string
+): Record<string, unknown> {
+  if (frontmatter.trim().length === 0) {
+    return {};
   }
-  return result;
+
+  try {
+    return asRecord(parseYaml(frontmatter));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse frontmatter in ${sourcePath}: ${message}`);
+  }
 }
 
 /**
@@ -281,7 +295,7 @@ async function buildManifestFromScan(skillDir: string): Promise<SkillManifest> {
   const raw = await readFile(entryPath, "utf8");
   const { frontmatter } = extractFrontmatter(raw);
 
-  const meta = frontmatter ? parseFrontmatterYaml(frontmatter) : {};
+  const meta = frontmatter ? parseFrontmatterYaml(frontmatter, entryPath) : {};
   const sections = buildSectionsFromScan(skillDir);
 
   return normalizeManifest({

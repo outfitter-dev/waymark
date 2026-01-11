@@ -53,112 +53,10 @@ function asNumber(value: unknown): number | undefined {
   return;
 }
 
-function parseInlineList(value: string): string[] | undefined {
-  const trimmed = value.trim();
-  if (!(trimmed.startsWith("[") && trimmed.endsWith("]"))) {
-    return;
-  }
-  const inner = trimmed.slice(1, -1).trim();
-  if (!inner) {
-    return [];
-  }
-  return inner
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-}
-
-const NON_WHITESPACE = /\S/;
-
-type ParsedLine = { key: string; value: string };
-
-function parseLine(line: string): ParsedLine | null {
-  const colonIndex = line.indexOf(":");
-  if (colonIndex === -1) {
-    return null;
-  }
-  const key = line.slice(0, colonIndex).trim();
-  if (!key) {
-    return null;
-  }
-  return {
-    key,
-    value: line.slice(colonIndex + 1).trim(),
-  };
-}
-
-type NestedEntryInput = {
-  result: FrontmatterRecord;
-  activeKey: string | null;
-  line: string;
-  indent: number;
-  activeIndent: number;
-};
-
-function applyNestedEntry({
-  result,
-  activeKey,
-  line,
-  indent,
-  activeIndent,
-}: NestedEntryInput): boolean {
-  if (!activeKey || indent <= activeIndent) {
-    return false;
-  }
-  const parsed = parseLine(line);
-  if (!parsed) {
-    return true;
-  }
-  const record = asRecord(result[activeKey]) ?? {};
-  record[parsed.key] = parseInlineList(parsed.value) ?? parsed.value;
-  result[activeKey] = record;
-  return true;
-}
-
-function parseFallbackFrontmatter(raw: string): FrontmatterRecord {
-  const result: FrontmatterRecord = {};
-  let activeKey: string | null = null;
-  let activeIndent = 0;
-
-  for (const line of raw.split("\n")) {
-    if (line.trim().length === 0) {
-      continue;
-    }
-
-    const indent = line.search(NON_WHITESPACE);
-    if (
-      applyNestedEntry({
-        result,
-        activeKey,
-        line,
-        indent,
-        activeIndent,
-      })
-    ) {
-      continue;
-    }
-
-    const parsed = parseLine(line);
-    if (!parsed) {
-      activeKey = null;
-      continue;
-    }
-
-    if (!parsed.value) {
-      activeKey = parsed.key;
-      activeIndent = indent;
-      result[parsed.key] = {};
-      continue;
-    }
-
-    result[parsed.key] = parseInlineList(parsed.value) ?? parsed.value;
-    activeKey = null;
-  }
-
-  return result;
-}
-
-function parseFrontmatter(raw?: string): FrontmatterRecord {
+function parseFrontmatter(
+  raw: string | undefined,
+  sourcePath: string
+): FrontmatterRecord {
   if (!raw || raw.trim().length === 0) {
     return {};
   }
@@ -166,8 +64,9 @@ function parseFrontmatter(raw?: string): FrontmatterRecord {
   try {
     const parsed = parseYaml(raw);
     return asRecord(parsed) ?? {};
-  } catch {
-    return parseFallbackFrontmatter(raw);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse frontmatter in ${sourcePath}: ${message}`);
   }
 }
 
@@ -348,7 +247,10 @@ async function resolveSection(
 
   const content = await readText(join(skillDir, relativePath));
   const extracted = extractFrontmatter(content);
-  const frontmatter = parseFrontmatter(extracted.frontmatter);
+    const frontmatter = parseFrontmatter(
+      extracted.frontmatter,
+      join(skillDir, relativePath)
+    );
   const kind = resolveSectionKind(frontmatter, relativePath);
 
   if (!kind || kind === "core") {
@@ -399,7 +301,10 @@ async function readSkillMetadata(
   const entryPath = join(skillDir, SKILL_ENTRY_FILE);
   const entryContent = await readText(entryPath);
   const entryExtracted = extractFrontmatter(entryContent);
-  const entryFrontmatter = parseFrontmatter(entryExtracted.frontmatter);
+  const entryFrontmatter = parseFrontmatter(
+    entryExtracted.frontmatter,
+    entryPath
+  );
   const description = asString(entryFrontmatter.description);
   const version = asString(entryFrontmatter.version);
 

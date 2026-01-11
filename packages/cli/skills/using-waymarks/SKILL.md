@@ -1,6 +1,11 @@
 ---
 name: using-waymarks
-description: This skill should be used when the user asks about "waymark syntax", "writing waymarks", "::: sigil", "tldr waymarks", "about waymarks", searching waymarks with ripgrep, or mentions waymark grammar, signals, markers, or properties. Provides comprehensive guidance for authoring and searching waymarks without requiring CLI tools.
+description: >-
+  This skill should be used when the user asks about "waymark syntax", "writing
+  waymarks", "::: sigil", "tldr waymarks", "about waymarks", searching waymarks
+  with ripgrep, or mentions waymark grammar, signals, markers, or properties.
+  Provides comprehensive guidance for authoring and searching waymarks without
+  requiring CLI tools.
 version: 1.0.0
 ---
 
