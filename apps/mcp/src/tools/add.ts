@@ -392,7 +392,11 @@ export const addToolDefinition = {
   inputSchema: addWaymarkInputSchema.shape,
 } as const;
 
-/** Wrapper to invoke the add tool handler in tests. */
+/**
+ * Wrapper to invoke the add tool handler in tests.
+ * @param params - The add waymark parameters including file path, type, content, and server context.
+ * @returns A promise resolving to the call tool result.
+ */
 export function handleAddWaymark(params: {
   filePath: string;
   type: string;
