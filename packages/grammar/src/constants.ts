@@ -142,14 +142,22 @@ for (const def of MARKER_DEFINITIONS) {
 }
 
 // Helper to get canonical type name from any alias
-/** Resolve a marker name or alias to its canonical type. */
+/**
+ * Resolve a marker name or alias to its canonical type.
+ * @param type - Marker name or alias to resolve.
+ * @returns Canonical marker type.
+ */
 export function getCanonicalType(type: string): string {
   const def = MARKER_MAP.get(type.toLowerCase());
   return def?.name || type.toLowerCase();
 }
 
 // Helper to get type category
-/** Look up the category for a marker name or alias. */
+/**
+ * Look up the category for a marker name or alias.
+ * @param type - Marker name or alias to look up.
+ * @returns Marker category or undefined.
+ */
 export function getTypeCategory(type: string): MarkerCategory | undefined {
   const def = MARKER_MAP.get(type.toLowerCase());
   return def?.category;
