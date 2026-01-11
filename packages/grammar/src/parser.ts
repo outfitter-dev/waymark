@@ -82,7 +82,5 @@ export function isValidType(type: string | undefined): boolean {
   if (!type) {
     return false;
   }
-  return BLESSED_MARKERS.includes(
-    type.toLowerCase() as (typeof BLESSED_MARKERS)[number]
-  );
+  return BLESSED_MARKERS.includes(type.toLowerCase());
 }
