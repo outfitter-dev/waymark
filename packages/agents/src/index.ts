@@ -4,14 +4,18 @@ import { readFile } from "node:fs/promises";
 
 import { formatText, parse, resolveConfig } from "@waymarks/core";
 import packageJson from "../package.json" with { type: "json" };
+import type { PartialWaymarkConfig } from "./types.ts";
 
 export type { ParseOptions, WaymarkRecord } from "@waymarks/core";
 export type { PartialWaymarkConfig } from "./types.ts";
 
 /** Options for configuring the agent toolkit. */
 export type AgentToolkitOptions = {
-  config?: import("./types.ts").PartialWaymarkConfig;
+  config?: PartialWaymarkConfig;
 };
+
+/** Current agent package version. */
+export const agentVersion = packageJson.version;
 
 /**
  * Creates an agent toolkit with waymark parsing, formatting, and scanning capabilities.
@@ -31,7 +35,7 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
   const config = resolveConfig(options.config ?? {});
 
   return {
-    agentVersion: packageJson.version,
+    agentVersion,
 
     /**
      * Parse waymark syntax from a source string.
@@ -84,6 +88,3 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
     },
   };
 }
-
-/** Current agent package version. */
-export const agentVersion = packageJson.version;
