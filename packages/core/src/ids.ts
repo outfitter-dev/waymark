@@ -85,6 +85,7 @@ export class WaymarkIdManager {
     this.reserved.delete(normalized);
   }
 
+  /** Update the stored location metadata for an existing ID. */
   async updateLocation(id: string, metadata: WaymarkIdMetadata): Promise<void> {
     const normalized = this.normalizeId(id);
     await this.index.update(normalized, () =>
@@ -92,6 +93,7 @@ export class WaymarkIdManager {
     );
   }
 
+  /** Remove an ID from the index and optionally record a removal reason. */
   async remove(
     id: string,
     options?: { reason?: string; removedBy?: string }
@@ -100,11 +102,13 @@ export class WaymarkIdManager {
     await this.index.delete(normalized, options);
   }
 
+  /** Fetch a stored ID entry by ID. */
   get(id: string): Promise<IdIndexEntry | null> {
     const normalized = this.normalizeId(id);
     return this.index.get(normalized);
   }
 
+  /** Lookup an ID entry by content or context hash. */
   lookupByFingerprint(fingerprint: {
     contentHash?: string;
     contextHash?: string;

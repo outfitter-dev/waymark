@@ -72,10 +72,12 @@ export class WaymarkCache {
     }
   }
 
+  /** Check whether cached file metadata is stale versus current stats. */
   isFileStale(filePath: string, mtime: number, size: number): boolean {
     return isFileStale(this.db, filePath, mtime, size);
   }
 
+  /** Persist file metadata in the cache index. */
   updateFileInfo(
     filePath: string,
     mtime: number,
@@ -85,14 +87,17 @@ export class WaymarkCache {
     updateFileInfo(this.db, filePath, mtime, size, hash);
   }
 
+  /** Insert records into the cache. */
   insertWaymarks(records: WaymarkRecord[]): void {
     insertWaymarks(this.db, records);
   }
 
+  /** Insert records in a batched transaction grouped by file. */
   insertWaymarksBatch(recordsByFile: Map<string, WaymarkRecord[]>): void {
     insertWaymarksBatch(this.db, recordsByFile);
   }
 
+  /** Replace cached records for a single file. */
   replaceFileWaymarks(args: {
     filePath: string;
     mtime: number;
@@ -103,34 +108,42 @@ export class WaymarkCache {
     replaceFileWaymarks(this.db, args);
   }
 
+  /** Remove cached records for the given file path. */
   deleteFile(filePath: string): void {
     deleteFile(this.db, filePath);
   }
 
+  /** Retrieve cached records for a specific file. */
   findByFile(filePath: string): WaymarkRecord[] {
     return findByFile(this.db, filePath);
   }
 
+  /** Retrieve cached records filtered by marker type. */
   findByType(marker: string): WaymarkRecord[] {
     return findByType(this.db, marker);
   }
 
+  /** Retrieve cached records that include the given tag. */
   findByTag(tag: string): WaymarkRecord[] {
     return findByTag(this.db, tag);
   }
 
+  /** Retrieve cached records that include the given mention. */
   findByMention(mention: string): WaymarkRecord[] {
     return findByMention(this.db, mention);
   }
 
+  /** Retrieve cached records that reference a canonical token. */
   findByCanonical(canonical: string): WaymarkRecord[] {
     return findByCanonical(this.db, canonical);
   }
 
+  /** Search cached records by content text. */
   searchContent(query: string): WaymarkRecord[] {
     return searchContent(this.db, query);
   }
 
+  /** Flush and close the underlying SQLite connection. */
   close(): void {
     // Run optimization before closing
     this.db.exec("PRAGMA optimize");
@@ -142,6 +155,7 @@ export class WaymarkCache {
   }
 
   // Implement disposable pattern for automatic cleanup
+  /** Dispose the cache by closing the database connection. */
   [Symbol.dispose](): void {
     this.close();
   }

@@ -78,6 +78,7 @@ export class JsonIdIndex {
     this.trackHistory = options.trackHistory ?? false;
   }
 
+  /** Load index and history from disk once per instance. */
   async init(): Promise<void> {
     if (this.loaded) {
       return;
@@ -90,22 +91,26 @@ export class JsonIdIndex {
     this.loaded = true;
   }
 
+  /** Check whether a waymark ID exists in the index. */
   async has(id: string): Promise<boolean> {
     await this.init();
     return Boolean(this.data.ids[id]);
   }
 
+  /** Fetch a waymark ID entry, if present. */
   async get(id: string): Promise<IdIndexEntry | null> {
     await this.init();
     return this.data.ids[id] ?? null;
   }
 
+  /** Insert or replace a waymark ID entry. */
   async set(entry: IdIndexEntry): Promise<void> {
     await this.init();
     this.data.ids[entry.id] = entry;
     await this.save();
   }
 
+  /** Update an existing entry via an updater function. */
   async update(
     id: string,
     updater: (entry: IdIndexEntry) => IdIndexEntry
@@ -119,6 +124,7 @@ export class JsonIdIndex {
     await this.save();
   }
 
+  /** Remove an entry and optionally record it in history. */
   async delete(
     id: string,
     history?: Partial<Omit<HistoryEntry, "removedAt">>
@@ -141,6 +147,7 @@ export class JsonIdIndex {
     await this.save();
   }
 
+  /** Record a file hash and last-seen timestamp. */
   async touchFile(filePath: string, hash?: string | null): Promise<void> {
     await this.init();
     this.data.files[filePath] = {
@@ -150,24 +157,28 @@ export class JsonIdIndex {
     await this.save();
   }
 
+  /** Remove file metadata from the index. */
   async removeFile(filePath: string): Promise<void> {
     await this.init();
     delete this.data.files[filePath];
     await this.save();
   }
 
+  /** Set the last refresh timestamp for the index metadata. */
   async setLastRefreshed(date: Date): Promise<void> {
     await this.init();
     this.data.metadata.lastRefreshed = date.toISOString();
     await this.save();
   }
 
+  /** Retrieve the last refresh timestamp, if recorded. */
   async getLastRefreshed(): Promise<Date | null> {
     await this.init();
     const value = this.data.metadata.lastRefreshed;
     return value ? new Date(value) : null;
   }
 
+  /** Find an entry that matches content or context hashes. */
   async findByFingerprint(fingerprint: {
     contentHash?: string;
     contextHash?: string;
@@ -189,6 +200,7 @@ export class JsonIdIndex {
     return null;
   }
 
+  /** List all stored ID entries. */
   async listIds(): Promise<IdIndexEntry[]> {
     await this.init();
     return Object.values(this.data.ids);
