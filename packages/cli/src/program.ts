@@ -1209,7 +1209,7 @@ Note: For agent-facing documentation, use "wm skill".
   return program;
 }
 
-/** Run the CLI using process argv when invoked as a script. */
+/** Run the CLI using process.argv when invoked as a script. Exits the process with appropriate exit code. */
 export function runMain(): void {
   registerSignalHandlers();
   createProgram()

@@ -11,9 +11,9 @@ import {
 
 /** @internal */
 export const __test = programTest;
-/** Build the CLI program with all commands registered. */
+/** Build a Commander program with all CLI commands registered. */
 export const createProgram = programCreateProgram;
-/** Run the CLI with the provided argv array. */
+/** Run the CLI with a custom argv array, capturing stdout/stderr. Returns exit code and captured output. */
 export const runCli = programRunCli;
 
 if (import.meta.main) {
