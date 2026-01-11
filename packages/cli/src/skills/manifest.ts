@@ -1,16 +1,16 @@
-// tldr ::: build skill manifest data from skill markdown and frontmatter #scripts/skill-manifest
+// tldr ::: build skill manifest data from skill markdown and frontmatter [[cli/skill-manifest]]
 
 import { basename, dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 
-import { extractFrontmatter } from "../packages/cli/src/skills/frontmatter.ts";
+import { extractFrontmatter } from "./frontmatter.ts";
 import {
   SKILL_ENTRY_FILE,
   type SkillManifest,
   type SkillManifestSections,
   type SkillSectionKind,
   type SkillSectionManifest,
-} from "../packages/cli/src/skills/types.ts";
+} from "./types.ts";
 
 type FrontmatterRecord = Record<string, unknown>;
 

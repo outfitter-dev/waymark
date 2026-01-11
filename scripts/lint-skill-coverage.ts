@@ -8,7 +8,7 @@ import {
   buildSkillManifest,
   discoverSkillDirectories,
   formatSkillManifest,
-} from "./skill-manifest.ts";
+} from "../packages/cli/src/skills/manifest.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const skillsRoot = resolve(repoRoot, "packages/agents/skills");
@@ -163,7 +163,7 @@ if (errors.length > 0) {
   for (const error of errors) {
     console.error(`- ${error}`);
   }
-  console.error("Run: bun scripts/build-skill-manifest.ts");
+  console.error("Run: bun packages/cli/scripts/build-skill-manifest.ts");
   process.exit(1);
 }
 
