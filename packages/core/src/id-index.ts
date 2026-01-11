@@ -178,7 +178,7 @@ export class JsonIdIndex {
     return value ? new Date(value) : null;
   }
 
-  /** Find an entry that matches content or context hashes. */
+  /** Find the first entry where either content or context hash matches. */
   async findByFingerprint(fingerprint: {
     contentHash?: string;
     contextHash?: string;
