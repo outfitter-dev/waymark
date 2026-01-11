@@ -80,6 +80,12 @@ type InsertWaymarkResult = {
   lineNumber: number;
 };
 
+/**
+ * Handle the add action for the MCP tool.
+ * @param input - Raw tool input payload.
+ * @param server - MCP server interface for notifications.
+ * @returns MCP tool result with insertion payload.
+ */
 export async function handleAdd(
   input: unknown,
   server: Pick<McpServer, "sendResourceListChanged">

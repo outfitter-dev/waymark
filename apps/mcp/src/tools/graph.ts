@@ -12,6 +12,11 @@ import {
   normalizePathForOutput,
 } from "../utils/filesystem";
 
+/**
+ * Handle the graph action for the MCP tool.
+ * @param input - Raw tool input payload.
+ * @returns MCP tool result with graph output.
+ */
 export async function handleGraph(input: unknown): Promise<CallToolResult> {
   const { paths, configPath, scope } = graphInputSchema.parse(input);
   const collectOptions: { configPath?: string; scope?: ConfigScope } = {};

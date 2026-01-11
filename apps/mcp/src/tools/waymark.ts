@@ -18,6 +18,12 @@ function isWaymarkAction(value: string): value is WaymarkAction {
   return (WAYMARK_ACTIONS as readonly string[]).includes(value);
 }
 
+/**
+ * Dispatch the MCP tool input to the correct waymark action handler.
+ * @param input - Raw tool input payload.
+ * @param server - MCP server interface for notifications.
+ * @returns MCP tool result promise.
+ */
 export function handleWaymarkTool(
   input: unknown,
   server: Pick<McpServer, "sendResourceListChanged">

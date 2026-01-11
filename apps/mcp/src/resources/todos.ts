@@ -14,6 +14,10 @@ import {
 export const MAX_TODOS_CONCURRENCY = 8;
 export const MAX_TODOS_RESULTS = 2000;
 
+/**
+ * Handle the todos resource request.
+ * @returns MCP resource response with todo records.
+ */
 export async function handleTodosResource() {
   const { records, truncated } = await collectRecords(["."], {});
   const todos = records.map((record) => ({
