@@ -2,13 +2,13 @@
 
 import { describe, expect, test } from "bun:test";
 import { fileURLToPath } from "node:url";
+import { runCli } from "../program.ts";
 import {
   runSkillCommand,
   runSkillListCommand,
   runSkillPathCommand,
   runSkillShowCommand,
 } from "./skill.ts";
-import { runCli } from "../program.ts";
 
 const skillDir = fileURLToPath(
   new URL("../../../agents/skills/waymark-cli", import.meta.url)
