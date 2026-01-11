@@ -33,5 +33,6 @@ export function truncateSource(source: string, maxLines: number): string {
   if (lines.length <= maxLines) {
     return source;
   }
-  return `${lines.slice(0, maxLines).join("\n")}\n...`;
+  const newline = source.includes("\r\n") ? "\r\n" : "\n";
+  return `${lines.slice(0, maxLines).join(newline)}${newline}...`;
 }
