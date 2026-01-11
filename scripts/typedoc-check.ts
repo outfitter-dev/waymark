@@ -121,9 +121,8 @@ function hasCommentText(comment: Comment | undefined): boolean {
   }
 
   const summary =
-    comment.summary
-      ?.map((part: CommentDisplayPart) => part.text)
-      .join("") ?? "";
+    comment.summary?.map((part: CommentDisplayPart) => part.text).join("") ??
+    "";
   if (hasText(summary)) {
     return true;
   }
