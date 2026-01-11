@@ -2,7 +2,7 @@
 // tldr ::: enforce TSDoc coverage for public API exports #scripts/typedoc-check
 
 import { existsSync } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Comment, ProjectReflection } from "typedoc";
 import {
@@ -20,6 +20,7 @@ type PackageConfig = {
   name: string;
   entryPoint: string;
   tsconfig: string;
+  rootDir: string;
 };
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -30,30 +31,35 @@ const PACKAGES: Record<PackageKey, PackageConfig> = {
     name: "@waymarks/core",
     entryPoint: "packages/core/src/index.ts",
     tsconfig: "packages/core/tsconfig.build.json",
+    rootDir: "packages/core",
   },
   cli: {
     key: "cli",
     name: "@waymarks/cli",
     entryPoint: "packages/cli/src/index.ts",
     tsconfig: "packages/cli/tsconfig.build.json",
+    rootDir: "packages/cli",
   },
   grammar: {
     key: "grammar",
     name: "@waymarks/grammar",
     entryPoint: "packages/grammar/src/index.ts",
     tsconfig: "packages/grammar/tsconfig.build.json",
+    rootDir: "packages/grammar",
   },
   mcp: {
     key: "mcp",
     name: "@waymarks/mcp",
     entryPoint: "packages/mcp/src/index.ts",
     tsconfig: "packages/mcp/tsconfig.build.json",
+    rootDir: "packages/mcp",
   },
   agents: {
     key: "agents",
     name: "@waymarks/agents",
     entryPoint: "packages/agents/src/index.ts",
     tsconfig: "packages/agents/tsconfig.build.json",
+    rootDir: "packages/agents",
   },
 };
 
@@ -156,6 +162,19 @@ function formatReflection(
   return `${kind} ${reflection.name} (${file}:${source.line})`;
 }
 
+function isWithinPackage(
+  packageRoot: string,
+  reflection: DeclarationReflection
+): boolean {
+  const source = reflection.sources?.[0];
+  if (!source) {
+    return true;
+  }
+
+  const relPath = relative(packageRoot, source.fileName);
+  return relPath !== "" && !relPath.startsWith("..") && !isAbsolute(relPath);
+}
+
 function collectTopLevel(project: ProjectReflection): DeclarationReflection[] {
   const children = project.children ?? [];
   const modules = children.filter((child) =>
@@ -176,6 +195,7 @@ function collectTopLevel(project: ProjectReflection): DeclarationReflection[] {
 function checkPackageDocs(config: PackageConfig, rootDir: string): string[] {
   const entryPoint = resolve(rootDir, config.entryPoint);
   const tsconfig = resolve(rootDir, config.tsconfig);
+  const packageRoot = resolve(rootDir, config.rootDir);
 
   const missing: string[] = [];
 
@@ -211,6 +231,9 @@ function checkPackageDocs(config: PackageConfig, rootDir: string): string[] {
   const topLevel = collectTopLevel(project);
   for (const reflection of topLevel) {
     if (!isDocKind(reflection)) {
+      continue;
+    }
+    if (!isWithinPackage(packageRoot, reflection)) {
       continue;
     }
     if (isDocumented(reflection)) {
