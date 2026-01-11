@@ -3,12 +3,12 @@
 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SKILL_MANIFEST_FILE } from "../src/skills/types.ts";
 import {
   buildSkillManifest,
   discoverSkillDirectories,
   formatSkillManifest,
 } from "../src/skills/manifest.ts";
+import { SKILL_MANIFEST_FILE } from "../src/skills/types.ts";
 
 const repoRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
