@@ -247,10 +247,10 @@ async function resolveSection(
 
   const content = await readText(join(skillDir, relativePath));
   const extracted = extractFrontmatter(content);
-    const frontmatter = parseFrontmatter(
-      extracted.frontmatter,
-      join(skillDir, relativePath)
-    );
+  const frontmatter = parseFrontmatter(
+    extracted.frontmatter,
+    join(skillDir, relativePath)
+  );
   const kind = resolveSectionKind(frontmatter, relativePath);
 
   if (!kind || kind === "core") {

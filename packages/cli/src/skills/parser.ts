@@ -96,6 +96,17 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 /**
+ * Safely extract a trimmed string from an unknown value.
+ * @param value - Unknown value to extract string from.
+ * @returns Trimmed string if value is non-empty string, undefined otherwise.
+ */
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+/**
  * Parse YAML frontmatter content using the yaml library.
  * @param frontmatter - Raw frontmatter string without delimiters.
  * @param sourcePath - Source file path for error reporting.
@@ -296,12 +307,15 @@ async function buildManifestFromScan(skillDir: string): Promise<SkillManifest> {
   const { frontmatter } = extractFrontmatter(raw);
 
   const meta = frontmatter ? parseFrontmatterYaml(frontmatter, entryPath) : {};
+  const name = asString(meta.name) ?? basename(skillDir);
+  const version = asString(meta.version);
+  const description = asString(meta.description);
   const sections = buildSectionsFromScan(skillDir);
 
   return normalizeManifest({
-    name: meta.name ?? basename(skillDir),
-    ...(meta.version ? { version: meta.version } : {}),
-    ...(meta.description ? { description: meta.description } : {}),
+    name,
+    ...(version ? { version } : {}),
+    ...(description ? { description } : {}),
     sections,
   });
 }
