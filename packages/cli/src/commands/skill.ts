@@ -1,6 +1,6 @@
 // tldr ::: implement the wm skill command outputs [[cli/skill-command]]
 
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { createUsageError } from "../errors.ts";
 import { ExitCode } from "../exit-codes.ts";
 import {
@@ -9,8 +9,11 @@ import {
   loadSkillManifest,
   loadSkillSection,
   resolveSkillDir,
-  type SkillSectionKind,
 } from "../skills/parser.ts";
+import type {
+  SkillSectionKind,
+  SkillSectionManifest,
+} from "../skills/types.ts";
 
 export type SkillCommandOptions = {
   json?: boolean;
@@ -64,39 +67,56 @@ export async function runSkillCommand(
   };
 }
 
+function findSection(
+  sections: SkillSectionManifest[],
+  section: string
+): SkillSectionManifest | null {
+  return (
+    sections.find(
+      (candidate) =>
+        candidate.name === section ||
+        Boolean(candidate.aliases?.includes(section))
+    ) ?? null
+  );
+}
+
 function resolveSkillSection(
   manifest: Awaited<ReturnType<typeof loadSkillManifest>>,
   section: string
 ): { name: string; kind: SkillSectionKind; path: string } | null {
-  if (manifest.commands.includes(section)) {
+  const command = findSection(manifest.sections.commands, section);
+  if (command) {
     return {
-      name: section,
+      name: command.name,
       kind: "command",
-      path: join("commands", `${section}.md`),
+      path: command.path,
     };
   }
 
-  if (manifest.references.includes(section)) {
+  const reference = findSection(manifest.sections.references, section);
+  if (reference) {
     return {
-      name: section,
+      name: reference.name,
       kind: "reference",
-      path: join("references", `${section}.md`),
+      path: reference.path,
     };
   }
 
-  if (manifest.examples.includes(section)) {
+  const example = findSection(manifest.sections.examples, section);
+  if (example) {
     return {
-      name: section,
+      name: example.name,
       kind: "example",
-      path: join("examples", `${section}.md`),
+      path: example.path,
     };
   }
 
   if (section === "skill" || section === "core") {
+    const core = manifest.sections.core;
     return {
-      name: "core",
+      name: core.name,
       kind: "core",
-      path: "SKILL.md",
+      path: core.path,
     };
   }
 
