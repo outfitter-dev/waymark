@@ -4,6 +4,11 @@ import type { Database } from "bun:sqlite";
 import type { WaymarkRecord } from "@waymarks/grammar";
 import { updateFileInfo } from "./files.ts";
 
+/**
+ * Insert waymark records into the cache.
+ * @param db - SQLite database handle.
+ * @param records - Records to insert.
+ */
 export function insertWaymarks(db: Database, records: WaymarkRecord[]): void {
   if (records.length === 0) {
     return;
@@ -16,6 +21,11 @@ export function insertWaymarks(db: Database, records: WaymarkRecord[]): void {
   transaction(records);
 }
 
+/**
+ * Insert waymark records grouped by file in a single transaction.
+ * @param db - SQLite database handle.
+ * @param recordsByFile - Map of file paths to records.
+ */
 export function insertWaymarksBatch(
   db: Database,
   recordsByFile: Map<string, WaymarkRecord[]>
@@ -36,6 +46,11 @@ export function insertWaymarksBatch(
   transaction();
 }
 
+/**
+ * Replace cached records for a single file.
+ * @param db - SQLite database handle.
+ * @param args - File metadata and records to store.
+ */
 export function replaceFileWaymarks(
   db: Database,
   args: {
@@ -49,7 +64,7 @@ export function replaceFileWaymarks(
   const { filePath, mtime, size, hash, records } = args;
   const transaction = db.transaction(() => {
     deleteFileInternal(db, filePath);
-    updateFileInfo(db, filePath, mtime, size, hash);
+    updateFileInfo(db, { filePath, mtime, size, hash });
     if (records.length > 0) {
       insertWaymarksUnsafe(db, records);
     }
@@ -58,6 +73,11 @@ export function replaceFileWaymarks(
   transaction();
 }
 
+/**
+ * Delete cached records and file metadata for a given file.
+ * @param db - SQLite database handle.
+ * @param filePath - File path to delete.
+ */
 export function deleteFile(db: Database, filePath: string): void {
   const transaction = db.transaction(() => {
     deleteFileInternal(db, filePath);

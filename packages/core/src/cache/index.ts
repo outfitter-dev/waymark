@@ -96,7 +96,7 @@ export class WaymarkCache {
     size: number,
     hash?: string | null
   ): void {
-    updateFileInfo(this.db, filePath, mtime, size, hash);
+    updateFileInfo(this.db, { filePath, mtime, size, hash });
   }
 
   /**

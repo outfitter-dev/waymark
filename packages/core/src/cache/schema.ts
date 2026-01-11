@@ -2,11 +2,16 @@
 
 import type { Database } from "bun:sqlite";
 
-// Schema version for cache database
-// Increment when making breaking schema changes (e.g., column renames, type changes)
-// On version mismatch, cache is invalidated and recreated
+/**
+ * Schema version for the cache database.
+ * Increment when making breaking schema changes (e.g., column renames, type changes).
+ */
 export const CACHE_SCHEMA_VERSION = 2;
 
+/**
+ * Apply performance-oriented PRAGMA settings for the cache database.
+ * @param db - SQLite database handle.
+ */
 export function configureForPerformance(db: Database): void {
   db.exec("PRAGMA foreign_keys = ON");
   // Enable WAL mode for better concurrency
@@ -21,6 +26,11 @@ export function configureForPerformance(db: Database): void {
   db.exec("PRAGMA auto_vacuum = INCREMENTAL");
 }
 
+/**
+ * Read the schema version from the cache metadata table.
+ * @param db - SQLite database handle.
+ * @returns Current schema version (0 when unset).
+ */
 export function getSchemaVersion(db: Database): number {
   // Create metadata table if it doesn't exist
   db.exec(`
@@ -37,6 +47,11 @@ export function getSchemaVersion(db: Database): number {
   return row?.value ?? 0;
 }
 
+/**
+ * Persist the schema version in the cache metadata table.
+ * @param db - SQLite database handle.
+ * @param version - Schema version to store.
+ */
 export function setSchemaVersion(db: Database, version: number): void {
   db.exec(`
     INSERT OR REPLACE INTO cache_metadata (key, value)
@@ -44,6 +59,10 @@ export function setSchemaVersion(db: Database, version: number): void {
   `);
 }
 
+/**
+ * Drop all cache tables to force reinitialization.
+ * @param db - SQLite database handle.
+ */
 export function invalidateCache(db: Database): void {
   // Drop all existing tables
   db.exec("DROP TABLE IF EXISTS dependencies");
@@ -52,6 +71,10 @@ export function invalidateCache(db: Database): void {
   db.exec("DROP TABLE IF EXISTS cache_metadata");
 }
 
+/**
+ * Create the cache schema, applying migrations as needed.
+ * @param db - SQLite database handle.
+ */
 export function createSchema(db: Database): void {
   // Check schema version and invalidate if mismatch
   const currentVersion = getSchemaVersion(db);
@@ -151,6 +174,10 @@ export function createSchema(db: Database): void {
   `);
 }
 
+/**
+ * Ensure new columns exist on the waymarkRecords table.
+ * @param db - SQLite database handle.
+ */
 export function ensureWaymarkRecordColumns(db: Database): void {
   const existingColumns = new Set<string>();
   const pragma = db.prepare("PRAGMA table_info(waymarkRecords)");
