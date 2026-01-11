@@ -42,6 +42,11 @@ const TEST_TOKEN_PATTERNS = [
   "__mocks__",
 ];
 
+/**
+ * Infer language identifier from a file path.
+ * @param filePath - File path to inspect.
+ * @returns Language identifier string.
+ */
 export function inferLanguageFromFile(filePath: string | undefined): string {
   if (!filePath) {
     return "unknown";
@@ -105,6 +110,11 @@ export function inferLanguageFromFile(filePath: string | undefined): string {
 }
 
 // todo ::: @codex allow configurable overrides for file category inference #lib/parser
+/**
+ * Infer a file category (code/docs/config/etc) from a file path.
+ * @param filePath - File path to inspect.
+ * @returns File category value.
+ */
 export function inferFileCategory(
   filePath: string | undefined
 ): WaymarkRecord["fileCategory"] {

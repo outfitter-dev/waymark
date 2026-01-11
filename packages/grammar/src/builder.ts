@@ -38,6 +38,11 @@ type ContinuationParams = {
   rawLines: string[];
 };
 
+/**
+ * Build a WaymarkRecord from parsed header and content.
+ * @param args - Record construction inputs.
+ * @returns Waymark record.
+ */
 export function buildRecord(args: BuildRecordArgs): WaymarkRecord {
   const { options, header, raw, contentText, startLine, endLine } = args;
   const file = options.file ?? "";
@@ -67,6 +72,13 @@ export function buildRecord(args: BuildRecordArgs): WaymarkRecord {
   };
 }
 
+/**
+ * Process continuation lines that follow a waymark header.
+ * @param context - Waymark parsing context.
+ * @param header - Parsed header data.
+ * @param params - Continuation processing params.
+ * @returns Continuation content segments and metadata.
+ */
 export function processContinuations(
   context: WaymarkContext,
   header: ParsedHeader,
@@ -117,6 +129,11 @@ export function processContinuations(
   return { contentSegments, endLine, extraProperties, newIndex: index };
 }
 
+/**
+ * Merge continuation properties into a record and update relations.
+ * @param record - Record to mutate.
+ * @param extraProperties - Extra properties discovered in continuations.
+ */
 export function mergeExtraProperties(
   record: WaymarkRecord,
   extraProperties: Record<string, string>
@@ -131,6 +148,13 @@ export function mergeExtraProperties(
   }
 }
 
+/**
+ * Process a single waymark header line into a record and updated cursor.
+ * @param context - Waymark parsing context.
+ * @param header - Parsed header data.
+ * @param rawLine - Raw header line string.
+ * @returns Processed waymark record and next index.
+ */
 export function processWaymarkLine(
   context: WaymarkContext,
   header: ParsedHeader,

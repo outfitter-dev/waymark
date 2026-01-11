@@ -24,10 +24,20 @@ export const RELATION_KIND_MAP: Record<
   replaces: "replaces",
 };
 
+/**
+ * Unescape quoted property values.
+ * @param value - Quoted value with escape sequences.
+ * @returns Unescaped value.
+ */
 export function unescapeQuotedValue(value: string): string {
   return value.replace(/\\(["\\])/g, "$1");
 }
 
+/**
+ * Split relation values by comma into trimmed tokens.
+ * @param value - Raw relation value string.
+ * @returns List of trimmed tokens.
+ */
 export function splitRelationValues(value: string): string[] {
   return value
     .split(",")
@@ -38,10 +48,20 @@ export function splitRelationValues(value: string): string[] {
 // note ::: URL schemes to preserve without # prefix in relation values
 const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
 
+/**
+ * Determine whether a value is a URL.
+ * @param value - Value to test.
+ * @returns True if the value matches a URL scheme.
+ */
 export function isUrl(value: string): boolean {
   return URL_SCHEME_PATTERN.test(value);
 }
 
+/**
+ * Normalize a relation token, adding # when needed.
+ * @param token - Raw token value.
+ * @returns Normalized token or null if empty.
+ */
 export function normalizeRelationToken(token: string): string | null {
   if (token.length === 0) {
     return null;
@@ -57,6 +77,13 @@ export function normalizeRelationToken(token: string): string | null {
   return token.startsWith("#") ? token : `#${token}`;
 }
 
+/**
+ * Append normalized relation tokens to the relations list.
+ * @param relationKind - Relation kind to assign.
+ * @param value - Raw relation value.
+ * @param relations - Relations array to mutate.
+ * @param canonicalSet - Canonical token set to update for see relations.
+ */
 export function appendRelationTokens(
   relationKind: WaymarkRecord["relations"][number]["kind"],
   value: string,
@@ -82,8 +109,10 @@ export function appendRelationTokens(
 }
 
 /**
- * Mask content inside backticks to prevent property extraction
+ * Mask content inside backticks to prevent property extraction.
  * about ::: prevents parsing `key:value` patterns inside inline code
+ * @param text - Raw content string.
+ * @returns Masked content and extracted blocks.
  */
 export function maskBackticks(text: string): {
   masked: string;
@@ -121,7 +150,10 @@ export function maskBackticks(text: string): {
 }
 
 /**
- * Restore masked backtick blocks
+ * Restore masked backtick blocks.
+ * @param text - Masked content string.
+ * @param blocks - Backtick blocks to restore.
+ * @returns Unmasked content string.
  */
 export function unmaskBackticks(text: string, blocks: string[]): string {
   let result = text;
@@ -131,6 +163,11 @@ export function unmaskBackticks(text: string, blocks: string[]): string {
   return result;
 }
 
+/**
+ * Extract properties and relations from content.
+ * @param content - Content text to analyze.
+ * @returns Extracted properties, relations, and canonical tokens.
+ */
 export function extractPropertiesAndRelations(content: string): {
   properties: Record<string, string>;
   relations: WaymarkRecord["relations"];
@@ -178,6 +215,11 @@ export function extractPropertiesAndRelations(content: string): {
   };
 }
 
+/**
+ * Extract unique mentions from content.
+ * @param content - Content text to analyze.
+ * @returns Mention tokens.
+ */
 export function extractMentions(content: string): string[] {
   const mentions = new Set<string>();
 
@@ -191,6 +233,11 @@ export function extractMentions(content: string): string[] {
   return Array.from(mentions);
 }
 
+/**
+ * Extract unique tags from content.
+ * @param content - Content text to analyze.
+ * @returns Tag tokens.
+ */
 export function extractTags(content: string): string[] {
   const tags = new Set<string>();
 
@@ -204,6 +251,12 @@ export function extractTags(content: string): string[] {
   return Array.from(tags);
 }
 
+/**
+ * Add relation tokens to an existing record.
+ * @param record - Record to mutate.
+ * @param relationKind - Relation kind to add.
+ * @param value - Raw relation value string.
+ */
 export function addRelationTokens(
   record: WaymarkRecord,
   relationKind: WaymarkRecord["relations"][number]["kind"],
