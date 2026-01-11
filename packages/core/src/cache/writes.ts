@@ -65,7 +65,9 @@ export function replaceFileWaymarks(
   const transaction = db.transaction(() => {
     deleteFileInternal(db, filePath);
     const info =
-      hash === undefined ? { filePath, mtime, size } : { filePath, mtime, size, hash };
+      hash === undefined
+        ? { filePath, mtime, size }
+        : { filePath, mtime, size, hash };
     updateFileInfo(db, info);
     if (records.length > 0) {
       insertWaymarksUnsafe(db, records);

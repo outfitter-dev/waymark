@@ -97,7 +97,9 @@ export class WaymarkCache {
     hash?: string | null
   ): void {
     const info =
-      hash === undefined ? { filePath, mtime, size } : { filePath, mtime, size, hash };
+      hash === undefined
+        ? { filePath, mtime, size }
+        : { filePath, mtime, size, hash };
     updateFileInfo(this.db, info);
   }
 
