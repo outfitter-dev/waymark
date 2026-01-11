@@ -2,14 +2,16 @@
 
 import type { WaymarkRecord } from "./types";
 
-// Exported regex patterns for reuse in styling and other contexts
+/** Regex matching `key:value` properties in waymark content. */
 // note ::: No space allowed after colon for unquoted values (key:value not key: value)
 export const PROPERTY_REGEX =
   /(?:^|[\s])([A-Za-z][A-Za-z0-9_-]*)\s*:(?:"([^"\\]*(?:\\.[^"\\]*)*)"|([^\s,]+(?:,[^\s,]+)*))/gm;
+/** Regex matching `@mention` tokens in waymark content. */
 // note ::: requires lowercase first char to reject decorators (@Component)
 // note ::: lookahead rejects both continuations and parens to prevent backtracking on @dataclass()
 export const MENTION_REGEX =
   /(?:^|[^A-Za-z0-9/_-])(@[a-z][A-Za-z0-9/_-]*)(?![A-Za-z0-9/_(-])/gm;
+/** Regex matching `#tag` tokens in waymark content. */
 export const TAG_REGEX = /(?:^|[^A-Za-z0-9._/:%-])(#[A-Za-z0-9._/:%-]+)/gm;
 
 export const RELATION_KIND_MAP: Record<

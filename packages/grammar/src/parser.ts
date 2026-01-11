@@ -12,6 +12,7 @@ import type { ParseOptions, WaymarkRecord } from "./types";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
 
+/** Parse a single line into a waymark record when possible. */
 export function parseLine(
   line: string,
   lineNumber: number,
@@ -38,6 +39,7 @@ export function parseLine(
   });
 }
 
+/** Parse a full text buffer into waymark records. */
 export function parse(
   text: string,
   options: ParseOptions = {}
@@ -75,6 +77,7 @@ export function parse(
   return records;
 }
 
+/** Check whether a marker type is in the blessed marker list. */
 export function isValidType(type: string | undefined): boolean {
   if (!type) {
     return false;
