@@ -4,7 +4,12 @@
 import { existsSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Comment, ProjectReflection } from "typedoc";
+import type {
+  Comment,
+  CommentDisplayPart,
+  CommentTag,
+  ProjectReflection,
+} from "typedoc";
 import {
   Application,
   DeclarationReflection,
@@ -115,14 +120,19 @@ function hasCommentText(comment: Comment | undefined): boolean {
     return false;
   }
 
-  const summary = comment.summary?.map((part) => part.text).join("") ?? "";
+  const summary =
+    comment.summary
+      ?.map((part: CommentDisplayPart) => part.text)
+      .join("") ?? "";
   if (hasText(summary)) {
     return true;
   }
 
   if (comment.blockTags && comment.blockTags.length > 0) {
-    return comment.blockTags.some((tag) => {
-      const body = tag.content?.map((part) => part.text).join("") ?? "";
+    return comment.blockTags.some((tag: CommentTag) => {
+      const body =
+        tag.content?.map((part: CommentDisplayPart) => part.text).join("") ??
+        "";
       return hasText(body);
     });
   }
