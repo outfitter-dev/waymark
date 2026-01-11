@@ -72,12 +72,24 @@ export class WaymarkCache {
     }
   }
 
-  /** Check whether cached file metadata is stale versus current stats. */
+  /**
+   * Check whether cached file metadata is stale versus current stats.
+   * @param filePath - File path to check.
+   * @param mtime - Modified time in milliseconds.
+   * @param size - File size in bytes.
+   * @returns True when cached metadata is stale or missing.
+   */
   isFileStale(filePath: string, mtime: number, size: number): boolean {
     return isFileStale(this.db, filePath, mtime, size);
   }
 
-  /** Persist file metadata in the cache index. */
+  /**
+   * Persist file metadata in the cache index.
+   * @param filePath - File path to update.
+   * @param mtime - Modified time in milliseconds.
+   * @param size - File size in bytes.
+   * @param hash - Optional content hash.
+   */
   updateFileInfo(
     filePath: string,
     mtime: number,
@@ -87,17 +99,26 @@ export class WaymarkCache {
     updateFileInfo(this.db, filePath, mtime, size, hash);
   }
 
-  /** Insert records into the cache. */
+  /**
+   * Insert records into the cache.
+   * @param records - Waymark records to insert.
+   */
   insertWaymarks(records: WaymarkRecord[]): void {
     insertWaymarks(this.db, records);
   }
 
-  /** Insert records in a batched transaction grouped by file. */
+  /**
+   * Insert records in a batched transaction grouped by file.
+   * @param recordsByFile - Map of file paths to waymark records.
+   */
   insertWaymarksBatch(recordsByFile: Map<string, WaymarkRecord[]>): void {
     insertWaymarksBatch(this.db, recordsByFile);
   }
 
-  /** Replace cached records for a single file. */
+  /**
+   * Replace cached records for a single file.
+   * @param args - File metadata and records to replace in the cache.
+   */
   replaceFileWaymarks(args: {
     filePath: string;
     mtime: number;
@@ -108,37 +129,64 @@ export class WaymarkCache {
     replaceFileWaymarks(this.db, args);
   }
 
-  /** Remove cached records for the given file path. */
+  /**
+   * Remove cached records for the given file path.
+   * @param filePath - File path to remove.
+   */
   deleteFile(filePath: string): void {
     deleteFile(this.db, filePath);
   }
 
-  /** Retrieve cached records for a specific file. */
+  /**
+   * Retrieve cached records for a specific file.
+   * @param filePath - File path to look up.
+   * @returns Cached waymark records for the file.
+   */
   findByFile(filePath: string): WaymarkRecord[] {
     return findByFile(this.db, filePath);
   }
 
-  /** Retrieve cached records filtered by marker type. */
+  /**
+   * Retrieve cached records filtered by marker type.
+   * @param marker - Marker type to filter by.
+   * @returns Cached records matching the marker.
+   */
   findByType(marker: string): WaymarkRecord[] {
     return findByType(this.db, marker);
   }
 
-  /** Retrieve cached records that include the given tag. */
+  /**
+   * Retrieve cached records that include the given tag.
+   * @param tag - Tag to filter by.
+   * @returns Cached records containing the tag.
+   */
   findByTag(tag: string): WaymarkRecord[] {
     return findByTag(this.db, tag);
   }
 
-  /** Retrieve cached records that include the given mention. */
+  /**
+   * Retrieve cached records that include the given mention.
+   * @param mention - Mention to filter by.
+   * @returns Cached records containing the mention.
+   */
   findByMention(mention: string): WaymarkRecord[] {
     return findByMention(this.db, mention);
   }
 
-  /** Retrieve cached records that reference a canonical token. */
+  /**
+   * Retrieve cached records that reference a canonical token.
+   * @param canonical - Canonical token to match.
+   * @returns Cached records referencing the canonical token.
+   */
   findByCanonical(canonical: string): WaymarkRecord[] {
     return findByCanonical(this.db, canonical);
   }
 
-  /** Search cached records by content text. */
+  /**
+   * Search cached records by content text.
+   * @param query - Search query text.
+   * @returns Cached records matching the query.
+   */
   searchContent(query: string): WaymarkRecord[] {
     return searchContent(this.db, query);
   }
