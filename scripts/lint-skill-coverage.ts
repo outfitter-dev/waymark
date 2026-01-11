@@ -3,20 +3,16 @@
 
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-
+import { SKILL_MANIFEST_FILE } from "../packages/cli/src/skills/types.ts";
 import {
   buildSkillManifest,
   discoverSkillDirectories,
   formatSkillManifest,
 } from "./skill-manifest.ts";
-import { SKILL_MANIFEST_FILE } from "../packages/cli/src/skills/types.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const skillsRoot = resolve(repoRoot, "packages/agents/skills");
-const registerPath = resolve(
-  repoRoot,
-  "packages/cli/src/commands/register.ts"
-);
+const registerPath = resolve(repoRoot, "packages/cli/src/commands/register.ts");
 
 type CommandExtraction = {
   commands: string[];
@@ -76,7 +72,10 @@ if (skillDirs.length === 0) {
   errors.push(`No skill directories found under ${skillsRoot}.`);
 }
 
-const manifests = new Map<string, Awaited<ReturnType<typeof buildSkillManifest>>>();
+const manifests = new Map<
+  string,
+  Awaited<ReturnType<typeof buildSkillManifest>>
+>();
 
 for (const skillDir of skillDirs) {
   const manifest = await buildSkillManifest(skillDir);
@@ -99,13 +98,9 @@ const waymarkSkillDir = skillDirs.find(
   (dir) => basename(dir) === "waymark-cli"
 );
 
-if (!waymarkSkillDir) {
-  errors.push("Unable to locate waymark-cli skill directory.");
-} else {
+if (waymarkSkillDir) {
   const manifest = manifests.get(waymarkSkillDir);
-  if (!manifest) {
-    errors.push("Unable to build manifest for waymark-cli.");
-  } else {
+  if (manifest) {
     const commandSections = manifest.sections.commands;
     const documentedCommands = new Set<string>();
     const duplicateDocs = new Set<string>();
@@ -131,9 +126,7 @@ if (!waymarkSkillDir) {
     }
 
     const registerSource = await readText(registerPath);
-    if (!registerSource) {
-      errors.push(`Unable to read ${registerPath}.`);
-    } else {
+    if (registerSource) {
       const extracted = extractCliCommands(registerSource);
       errors.push(...extracted.errors);
 
@@ -155,8 +148,14 @@ if (!waymarkSkillDir) {
           `Skill docs reference unknown commands: ${unknownDocs.join(", ")}.`
         );
       }
+    } else {
+      errors.push(`Unable to read ${registerPath}.`);
     }
+  } else {
+    errors.push("Unable to build manifest for waymark-cli.");
   }
+} else {
+  errors.push("Unable to locate waymark-cli skill directory.");
 }
 
 if (errors.length > 0) {
