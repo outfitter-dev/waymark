@@ -392,7 +392,7 @@ export const addToolDefinition = {
   inputSchema: addWaymarkInputSchema.shape,
 } as const;
 
-// Wrapper for tests
+/** Wrapper to invoke the add tool handler in tests. */
 export function handleAddWaymark(params: {
   filePath: string;
   type: string;

@@ -27,6 +27,7 @@ export function clamp(value: number, min: number, max: number): number {
 
 const NEWLINE_SPLIT_REGEX = /\r?\n/u;
 
+/** Truncate source text to a maximum number of lines. */
 export function truncateSource(source: string, maxLines: number): string {
   const lines = source.split(NEWLINE_SPLIT_REGEX);
   if (lines.length <= maxLines) {

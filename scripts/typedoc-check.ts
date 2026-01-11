@@ -55,9 +55,9 @@ const PACKAGES: Record<PackageKey, PackageConfig> = {
   mcp: {
     key: "mcp",
     name: "@waymarks/mcp",
-    entryPoint: "packages/mcp/src/index.ts",
-    tsconfig: "packages/mcp/tsconfig.build.json",
-    rootDir: "packages/mcp",
+    entryPoint: "apps/mcp/src/index.ts",
+    tsconfig: "apps/mcp/tsconfig.build.json",
+    rootDir: "apps/mcp",
   },
   agents: {
     key: "agents",
@@ -68,7 +68,12 @@ const PACKAGES: Record<PackageKey, PackageConfig> = {
   },
 };
 
-const DEFAULT_ENFORCED_PACKAGES: PackageKey[] = ["core", "cli", "grammar"];
+const DEFAULT_ENFORCED_PACKAGES: PackageKey[] = [
+  "core",
+  "cli",
+  "grammar",
+  "mcp",
+];
 
 const DOC_KINDS: ReflectionKind[] = [
   ReflectionKind.Class,
