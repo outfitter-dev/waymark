@@ -73,6 +73,7 @@ const DEFAULT_ENFORCED_PACKAGES: PackageKey[] = [
   "cli",
   "grammar",
   "mcp",
+  "agents",
 ];
 
 const DOC_KINDS: ReflectionKind[] = [

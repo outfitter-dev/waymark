@@ -8,6 +8,7 @@ import packageJson from "../package.json" with { type: "json" };
 export type { ParseOptions, WaymarkRecord } from "@waymarks/core";
 export type { PartialWaymarkConfig } from "./types.ts";
 
+/** Options for configuring the agent toolkit. */
 export type AgentToolkitOptions = {
   config?: import("./types.ts").PartialWaymarkConfig;
 };
@@ -84,4 +85,5 @@ export function createAgentToolkit(options: AgentToolkitOptions = {}) {
   };
 }
 
+/** Current agent package version. */
 export const agentVersion = packageJson.version;
