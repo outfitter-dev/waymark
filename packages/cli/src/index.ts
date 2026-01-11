@@ -9,8 +9,11 @@ import {
   runMain,
 } from "./program.ts";
 
+/** @internal */
 export const __test = programTest;
+/** Build the CLI program with all commands registered. */
 export const createProgram = programCreateProgram;
+/** Run the CLI with the provided argv array. */
 export const runCli = programRunCli;
 
 if (import.meta.main) {
