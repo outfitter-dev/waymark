@@ -134,7 +134,12 @@ type RemovalState = {
   dryRun: boolean;
 };
 
-/** Remove waymarks matching specs, optionally writing changes to disk. */
+/**
+ * Remove waymarks matching specs, optionally writing changes to disk.
+ * @param specs - Removal specs describing what to remove.
+ * @param options - Options controlling formatting, writing, and ID management.
+ * @returns Results for each removal attempt.
+ */
 export async function removeWaymarks(
   specs: RemovalSpec[],
   options: RemoveOptions = {}

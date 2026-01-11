@@ -37,6 +37,9 @@ export class WaymarkIdManager {
   /**
    * Reserve an ID for the provided metadata without immediately writing to disk.
    * Call {@link commitReservedId} after the file write succeeds to persist the mapping.
+   * @param metadata - Metadata used to generate or validate the ID.
+   * @param requestedId - Optional explicit ID to reserve.
+   * @returns Reserved ID or undefined when no ID should be assigned.
    */
   async reserveId(
     metadata: WaymarkIdMetadata,
@@ -72,6 +75,9 @@ export class WaymarkIdManager {
 
   /**
    * Persist a previously reserved ID to the on-disk index.
+   * @param id - Reserved ID to persist.
+   * @param metadata - Metadata associated with the ID.
+   * @returns Promise that resolves when saved.
    */
   async commitReservedId(
     id: string,
@@ -85,7 +91,12 @@ export class WaymarkIdManager {
     this.reserved.delete(normalized);
   }
 
-  /** Update the stored location metadata for an existing ID. */
+  /**
+   * Update the stored location metadata for an existing ID.
+   * @param id - Waymark ID to update.
+   * @param metadata - Updated metadata for the ID.
+   * @returns Promise that resolves when saved.
+   */
   async updateLocation(id: string, metadata: WaymarkIdMetadata): Promise<void> {
     const normalized = this.normalizeId(id);
     await this.index.update(normalized, () =>
@@ -93,7 +104,12 @@ export class WaymarkIdManager {
     );
   }
 
-  /** Remove an ID from the index and optionally record a removal reason. */
+  /**
+   * Remove an ID from the index and optionally record a removal reason.
+   * @param id - Waymark ID to remove.
+   * @param options - Optional removal metadata.
+   * @returns Promise that resolves when saved.
+   */
   async remove(
     id: string,
     options?: { reason?: string; removedBy?: string }
@@ -102,13 +118,21 @@ export class WaymarkIdManager {
     await this.index.delete(normalized, options);
   }
 
-  /** Fetch a stored ID entry by ID. */
+  /**
+   * Fetch a stored ID entry by ID.
+   * @param id - Waymark ID to fetch.
+   * @returns Entry if found, otherwise null.
+   */
   get(id: string): Promise<IdIndexEntry | null> {
     const normalized = this.normalizeId(id);
     return this.index.get(normalized);
   }
 
-  /** Lookup an ID entry by content or context hash. */
+  /**
+   * Lookup an ID entry by content or context hash.
+   * @param fingerprint - Content/context hashes to search for.
+   * @returns Matching entry or null.
+   */
   lookupByFingerprint(fingerprint: {
     contentHash?: string;
     contextHash?: string;
@@ -202,12 +226,20 @@ export class WaymarkIdManager {
   }
 }
 
-/** Hash normalized waymark content for ID matching. */
+/**
+ * Hash normalized waymark content for ID matching.
+ * @param content - Waymark content to hash.
+ * @returns SHA-256 content hash.
+ */
 export function fingerprintContent(content: string): string {
   return createHash("sha256").update(content.trim()).digest("hex");
 }
 
-/** Hash surrounding context for ID matching. */
+/**
+ * Hash surrounding context for ID matching.
+ * @param context - Surrounding text to hash.
+ * @returns SHA-256 context hash.
+ */
 export function fingerprintContext(context: string): string {
   return createHash("sha256").update(context).digest("hex");
 }

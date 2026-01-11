@@ -129,7 +129,11 @@ function deepMerge(
   return result;
 }
 
-/** Merge overrides into the default configuration. */
+/**
+ * Merge overrides into the default configuration.
+ * @param overrides - Partial configuration overrides.
+ * @returns Resolved configuration with defaults applied.
+ */
 export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
   if (!overrides) {
     return cloneConfig(DEFAULT_CONFIG);
@@ -138,12 +142,20 @@ export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
   return deepMerge(DEFAULT_CONFIG, overrides);
 }
 
-/** Clone a config object to avoid mutation side effects. */
+/**
+ * Clone a config object to avoid mutation side effects.
+ * @param config - Configuration to clone.
+ * @returns Deep-cloned configuration.
+ */
 export function cloneConfig(config: WaymarkConfig): WaymarkConfig {
   return structuredClone(config);
 }
 
-/** Load configuration from explicit path, env path, or scoped defaults. */
+/**
+ * Load configuration from explicit path, env path, or scoped defaults.
+ * @param options - Options controlling where config is loaded from.
+ * @returns Resolved configuration loaded from disk.
+ */
 export async function loadConfigFromDisk(
   options: LoadConfigOptions = {}
 ): Promise<WaymarkConfig> {

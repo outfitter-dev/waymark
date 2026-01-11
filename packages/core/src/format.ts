@@ -31,7 +31,12 @@ const SINGLE_SPACE = " ";
 const NEWLINE = "\n";
 const LINE_SPLIT_REGEX = /\r?\n/;
 
-/** Normalize waymark formatting within the provided source text. */
+/**
+ * Normalize waymark formatting within the provided source text.
+ * @param source - Source text to format.
+ * @param options - Formatting and parse options.
+ * @returns Formatted text and a list of edits.
+ */
 export function formatText(
   source: string,
   options: FormatOptions = {}

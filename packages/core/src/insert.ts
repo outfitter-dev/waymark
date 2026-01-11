@@ -68,7 +68,12 @@ export type InsertOptions = {
   logger?: CoreLogger;
 };
 
-/** Insert waymarks into files, optionally writing changes to disk. */
+/**
+ * Insert waymarks into files, optionally writing changes to disk.
+ * @param specs - Insertion specs describing what to insert.
+ * @param options - Options controlling formatting, writing, and ID management.
+ * @returns Results for each insertion attempt.
+ */
 export async function insertWaymarks(
   specs: InsertionSpec[],
   options: InsertOptions = {}

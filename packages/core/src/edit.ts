@@ -100,7 +100,12 @@ type ResolvedTarget = {
   id?: string;
 };
 
-/** Edit a waymark in place, optionally writing changes to disk. */
+/**
+ * Edit a waymark in place, optionally writing changes to disk.
+ * @param options - Edit request options and optional ID manager/logger.
+ * @param config - Optional configuration overrides for formatting.
+ * @returns Result describing the applied edit.
+ */
 export async function editWaymark(
   options: EditOptions,
   config?: WaymarkConfig

@@ -78,7 +78,10 @@ export class JsonIdIndex {
     this.trackHistory = options.trackHistory ?? false;
   }
 
-  /** Load index and history from disk once per instance. */
+  /**
+   * Load index and history from disk once per instance.
+   * @returns Promise that resolves when the index is initialized.
+   */
   async init(): Promise<void> {
     if (this.loaded) {
       return;
@@ -91,26 +94,43 @@ export class JsonIdIndex {
     this.loaded = true;
   }
 
-  /** Check whether a waymark ID exists in the index. */
+  /**
+   * Check whether a waymark ID exists in the index.
+   * @param id - Waymark ID to check.
+   * @returns True if the ID exists.
+   */
   async has(id: string): Promise<boolean> {
     await this.init();
     return Boolean(this.data.ids[id]);
   }
 
-  /** Fetch a waymark ID entry, if present. */
+  /**
+   * Fetch a waymark ID entry, if present.
+   * @param id - Waymark ID to fetch.
+   * @returns Matching entry or null.
+   */
   async get(id: string): Promise<IdIndexEntry | null> {
     await this.init();
     return this.data.ids[id] ?? null;
   }
 
-  /** Insert or replace a waymark ID entry. */
+  /**
+   * Insert or replace a waymark ID entry.
+   * @param entry - Entry to persist.
+   * @returns Promise that resolves when saved.
+   */
   async set(entry: IdIndexEntry): Promise<void> {
     await this.init();
     this.data.ids[entry.id] = entry;
     await this.save();
   }
 
-  /** Update an existing entry via an updater function. */
+  /**
+   * Update an existing entry via an updater function.
+   * @param id - Waymark ID to update.
+   * @param updater - Function to transform the existing entry.
+   * @returns Promise that resolves when saved.
+   */
   async update(
     id: string,
     updater: (entry: IdIndexEntry) => IdIndexEntry
@@ -124,7 +144,12 @@ export class JsonIdIndex {
     await this.save();
   }
 
-  /** Remove an entry and optionally record it in history. */
+  /**
+   * Remove an entry and optionally record it in history.
+   * @param id - Waymark ID to remove.
+   * @param history - Optional history fields to record with removal.
+   * @returns Promise that resolves when saved.
+   */
   async delete(
     id: string,
     history?: Partial<Omit<HistoryEntry, "removedAt">>
@@ -147,7 +172,12 @@ export class JsonIdIndex {
     await this.save();
   }
 
-  /** Record a file hash and last-seen timestamp. */
+  /**
+   * Record a file hash and last-seen timestamp.
+   * @param filePath - File path to update.
+   * @param hash - Optional content hash.
+   * @returns Promise that resolves when saved.
+   */
   async touchFile(filePath: string, hash?: string | null): Promise<void> {
     await this.init();
     this.data.files[filePath] = {
@@ -157,28 +187,43 @@ export class JsonIdIndex {
     await this.save();
   }
 
-  /** Remove file metadata from the index. */
+  /**
+   * Remove file metadata from the index.
+   * @param filePath - File path to remove.
+   * @returns Promise that resolves when saved.
+   */
   async removeFile(filePath: string): Promise<void> {
     await this.init();
     delete this.data.files[filePath];
     await this.save();
   }
 
-  /** Set the last refresh timestamp for the index metadata. */
+  /**
+   * Set the last refresh timestamp for the index metadata.
+   * @param date - Date to record as last refresh.
+   * @returns Promise that resolves when saved.
+   */
   async setLastRefreshed(date: Date): Promise<void> {
     await this.init();
     this.data.metadata.lastRefreshed = date.toISOString();
     await this.save();
   }
 
-  /** Retrieve the last refresh timestamp, if recorded. */
+  /**
+   * Retrieve the last refresh timestamp, if recorded.
+   * @returns Date of last refresh or null.
+   */
   async getLastRefreshed(): Promise<Date | null> {
     await this.init();
     const value = this.data.metadata.lastRefreshed;
     return value ? new Date(value) : null;
   }
 
-  /** Find the first entry where either content or context hash matches. */
+  /**
+   * Find the first entry where either content or context hash matches.
+   * @param fingerprint - Content or context hashes to match.
+   * @returns Matching entry or null.
+   */
   async findByFingerprint(fingerprint: {
     contentHash?: string;
     contextHash?: string;
@@ -200,7 +245,10 @@ export class JsonIdIndex {
     return null;
   }
 
-  /** List all stored ID entries. */
+  /**
+   * List all stored ID entries.
+   * @returns All entries in the index.
+   */
   async listIds(): Promise<IdIndexEntry[]> {
     await this.init();
     return Object.values(this.data.ids);
