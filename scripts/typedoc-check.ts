@@ -201,7 +201,10 @@ function collectTopLevel(project: ProjectReflection): DeclarationReflection[] {
   );
 }
 
-function checkPackageDocs(config: PackageConfig, rootDir: string): string[] {
+async function checkPackageDocs(
+  config: PackageConfig,
+  rootDir: string
+): Promise<string[]> {
   const entryPoint = resolve(rootDir, config.entryPoint);
   const tsconfig = resolve(rootDir, config.tsconfig);
   const packageRoot = resolve(rootDir, config.rootDir);
@@ -218,10 +221,8 @@ function checkPackageDocs(config: PackageConfig, rootDir: string): string[] {
     return missing;
   }
 
-  const app = new Application();
-  app.options.addReader(new TypeDocReader());
-  app.options.addReader(new TSConfigReader());
-  app.bootstrap({
+  const app = await Application.bootstrap(
+    {
     entryPoints: [entryPoint],
     tsconfig,
     excludePrivate: true,
@@ -229,9 +230,11 @@ function checkPackageDocs(config: PackageConfig, rootDir: string): string[] {
     excludeExternals: true,
     excludeInternal: true,
     logLevel: "Error",
-  });
+    },
+    [new TypeDocReader(), new TSConfigReader()]
+  );
 
-  const project = app.convert();
+  const project = await app.convert();
   if (!project) {
     missing.push(`TypeDoc failed to build project for ${config.name}.`);
     return missing;
@@ -270,7 +273,7 @@ for (const key of enforced) {
     continue;
   }
 
-  const missing = checkPackageDocs(config, repoRoot);
+  const missing = await checkPackageDocs(config, repoRoot);
   if (missing.length > 0) {
     failures.push(`${config.name} missing docs:`);
     failures.push(...missing.map((entry) => `- ${entry}`));
