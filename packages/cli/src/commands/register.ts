@@ -525,9 +525,13 @@ Examples:
   const skillCommand = new Command("skill")
     .description("show agent-facing skill documentation")
     .option("--json", "output structured JSON")
-    .action(async (options: SkillCommandOptions) => {
+    .action(async function (this: Command, options: SkillCommandOptions) {
       try {
-        await handleSkillCommand(options);
+        const mergedOptions =
+          typeof this.optsWithGlobals === "function"
+            ? (this.optsWithGlobals() as SkillCommandOptions)
+            : options;
+        await handleSkillCommand(mergedOptions);
       } catch (error) {
         handleCommandError(program, error);
       }
@@ -537,9 +541,17 @@ Examples:
     .argument("<section>", "command, reference, or example to display")
     .option("--json", "output structured JSON")
     .description("show a specific skill section")
-    .action(async (section: string, options: SkillCommandOptions) => {
+    .action(async function (
+      this: Command,
+      section: string,
+      options: SkillCommandOptions
+    ) {
       try {
-        await handleSkillShowCommand(section, options);
+        const mergedOptions =
+          typeof this.optsWithGlobals === "function"
+            ? (this.optsWithGlobals() as SkillCommandOptions)
+            : options;
+        await handleSkillShowCommand(section, mergedOptions);
       } catch (error) {
         handleCommandError(program, error);
       }

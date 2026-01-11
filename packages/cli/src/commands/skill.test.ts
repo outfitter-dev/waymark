@@ -8,6 +8,7 @@ import {
   runSkillPathCommand,
   runSkillShowCommand,
 } from "./skill.ts";
+import { runCli } from "../program.ts";
 
 const skillDir = fileURLToPath(
   new URL("../../../agents/skills/waymark-cli", import.meta.url)
@@ -60,6 +61,17 @@ describe("skill command", () => {
     };
     expect(parsed.kind).toBe("command");
     expect(parsed.content).toContain("# wm add");
+  });
+
+  test("supports --json for skill show via CLI parsing", async () => {
+    const result = await runCli(["skill", "show", "add", "--json"]);
+    expect(result.exitCode).toBe(0);
+    const parsed = JSON.parse(result.stdout.trim()) as {
+      kind: string;
+      name: string;
+    };
+    expect(parsed.kind).toBe("command");
+    expect(parsed.name).toBe("add");
   });
 
   test("unknown sections throw usage errors", async () => {
