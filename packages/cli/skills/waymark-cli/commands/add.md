@@ -1,3 +1,10 @@
+---
+name: add
+kind: command
+metadata:
+  wm-cmd: add
+---
+
 <!-- tldr ::: command guide for wm add -->
 
 # wm add

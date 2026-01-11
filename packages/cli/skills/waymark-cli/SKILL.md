@@ -33,7 +33,11 @@ Load the `using-waymarks` skill first for grammar and syntax fundamentals. This 
 | fmt | Format waymarks | `wm fmt src/ --write` |
 | lint | Validate structure | `wm lint src/ --json` |
 | init | Write config | `wm init --format toml` |
+| config | Print config | `wm config --print --json` |
+| skill | Show skill docs | `wm skill show add` |
+| update | Update CLI | `wm update --yes` |
 | doctor | Diagnose config | `wm doctor --json` |
+| help | Show CLI help | `wm help add` |
 
 ## Quick Start Patterns
 

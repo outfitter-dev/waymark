@@ -1,3 +1,10 @@
+---
+name: init
+kind: command
+metadata:
+  wm-cmd: init
+---
+
 <!-- tldr ::: command guide for wm init -->
 
 # wm init

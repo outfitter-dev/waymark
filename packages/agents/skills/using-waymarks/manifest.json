@@ -1,0 +1,50 @@
+{
+  "name": "using-waymarks",
+  "version": "1.0.0",
+  "description": "This skill should be used when the user asks about \"waymark syntax\", \"writing waymarks\", \"::: sigil\", \"tldr waymarks\", \"about waymarks\", searching waymarks with ripgrep, or mentions waymark grammar, signals, markers, or properties. Provides comprehensive guidance for authoring and searching waymarks without requiring CLI tools.",
+  "commands": [],
+  "references": [
+    "about-waymarks",
+    "grammar",
+    "markers",
+    "ripgrep",
+    "tldr-patterns"
+  ],
+  "examples": [],
+  "sections": {
+    "core": {
+      "name": "core",
+      "kind": "core",
+      "path": "SKILL.md"
+    },
+    "commands": [],
+    "references": [
+      {
+        "name": "about-waymarks",
+        "kind": "reference",
+        "path": "references/about-waymarks.md"
+      },
+      {
+        "name": "grammar",
+        "kind": "reference",
+        "path": "references/grammar.md"
+      },
+      {
+        "name": "markers",
+        "kind": "reference",
+        "path": "references/markers.md"
+      },
+      {
+        "name": "ripgrep",
+        "kind": "reference",
+        "path": "references/ripgrep.md"
+      },
+      {
+        "name": "tldr-patterns",
+        "kind": "reference",
+        "path": "references/tldr-patterns.md"
+      }
+    ],
+    "examples": []
+  }
+}

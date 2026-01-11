@@ -1,3 +1,10 @@
+---
+name: edit
+kind: command
+metadata:
+  wm-cmd: edit
+---
+
 <!-- tldr ::: command guide for wm edit -->
 
 # wm edit

@@ -9,6 +9,7 @@ Skills use convention-based discovery. The directory structure determines what's
 ```text
 packages/agents/skills/waymark-cli/
 ├── SKILL.md           # Core skill guide (required)
+├── manifest.json      # Build-time index (generated)
 ├── commands/          # Command docs (auto-discovered)
 │   ├── find.md
 │   └── add.md
@@ -24,8 +25,9 @@ packages/agents/skills/waymark-cli/
 - `commands/*.md` — Each file becomes a command section. Filename (without .md) is the section name.
 - `references/*.md` — Each file becomes a reference section.
 - `examples/*.md` — Each file becomes an example section.
+- `manifest.json` — Build-time manifest generated from frontmatter and filenames.
 
-No manifest file needed. The CLI discovers sections by scanning directories.
+In development, the CLI can fall back to live scanning when the manifest is missing.
 
 ## SKILL.md Frontmatter
 
@@ -66,5 +68,6 @@ wm skill show workflows  # examples/workflows.md
 
 - Start each file with a `<!-- tldr ::: ... -->` preamble.
 - Frontmatter is optional for non-SKILL.md files.
+- Command docs should include `kind: command` and `metadata.wm-cmd` for CLI coverage checks.
 - Keep headings short and scannable.
 - Include `:::` examples in fenced code blocks.

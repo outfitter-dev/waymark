@@ -1,3 +1,10 @@
+---
+name: lint
+kind: command
+metadata:
+  wm-cmd: lint
+---
+
 <!-- tldr ::: command guide for wm lint -->
 
 # wm lint
