@@ -223,13 +223,13 @@ async function checkPackageDocs(
 
   const app = await Application.bootstrap(
     {
-    entryPoints: [entryPoint],
-    tsconfig,
-    excludePrivate: true,
-    excludeProtected: true,
-    excludeExternals: true,
-    excludeInternal: true,
-    logLevel: "Error",
+      entryPoints: [entryPoint],
+      tsconfig,
+      excludePrivate: true,
+      excludeProtected: true,
+      excludeExternals: true,
+      excludeInternal: true,
+      logLevel: "Error",
     },
     [new TypeDocReader(), new TSConfigReader()]
   );
