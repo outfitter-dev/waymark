@@ -31,10 +31,12 @@ export type LoggerOptions = {
 };
 
 /**
- * Create a configured pino logger instance
+ * Create a configured pino logger instance.
  *
  * For CLI tools, we default to 'warn' level to keep output clean.
  * Use --verbose flag to set level to 'info' or --debug for 'debug'.
+ * @param options - Logger configuration options.
+ * @returns Configured pino logger instance.
  */
 export function createLogger(options: LoggerOptions = {}): pino.Logger {
   const {

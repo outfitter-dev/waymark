@@ -8,7 +8,10 @@ import { sanitizeInlineText } from "./sanitize";
 import type { DisplayOptions } from "./types";
 
 /**
- * Compute grouping key for a single record
+ * Compute grouping key for a single record.
+ * @param record - Record to group.
+ * @param groupBy - Grouping key.
+ * @returns Group key string.
  */
 export function getGroupKey(record: WaymarkRecord, groupBy: GroupBy): string {
   switch (groupBy) {
@@ -48,7 +51,10 @@ export function getGroupKey(record: WaymarkRecord, groupBy: GroupBy): string {
 }
 
 /**
- * Group records by specified field
+ * Group records by specified field.
+ * @param records - Records to group.
+ * @param groupBy - Grouping key.
+ * @returns Map of group keys to records.
  */
 export function groupRecords(
   records: WaymarkRecord[],
@@ -67,7 +73,10 @@ export function groupRecords(
 }
 
 /**
- * Format records with grouping
+ * Format records with grouping.
+ * @param records - Records to format.
+ * @param options - Display options including groupBy.
+ * @returns Formatted grouped output.
  */
 export function formatGrouped(
   records: WaymarkRecord[],

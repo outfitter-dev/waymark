@@ -34,7 +34,9 @@ function formatTreeDirectory(
 }
 
 /**
- * Format records with tree display (grouped by directory structure)
+ * Format records with tree display (grouped by directory structure).
+ * @param records - Records to format.
+ * @returns Tree-formatted output string.
  */
 export function formatTree(records: WaymarkRecord[]): string {
   // Group by directory

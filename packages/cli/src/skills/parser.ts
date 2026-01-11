@@ -139,6 +139,10 @@ function extractFrontmatter(raw: string): {
   };
 }
 
+/**
+ * Resolve the skills directory by scanning expected locations or env override.
+ * @returns Absolute path to the skills directory.
+ */
 export function resolveSkillDir(): string {
   if (SKILL_DIR_CACHE.value) {
     return SKILL_DIR_CACHE.value;
@@ -174,6 +178,11 @@ export function resolveSkillDir(): string {
   );
 }
 
+/**
+ * Load and parse the skill manifest from a skills directory.
+ * @param skillDir - Absolute path to the skills directory.
+ * @returns Parsed skill manifest data.
+ */
 export async function loadSkillManifest(
   skillDir: string
 ): Promise<SkillManifest> {
@@ -182,6 +191,14 @@ export async function loadSkillManifest(
   return JSON.parse(raw) as SkillManifest;
 }
 
+/**
+ * Load and parse a single skill section file.
+ * @param skillDir - Absolute path to the skills directory.
+ * @param sectionName - Name of the section in the manifest.
+ * @param kind - Section category to assign.
+ * @param relativePath - Relative path to the section content.
+ * @returns Parsed section metadata and content.
+ */
 export async function loadSkillSection(
   skillDir: string,
   sectionName: string,
@@ -200,6 +217,11 @@ export async function loadSkillSection(
   };
 }
 
+/**
+ * Load the full skill manifest and referenced sections.
+ * @param skillDir - Absolute path to the skills directory.
+ * @returns Aggregated skill data with sections attached.
+ */
 export async function loadSkillData(skillDir: string): Promise<SkillData> {
   const manifest = await loadSkillManifest(skillDir);
   const entryPath = manifest.entry || "SKILL.md";
@@ -237,6 +259,11 @@ export async function loadSkillData(skillDir: string): Promise<SkillData> {
   };
 }
 
+/**
+ * List the named sections grouped by type.
+ * @param manifest - Skill manifest to inspect.
+ * @returns Grouped section names for commands, references, and examples.
+ */
 export function listSkillSections(manifest: SkillManifest): {
   commands: string[];
   references: string[];

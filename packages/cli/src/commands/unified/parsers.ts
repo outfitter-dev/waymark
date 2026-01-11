@@ -3,7 +3,10 @@
 import type { createArgIterator } from "../../utils/flags/iterator";
 
 /**
- * Parse a non-negative integer argument
+ * Parse a non-negative integer argument.
+ * @param token - Flag token being parsed.
+ * @param iterator - Iterator for remaining args.
+ * @returns Parsed non-negative integer.
  */
 export function parseNonNegativeInt(
   token: string,
@@ -21,7 +24,10 @@ export function parseNonNegativeInt(
 }
 
 /**
- * Parse a positive integer argument
+ * Parse a positive integer argument.
+ * @param token - Flag token being parsed.
+ * @param iterator - Iterator for remaining args.
+ * @returns Parsed positive integer.
  */
 export function parsePositiveInt(
   token: string,
@@ -39,7 +45,11 @@ export function parsePositiveInt(
 }
 
 /**
- * Parse an enum value argument
+ * Parse an enum value argument.
+ * @param token - Flag token being parsed.
+ * @param iterator - Iterator for remaining args.
+ * @param validValues - Allowed enum values.
+ * @returns Parsed enum value.
  */
 export function parseEnumValue<T extends string>(
   token: string,

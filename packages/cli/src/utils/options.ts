@@ -2,6 +2,11 @@
 
 import type { CliScopeOption, GlobalOptions } from "../types.ts";
 
+/**
+ * Parse global CLI options and return remaining args.
+ * @param argv - Raw CLI arguments.
+ * @returns Parsed global options and the rest of args.
+ */
 export function parseGlobalOptions(argv: string[]): {
   globalOptions: GlobalOptions;
   rest: string[];
@@ -34,6 +39,13 @@ export function parseGlobalOptions(argv: string[]): {
   return { globalOptions, rest };
 }
 
+/**
+ * Consume the --config option from the argument stream.
+ * @param globalOptions - Options object to mutate.
+ * @param iterator - Iterator over CLI args.
+ * @param arg - Current argument token.
+ * @returns Whether the token was consumed.
+ */
 export function consumeConfigOption(
   globalOptions: GlobalOptions,
   iterator: IterableIterator<string>,
@@ -58,6 +70,13 @@ export function consumeConfigOption(
   return false;
 }
 
+/**
+ * Consume the --scope option from the argument stream.
+ * @param globalOptions - Options object to mutate.
+ * @param iterator - Iterator over CLI args.
+ * @param arg - Current argument token.
+ * @returns Whether the token was consumed.
+ */
 export function consumeScopeOption(
   globalOptions: GlobalOptions,
   iterator: IterableIterator<string>,
@@ -82,6 +101,11 @@ export function consumeScopeOption(
   return false;
 }
 
+/**
+ * Normalize a scope string into a valid scope value.
+ * @param value - Scope string from CLI.
+ * @returns Normalized scope option.
+ */
 export function normalizeScope(value: string): CliScopeOption {
   if (value === "default" || value === "project" || value === "user") {
     return value;
@@ -91,6 +115,12 @@ export function normalizeScope(value: string): CliScopeOption {
   );
 }
 
+/**
+ * Consume log level flags from the argument stream.
+ * @param globalOptions - Options object to mutate.
+ * @param arg - Current argument token.
+ * @returns Whether the token was consumed.
+ */
 export function consumeLogLevelOption(
   globalOptions: GlobalOptions,
   arg: string

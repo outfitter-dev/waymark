@@ -36,6 +36,12 @@ function formatJsonOutput(payload: unknown): string {
   return JSON.stringify(payload, null, 2);
 }
 
+/**
+ * Execute the `wm skill` command (core skill content or JSON).
+ * @param options - Output formatting options.
+ * @param overrides - Overrides for skill directory resolution.
+ * @returns Output payload and exit code.
+ */
 export async function runSkillCommand(
   options: SkillCommandOptions = {},
   overrides: SkillCommandOverrides = {}
@@ -111,6 +117,13 @@ function resolveSkillSection(
   return null;
 }
 
+/**
+ * Execute the `wm skill show` command for a specific section.
+ * @param section - Section name to display.
+ * @param options - Output formatting options.
+ * @param overrides - Overrides for skill directory resolution.
+ * @returns Output payload and exit code.
+ */
 export async function runSkillShowCommand(
   section: string,
   options: SkillCommandOptions = {},
@@ -144,6 +157,11 @@ export async function runSkillShowCommand(
   };
 }
 
+/**
+ * Execute the `wm skill list` command to enumerate sections.
+ * @param overrides - Overrides for skill directory resolution.
+ * @returns Output payload and exit code.
+ */
 export async function runSkillListCommand(
   overrides: SkillCommandOverrides = {}
 ): Promise<SkillCommandResult> {
@@ -187,6 +205,11 @@ export async function runSkillListCommand(
   };
 }
 
+/**
+ * Execute the `wm skill path` command to print the skills directory.
+ * @param overrides - Overrides for skill directory resolution.
+ * @returns Output payload and exit code.
+ */
 export function runSkillPathCommand(
   overrides: SkillCommandOverrides = {}
 ): SkillCommandResult {

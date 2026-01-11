@@ -117,6 +117,14 @@ type InteractiveStep = {
   build: (state: InteractiveAnswers) => Record<string, unknown>;
 };
 
+/**
+ * Execute the `wm modify` command to update an existing waymark.
+ * @param context - CLI context with config and logging.
+ * @param targetArg - Target file/line input.
+ * @param options - Modify command options.
+ * @param io - IO adapters for prompts and stdin.
+ * @returns CLI result payload and exit code.
+ */
 export async function runModifyCommand(
   context: CommandContext,
   targetArg: string | undefined,
@@ -301,6 +309,11 @@ export type ApplyResult = {
   firstLine: string;
 };
 
+/**
+ * Apply requested modifications to a waymark record.
+ * @param args - Modification inputs and context.
+ * @returns Updated waymark fields and first line output.
+ */
 export function applyModifications(args: ApplyArgs): ApplyResult {
   const { record, config, baseContent, resolvedContent, options } = args;
 
@@ -350,6 +363,12 @@ function determineSignals(
   };
 }
 
+/**
+ * Preserve trailing ID tokens when content changes.
+ * @param original - Original content with potential ID.
+ * @param updated - Updated content without ID.
+ * @returns Updated content with ID preserved when present.
+ */
 export function preserveId(original: string, updated: string): string {
   const originalId = extractTrailingId(original);
   if (!originalId) {
@@ -829,6 +848,12 @@ function resolveMarkerChoices(
 
 const TRAILING_NEWLINE_REGEX = /\r?\n$/;
 
+/**
+ * Resolve content input from flags or stdin.
+ * @param options - Modify command options.
+ * @param stdin - Readable stream for stdin input.
+ * @returns Resolved content string, or undefined if not provided.
+ */
 export async function resolveContentInput(
   options: ModifyOptions,
   stdin: NodeJS.ReadableStream

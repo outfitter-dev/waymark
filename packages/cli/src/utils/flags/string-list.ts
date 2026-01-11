@@ -5,6 +5,10 @@ import { matchesFlag } from "./iterator";
 
 /**
  * Generic helper for flags that accept a single string value and can repeat.
+ * @param token - Current CLI token.
+ * @param iterator - Iterator for remaining args.
+ * @param options - Flag names, target list, and normalization settings.
+ * @returns Whether the token was handled.
  */
 export function handleStringListFlag(
   token: string | undefined,

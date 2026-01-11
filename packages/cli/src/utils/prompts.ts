@@ -16,6 +16,10 @@ type PromptPolicy = {
 let promptPolicy: PromptPolicy = { allowed: true };
 
 // note ::: central prompt policy for --no-input enforcement [[cli/no-input]]
+/**
+ * Set prompt policy based on no-input flags and TTY detection.
+ * @param options - Prompt policy inputs.
+ */
 export function setPromptPolicy(options: {
   noInput?: boolean;
   isTty?: boolean;
@@ -35,6 +39,10 @@ export function setPromptPolicy(options: {
   promptPolicy = { allowed: true };
 }
 
+/**
+ * Assert that prompting is allowed for a given action.
+ * @param action - Description of the prompt action.
+ */
 export function assertPromptAllowed(action: string): void {
   if (promptPolicy.allowed) {
     return;
@@ -57,6 +65,11 @@ export type ConfirmOptions = {
   default?: boolean;
 };
 
+/**
+ * Show a confirmation prompt.
+ * @param options - Confirmation prompt options.
+ * @returns True when confirmed.
+ */
 export async function confirm(options: ConfirmOptions): Promise<boolean> {
   assertPromptAllowed("confirmation");
   const { confirmed } = await inquirer.prompt<{ confirmed: boolean }>([
@@ -76,6 +89,11 @@ export type WriteConfirmationOptions = {
   actionVerb?: string; // "format", "migrate", etc.
 };
 
+/**
+ * Show a confirmation prompt before writing changes.
+ * @param options - Write confirmation options.
+ * @returns True when confirmed.
+ */
 export async function confirmWrite(
   options: WriteConfirmationOptions
 ): Promise<boolean> {
@@ -100,6 +118,11 @@ type WaymarkChoice = {
   short: string;
 };
 
+/**
+ * Prompt the user to select a waymark from a list.
+ * @param options - Selection prompt options.
+ * @returns Selected waymark or undefined if cancelled.
+ */
 export async function selectWaymark(
   options: SelectWaymarkOptions
 ): Promise<WaymarkRecord | undefined> {

@@ -35,7 +35,11 @@ export type ParseState = {
 };
 
 /**
- * Handle context display flags
+ * Handle context display flags.
+ * @param token - Current CLI token.
+ * @param iterator - Iterator for remaining args.
+ * @param state - Parse state to update.
+ * @returns Whether the token was handled.
  */
 export function handleContextFlags(
   token: string,
@@ -58,7 +62,11 @@ export function handleContextFlags(
 }
 
 /**
- * Handle grouping and sorting flags
+ * Handle grouping and sorting flags.
+ * @param token - Current CLI token.
+ * @param iterator - Iterator for remaining args.
+ * @param state - Parse state to update.
+ * @returns Whether the token was handled.
  */
 export function handleGroupSortFlags(
   token: string,
@@ -100,7 +108,11 @@ export function handleGroupSortFlags(
 }
 
 /**
- * Handle pagination flags
+ * Handle pagination flags.
+ * @param token - Current CLI token.
+ * @param iterator - Iterator for remaining args.
+ * @param state - Parse state to update.
+ * @returns Whether the token was handled.
  */
 export function handlePaginationFlags(
   token: string,
@@ -138,7 +150,10 @@ function handleFormattingFlags(token: string, state: ParseState): boolean {
 }
 
 /**
- * Handle mode and display flags
+ * Handle mode and display flags.
+ * @param token - Current CLI token.
+ * @param state - Parse state to update.
+ * @returns Whether the token was handled.
  */
 export function handleModeDisplayFlags(
   token: string,

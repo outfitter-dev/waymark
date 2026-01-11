@@ -10,6 +10,9 @@ export type JsonFlagState = {
 
 /**
  * Toggle JSON output mode when the `--json` or `--jsonl` flag is encountered.
+ * @param token - Current CLI token.
+ * @param state - JSON flag parsing state to mutate.
+ * @returns Whether the token was handled.
  */
 export function handleJsonFlag(
   token: string | undefined,

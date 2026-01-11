@@ -13,6 +13,13 @@ export type ParsedGraphArgs = {
   json: boolean;
 };
 
+/**
+ * Scan records and build relation graph edges.
+ * @param filePaths - Paths or globs to scan.
+ * @param config - Resolved waymark configuration.
+ * @param scanOptions - Optional scan runtime options.
+ * @returns Relation graph edges.
+ */
 export async function graphRecords(
   filePaths: string[],
   config: WaymarkConfig,
@@ -26,6 +33,11 @@ export async function graphRecords(
   return buildRelationGraph(records).edges;
 }
 
+/**
+ * Parse CLI arguments for the graph command.
+ * @param argv - Raw CLI arguments.
+ * @returns Parsed graph arguments.
+ */
 export function parseGraphArgs(argv: string[]): ParsedGraphArgs {
   const json = argv.includes("--json");
   const filePaths = argv.filter((arg) => !arg.startsWith("-"));

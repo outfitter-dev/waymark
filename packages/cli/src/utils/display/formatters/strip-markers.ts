@@ -10,8 +10,11 @@ const BLOCK_COMMENT_END_PATTERN = /\s*\*\/.*$/;
 const SQL_COMMENT_PATTERN = /^.*?--\s*/;
 
 /**
- * Strip comment markers from a waymark's raw text
- * Extracts just the waymark content without the comment syntax
+ * Strip comment markers from a waymark's raw text.
+ * Extracts just the waymark content without the comment syntax.
+ * @param raw - Raw comment text.
+ * @param commentLeader - Comment leader token (e.g. //, <!--).
+ * @returns Stripped content string.
  */
 export function stripCommentMarkers(
   raw: string,
@@ -59,7 +62,10 @@ export function stripCommentMarkers(
 }
 
 /**
- * Strip comment markers from multi-line waymark content
+ * Strip comment markers from multi-line waymark content.
+ * @param lines - Raw comment lines.
+ * @param commentLeader - Comment leader token.
+ * @returns Stripped content lines.
  */
 export function stripCommentMarkersMultiLine(
   lines: string[],

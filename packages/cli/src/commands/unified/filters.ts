@@ -6,6 +6,9 @@ import type { UnifiedCommandOptions } from "./types";
 
 /**
  * Apply filters to scanned records based on unified command options.
+ * @param records - Records to filter.
+ * @param options - Filter options from unified command.
+ * @returns Filtered records.
  */
 export function applyFilters(
   records: WaymarkRecord[],

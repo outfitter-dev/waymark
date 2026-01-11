@@ -18,6 +18,11 @@ export type HelpTopic = keyof typeof helpTopics;
 
 export const helpTopicNames = Object.keys(helpTopics) as HelpTopic[];
 
+/**
+ * Resolve the help text for a known topic.
+ * @param name - Topic name to look up.
+ * @returns Help text or null if missing.
+ */
 export function getTopicHelp(name: string): string | null {
   const normalized = name.trim().toLowerCase();
   if (!normalized) {

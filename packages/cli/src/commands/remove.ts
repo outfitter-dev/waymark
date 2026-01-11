@@ -110,6 +110,11 @@ function createInitialState(): RemoveParseState {
   };
 }
 
+/**
+ * Build remove specs and options from parsed remove command input.
+ * @param input - Parsed targets and flags.
+ * @returns Parsed remove args.
+ */
 export function buildRemoveArgs(input: RemoveCommandInput): ParsedRemoveArgs {
   const state = createInitialState();
   const { targets, options } = input;
@@ -252,6 +257,13 @@ function buildCriteriaSpec(state: RemoveParseState): RemovalSpec | undefined {
   };
 }
 
+/**
+ * Execute the `wm remove` command with parsed inputs.
+ * @param parsed - Parsed removal args.
+ * @param context - CLI context with config and filesystem helpers.
+ * @param execution - Optional execution overrides (write, etc.).
+ * @returns Removal results, summary, output, and exit code.
+ */
 export async function runRemoveCommand(
   parsed: ParsedRemoveArgs,
   context: CommandContext,

@@ -37,6 +37,10 @@ let customRunner: ChildRunner | undefined;
 const NPM_UPDATE_ARGS = ["install", "-g", "@waymarks/cli"];
 const UPDATE_COMMAND_ALLOWLIST = new Set(["npm", "pnpm", "bun", "yarn"]);
 
+/**
+ * Inject a custom child-process runner for tests.
+ * @param fn - Optional runner override.
+ */
 export function __setChildRunner(fn?: ChildRunner): void {
   customRunner = fn;
 }
@@ -61,6 +65,11 @@ function runChild(command: string, args: string[]): Promise<number> {
   });
 }
 
+/**
+ * Detect how the CLI was installed based on the executable path.
+ * @param executablePath - Optional path override for detection.
+ * @returns Detected install method metadata.
+ */
 export function detectInstallMethod(executablePath?: string): InstallDetection {
   let resolvedPath = "";
   try {
@@ -193,6 +202,11 @@ async function confirmUpdateCommand(
   );
 }
 
+/**
+ * Execute the `wm update` command with the provided options.
+ * @param options - Update command options.
+ * @returns Result metadata including exit code.
+ */
 export async function runUpdateCommand(
   options: UpdateCommandOptions = {}
 ): Promise<UpdateCommandResult> {

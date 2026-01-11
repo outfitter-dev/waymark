@@ -48,6 +48,12 @@ function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
   return cleaned;
 }
 
+/**
+ * Render waymark records in the requested output format.
+ * @param records - Waymark records to render.
+ * @param format - Output format selection.
+ * @returns Rendered output string.
+ */
 export function renderRecords(
   records: WaymarkRecord[],
   format: ScanOutputFormat

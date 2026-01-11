@@ -107,6 +107,13 @@ function scanCodetags(source: string, filePath: string): WaymarkRecord[] {
   return records;
 }
 
+/**
+ * Scan file paths for waymark records.
+ * @param filePaths - Paths or globs to scan.
+ * @param config - Resolved waymark configuration.
+ * @param options - Runtime scan options (cache, metrics, codetags).
+ * @returns Parsed waymark records.
+ */
 export async function scanRecords(
   filePaths: string[],
   config: WaymarkConfig,
@@ -188,6 +195,11 @@ function createCache(options: ScanRuntimeOptions): WaymarkCache | undefined {
   return new WaymarkCache();
 }
 
+/**
+ * Parse CLI arguments for the scan command.
+ * @param argv - Raw CLI arguments.
+ * @returns Parsed scan arguments.
+ */
 export function parseScanArgs(argv: string[]): ParsedScanArgs {
   if (argv.length === 0) {
     throw new Error("scan requires a file path");

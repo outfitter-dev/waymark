@@ -26,6 +26,12 @@ function serializeConfig(
   return JSON.stringify(config, null, indent);
 }
 
+/**
+ * Execute the `wm config` command to print resolved configuration.
+ * @param context - CLI context with config.
+ * @param options - Command options controlling output.
+ * @returns Output payload and exit code.
+ */
 export function runConfigCommand(
   context: CommandContext,
   options: ConfigCommandOptions = {}

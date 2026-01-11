@@ -4,7 +4,9 @@ import type { WaymarkRecord } from "@waymarks/core";
 import { sanitizeInlineText } from "../sanitize";
 
 /**
- * Format records with long display (all properties shown)
+ * Format records with long display (all properties shown).
+ * @param records - Records to format.
+ * @returns Long formatted output string.
  */
 export function formatLong(records: WaymarkRecord[]): string {
   const lines: string[] = [];

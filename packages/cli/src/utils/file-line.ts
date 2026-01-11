@@ -10,6 +10,12 @@ type FileLineParseMessages = {
   invalidLine: string;
 };
 
+/**
+ * Parse a FILE:LINE token into structured data.
+ * @param value - Input string containing file and line.
+ * @param messages - Error messages for invalid input.
+ * @returns Parsed file and line target.
+ */
 export function parseFileLineTarget(
   value: string,
   messages: FileLineParseMessages

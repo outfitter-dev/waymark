@@ -18,7 +18,8 @@ import { parseQuery } from "./query-parser";
 import type { UnifiedCommandOptions } from "./types";
 
 /**
- * Create initial parse state
+ * Create initial parse state.
+ * @returns Initialized parse state object.
  */
 export function createParseState(): ParseState {
   return {
@@ -80,7 +81,10 @@ function looksLikeFilePath(token: string): boolean {
 }
 
 /**
- * Process a single token during argument parsing
+ * Process a single token during argument parsing.
+ * @param token - Current CLI token to process.
+ * @param iterator - Iterator for remaining arguments.
+ * @param state - Parse state to mutate.
  */
 export function processToken(
   token: string,
@@ -140,7 +144,9 @@ export function processToken(
 }
 
 /**
- * Build final options from parse state
+ * Build final options from parse state.
+ * @param state - Collected parse state.
+ * @returns Unified command options.
  */
 export function buildOptions(state: ParseState): UnifiedCommandOptions {
   const options: UnifiedCommandOptions = {
@@ -256,6 +262,8 @@ function applyPaginationOptions(
 
 /**
  * Parse CLI arguments for the unified command.
+ * @param argv - Raw CLI arguments.
+ * @returns Parsed unified command options.
  */
 export function parseUnifiedArgs(argv: string[]): UnifiedCommandOptions {
   const state = createParseState();

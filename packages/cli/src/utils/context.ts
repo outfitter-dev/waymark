@@ -5,6 +5,11 @@ import { createConfigError } from "../errors.ts";
 import type { CommandContext, GlobalOptions } from "../types.ts";
 import { resolveWorkspaceRoot } from "./workspace.ts";
 
+/**
+ * Create a command context by loading config and workspace info.
+ * @param globalOptions - Parsed global CLI options.
+ * @returns Command context with config and workspace root.
+ */
 export async function createContext(
   globalOptions: GlobalOptions
 ): Promise<CommandContext> {
