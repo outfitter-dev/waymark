@@ -4,6 +4,7 @@ import { Command, InvalidArgumentError } from "commander";
 import { createUsageError } from "../errors.ts";
 import type { ModifyCliOptions } from "../types.ts";
 import { parsePropertyEntry } from "../utils/properties.ts";
+import type { CheckCommandOptions } from "./check.ts";
 import type { ConfigCommandOptions } from "./config.ts";
 import type { DoctorCommandOptions } from "./doctor.ts";
 import { getTopicHelp, helpTopicNames } from "./help/index.ts";
@@ -59,6 +60,10 @@ type CommandHandlers = {
     program: Command,
     options: DoctorCommandOptions
   ) => Promise<void>;
+  handleCheckCommand: (
+    program: Command,
+    options: CheckCommandOptions
+  ) => Promise<void>;
   handleUnifiedCommand: (
     program: Command,
     paths: string[],
@@ -91,6 +96,7 @@ export function registerCommands(
     handleSkillListCommand,
     handleSkillPathCommand,
     handleDoctorCommand,
+    handleCheckCommand,
     handleUnifiedCommand,
     writeStdout,
   } = handlers;
@@ -646,6 +652,47 @@ See 'wm skill show doctor' for agent-facing documentation.
     });
 
   program.addCommand(doctorCommand);
+
+  // Check command - content integrity validation (#230)
+  const checkCommand = new Command("check")
+    .argument("[paths...]", "files or directories to check")
+    .option("--strict", "CI mode (fail on warnings)", false)
+    .option("--fix", "auto-repair safe issues (not yet implemented)", false)
+    .option("--json", "output as JSON")
+    .description("validate cross-file content integrity")
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm check                      # Check current directory
+  $ wm check src/                 # Check specific directory
+  $ wm check --strict             # CI mode (fail on warnings)
+  $ wm check --json               # JSON output for tooling
+
+Integrity Checks:
+  duplicate-canonical   Same ref:#token defined in multiple files (error)
+  dangling-relation     Relation pointing to non-existent canonical (error)
+  multiple-tldr         Multiple TLDRs in same file (error)
+  tldr-position         TLDR not near top of file (warning)
+  flagged-signal        Flagged (~) waymark should be cleared (warning)
+
+Exit Codes:
+  0  No errors (warnings only if not --strict)
+  1  Errors found or warnings in --strict mode
+  2  Usage error
+
+See 'wm skill show check' for agent-facing documentation.
+    `
+    )
+    .action(async (paths: string[], options: CheckCommandOptions) => {
+      try {
+        await handleCheckCommand(program, { ...options, paths });
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  program.addCommand(checkCommand);
 
   // Find command - explicit scan and filter (WAY-31)
   const findCommand = new Command("find")
