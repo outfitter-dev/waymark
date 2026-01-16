@@ -24,6 +24,12 @@ export type ContinuationResult = {
   propertyValue?: string;
 };
 
+/**
+ * Strip HTML comment closure marker from content if applicable.
+ * @param content - Raw content string.
+ * @param commentLeader - Comment leader token.
+ * @returns Content without HTML comment closure.
+ */
 export function stripHtmlCommentClosure(
   content: string,
   commentLeader: string
@@ -34,6 +40,12 @@ export function stripHtmlCommentClosure(
   return content;
 }
 
+/**
+ * Strip block comment closure marker from content if applicable.
+ * @param content - Raw content string.
+ * @param commentLeader - Comment leader token.
+ * @returns Content without block comment closure.
+ */
 export function stripBlockCommentClosure(
   content: string,
   commentLeader: string
@@ -51,6 +63,12 @@ function stripCommentClosure(content: string, commentLeader: string): string {
   );
 }
 
+/**
+ * Process a content segment, trimming markers and detecting closures.
+ * @param segment - Raw content segment.
+ * @param commentLeader - Comment leader token.
+ * @returns Parsed content segment metadata.
+ */
 export function processContentSegment(
   segment: string,
   commentLeader: string
@@ -82,6 +100,13 @@ export function processContentSegment(
   };
 }
 
+/**
+ * Parse a continuation line for a waymark block.
+ * @param line - Raw line content.
+ * @param commentLeader - Comment leader token.
+ * @param inWaymarkContext - Whether a waymark block is active.
+ * @returns Parsed continuation result, or null if not a continuation.
+ */
 export function parseContinuation(
   line: string,
   commentLeader: string,
@@ -167,6 +192,11 @@ function resolveContinuationLeader(
   return null;
 }
 
+/**
+ * Analyze content to extract properties, relations, mentions, and tags.
+ * @param content - Content text to analyze.
+ * @returns Extracted content metadata.
+ */
 export function analyzeContent(content: string): {
   properties: Record<string, string>;
   relations: WaymarkRecord["relations"];

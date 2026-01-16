@@ -1,5 +1,6 @@
 // tldr ::: core type definitions for waymark grammar
 
+/** Parsed representation of a waymark comment. */
 export type WaymarkRecord = {
   file: string;
   language: string;
@@ -27,6 +28,7 @@ export type WaymarkRecord = {
   codetag?: boolean;
 };
 
+/** Options that influence waymark parsing. */
 export type ParseOptions = {
   file?: string;
   language?: string;

@@ -12,6 +12,13 @@ import type { ParseOptions, WaymarkRecord } from "./types";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
 
+/**
+ * Parse a single line into a waymark record when possible.
+ * @param line - Raw line of text to parse.
+ * @param lineNumber - 1-based line number in the source.
+ * @param options - Optional parse options.
+ * @returns Parsed waymark record or null when no header is found.
+ */
 export function parseLine(
   line: string,
   lineNumber: number,
@@ -38,6 +45,12 @@ export function parseLine(
   });
 }
 
+/**
+ * Parse a full text buffer into waymark records.
+ * @param text - Source text to parse.
+ * @param options - Optional parse options.
+ * @returns Parsed waymark records.
+ */
 export function parse(
   text: string,
   options: ParseOptions = {}
@@ -75,11 +88,14 @@ export function parse(
   return records;
 }
 
+/**
+ * Check whether a marker type is in the blessed marker list.
+ * @param type - Marker type to validate.
+ * @returns True if the type is blessed.
+ */
 export function isValidType(type: string | undefined): boolean {
   if (!type) {
     return false;
   }
-  return BLESSED_MARKERS.includes(
-    type.toLowerCase() as (typeof BLESSED_MARKERS)[number]
-  );
+  return BLESSED_MARKERS.includes(type.toLowerCase());
 }

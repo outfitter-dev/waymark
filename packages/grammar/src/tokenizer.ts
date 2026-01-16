@@ -20,10 +20,20 @@ export type ParsedHeader = {
   content: string;
 };
 
+/**
+ * Normalize a line by stripping trailing carriage returns.
+ * @param line - Raw line text.
+ * @returns Normalized line text.
+ */
 export function normalizeLine(line: string): string {
   return line.endsWith("\r") ? line.slice(0, -1) : line;
 }
 
+/**
+ * Find the comment leader at the start of a string.
+ * @param text - Text to inspect.
+ * @returns Comment leader token or null.
+ */
 export function findCommentLeader(text: string): string | null {
   for (const leader of COMMENT_LEADERS) {
     if (text.startsWith(leader)) {
@@ -33,6 +43,11 @@ export function findCommentLeader(text: string): string | null {
   return null;
 }
 
+/**
+ * Parse the signals and type segment before the sigil.
+ * @param segment - Raw segment before the sigil.
+ * @returns Parsed type, signals, and validity.
+ */
 export function parseSignalsAndType(segment: string): {
   type: string;
   signals: SignalState;
@@ -89,6 +104,11 @@ export function parseSignalsAndType(segment: string): {
   };
 }
 
+/**
+ * Parse a full waymark header line into structured data.
+ * @param line - Raw line text.
+ * @returns Parsed header or null when invalid.
+ */
 export function parseHeader(line: string): ParsedHeader | null {
   const indentMatch = line.match(LEADING_WHITESPACE_REGEX);
   const indent = indentMatch ? indentMatch[0].length : 0;
