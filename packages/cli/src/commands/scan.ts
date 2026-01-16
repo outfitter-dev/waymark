@@ -111,7 +111,7 @@ function scanCodetags(source: string, filePath: string): WaymarkRecord[] {
  * Scan file paths for waymark records.
  * @param filePaths - Paths or globs to scan.
  * @param config - Resolved waymark configuration.
- * @param options - Runtime scan options (cache, metrics, codetags).
+ * @param options - Runtime scan options (cache, cachePath, metrics).
  * @returns Parsed waymark records.
  */
 export async function scanRecords(
