@@ -4,6 +4,7 @@
   "description": "This skill should be used when the user asks about \"wm command\", \"waymark cli\", \"wm find\", \"wm add\", \"wm edit\", \"wm rm\", \"wm fmt\", \"wm lint\", or needs to use waymark tooling. Requires `using-waymarks` skill for syntax fundamentals. Provides comprehensive CLI command reference and workflows.",
   "commands": [
     "add",
+    "check",
     "config",
     "doctor",
     "edit",
@@ -43,6 +44,14 @@
         "path": "commands/add.md",
         "metadata": {
           "wm-cmd": "add"
+        }
+      },
+      {
+        "name": "check",
+        "kind": "command",
+        "path": "commands/check.md",
+        "metadata": {
+          "wm-cmd": "check"
         }
       },
       {

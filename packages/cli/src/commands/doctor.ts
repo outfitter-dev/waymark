@@ -1,21 +1,13 @@
-// tldr ::: health check diagnostics validating config integrity and waymark structure #cli
+// tldr ::: health check diagnostics validating tool and environment health #cli
 
 import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { isValidType, parse, type WaymarkRecord } from "@waymarks/core";
 import chalk from "chalk";
 import type { CommandContext } from "../types";
-import { expandInputPaths } from "../utils/fs";
 import { logger } from "../utils/logger";
 
-// about ::: canonical relation kinds that must have valid targets
-const CANONICAL_RELATIONS: WaymarkRecord["relations"][number]["kind"][] = [
-  "from",
-  "replaces",
-];
-const TLDR_TOP_LINES_MAX = 20;
 // biome-ignore lint/style/noMagicNumbers: bytes per megabyte conversion
 const BYTES_PER_MB = 1024 * 1024;
 const MAX_INDEX_MB = 10;
@@ -57,7 +49,6 @@ export type DoctorCommandOptions = {
   strict?: boolean;
   fix?: boolean;
   json?: boolean;
-  paths?: string[];
 };
 
 // about ::: orchestrates all diagnostic checks and returns comprehensive report
@@ -93,11 +84,6 @@ export async function runDoctorCommand(
   const completionChecks = checkCompletions();
   checks.push(...completionChecks);
   allIssues.push(...completionChecks.flatMap((c) => c.issues));
-
-  // Waymark integrity checks
-  const integrityChecks = await checkWaymarkIntegrity(context, options.paths);
-  checks.push(...integrityChecks);
-  allIssues.push(...integrityChecks.flatMap((c) => c.issues));
 
   // Performance checks
   const perfChecks = await checkPerformance(context);
@@ -360,191 +346,6 @@ function checkCompletions(): CheckResult[] {
       issues,
     },
   ];
-}
-
-// about ::: validates waymark parsing canonical uniqueness and relation integrity
-async function checkWaymarkIntegrity(
-  context: CommandContext,
-  paths?: string[]
-): Promise<CheckResult[]> {
-  const results: CheckResult[] = [];
-  const parseIssues: DiagnosticIssue[] = [];
-  const canonicalIssues: DiagnosticIssue[] = [];
-  const relationIssues: DiagnosticIssue[] = [];
-  const markerIssues: DiagnosticIssue[] = [];
-  const tldrIssues: DiagnosticIssue[] = [];
-
-  // Expand input paths
-  const inputPaths = paths && paths.length > 0 ? paths : ["."];
-  const files = await expandInputPaths(inputPaths, context.config);
-
-  // Parse all waymarks
-  const allRecords: WaymarkRecord[] = [];
-  for (const filePath of files) {
-    try {
-      const source = await readFile(filePath, "utf-8");
-      const records = parse(source, { file: filePath });
-      allRecords.push(...records);
-
-      // Check for parse errors (parser is lenient, but track invalid structures)
-      for (const record of records) {
-        if (!record.type) {
-          parseIssues.push({
-            severity: "error",
-            category: "integrity",
-            message: "Waymark missing type",
-            file: filePath,
-            line: record.startLine,
-          });
-        }
-      }
-    } catch (error) {
-      parseIssues.push({
-        severity: "error",
-        category: "integrity",
-        message: `Parse error: ${error instanceof Error ? error.message : String(error)}`,
-        file: filePath,
-      });
-    }
-  }
-
-  // Check 1: Canonical uniqueness
-  const canonicals = new Map<string, { file: string; line: number }[]>();
-  for (const record of allRecords) {
-    for (const token of record.canonicals || []) {
-      if (!canonicals.has(token)) {
-        canonicals.set(token, []);
-      }
-      canonicals
-        .get(token)
-        ?.push({ file: record.file, line: record.startLine });
-    }
-  }
-
-  for (const [token, occurrences] of canonicals) {
-    if (occurrences.length > 1) {
-      canonicalIssues.push({
-        severity: "error",
-        category: "integrity",
-        message: `Duplicate canonical reference: ${token} defined in ${occurrences.length} places`,
-        suggestion: occurrences
-          .map((o) => `  - ${o.file}:${o.line}`)
-          .join("\n"),
-      });
-    }
-  }
-
-  // Check 2: Dangling relations
-  for (const record of allRecords) {
-    for (const relation of record.relations || []) {
-      if (CANONICAL_RELATIONS.includes(relation.kind)) {
-        const hasCanonical = canonicals.has(relation.token);
-        if (!hasCanonical) {
-          relationIssues.push({
-            severity: "error",
-            category: "integrity",
-            message: `Dangling relation: ${relation.kind}:${relation.token} (canonical not found)`,
-            file: record.file,
-            line: record.startLine,
-          });
-        }
-      }
-    }
-  }
-
-  // Check 3: Marker validity
-  for (const record of allRecords) {
-    if (!isValidType(record.type)) {
-      const isAllowed =
-        context.config.allowTypes.includes(record.type) ||
-        context.config.allowTypes.includes("*");
-
-      if (!isAllowed) {
-        markerIssues.push({
-          severity: "warning",
-          category: "integrity",
-          message: `Unknown marker type: "${record.type}"`,
-          file: record.file,
-          line: record.startLine,
-          suggestion: "Add to allowTypes config or use a blessed marker",
-        });
-      }
-    }
-  }
-
-  // Check 4: TLDR positioning (should be near top of file)
-  const tldrByFile = new Map<string, WaymarkRecord[]>();
-  for (const record of allRecords) {
-    if (record.type === "tldr") {
-      if (!tldrByFile.has(record.file)) {
-        tldrByFile.set(record.file, []);
-      }
-      tldrByFile.get(record.file)?.push(record);
-    }
-  }
-
-  for (const [file, tldrs] of tldrByFile) {
-    if (tldrs.length > 1) {
-      tldrIssues.push({
-        severity: "error",
-        category: "integrity",
-        message: `Multiple TLDRs in file (found ${tldrs.length})`,
-        file,
-        suggestion: "Consolidate into single TLDR at top of file",
-      });
-    }
-
-    // Check if TLDR is reasonably near the top (within first lines threshold)
-    for (const tldr of tldrs) {
-      if (tldr.startLine > TLDR_TOP_LINES_MAX) {
-        tldrIssues.push({
-          severity: "warning",
-          category: "integrity",
-          message: "TLDR should be near top of file",
-          file,
-          line: tldr.startLine,
-        });
-      }
-    }
-  }
-
-  // Add all check results
-  results.push({
-    category: "integrity",
-    name: "Parse Validity",
-    passed: parseIssues.length === 0,
-    issues: parseIssues,
-  });
-
-  results.push({
-    category: "integrity",
-    name: "Canonical References",
-    passed: canonicalIssues.length === 0,
-    issues: canonicalIssues,
-  });
-
-  results.push({
-    category: "integrity",
-    name: "Relation Integrity",
-    passed: relationIssues.length === 0,
-    issues: relationIssues,
-  });
-
-  results.push({
-    category: "integrity",
-    name: "Marker Validity",
-    passed: markerIssues.length === 0,
-    issues: markerIssues,
-  });
-
-  results.push({
-    category: "integrity",
-    name: "TLDR Coverage",
-    passed: tldrIssues.length === 0,
-    issues: tldrIssues,
-  });
-
-  return results;
 }
 
 // about ::: analyzes index size cache health and scan performance

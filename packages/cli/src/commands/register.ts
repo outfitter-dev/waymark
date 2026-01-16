@@ -588,19 +588,17 @@ Examples:
   skillCommand.addCommand(skillPathCommand);
   program.addCommand(skillCommand);
 
-  // Doctor command - health checks and diagnostics (WAY-47)
+  // Doctor command - tool and environment health checks (WAY-47)
   const doctorCommand = new Command("doctor")
-    .argument("[paths...]", "files or directories to check")
     .option("--strict", "fail on warnings (CI mode)", false)
     .option("--fix", "attempt automatic repairs", false)
     .option("--json", "output as JSON")
-    .description("run health checks and diagnostics")
+    .description("check tool and environment health")
     .addHelpText(
       "after",
       `
 Examples:
-  $ wm doctor                      # Check current directory
-  $ wm doctor src/                 # Check specific directory
+  $ wm doctor                      # Run health checks
   $ wm doctor --strict             # CI mode (fail on warnings)
   $ wm doctor --fix                # Auto-repair safe issues
   $ wm doctor --json               # JSON output for tooling
@@ -609,43 +607,35 @@ Health Checks:
   Configuration:
     - Config file exists and is valid
     - Config values are within valid ranges
+
+  Cache:
     - Cache directory is writable
     - Index files are valid JSON
-
-  Waymark Integrity:
-    - All waymarks parse correctly
-    - No duplicate canonical references
-    - No dangling relations (depends:, needs:, etc.)
-    - TLDRs are in correct positions
-    - Raised/starred signals on protected branches
+    - Cache is not stale
+    - Index size is reasonable
 
   Environment:
     - Git repository detected
     - Ignore patterns working correctly
-    - Index size is reasonable
-
-  Performance:
-    - Cache functioning correctly
-    - Index size warnings
 
 Auto-Fix Support (--fix):
   - Rebuild corrupted cache/index files
-  - Remove duplicate canonicals (keeps first)
-  - Fix TLDR positioning issues
-  - Run formatter on waymarks with syntax issues
-  - Clear flagged signals on protected branches (with confirmation)
+  - Clear stale cache entries
 
 Exit Codes:
   0  No errors (warnings only if not --strict)
   1  Errors found or warnings in --strict mode
   2  Internal/tooling error
 
+Note: For content integrity checks (duplicate canonicals, dangling relations,
+TLDR positioning, signal hygiene), use 'wm check' instead.
+
 See 'wm skill show doctor' for agent-facing documentation.
     `
     )
-    .action(async (paths: string[], options: DoctorCommandOptions) => {
+    .action(async (options: DoctorCommandOptions) => {
       try {
-        await handleDoctorCommand(program, { ...options, paths });
+        await handleDoctorCommand(program, options);
       } catch (error) {
         handleCommandError(program, error);
       }
