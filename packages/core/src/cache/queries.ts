@@ -4,6 +4,12 @@ import type { Database } from "bun:sqlite";
 import type { WaymarkRecord } from "@waymarks/grammar";
 import { deserializeRecord, type WaymarkRow } from "./serialization.ts";
 
+/**
+ * Fetch cached records for a specific file.
+ * @param db - SQLite database handle.
+ * @param filePath - File path to filter by.
+ * @returns Waymark records for the file.
+ */
 export function findByFile(db: Database, filePath: string): WaymarkRecord[] {
   const stmt = db.prepare(`
     SELECT * FROM waymarkRecords
@@ -15,6 +21,12 @@ export function findByFile(db: Database, filePath: string): WaymarkRecord[] {
   );
 }
 
+/**
+ * Fetch cached records for a specific marker type.
+ * @param db - SQLite database handle.
+ * @param type - Marker type to filter by.
+ * @returns Waymark records matching the type.
+ */
 export function findByType(db: Database, type: string): WaymarkRecord[] {
   const stmt = db.prepare(`
     SELECT * FROM waymarkRecords
@@ -24,6 +36,12 @@ export function findByType(db: Database, type: string): WaymarkRecord[] {
   return (stmt.all(type) as WaymarkRow[]).map((row) => deserializeRecord(row));
 }
 
+/**
+ * Fetch cached records containing a specific tag.
+ * @param db - SQLite database handle.
+ * @param tag - Tag to filter by.
+ * @returns Waymark records containing the tag.
+ */
 export function findByTag(db: Database, tag: string): WaymarkRecord[] {
   const stmt = db.prepare(`
     SELECT * FROM waymarkRecords
@@ -35,6 +53,12 @@ export function findByTag(db: Database, tag: string): WaymarkRecord[] {
   );
 }
 
+/**
+ * Fetch cached records containing a specific mention.
+ * @param db - SQLite database handle.
+ * @param mention - Mention to filter by.
+ * @returns Waymark records containing the mention.
+ */
 export function findByMention(db: Database, mention: string): WaymarkRecord[] {
   const stmt = db.prepare(`
     SELECT * FROM waymarkRecords
@@ -46,6 +70,12 @@ export function findByMention(db: Database, mention: string): WaymarkRecord[] {
   );
 }
 
+/**
+ * Fetch cached records containing a canonical token.
+ * @param db - SQLite database handle.
+ * @param canonical - Canonical token to filter by.
+ * @returns Waymark records containing the canonical token.
+ */
 export function findByCanonical(
   db: Database,
   canonical: string
@@ -60,6 +90,12 @@ export function findByCanonical(
   );
 }
 
+/**
+ * Search cached records by content text.
+ * @param db - SQLite database handle.
+ * @param query - Query text to match.
+ * @returns Waymark records with matching content.
+ */
 export function searchContent(db: Database, query: string): WaymarkRecord[] {
   const stmt = db.prepare(`
     SELECT * FROM waymarkRecords

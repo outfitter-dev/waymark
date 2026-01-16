@@ -21,6 +21,11 @@ export type WaymarkRow = {
   tags?: string | null;
 };
 
+/**
+ * Convert a serialized cache row into a waymark record.
+ * @param row - Serialized row from the cache database.
+ * @returns Deserialized waymark record.
+ */
 export function deserializeRecord(row: WaymarkRow): WaymarkRecord {
   return {
     file: row.filePath,

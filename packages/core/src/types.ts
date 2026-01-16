@@ -3,6 +3,7 @@
 // Re-export grammar types for convenience
 export type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";
 
+/** Formatting controls for rendered waymark comments. */
 export type WaymarkFormatConfig = {
   spaceAroundSigil: boolean;
   normalizeCase: boolean;
@@ -11,6 +12,7 @@ export type WaymarkFormatConfig = {
   wrapWidth?: number;
 };
 
+/** Lint severity configuration for waymark validation. */
 export type WaymarkLintConfig = {
   duplicateProperty: "warn" | "error" | "ignore";
   unknownMarker: "warn" | "error" | "ignore";
@@ -18,10 +20,12 @@ export type WaymarkLintConfig = {
   duplicateCanonical: "warn" | "error" | "ignore";
 };
 
+/** Scan-time toggles for including additional markers. */
 export type WaymarkScanConfig = {
   includeCodetags: boolean;
 };
 
+/** Full configuration shape for waymark operations. */
 export type WaymarkConfig = {
   typeCase: "lowercase" | "uppercase";
   idScope: "repo" | "file";
@@ -36,7 +40,7 @@ export type WaymarkConfig = {
   index: WaymarkIndexConfig;
 };
 
-// Manually defined partial config to work with exactOptionalPropertyTypes
+/** Partial configuration shape for overrides. */
 export type PartialWaymarkConfig = {
   typeCase?: "lowercase" | "uppercase";
   idScope?: "repo" | "file";
@@ -51,12 +55,14 @@ export type PartialWaymarkConfig = {
   index?: Partial<WaymarkIndexConfig>;
 };
 
+/** Options that control scanning and filtering waymarks. */
 export type ScanOptions = {
   cache?: boolean;
   filter?: (record: import("@waymarks/grammar").WaymarkRecord) => boolean;
   config?: Partial<WaymarkConfig>;
 };
 
+/** Configuration for waymark ID assignment. */
 export type WaymarkIdConfig = {
   mode: "auto" | "prompt" | "off" | "manual";
   length: number;
@@ -65,11 +71,13 @@ export type WaymarkIdConfig = {
   assignOnRefresh: boolean;
 };
 
+/** Configuration for the on-disk ID index refresh behavior. */
 export type WaymarkIndexConfig = {
   refreshTriggers: string[];
   autoRefreshAfterMinutes: number;
 };
 
+/** Minimal logger interface used by core utilities. */
 export type CoreLogger = {
   debug: (msg: string, meta?: Record<string, unknown>) => void;
   info: (msg: string, meta?: Record<string, unknown>) => void;

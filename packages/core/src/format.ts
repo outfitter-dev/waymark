@@ -6,10 +6,12 @@ import { PROPERTY_KEYS, parse, SIGIL } from "@waymarks/grammar";
 import { resolveConfig } from "./config";
 import type { PartialWaymarkConfig, WaymarkConfig } from "./types";
 
+/** Options for formatting waymark comments in source text. */
 export type FormatOptions = ParseOptions & {
   config?: PartialWaymarkConfig;
 };
 
+/** Describes a single formatting change in the source text. */
 export type FormatEdit = {
   startLine: number;
   endLine: number;
@@ -18,6 +20,7 @@ export type FormatEdit = {
   reason: string;
 };
 
+/** Output from formatting, including the rewritten text and edits. */
 export type FormatResult = {
   formattedText: string;
   edits: FormatEdit[];
@@ -28,6 +31,12 @@ const SINGLE_SPACE = " ";
 const NEWLINE = "\n";
 const LINE_SPLIT_REGEX = /\r?\n/;
 
+/**
+ * Normalize waymark formatting within the provided source text.
+ * @param source - Source text to format.
+ * @param options - Formatting and parse options.
+ * @returns Formatted text and a list of edits.
+ */
 export function formatText(
   source: string,
   options: FormatOptions = {}

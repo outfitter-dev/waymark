@@ -18,7 +18,7 @@ const CONTEXT_BEFORE_LINES = 2;
 const CONTEXT_AFTER_LINES = 3;
 const DEFAULT_EOL = "\n";
 
-// Define the Zod schema for InsertionSpec
+/** Zod schema describing a waymark insertion request. */
 export const InsertionSpecSchema = z.object({
   file: z.string().min(1, "File path is required"),
   line: z.number().int().positive("Line must be a positive integer"),
@@ -40,9 +40,10 @@ export const InsertionSpecSchema = z.object({
   id: z.string().optional(),
 });
 
-// Infer the type from the schema for consistency
+/** Parsed insertion spec derived from {@link InsertionSpecSchema}. */
 export type InsertionSpec = z.infer<typeof InsertionSpecSchema>;
 
+/** Result for a single insertion attempt. */
 export type InsertionResult = {
   file: string;
   requested: {
@@ -58,6 +59,7 @@ export type InsertionResult = {
   error?: string;
 };
 
+/** Options that control how insertions are applied and written. */
 export type InsertOptions = {
   write?: boolean;
   format?: boolean;
@@ -66,6 +68,12 @@ export type InsertOptions = {
   logger?: CoreLogger;
 };
 
+/**
+ * Insert waymarks into files, optionally writing changes to disk.
+ * @param specs - Insertion specs describing what to insert.
+ * @param options - Options controlling formatting, writing, and ID management.
+ * @returns Results for each insertion attempt.
+ */
 export async function insertWaymarks(
   specs: InsertionSpec[],
   options: InsertOptions = {}
