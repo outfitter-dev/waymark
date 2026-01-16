@@ -12,6 +12,9 @@ import {
   type SkillSectionManifest,
 } from "./types.ts";
 
+/** Matches path separators for both Unix (/) and Windows (\). */
+const PATH_SEPARATOR_PATTERN = /[/\\]/;
+
 type FrontmatterRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): FrontmatterRecord | null {
@@ -71,7 +74,7 @@ function parseFrontmatter(
 }
 
 function inferKindFromPath(relativePath: string): SkillSectionKind | null {
-  const [prefix] = relativePath.split("/");
+  const [prefix] = relativePath.split(PATH_SEPARATOR_PATTERN);
   switch (prefix) {
     case "commands":
       return "command";
