@@ -20,7 +20,8 @@
     "lint:biome": "bunx ultracite check",
     "lint:md": "bunx markdownlint-cli2 \"**/*.md\" \"!**/.bun/**\"",
     "check": "bun run lint",
-    "check:spec": "bun scripts/check-spec-alignment.ts",
+    "check:doc": "bun scripts/typedoc-check.ts",
+    "check:spec": "bun scripts/check-spec-alignment.ts && bun run check:doc",
     "check:all": "bun run lint && bun run typecheck && bun run test && bun run check:spec",
     "waymark:map": "bun scripts/waymark-map.ts",
     "audit": "bun scripts/waymark-audit.ts",
@@ -44,6 +45,7 @@
     "pino": "9.13.0",
     "pino-pretty": "13.1.1",
     "prettier": "^3.6.2",
+    "typedoc": "^0.28.15",
     "turbo": "^2.5.8",
     "typescript": "^5.9.2",
     "ultracite": "^5.4.5"
