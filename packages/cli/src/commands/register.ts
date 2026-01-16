@@ -17,7 +17,7 @@ type CommandHandlers = {
   handleFormatCommand: (
     program: Command,
     paths: string[],
-    options: { write?: boolean }
+    options: { yes?: boolean }
   ) => Promise<void>;
   handleAddCommand: (program: Command, command: Command) => Promise<void>;
   handleModifyCommand: (
@@ -132,16 +132,16 @@ export function registerCommands(
   // Format command
   const fmtCommand = new Command("fmt")
     .argument("[paths...]", "files or directories to format")
-    .option("--write, -w", "write changes to file", false)
+    .option("--yes, -y", "write changes to file without prompting", false)
     .description("format and normalize waymark syntax in files")
     .addHelpText(
       "after",
       `
 Examples:
   $ wm fmt src/auth.ts                 # Preview formatting single file
-  $ wm fmt src/auth.ts --write         # Apply formatting to single file
-  $ wm fmt src/**/*.ts --write         # Format multiple files
-  $ wm fmt src/ --write                # Format all files in directory
+  $ wm fmt src/auth.ts --yes           # Apply formatting to single file
+  $ wm fmt src/**/*.ts --yes           # Format multiple files
+  $ wm fmt src/ --yes                  # Format all files in directory
 
 Notes:
   - Files beginning with a \`waymark-ignore-file\` comment are skipped
@@ -164,7 +164,7 @@ After Formatting:
 See 'wm skill show fmt' for agent-facing documentation.
     `
     )
-    .action(async (paths: string[], options: { write?: boolean }) => {
+    .action(async (paths: string[], options: { yes?: boolean }) => {
       try {
         await handleFormatCommand(program, paths, options);
       } catch (error) {

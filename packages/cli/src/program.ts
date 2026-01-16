@@ -178,7 +178,7 @@ function registerSignalHandlers(): void {
 async function handleFormatCommand(
   program: Command,
   paths: string[],
-  options: { write?: boolean }
+  options: { yes?: boolean }
 ): Promise<void> {
   const context = await createContext(resolveGlobalOptions(program));
 
@@ -203,22 +203,10 @@ async function handleFormatCommand(
       continue;
     }
 
-    // If --write flag is set, confirm before writing
-    if (options.write) {
-      const shouldWrite = await confirmWrite({
-        filePath,
-        changeCount: edits.length,
-        actionVerb: "format",
-      });
-
-      if (shouldWrite) {
-        // Actually write the changes
-        await formatFile({ filePath, write: true }, context);
-        writeStdout(`${filePath}: formatted (${edits.length} edits)`);
-      } else {
-        writeStdout("Write cancelled");
-        throw new CliError("Write cancelled", ExitCode.failure);
-      }
+    // If --yes flag is set, write changes without confirmation
+    if (options.yes) {
+      await formatFile({ filePath, write: true }, context);
+      writeStdout(`${filePath}: formatted (${edits.length} edits)`);
     } else {
       writeStdout(formattedText);
     }
