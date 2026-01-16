@@ -63,6 +63,11 @@ export type ParsedAddArgs = {
   options: AddCommandOptions;
 };
 
+/**
+ * Build insertion specs and options from parsed add command input.
+ * @param input - Parsed positional arguments and flags.
+ * @returns Parsed insertion specs and options.
+ */
 export function buildAddArgs(input: AddCommandInput): ParsedAddArgs {
   const state = createInitialState();
   const { options } = input;
@@ -337,6 +342,12 @@ function buildInsertOptions(state: InsertParseState): AddCommandOptions {
   return { ...state.optionState };
 }
 
+/**
+ * Execute the `wm add` command with parsed inputs.
+ * @param parsed - Parsed insertion specs and options.
+ * @param context - CLI context with config, logger, and filesystem helpers.
+ * @returns Results, summary, output text, and exit code.
+ */
 export async function runAddCommand(
   parsed: ParsedAddArgs,
   context: CommandContext

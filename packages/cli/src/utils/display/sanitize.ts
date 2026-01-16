@@ -3,6 +3,11 @@
 const CONTROL_CHAR_PATTERN = "[\\u0000-\\u001F\\u007F]";
 const CONTROL_CHAR_REGEX = new RegExp(CONTROL_CHAR_PATTERN, "g");
 
+/**
+ * Strip control characters from a string for CLI output.
+ * @param value - Input string to sanitize.
+ * @returns Sanitized string.
+ */
 export function sanitizeInlineText(value: string): string {
   return value.replace(CONTROL_CHAR_REGEX, "");
 }

@@ -14,7 +14,10 @@ import type { DisplayOptions } from "./types";
 export type { DisplayOptions } from "./types";
 
 /**
- * Format waymark records according to display options
+ * Format waymark records according to display options.
+ * @param records - Records to format.
+ * @param options - Display options and formatting preferences.
+ * @returns Formatted output string.
  */
 export function formatRecords(
   records: WaymarkRecord[],

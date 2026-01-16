@@ -393,6 +393,11 @@ function buildLintRules(): LintRule[] {
   ];
 }
 
+/**
+ * Parse CLI arguments for the lint command.
+ * @param argv - Raw CLI arguments.
+ * @returns Parsed lint command options.
+ */
 export function parseLintArgs(argv: string[]): LintCommandOptions {
   const json = argv.includes("--json");
   const filePaths = argv.filter((arg) => !arg.startsWith("-"));
@@ -402,6 +407,13 @@ export function parseLintArgs(argv: string[]): LintCommandOptions {
   return { filePaths, json };
 }
 
+/**
+ * Run lint rules against the provided file paths.
+ * @param filePaths - Paths or globs to scan.
+ * @param allowTypes - Allowed marker types from config.
+ * @param config - Resolved waymark configuration.
+ * @returns Lint report with collected issues.
+ */
 export async function lintFiles(
   filePaths: string[],
   allowTypes: string[],

@@ -3,6 +3,11 @@
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
+/**
+ * Resolve the workspace root by searching for a .waymark directory.
+ * @param start - Directory to start searching from.
+ * @returns Resolved workspace root path.
+ */
 export function resolveWorkspaceRoot(start = process.cwd()): string {
   let current = resolve(start);
 

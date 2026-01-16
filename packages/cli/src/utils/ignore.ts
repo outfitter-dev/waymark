@@ -95,6 +95,11 @@ export class IgnoreFilter {
 // Cache filters by root directory for performance
 const filterCache = new Map<string, IgnoreFilter>();
 
+/**
+ * Get a cached ignore filter for the provided options.
+ * @param options - Root directory and ignore configuration.
+ * @returns Ignore filter instance.
+ */
 export function getIgnoreFilter(options: IgnoreOptions): IgnoreFilter {
   const cacheKey = `${options.rootDir}:${options.config.respectGitignore}:${options.config.skipPaths.join(",")}:${options.config.includePaths.join(",")}`;
 
@@ -108,7 +113,9 @@ export function getIgnoreFilter(options: IgnoreOptions): IgnoreFilter {
   return filter;
 }
 
-// Clear cache (useful for testing)
+/**
+ * Clear the ignore filter cache (useful for tests).
+ */
 export function clearIgnoreCache(): void {
   filterCache.clear();
 }

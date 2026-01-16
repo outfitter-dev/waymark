@@ -9,7 +9,9 @@ import type { DisplayOptions } from "../types";
 const LINE_NUMBER_WIDTH = 3;
 
 /**
- * Format a single record in simple format
+ * Format a single record in simple format.
+ * @param record - Record to format.
+ * @returns Formatted record string.
  */
 export function formatRecordSimple(record: WaymarkRecord): string {
   const signals =
@@ -21,7 +23,10 @@ export function formatRecordSimple(record: WaymarkRecord): string {
 }
 
 /**
- * Format a single record with context lines
+ * Format a single record with context lines.
+ * @param record - Record to format.
+ * @param options - Display options including context settings.
+ * @returns Formatted record string with context.
  */
 export function formatRecordWithContext(
   record: WaymarkRecord,
@@ -61,7 +66,10 @@ export function formatRecordWithContext(
 }
 
 /**
- * Format records with text display (default, with optional context)
+ * Format records with text display (default, with optional context).
+ * @param records - Records to format.
+ * @param options - Display options including context settings.
+ * @returns Formatted output string.
  */
 export function formatText(
   records: WaymarkRecord[],
@@ -89,7 +97,9 @@ export function formatText(
 }
 
 /**
- * Format records with flat display (one per line)
+ * Format records with flat display (one per line).
+ * @param records - Records to format.
+ * @returns Flat formatted output string.
  */
 export function formatFlat(records: WaymarkRecord[]): string {
   return records.map((r) => formatRecordSimple(r)).join("\n");

@@ -5,7 +5,11 @@ import type { WaymarkRecord } from "@waymarks/core";
 import type { SortBy } from "../../commands/unified/types";
 
 /**
- * Sort records by specified field
+ * Sort records by specified field.
+ * @param records - Records to sort.
+ * @param sortBy - Sort key.
+ * @param reverse - Whether to reverse the result.
+ * @returns Sorted records.
  */
 export function sortRecords(
   records: WaymarkRecord[],

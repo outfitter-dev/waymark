@@ -1080,6 +1080,10 @@ function buildCustomHelpFormatter() {
   };
 }
 
+/**
+ * Build a Commander program with all CLI commands registered.
+ * @returns Configured Commander program instance.
+ */
 export async function createProgram(): Promise<Command> {
   // Read version from package.json
   const packageJsonPath = new URL("../package.json", import.meta.url);
@@ -1208,6 +1212,10 @@ Note: For agent-facing documentation, use "wm skill".
   return program;
 }
 
+/**
+ * Run the CLI using process.argv when invoked as a script. Exits the process with appropriate exit code.
+ * @returns No return value; process exits after execution.
+ */
 export function runMain(): void {
   registerSignalHandlers();
   createProgram()
@@ -1220,7 +1228,11 @@ export function runMain(): void {
     });
 }
 
-// For testing
+/**
+ * Run the CLI with a custom argv array, capturing stdout/stderr.
+ * @param argv - Command-line arguments (excluding node and binary).
+ * @returns Exit code and captured stdout/stderr.
+ */
 export async function runCli(argv: string[]): Promise<{
   exitCode: number;
   stdout: string;
@@ -1277,6 +1289,7 @@ export async function runCli(argv: string[]): Promise<{
   };
 }
 
+/** @internal */
 export const __test = {
   createProgram,
 };

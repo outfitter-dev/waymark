@@ -67,6 +67,11 @@ type CommandHandlers = {
   writeStdout: (message: string) => void;
 };
 
+/**
+ * Register CLI commands and handlers on the commander program.
+ * @param program - Commander program instance.
+ * @param handlers - Handler callbacks for each command.
+ */
 export function registerCommands(
   program: Command,
   handlers: CommandHandlers

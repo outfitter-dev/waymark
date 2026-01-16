@@ -22,6 +22,8 @@ export type FindCommandOptions = {
 
 /**
  * Scan the provided file and run structured searches across the resulting records.
+ * @param options - Find command options, including filters and config.
+ * @returns Matching waymark records.
  */
 export async function findRecords(
   options: FindCommandOptions
@@ -45,6 +47,8 @@ export async function findRecords(
 
 /**
  * Parse CLI arguments for the find command into structured options.
+ * @param argv - Raw CLI arguments.
+ * @returns Parsed find options excluding config.
  */
 export function parseFindArgs(
   argv: string[]

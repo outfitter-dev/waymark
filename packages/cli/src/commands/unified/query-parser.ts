@@ -28,12 +28,14 @@ export type ParsedQuery = {
 };
 
 /**
- * Parse a query string into structured filters
+ * Parse a query string into structured filters.
  *
  * Examples:
  *   "todo @agent #perf" → types: [todo], mentions: [@agent], tags: [#perf]
  *   "fix !@alice" → types: [fix], exclusions.mentions: [@alice]
  *   "owner:@alice" → properties: { owner: "@alice" }
+ * @param query - Raw query string.
+ * @returns Parsed query tokens and filters.
  */
 export function parseQuery(query: string): ParsedQuery {
   const tokens = tokenize(query);

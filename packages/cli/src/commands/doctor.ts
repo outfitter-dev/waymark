@@ -61,6 +61,12 @@ export type DoctorCommandOptions = {
 };
 
 // about ::: orchestrates all diagnostic checks and returns comprehensive report
+/**
+ * Run the doctor diagnostics and return a report.
+ * @param context - CLI context with config and logger.
+ * @param options - Doctor command options.
+ * @returns Comprehensive doctor report.
+ */
 export async function runDoctorCommand(
   context: CommandContext,
   options: DoctorCommandOptions
@@ -579,6 +585,11 @@ async function checkPerformance(
 }
 
 // about ::: renders check results with color coded severity indicators
+/**
+ * Format a doctor report for CLI output.
+ * @param report - Doctor report to format.
+ * @returns Human-readable report string.
+ */
 export function formatDoctorReport(report: DoctorReport): string {
   const lines: string[] = [];
 

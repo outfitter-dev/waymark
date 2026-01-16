@@ -386,7 +386,10 @@ function formatCompactRecord(
 }
 
 /**
- * Format records in enhanced ripgrep-style output
+ * Format records in enhanced ripgrep-style output.
+ * @param records - Records to format.
+ * @param options - Display options affecting output.
+ * @returns Formatted output string.
  */
 export function formatEnhanced(
   records: WaymarkRecord[],

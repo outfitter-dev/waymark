@@ -23,6 +23,11 @@ const CONFIG_FORMATS: ConfigFormat[] = ["toml", "jsonc", "yaml", "yml"];
 const CONFIG_PRESETS: ConfigPreset[] = ["full", "minimal"];
 const CONFIG_SCOPES: ConfigScope[] = ["project", "user"];
 
+/**
+ * Execute the `wm init` command to generate configuration files.
+ * @param options - CLI options for format, preset, and scope.
+ * @returns Promise that resolves when initialization completes.
+ */
 export async function runInitCommand(
   options: InitCommandOptions = {}
 ): Promise<void> {

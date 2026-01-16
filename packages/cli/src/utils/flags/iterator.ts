@@ -42,6 +42,8 @@ export class ArgIterator {
 
 /**
  * Create an iterator configured for the provided argv slice.
+ * @param argv - Argument list to iterate over.
+ * @returns Argument iterator.
  */
 export function createArgIterator(argv: readonly string[]): ArgIterator {
   return new ArgIterator(argv);
@@ -49,6 +51,8 @@ export function createArgIterator(argv: readonly string[]): ArgIterator {
 
 /**
  * Determine whether the token represents a flag (prefixed with a dash).
+ * @param token - Token to inspect.
+ * @returns True if the token is a flag.
  */
 export function isFlag(token: string | undefined): boolean {
   return typeof token === "string" && token.startsWith("-");
@@ -56,6 +60,9 @@ export function isFlag(token: string | undefined): boolean {
 
 /**
  * Check whether a token matches any of the provided flag names.
+ * @param token - Token to inspect.
+ * @param names - List of flag names to match.
+ * @returns True if the token matches one of the names.
  */
 export function matchesFlag(
   token: string | undefined,

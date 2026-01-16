@@ -18,8 +18,10 @@ export type UnifiedCommandResult = {
 const DEFAULT_CHALK_LEVEL = chalk.level;
 
 /**
- * Unified command handler that intelligently routes to scan/find/map/graph behavior
- * based on flags and arguments provided.
+ * Unified command handler that routes to scan/find/graph behavior.
+ * @param options - Unified command options.
+ * @param context - CLI context with config and globals.
+ * @returns Output payload and optional records.
  */
 export async function runUnifiedCommand(
   options: UnifiedCommandOptions,

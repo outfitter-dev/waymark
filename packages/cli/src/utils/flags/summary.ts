@@ -8,6 +8,9 @@ export type SummaryFlagState = {
 
 /**
  * Enable summary output when the `--summary` flag is encountered.
+ * @param token - Current CLI token.
+ * @param state - Summary flag state to mutate.
+ * @returns Whether the token was handled.
  */
 export function handleSummaryFlag(
   token: string | undefined,

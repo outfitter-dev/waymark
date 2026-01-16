@@ -4,7 +4,11 @@ import type { WaymarkRecord } from "@waymarks/core";
 import { DEFAULT_PAGE_SIZE } from "./types";
 
 /**
- * Apply pagination to records
+ * Apply pagination to records.
+ * @param records - Records to paginate.
+ * @param limit - Page size limit.
+ * @param page - Page number (1-based).
+ * @returns Paginated records.
  */
 export function paginateRecords(
   records: WaymarkRecord[],

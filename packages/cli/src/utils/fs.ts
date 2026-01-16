@@ -295,6 +295,7 @@ function normalizePathForOutput(path: string): string {
  * working directory, throwing a descriptive error when it cannot be found.
  *
  * @param path - The file path to verify
+ * @returns Nothing. Throws when the path cannot be resolved.
  * @throws Error if the path does not resolve to an existing file
  */
 export function ensureFileExists(path: string): void {

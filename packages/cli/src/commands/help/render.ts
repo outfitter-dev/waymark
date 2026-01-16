@@ -19,7 +19,9 @@ function renderFlag(flag: FlagConfig): string {
 }
 
 /**
- * Render command-specific help
+ * Render command-specific help content.
+ * @param config - Command configuration to render.
+ * @returns Formatted help text.
  */
 export function renderCommandHelp(config: CommandConfig): string {
   const sections: string[] = [];
@@ -53,7 +55,8 @@ export function renderCommandHelp(config: CommandConfig): string {
 }
 
 /**
- * Render global help (main command overview + command list)
+ * Render global help (main command overview + command list).
+ * @returns Formatted help text.
  */
 export function renderGlobalHelp(): string {
   const sections: string[] = [];
@@ -120,7 +123,9 @@ export function renderGlobalHelp(): string {
 }
 
 /**
- * Get help text for a command or global help
+ * Get help text for a command or global help.
+ * @param commandName - Optional command name to scope output.
+ * @returns Help text for the requested command or fallback.
  */
 export function getHelp(commandName?: string): string {
   if (!commandName) {

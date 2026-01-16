@@ -28,6 +28,11 @@ const noopSpinner: SpinnerHandle = {
   fail: noop,
 };
 
+/**
+ * Create a spinner handle (no-op if disabled).
+ * @param options - Spinner configuration.
+ * @returns Spinner handle.
+ */
 export function createSpinner(options: SpinnerOptions): SpinnerHandle {
   if (!options.enabled) {
     return noopSpinner;

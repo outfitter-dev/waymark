@@ -14,7 +14,9 @@ export type { CommandConfig, FlagConfig, HelpRegistry } from "./types.ts";
 import { getHelp } from "./render.ts";
 
 /**
- * Display help and exit
+ * Display help text to stdout.
+ * @param commandName - Optional command name to scope output.
+ * @returns Exit code to use for the CLI.
  */
 export function displayHelp(commandName?: string): number {
   const helpText = getHelp(commandName);

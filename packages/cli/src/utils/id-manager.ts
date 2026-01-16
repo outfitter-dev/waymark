@@ -10,6 +10,12 @@ export type CreateIdManagerOptions = {
   interactive?: boolean;
 };
 
+/**
+ * Create a WaymarkIdManager configured for the current CLI context.
+ * @param context - CLI context with config and workspace root.
+ * @param options - Options controlling interactive behavior.
+ * @returns ID manager instance or undefined when disabled.
+ */
 export async function createIdManager(
   context: CommandContext,
   options: CreateIdManagerOptions = {}

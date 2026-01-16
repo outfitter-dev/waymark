@@ -105,7 +105,9 @@ function unmaskCodeBlocks(text: string, blocks: string[]): string {
 }
 
 /**
- * Get color for a waymark type based on its category
+ * Get color for a waymark type based on its category.
+ * @param type - Waymark type string.
+ * @returns Chalk color function.
  */
 export function getTypeColor(type: string): typeof chalk {
   const category = getTypeCategory(type);
@@ -142,7 +144,10 @@ export function getTypeColor(type: string): typeof chalk {
 }
 
 /**
- * Style a waymark type with appropriate color and signals
+ * Style a waymark type with appropriate color and signals.
+ * @param type - Waymark type string.
+ * @param signals - Signal flags to include.
+ * @returns Styled type string.
  */
 export function styleType(
   type: string,
@@ -161,15 +166,19 @@ export function styleType(
 }
 
 /**
- * Style the ::: sigil (always dim)
+ * Style the ::: sigil (always dim).
+ * @param text - Sigil text to style.
+ * @returns Styled sigil string.
  */
 export function styleSigil(text: string): string {
   return chalk.dim(text);
 }
 
 /**
- * Style a mention (@user, not @scope/package)
- * Mentions never have / or : in them
+ * Style a mention (@user, not @scope/package).
+ * Mentions never have / or : in them.
+ * @param text - Mention text.
+ * @returns Styled mention string.
  */
 export function styleMention(text: string): string {
   if (text.includes("/") || text.includes(":")) {
@@ -179,14 +188,18 @@ export function styleMention(text: string): string {
 }
 
 /**
- * Style a tag (#tag or #tag:subtag)
+ * Style a tag (#tag or #tag:subtag).
+ * @param text - Tag text.
+ * @returns Styled tag string.
  */
 export function styleTag(text: string): string {
   return chalk.bold.cyan(text);
 }
 
 /**
- * Style a scoped package reference (@scope/package or @scope/package^v1.0.0)
+ * Style a scoped package reference (@scope/package or @scope/package^v1.0.0).
+ * @param text - Scope text.
+ * @returns Styled scope string.
  */
 export function styleScope(text: string): string {
   if (text.includes("/")) {
@@ -196,31 +209,39 @@ export function styleScope(text: string): string {
 }
 
 /**
- * Style a property key (dim)
+ * Style a property key (dim).
+ * @param text - Property key text.
+ * @returns Styled property string.
  */
 export function styleProperty(text: string): string {
   return chalk.dim(text);
 }
 
 /**
- * Style a line number (dim)
- * Accepts either a number or a padded string to preserve alignment
+ * Style a line number (dim).
+ * Accepts either a number or a padded string to preserve alignment.
+ * @param num - Line number or padded string.
+ * @returns Styled line number string.
  */
 export function styleLineNumber(num: number | string): string {
   return chalk.dim(`${num}`);
 }
 
 /**
- * Style a file path (bold, no underline)
+ * Style a file path (bold, no underline).
+ * @param path - File path to style.
+ * @returns Styled file path.
  */
 export function styleFilePath(path: string): string {
   return chalk.bold(path);
 }
 
 /**
- * Apply inline styling to waymark content text
- * Styles tags, properties, mentions, and scopes within the content
- * Order matters: tags first (to avoid conflict with properties containing colons)
+ * Apply inline styling to waymark content text.
+ * Styles tags, properties, mentions, and scopes within the content.
+ * Order matters: tags first (to avoid conflict with properties containing colons).
+ * @param content - Raw content text to style.
+ * @returns Styled content string.
  */
 export function styleContent(content: string): string {
   const sanitized = sanitizeInlineText(content);

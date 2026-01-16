@@ -8,6 +8,11 @@ export type PropertyEntry = {
 const PROPERTY_ERROR_MESSAGE =
   "--property expects key=value or key:value format";
 
+/**
+ * Parse a key/value property entry from CLI input.
+ * @param value - Property string in key=value or key:value form.
+ * @returns Parsed property entry.
+ */
 export function parsePropertyEntry(value: string): PropertyEntry {
   const separatorIndex =
     value.indexOf("=") >= 0 ? value.indexOf("=") : value.indexOf(":");
