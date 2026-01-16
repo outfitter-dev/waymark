@@ -66,7 +66,13 @@ describe("skill command", () => {
   test("supports --json for skill show via CLI parsing", async () => {
     const result = await runCli(["skill", "show", "add", "--json"]);
     expect(result.exitCode).toBe(0);
-    const parsed = JSON.parse(result.stdout.trim()) as {
+    // Extract JSON from stdout - may contain banners/warnings before JSON
+    const jsonStart = result.stdout.indexOf("{");
+    if (jsonStart === -1) {
+      throw new Error(`No JSON object found in stdout: ${result.stdout}`);
+    }
+    const jsonString = result.stdout.slice(jsonStart);
+    const parsed = JSON.parse(jsonString) as {
       kind: string;
       name: string;
     };
