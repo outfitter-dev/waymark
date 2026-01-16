@@ -13,6 +13,11 @@ import {
   normalizePathForOutput,
 } from "../utils/filesystem";
 
+/**
+ * Handle the scan action for the MCP tool.
+ * @param input - Raw tool input payload.
+ * @returns MCP tool result with scan output.
+ */
 export async function handleScan(input: unknown): Promise<CallToolResult> {
   const { paths, format, configPath, scope } = scanInputSchema.parse(input);
   const collectOptions: { configPath?: string; scope?: ConfigScope } = {};

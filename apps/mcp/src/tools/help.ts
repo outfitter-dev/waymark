@@ -87,6 +87,11 @@ const DEFAULT_HELP = [
   '{"action":"help","topic":"scan"}',
 ].join("\n");
 
+/**
+ * Handle the help action for the MCP tool.
+ * @param input - Help action input payload.
+ * @returns MCP tool result with help text.
+ */
 export function handleHelp(input: HelpActionInput): CallToolResult {
   const topic = input.topic?.trim().toLowerCase();
   const selected = topic ? HELP_TOPICS[topic] : undefined;

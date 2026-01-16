@@ -5,6 +5,11 @@ import type { ConfigScope } from "@waymarks/core";
 import { loadConfigFromDisk } from "@waymarks/core";
 import type { ExpandedConfig } from "../types";
 
+/**
+ * Load MCP configuration based on scope and optional explicit path.
+ * @param options - Scope and optional config path.
+ * @returns Resolved configuration loaded from disk.
+ */
 export function loadConfig(options: {
   scope: ConfigScope;
   configPath?: string;
@@ -21,16 +26,30 @@ export function loadConfig(options: {
   return loadConfigFromDisk(loadOptions);
 }
 
+/**
+ * Clamp a numeric value between min and max.
+ * @param value - Value to clamp.
+ * @param min - Minimum allowed value.
+ * @param max - Maximum allowed value.
+ * @returns Clamped value.
+ */
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
 const NEWLINE_SPLIT_REGEX = /\r?\n/u;
 
+/**
+ * Truncate source text to a maximum number of lines.
+ * @param source - Source text to truncate.
+ * @param maxLines - Maximum number of lines to keep.
+ * @returns Truncated text with an ellipsis line when truncated.
+ */
 export function truncateSource(source: string, maxLines: number): string {
   const lines = source.split(NEWLINE_SPLIT_REGEX);
   if (lines.length <= maxLines) {
     return source;
   }
-  return `${lines.slice(0, maxLines).join("\n")}\n...`;
+  const newline = source.includes("\r\n") ? "\r\n" : "\n";
+  return `${lines.slice(0, maxLines).join(newline)}${newline}...`;
 }

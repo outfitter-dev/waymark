@@ -80,6 +80,12 @@ type InsertWaymarkResult = {
   lineNumber: number;
 };
 
+/**
+ * Handle the add action for the MCP tool.
+ * @param input - Raw tool input payload.
+ * @param server - MCP server interface for notifications.
+ * @returns MCP tool result with insertion payload.
+ */
 export async function handleAdd(
   input: unknown,
   server: Pick<McpServer, "sendResourceListChanged">
@@ -392,7 +398,11 @@ export const addToolDefinition = {
   inputSchema: addWaymarkInputSchema.shape,
 } as const;
 
-// Wrapper for tests
+/**
+ * Wrapper to invoke the add tool handler in tests.
+ * @param params - The add waymark parameters including file path, type, content, and server context.
+ * @returns A promise resolving to the call tool result.
+ */
 export function handleAddWaymark(params: {
   filePath: string;
   type: string;

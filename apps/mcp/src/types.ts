@@ -65,6 +65,7 @@ export type HelpInput = z.infer<typeof helpInputSchema>;
 export type WaymarkToolInput = z.infer<typeof waymarkToolInputSchema>;
 export type RenderFormat = ScanInput["format"];
 
+/** Optional signal flags supported by the MCP add tool. */
 export type SignalFlags = {
   flagged?: boolean | undefined;
   starred?: boolean | undefined;
