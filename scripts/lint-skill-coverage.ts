@@ -20,7 +20,8 @@ type CommandExtraction = {
 };
 
 const COMMAND_DECLARATION = /const\s+(\w+)\s*=\s*new Command\("([^"]+)"\)/g;
-const ADD_COMMAND = /program\.addCommand\((\w+)/g;
+// Match both program.addCommand() and subcommand registrations like skill.addCommand()
+const ADD_COMMAND = /\w+\.addCommand\((\w+)/g;
 
 function normalizeLineEndings(value: string): string {
   return value.replace(/\r\n/g, "\n");
