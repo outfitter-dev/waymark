@@ -241,6 +241,17 @@ function parseManifest(raw: string, sourcePath: string): SkillManifest {
     throw new Error(`Incomplete sections in manifest at ${sourcePath}.`);
   }
 
+  const sectionsAreArrays =
+    Array.isArray(sectionRecord.commands) &&
+    Array.isArray(sectionRecord.references) &&
+    Array.isArray(sectionRecord.examples);
+
+  if (!sectionsAreArrays) {
+    throw new Error(
+      `Section lists (commands, references, examples) must be arrays in manifest at ${sourcePath}.`
+    );
+  }
+
   return normalizeManifest(parsed);
 }
 
