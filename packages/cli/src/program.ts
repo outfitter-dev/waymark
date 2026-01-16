@@ -55,11 +55,7 @@ import type {
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
-import {
-  confirmWrite,
-  selectWaymark,
-  setPromptPolicy,
-} from "./utils/prompts.ts";
+import { selectWaymark, setPromptPolicy } from "./utils/prompts.ts";
 import { createSpinner } from "./utils/spinner.ts";
 import { shouldUseColor } from "./utils/terminal.ts";
 
