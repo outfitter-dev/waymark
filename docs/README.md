@@ -197,6 +197,5 @@ Waymark documentation follows these conventions:
 
 - [Project README](../README.md) - Project overview and quick start
 - [Specification](./waymark/SPEC.md) - Canonical grammar and tooling scope
-- [Release Plan](../.agents/plans/v1/PLAN.md) - Execution plan and decision log
-- GitHub repository (internal: outfitter-dev/waymark) - Source code
+- [GitHub Repository](https://github.com/outfitter-dev/waymark) - Source code
 - [npm Package](https://www.npmjs.com/package/@waymarks/cli) - CLI installation

@@ -6,7 +6,7 @@
 
 - Follow the instructions in the @./.agents/rules/waymarks/WAYMARKS.md file and the TLDR-specific rules in @./.agents/rules/waymarks/tldrs.md.
 - Keep this document current—if you introduce a new convention (tag namespace, canonical token pattern, etc.) add it here **before** merging.
-- Reference @docs/waymark/SPEC.md for the canonical grammar and @./.agents/plans/v1/PLAN.md for any in-flight decisions that might alter conventions.
+- Reference @docs/waymark/SPEC.md for the canonical grammar.
 
 ## General Rules
 
