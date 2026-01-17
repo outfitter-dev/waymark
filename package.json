@@ -34,7 +34,11 @@
     "dev:cli": "turbo run dev --filter=@waymarks/cli",
     "build:core": "turbo run build --filter=@waymarks/core",
     "build:cli": "turbo run build --filter=@waymarks/cli",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "test:cli": "./.claude/scripts/run-tests.sh --all",
+    "test:cli:parse": "./.claude/scripts/run-tests.sh parse",
+    "test:cli:scan": "./.claude/scripts/run-tests.sh scan",
+    "clean:test": "rm -rf .scratch/testing"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
