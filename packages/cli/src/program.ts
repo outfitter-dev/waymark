@@ -11,6 +11,11 @@ import {
   runAddCommand,
 } from "./commands/add.ts";
 import {
+  type CheckCommandOptions,
+  formatCheckReport,
+  runCheckCommand,
+} from "./commands/check.ts";
+import {
   type ConfigCommandOptions,
   runConfigCommand,
 } from "./commands/config.ts";
@@ -794,6 +799,45 @@ async function handleDoctorCommand(
   }
 }
 
+// about ::: executes content integrity checks and outputs report
+async function handleCheckCommand(
+  program: Command,
+  options: CheckCommandOptions
+): Promise<void> {
+  const programOpts = program.opts();
+  const context = await createContext(resolveGlobalOptions(program));
+
+  const spinner = createSpinner({
+    enabled: shouldEnableSpinner({
+      quiet: Boolean(programOpts.quiet),
+      structuredOutput: Boolean(options.json || programOpts.json),
+    }),
+    text: "Checking content integrity...",
+    noColor: Boolean(programOpts.noColor),
+  });
+
+  spinner.start();
+  let report: Awaited<ReturnType<typeof runCheckCommand>>;
+  try {
+    report = await runCheckCommand(context, options);
+  } finally {
+    spinner.stop();
+  }
+
+  // Output based on format (check both local and global options)
+  if (options.json || programOpts.json) {
+    writeStdout(JSON.stringify(report, null, 2));
+  } else {
+    const formatted = formatCheckReport(report);
+    writeStdout(formatted);
+  }
+
+  // Exit with appropriate code
+  if (!report.passed) {
+    throw new CliError("Check found issues", ExitCode.failure);
+  }
+}
+
 function parseUnifiedOptions(
   args: string[]
 ): ReturnType<typeof parseUnifiedArgs> {
@@ -888,6 +932,7 @@ const COMMAND_ORDER = [
   "rm",
   "fmt",
   "lint",
+  "check",
   "init",
   "config",
   "skill",
@@ -1174,6 +1219,7 @@ Note: For agent-facing documentation, use "wm skill".
     handleSkillListCommand,
     handleSkillPathCommand,
     handleDoctorCommand,
+    handleCheckCommand,
     handleUnifiedCommand,
     writeStdout,
   });
