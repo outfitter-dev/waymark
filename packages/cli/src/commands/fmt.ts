@@ -10,7 +10,7 @@ import { ensureFileExists, expandInputPaths } from "../utils/fs";
 
 export type FormatCommandOptions = {
   filePaths: string[];
-  write: boolean;
+  yes: boolean;
 };
 
 const IGNORE_FILE_MARKER_PATTERN =
@@ -103,7 +103,7 @@ export function parseFormatArgs(argv: string[]): FormatCommandOptions {
     throw new Error("fmt requires at least one file path");
   }
 
-  const write = argv.includes("--write") || argv.includes("-w");
+  const yes = argv.includes("--yes") || argv.includes("-y");
   const remaining = argv.filter((arg) => !arg.startsWith("-"));
   const filePaths = remaining.filter((path) => path.length > 0);
 
@@ -113,6 +113,6 @@ export function parseFormatArgs(argv: string[]): FormatCommandOptions {
 
   return {
     filePaths,
-    write,
+    yes,
   };
 }

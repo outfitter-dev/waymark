@@ -1,3 +1,10 @@
+---
+name: doctor
+kind: command
+metadata:
+  wm-cmd: doctor
+---
+
 <!-- tldr ::: command guide for wm doctor -->
 
 # wm doctor

@@ -2,6 +2,7 @@
 
 import { describe, expect, test } from "bun:test";
 import { fileURLToPath } from "node:url";
+import { runCli } from "../program.ts";
 import {
   runSkillCommand,
   runSkillListCommand,
@@ -60,6 +61,23 @@ describe("skill command", () => {
     };
     expect(parsed.kind).toBe("command");
     expect(parsed.content).toContain("# wm add");
+  });
+
+  test("supports --json for skill show via CLI parsing", async () => {
+    const result = await runCli(["skill", "show", "add", "--json"]);
+    expect(result.exitCode).toBe(0);
+    // Extract JSON from stdout - may contain banners/warnings before JSON
+    const jsonStart = result.stdout.indexOf("{");
+    if (jsonStart === -1) {
+      throw new Error(`No JSON object found in stdout: ${result.stdout}`);
+    }
+    const jsonString = result.stdout.slice(jsonStart);
+    const parsed = JSON.parse(jsonString) as {
+      kind: string;
+      name: string;
+    };
+    expect(parsed.kind).toBe("command");
+    expect(parsed.name).toBe("add");
   });
 
   test("unknown sections throw usage errors", async () => {

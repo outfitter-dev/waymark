@@ -1,3 +1,10 @@
+---
+name: fmt
+kind: command
+metadata:
+  wm-cmd: fmt
+---
+
 <!-- tldr ::: command guide for wm fmt -->
 
 # wm fmt

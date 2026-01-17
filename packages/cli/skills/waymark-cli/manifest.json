@@ -1,0 +1,192 @@
+{
+  "name": "Waymark CLI",
+  "version": "1.0.0",
+  "description": "This skill should be used when the user asks about \"wm command\", \"waymark cli\", \"wm find\", \"wm add\", \"wm edit\", \"wm rm\", \"wm fmt\", \"wm lint\", or needs to use waymark tooling. Requires `using-waymarks` skill for syntax fundamentals. Provides comprehensive CLI command reference and workflows.",
+  "commands": [
+    "add",
+    "config",
+    "doctor",
+    "edit",
+    "find",
+    "fmt",
+    "help",
+    "init",
+    "lint",
+    "rm",
+    "skill",
+    "update"
+  ],
+  "references": [
+    "errors",
+    "exit-codes",
+    "project-skills",
+    "schemas",
+    "skill-format"
+  ],
+  "examples": [
+    "agent-tasks",
+    "auditing",
+    "batch-operations",
+    "integration",
+    "workflows"
+  ],
+  "sections": {
+    "core": {
+      "name": "core",
+      "kind": "core",
+      "path": "SKILL.md"
+    },
+    "commands": [
+      {
+        "name": "add",
+        "kind": "command",
+        "path": "commands/add.md",
+        "metadata": {
+          "wm-cmd": "add"
+        }
+      },
+      {
+        "name": "config",
+        "kind": "command",
+        "path": "commands/config.md",
+        "metadata": {
+          "wm-cmd": "config"
+        }
+      },
+      {
+        "name": "doctor",
+        "kind": "command",
+        "path": "commands/doctor.md",
+        "metadata": {
+          "wm-cmd": "doctor"
+        }
+      },
+      {
+        "name": "edit",
+        "kind": "command",
+        "path": "commands/edit.md",
+        "metadata": {
+          "wm-cmd": "edit"
+        }
+      },
+      {
+        "name": "find",
+        "kind": "command",
+        "path": "commands/find.md",
+        "metadata": {
+          "wm-cmd": "find"
+        }
+      },
+      {
+        "name": "fmt",
+        "kind": "command",
+        "path": "commands/fmt.md",
+        "metadata": {
+          "wm-cmd": "fmt"
+        }
+      },
+      {
+        "name": "help",
+        "kind": "command",
+        "path": "commands/help.md",
+        "metadata": {
+          "wm-cmd": "help"
+        }
+      },
+      {
+        "name": "init",
+        "kind": "command",
+        "path": "commands/init.md",
+        "metadata": {
+          "wm-cmd": "init"
+        }
+      },
+      {
+        "name": "lint",
+        "kind": "command",
+        "path": "commands/lint.md",
+        "metadata": {
+          "wm-cmd": "lint"
+        }
+      },
+      {
+        "name": "rm",
+        "kind": "command",
+        "path": "commands/rm.md",
+        "metadata": {
+          "wm-cmd": "rm"
+        }
+      },
+      {
+        "name": "skill",
+        "kind": "command",
+        "path": "commands/skill.md",
+        "metadata": {
+          "wm-cmd": "skill"
+        }
+      },
+      {
+        "name": "update",
+        "kind": "command",
+        "path": "commands/update.md",
+        "metadata": {
+          "wm-cmd": "update"
+        }
+      }
+    ],
+    "references": [
+      {
+        "name": "errors",
+        "kind": "reference",
+        "path": "references/errors.md"
+      },
+      {
+        "name": "exit-codes",
+        "kind": "reference",
+        "path": "references/exit-codes.md"
+      },
+      {
+        "name": "project-skills",
+        "kind": "reference",
+        "path": "references/project-skills.md"
+      },
+      {
+        "name": "schemas",
+        "kind": "reference",
+        "path": "references/schemas.md"
+      },
+      {
+        "name": "skill-format",
+        "kind": "reference",
+        "path": "references/skill-format.md"
+      }
+    ],
+    "examples": [
+      {
+        "name": "agent-tasks",
+        "kind": "example",
+        "path": "examples/agent-tasks.md"
+      },
+      {
+        "name": "auditing",
+        "kind": "example",
+        "path": "examples/auditing.md"
+      },
+      {
+        "name": "batch-operations",
+        "kind": "example",
+        "path": "examples/batch-operations.md"
+      },
+      {
+        "name": "integration",
+        "kind": "example",
+        "path": "examples/integration.md"
+      },
+      {
+        "name": "workflows",
+        "kind": "example",
+        "path": "examples/workflows.md"
+      }
+    ]
+  }
+}

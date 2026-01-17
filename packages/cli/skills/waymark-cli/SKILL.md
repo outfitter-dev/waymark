@@ -1,6 +1,10 @@
 ---
 name: Waymark CLI
-description: This skill should be used when the user asks about "wm command", "waymark cli", "wm find", "wm add", "wm edit", "wm rm", "wm fmt", "wm lint", or needs to use waymark tooling. Requires `using-waymarks` skill for syntax fundamentals. Provides comprehensive CLI command reference and workflows.
+description: >-
+  This skill should be used when the user asks about "wm command", "waymark cli",
+  "wm find", "wm add", "wm edit", "wm rm", "wm fmt", "wm lint", or needs to use
+  waymark tooling. Requires `using-waymarks` skill for syntax fundamentals.
+  Provides comprehensive CLI command reference and workflows.
 version: 1.0.0
 ---
 
@@ -33,7 +37,11 @@ Load the `using-waymarks` skill first for grammar and syntax fundamentals. This 
 | fmt | Format waymarks | `wm fmt src/ --write` |
 | lint | Validate structure | `wm lint src/ --json` |
 | init | Write config | `wm init --format toml` |
+| config | Print config | `wm config --print --json` |
+| skill | Show skill docs | `wm skill show add` |
+| update | Update CLI | `wm update --yes` |
 | doctor | Diagnose config | `wm doctor --json` |
+| help | Show CLI help | `wm help add` |
 
 ## Quick Start Patterns
 

@@ -16,7 +16,9 @@ The CLI searches for a `waymark-cli` skill directory in the following locations
 - `agents/skills/waymark-cli/`
 - `packages/agents/skills/waymark-cli/` (monorepo)
 
-A valid skill directory contains a `SKILL.md` file. No manifest needed.
+A valid skill directory contains a `SKILL.md` file.
+In production builds, the CLI uses a generated `manifest.json` for faster lookup,
+while development can still live-scan the directories.
 
 ## How to Create a Custom Skill
 

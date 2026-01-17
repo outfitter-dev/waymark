@@ -1,3 +1,10 @@
+---
+name: rm
+kind: command
+metadata:
+  wm-cmd: rm
+---
+
 <!-- tldr ::: command guide for wm rm -->
 
 # wm rm

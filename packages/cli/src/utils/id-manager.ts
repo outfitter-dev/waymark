@@ -3,7 +3,6 @@
 import { JsonIdIndex, WaymarkIdManager } from "@waymarks/core";
 
 import type { CommandContext } from "../types.ts";
-import { logger } from "./logger.ts";
 import { confirm } from "./prompts.ts";
 
 export type CreateIdManagerOptions = {
@@ -37,9 +36,12 @@ export async function createIdManager(
       });
       idConfig.mode = shouldGenerate ? "auto" : "manual";
     } else {
-      logger.warn(
-        "ID mode is set to 'prompt' but the terminal is not interactive; skipping auto-generation"
-      );
+      // Emit structured warning to stderr without cluttering stdout
+      const warning = {
+        level: "warn",
+        msg: "ID mode 'prompt' requires interactive terminal; using 'manual'",
+      };
+      process.stderr.write(`${JSON.stringify(warning)}\n`);
       idConfig.mode = "manual";
     }
   }

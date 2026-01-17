@@ -4,17 +4,16 @@ import { existsSync, readdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-
-export type SkillManifest = {
-  name: string;
-  version?: string;
-  description?: string;
-  commands: string[];
-  references: string[];
-  examples: string[];
-};
-
-export type SkillSectionKind = "core" | "command" | "reference" | "example";
+import { parse as parseYaml } from "yaml";
+import { extractFrontmatter } from "./frontmatter.ts";
+import {
+  SKILL_ENTRY_FILE,
+  SKILL_MANIFEST_FILE,
+  type SkillManifest,
+  type SkillManifestSections,
+  type SkillSectionKind,
+  type SkillSectionManifest,
+} from "./types.ts";
 
 export type SkillSection = {
   name: string;
@@ -31,112 +30,19 @@ export type SkillSections = {
   examples: Record<string, SkillSection>;
 };
 
-export type SkillData = SkillManifest & {
+export type SkillData = Omit<SkillManifest, "sections"> & {
   sections: SkillSections;
 };
 
 const SKILL_DIR_ENV = "WAYMARK_SKILL_DIR";
+const SKILL_LIVE_SCAN_ENV = "WAYMARK_SKILL_LIVE_SCAN";
 const SKILL_DIR_CACHE: { value?: string } = {};
-const SKILL_ENTRY_FILE = "SKILL.md";
 const SKILL_SEARCH_DEPTH = 6;
 const SKILL_DIR_CANDIDATES = [
   join("skills", "waymark-cli"),
   join("agents", "skills", "waymark-cli"),
   join("packages", "agents", "skills", "waymark-cli"),
 ];
-
-function normalizeLineEndings(value: string): string {
-  return value.replace(/\r\n/g, "\n");
-}
-
-function consumeCommentBlock(
-  lines: string[],
-  startIndex: number
-): { collected: string[]; nextIndex: number } {
-  const collected: string[] = [];
-  let index = startIndex;
-
-  while (index < lines.length) {
-    const line = lines[index] ?? "";
-    collected.push(line);
-    index += 1;
-    if (line.includes("-->")) {
-      break;
-    }
-  }
-
-  return { collected, nextIndex: index };
-}
-
-function consumePreamble(lines: string[]): {
-  preamble: string[];
-  index: number;
-} {
-  const preamble: string[] = [];
-  let index = 0;
-
-  while (index < lines.length) {
-    const line = lines[index] ?? "";
-    const trimmed = line.trim();
-    if (trimmed.length === 0) {
-      preamble.push(line);
-      index += 1;
-      continue;
-    }
-    if (trimmed.startsWith("<!--")) {
-      const { collected, nextIndex } = consumeCommentBlock(lines, index);
-      preamble.push(...collected);
-      index = nextIndex;
-      continue;
-    }
-    break;
-  }
-
-  return { preamble, index };
-}
-
-function readFrontmatter(
-  lines: string[],
-  startIndex: number
-): { frontmatter: string[]; nextIndex: number; closed: boolean } {
-  if ((lines[startIndex] ?? "").trim() !== "---") {
-    return { frontmatter: [], nextIndex: startIndex, closed: false };
-  }
-
-  const frontmatter: string[] = [];
-  let index = startIndex + 1;
-
-  while (index < lines.length && (lines[index] ?? "").trim() !== "---") {
-    frontmatter.push(lines[index] ?? "");
-    index += 1;
-  }
-
-  if (index >= lines.length) {
-    return { frontmatter: [], nextIndex: startIndex, closed: false };
-  }
-
-  return { frontmatter, nextIndex: index + 1, closed: true };
-}
-
-function extractFrontmatter(raw: string): {
-  frontmatter?: string;
-  body: string;
-} {
-  const normalized = normalizeLineEndings(raw);
-  const lines = normalized.split("\n");
-  const { preamble, index } = consumePreamble(lines);
-  const { frontmatter, nextIndex, closed } = readFrontmatter(lines, index);
-
-  if (!closed) {
-    return { body: normalized };
-  }
-
-  const bodyLines = [...preamble, ...lines.slice(nextIndex)];
-  return {
-    frontmatter: frontmatter.join("\n").trimEnd(),
-    body: bodyLines.join("\n").trimStart(),
-  };
-}
 
 /**
  * Resolve the skills directory by scanning expected locations or env override.
@@ -178,24 +84,48 @@ export function resolveSkillDir(): string {
 }
 
 /**
- * Parse simple YAML key-value pairs from frontmatter content.
+ * Safely cast a value to a record type.
+ * @param value - Unknown value to cast.
+ * @returns Record if value is an object, empty record otherwise.
+ */
+function asRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return value as Record<string, unknown>;
+}
+
+/**
+ * Safely extract a trimmed string from an unknown value.
+ * @param value - Unknown value to extract string from.
+ * @returns Trimmed string if value is non-empty string, undefined otherwise.
+ */
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+/**
+ * Parse YAML frontmatter content using the yaml library.
  * @param frontmatter - Raw frontmatter string without delimiters.
+ * @param sourcePath - Source file path for error reporting.
  * @returns Record of parsed key-value pairs.
  */
-function parseFrontmatterYaml(frontmatter: string): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const line of frontmatter.split("\n")) {
-    const colonIndex = line.indexOf(":");
-    if (colonIndex === -1) {
-      continue;
-    }
-    const key = line.slice(0, colonIndex).trim();
-    const value = line.slice(colonIndex + 1).trim();
-    if (key && value) {
-      result[key] = value;
-    }
+function parseFrontmatterYaml(
+  frontmatter: string,
+  sourcePath: string
+): Record<string, unknown> {
+  if (frontmatter.trim().length === 0) {
+    return {};
   }
-  return result;
+
+  try {
+    return asRecord(parseYaml(frontmatter));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse frontmatter in ${sourcePath}: ${message}`);
+  }
 }
 
 /**
@@ -213,6 +143,206 @@ function discoverMarkdownFiles(dir: string): string[] {
     .sort();
 }
 
+type RawSkillManifest = Omit<
+  SkillManifest,
+  "commands" | "references" | "examples"
+> &
+  Partial<Pick<SkillManifest, "commands" | "references" | "examples">>;
+
+/**
+ * Build a section manifest entry.
+ * @param name - Section name identifier.
+ * @param kind - Section category type.
+ * @param path - Relative path to the section file.
+ * @returns Structured section manifest.
+ */
+function buildSectionManifest(
+  name: string,
+  kind: SkillSectionKind,
+  path: string
+): SkillSectionManifest {
+  return { name, kind, path };
+}
+
+/**
+ * Extract section name lists from manifest sections.
+ * @param sections - Manifest sections object.
+ * @returns Object with command, reference, and example name arrays.
+ */
+function buildSectionLists(sections: SkillManifestSections): {
+  commands: string[];
+  references: string[];
+  examples: string[];
+} {
+  return {
+    commands: sections.commands.map((section) => section.name),
+    references: sections.references.map((section) => section.name),
+    examples: sections.examples.map((section) => section.name),
+  };
+}
+
+/**
+ * Normalize a raw manifest into the full SkillManifest shape.
+ * @param manifest - Raw manifest with optional fields.
+ * @returns Fully populated skill manifest.
+ */
+function normalizeManifest(manifest: RawSkillManifest): SkillManifest {
+  const { sections } = manifest;
+  const lists = buildSectionLists(sections);
+
+  return {
+    name: manifest.name,
+    ...(manifest.version ? { version: manifest.version } : {}),
+    ...(manifest.description ? { description: manifest.description } : {}),
+    ...lists,
+    sections,
+  };
+}
+
+/**
+ * Parse a manifest JSON string into a SkillManifest.
+ * @param raw - Raw JSON string content.
+ * @param sourcePath - Path for error reporting.
+ * @returns Parsed and normalized skill manifest.
+ */
+function parseManifest(raw: string, sourcePath: string): SkillManifest {
+  let parsed: RawSkillManifest;
+  try {
+    parsed = JSON.parse(raw) as RawSkillManifest;
+  } catch (error) {
+    throw new Error(
+      `Failed to parse skill manifest at ${sourcePath}: ${(error as Error).message}`
+    );
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error(`Invalid skill manifest at ${sourcePath}.`);
+  }
+
+  const record = parsed as Record<string, unknown>;
+  if (typeof record.name !== "string") {
+    throw new Error(`Missing skill name in manifest at ${sourcePath}.`);
+  }
+
+  const sections = record.sections;
+  if (!sections || typeof sections !== "object") {
+    throw new Error(`Missing sections in manifest at ${sourcePath}.`);
+  }
+
+  const sectionRecord = sections as Record<string, unknown>;
+  if (
+    !(
+      sectionRecord.core &&
+      sectionRecord.commands &&
+      sectionRecord.references &&
+      sectionRecord.examples
+    )
+  ) {
+    throw new Error(`Incomplete sections in manifest at ${sourcePath}.`);
+  }
+
+  const sectionsAreArrays =
+    Array.isArray(sectionRecord.commands) &&
+    Array.isArray(sectionRecord.references) &&
+    Array.isArray(sectionRecord.examples);
+
+  if (!sectionsAreArrays) {
+    throw new Error(
+      `Section lists (commands, references, examples) must be arrays in manifest at ${sourcePath}.`
+    );
+  }
+
+  return normalizeManifest(parsed);
+}
+
+/**
+ * Read and parse a manifest file from disk.
+ * @param skillDir - Absolute path to the skills directory.
+ * @returns Parsed manifest or null if file not found.
+ */
+async function readManifestFile(
+  skillDir: string
+): Promise<SkillManifest | null> {
+  const manifestPath = join(skillDir, SKILL_MANIFEST_FILE);
+  try {
+    const raw = await readFile(manifestPath, "utf8");
+    return parseManifest(raw, manifestPath);
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Build manifest sections by scanning the skill directory.
+ * @param skillDir - Absolute path to the skills directory.
+ * @returns Sections discovered from filesystem structure.
+ */
+function buildSectionsFromScan(skillDir: string): SkillManifestSections {
+  const commands = discoverMarkdownFiles(join(skillDir, "commands")).map(
+    (name) =>
+      buildSectionManifest(name, "command", join("commands", `${name}.md`))
+  );
+  const references = discoverMarkdownFiles(join(skillDir, "references")).map(
+    (name) =>
+      buildSectionManifest(name, "reference", join("references", `${name}.md`))
+  );
+  const examples = discoverMarkdownFiles(join(skillDir, "examples")).map(
+    (name) =>
+      buildSectionManifest(name, "example", join("examples", `${name}.md`))
+  );
+
+  return {
+    core: buildSectionManifest("core", "core", SKILL_ENTRY_FILE),
+    commands,
+    references,
+    examples,
+  };
+}
+
+/**
+ * Build a manifest by scanning the skill directory filesystem.
+ * @param skillDir - Absolute path to the skills directory.
+ * @returns Manifest built from directory structure and entry file.
+ */
+async function buildManifestFromScan(skillDir: string): Promise<SkillManifest> {
+  const entryPath = join(skillDir, SKILL_ENTRY_FILE);
+  const raw = await readFile(entryPath, "utf8");
+  const { frontmatter } = extractFrontmatter(raw);
+
+  const meta = frontmatter ? parseFrontmatterYaml(frontmatter, entryPath) : {};
+  const name = asString(meta.name) ?? basename(skillDir);
+  const version = asString(meta.version);
+  const description = asString(meta.description);
+  const sections = buildSectionsFromScan(skillDir);
+
+  return normalizeManifest({
+    name,
+    ...(version ? { version } : {}),
+    ...(description ? { description } : {}),
+    sections,
+  });
+}
+
+/**
+ * Determine whether to use live filesystem scanning.
+ * @returns True if live scan should be used instead of cached manifest.
+ */
+function shouldUseLiveScan(): boolean {
+  const override = process.env[SKILL_LIVE_SCAN_ENV];
+  if (override) {
+    return ["1", "true", "yes", "on"].includes(override.toLowerCase());
+  }
+  return process.env.NODE_ENV !== "production";
+}
+
 /**
  * Load and parse the skill manifest from a skills directory.
  * @param skillDir - Absolute path to the skills directory.
@@ -221,20 +351,18 @@ function discoverMarkdownFiles(dir: string): string[] {
 export async function loadSkillManifest(
   skillDir: string
 ): Promise<SkillManifest> {
-  const entryPath = join(skillDir, SKILL_ENTRY_FILE);
-  const raw = await readFile(entryPath, "utf8");
-  const { frontmatter } = extractFrontmatter(raw);
+  const manifest = await readManifestFile(skillDir);
+  if (manifest) {
+    return manifest;
+  }
 
-  const meta = frontmatter ? parseFrontmatterYaml(frontmatter) : {};
+  if (!shouldUseLiveScan()) {
+    throw new Error(
+      `Skill manifest not found. Run the build step to generate ${SKILL_MANIFEST_FILE}.`
+    );
+  }
 
-  return {
-    name: meta.name ?? basename(skillDir),
-    ...(meta.version ? { version: meta.version } : {}),
-    ...(meta.description ? { description: meta.description } : {}),
-    commands: discoverMarkdownFiles(join(skillDir, "commands")),
-    references: discoverMarkdownFiles(join(skillDir, "references")),
-    examples: discoverMarkdownFiles(join(skillDir, "examples")),
-  };
+  return buildManifestFromScan(skillDir);
 }
 
 /**
@@ -270,46 +398,47 @@ export async function loadSkillSection(
  */
 export async function loadSkillData(skillDir: string): Promise<SkillData> {
   const manifest = await loadSkillManifest(skillDir);
+  const { sections: manifestSections, ...manifestData } = manifest;
   const core = await loadSkillSection(
     skillDir,
+    manifestSections.core.name,
     "core",
-    "core",
-    SKILL_ENTRY_FILE
+    manifestSections.core.path
   );
 
   const commands: Record<string, SkillSection> = {};
   const references: Record<string, SkillSection> = {};
   const examples: Record<string, SkillSection> = {};
 
-  for (const name of manifest.commands) {
-    commands[name] = await loadSkillSection(
+  for (const section of manifestSections.commands) {
+    commands[section.name] = await loadSkillSection(
       skillDir,
-      name,
+      section.name,
       "command",
-      join("commands", `${name}.md`)
+      section.path
     );
   }
 
-  for (const name of manifest.references) {
-    references[name] = await loadSkillSection(
+  for (const section of manifestSections.references) {
+    references[section.name] = await loadSkillSection(
       skillDir,
-      name,
+      section.name,
       "reference",
-      join("references", `${name}.md`)
+      section.path
     );
   }
 
-  for (const name of manifest.examples) {
-    examples[name] = await loadSkillSection(
+  for (const section of manifestSections.examples) {
+    examples[section.name] = await loadSkillSection(
       skillDir,
-      name,
+      section.name,
       "example",
-      join("examples", `${name}.md`)
+      section.path
     );
   }
 
   return {
-    ...manifest,
+    ...manifestData,
     sections: {
       core,
       commands,

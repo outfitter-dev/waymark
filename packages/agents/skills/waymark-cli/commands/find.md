@@ -1,3 +1,10 @@
+---
+name: find
+kind: command
+metadata:
+  wm-cmd: find
+---
+
 <!-- tldr ::: command guide for wm find -->
 
 # wm find
