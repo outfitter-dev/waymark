@@ -11,28 +11,40 @@ metadata:
 
 ## Synopsis
 
-Run diagnostics on configuration, cache, and waymark integrity.
+Run diagnostics on tool installation, configuration, and environment health.
 
 ## Syntax
 
 ```text
-wm doctor [paths...] [options]
+wm doctor [options]
 ```
 
 ## Options
 
-| Option | Short | Description | Default |
-| --- | --- | --- | --- |
-| `--strict` |  | Treat warnings as failures | false |
-| `--fix` |  | Attempt safe repairs | false |
-| `--json` |  | JSON report output | false |
+| Option | Description | Default |
+| --- | --- | --- |
+| `--strict` | Treat warnings as failures | false |
+| `--fix` | Attempt safe repairs | false |
+| `--json` | JSON report output | false |
+
+## Health Checks
+
+| Check | Description |
+| --- | --- |
+| Configuration validity | Config file syntax and value ranges |
+| Cache directory | Cache directory writability |
+| Index file integrity | Index file health and consistency |
+| Git repository | Git repository detection |
+| Ignore patterns | Ignore pattern validation |
+| Performance | Performance diagnostics |
 
 ## Examples
 
 ```bash
-wm doctor
-wm doctor src/ --strict
-wm doctor --json
+wm doctor              # Run all health checks
+wm doctor --strict     # Fail on warnings
+wm doctor --json       # JSON output for tooling
+wm doctor --fix        # Attempt safe repairs
 ```
 
 ## Exit Codes
@@ -45,7 +57,18 @@ wm doctor --json
 | 3 | Config error |
 | 4 | I/O error |
 
+## Command Model
+
+The `doctor` command focuses on tool/environment health. For content validation, use other commands:
+
+| Command | Purpose |
+| --- | --- |
+| `wm lint` | Per-file structural validation |
+| `wm check` | Cross-file content integrity |
+| `wm doctor` | Tool/environment health |
+
 ## See Also
 
-- `wm lint` - lint waymarks
-- `wm config --print` - view config
+- `wm check` - cross-file content integrity
+- `wm lint` - per-file structural validation
+- `wm config --print` - view merged config

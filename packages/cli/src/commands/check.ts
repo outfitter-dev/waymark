@@ -1,6 +1,5 @@
 // tldr ::: cross-file content integrity validation for waymarks
 
-import { readFile } from "node:fs/promises";
 import { parse, type WaymarkRecord } from "@waymarks/core";
 import chalk from "chalk";
 import type { CommandContext } from "../types.ts";
@@ -58,15 +57,6 @@ export type CheckCommandOptions = {
   strict?: boolean;
   fix?: boolean;
   json?: boolean;
-};
-
-/**
- * Result of running the check command.
- */
-export type CheckCommandResult = {
-  output: string;
-  exitCode: number;
-  report: CheckReport;
 };
 
 // about ::: builds map of canonical tokens to their locations
@@ -264,6 +254,50 @@ function checkSignalHygiene(records: WaymarkRecord[]): CheckIssue[] {
   return issues;
 }
 
+// about ::: extracts error message from unknown error
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+// about ::: creates a file read error issue
+function createFileReadError(filePath: string, error: unknown): CheckIssue {
+  return {
+    file: filePath,
+    rule: "file-read-error",
+    severity: "error",
+    message: `File read error: ${getErrorMessage(error)}`,
+  };
+}
+
+// about ::: creates a parse error issue
+function createParseError(filePath: string, error: unknown): CheckIssue {
+  return {
+    file: filePath,
+    rule: "parse-error",
+    severity: "error",
+    message: `Parse error: ${getErrorMessage(error)}`,
+  };
+}
+
+// about ::: reads and parses a single file, returning records or an error issue
+async function parseFile(
+  filePath: string
+): Promise<{ records: WaymarkRecord[] } | { error: CheckIssue }> {
+  let source: string;
+  try {
+    source = await Bun.file(filePath).text();
+  } catch (error) {
+    return { error: createFileReadError(filePath, error) };
+  }
+
+  try {
+    const records = parse(source, { file: filePath });
+    return { records };
+  } catch (error) {
+    return { error: createParseError(filePath, error) };
+  }
+}
+
 // about ::: parses all files and collects waymark records
 async function parseFiles(
   paths: string[],
@@ -276,17 +310,11 @@ async function parseFiles(
   const files = await expandInputPaths(inputPaths, context.config);
 
   for (const filePath of files) {
-    try {
-      const source = await readFile(filePath, "utf-8");
-      const fileRecords = parse(source, { file: filePath });
-      records.push(...fileRecords);
-    } catch (error) {
-      parseErrors.push({
-        file: filePath,
-        rule: "parse-error",
-        severity: "error",
-        message: `Parse error: ${error instanceof Error ? error.message : String(error)}`,
-      });
+    const result = await parseFile(filePath);
+    if ("error" in result) {
+      parseErrors.push(result.error);
+    } else {
+      records.push(...result.records);
     }
   }
 
