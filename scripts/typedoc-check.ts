@@ -86,6 +86,8 @@ const DOC_KINDS: ReflectionKind[] = [
   ReflectionKind.Namespace,
 ];
 
+const VALID_KEYS = Object.keys(PACKAGES) as PackageKey[];
+
 function normalizeKey(value: string): PackageKey | null {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -95,23 +97,44 @@ function normalizeKey(value: string): PackageKey | null {
   return key in PACKAGES ? key : null;
 }
 
+function warnUnrecognizedKeys(rawValues: string[]): void {
+  const unrecognized = rawValues
+    .map((v) => v.trim().toLowerCase())
+    .filter((v) => v && !(v in PACKAGES));
+
+  if (unrecognized.length === 0) {
+    return;
+  }
+
+  for (const key of unrecognized) {
+    console.warn(`Warning: Unrecognized package key "${key}"`);
+  }
+  console.warn(`Valid packages: ${VALID_KEYS.join(", ")}`);
+}
+
 function resolveEnforcedPackages(): Set<PackageKey> {
-  const cliArgs = process.argv
-    .slice(2)
-    .map(normalizeKey)
-    .filter((value): value is PackageKey => Boolean(value));
-  if (cliArgs.length > 0) {
-    return new Set(cliArgs as PackageKey[]);
+  const rawCliArgs = process.argv.slice(2);
+  if (rawCliArgs.length > 0) {
+    warnUnrecognizedKeys(rawCliArgs);
+    const cliArgs = rawCliArgs
+      .map(normalizeKey)
+      .filter((value): value is PackageKey => Boolean(value));
+    if (cliArgs.length > 0) {
+      return new Set(cliArgs);
+    }
   }
 
   const envValue =
     process.env.WAYMARK_TSDOC_PACKAGES ?? process.env.DOCS_COVERAGE_PACKAGES;
   if (envValue) {
-    const fromEnv = envValue
-      .split(",")
+    const rawEnvValues = envValue.split(",");
+    warnUnrecognizedKeys(rawEnvValues);
+    const fromEnv = rawEnvValues
       .map(normalizeKey)
       .filter((value): value is PackageKey => Boolean(value));
-    return new Set(fromEnv);
+    if (fromEnv.length > 0) {
+      return new Set(fromEnv);
+    }
   }
 
   return new Set(DEFAULT_ENFORCED_PACKAGES);
