@@ -8,7 +8,7 @@ import inquirer from "inquirer";
 import { logger } from "../utils/logger.ts";
 import { assertPromptAllowed } from "../utils/prompts.ts";
 
-type ConfigFormat = "toml" | "jsonc" | "yaml" | "yml";
+type ConfigFormat = "yaml" | "yml";
 type ConfigPreset = "full" | "minimal";
 type ConfigScope = "project" | "user";
 
@@ -19,7 +19,7 @@ export type InitCommandOptions = {
   force?: boolean;
 };
 
-const CONFIG_FORMATS: ConfigFormat[] = ["toml", "jsonc", "yaml", "yml"];
+const CONFIG_FORMATS: ConfigFormat[] = ["yaml", "yml"];
 const CONFIG_PRESETS: ConfigPreset[] = ["full", "minimal"];
 const CONFIG_SCOPES: ConfigScope[] = ["project", "user"];
 
@@ -42,7 +42,7 @@ export async function runInitCommand(
 
   if (hasOptions) {
     // Validate and set defaults from flags
-    format = validateFormat(options.format ?? "toml");
+    format = validateFormat(options.format ?? "yaml");
     preset = validatePreset(options.preset ?? "full");
     scope = validateScope(options.scope ?? "project");
     force = options.force ?? false;
@@ -58,7 +58,7 @@ export async function runInitCommand(
         name: "format",
         message: "Choose config format:",
         choices: CONFIG_FORMATS,
-        default: "toml",
+        default: "yaml",
       },
       {
         type: "list",
@@ -159,131 +159,8 @@ function getConfigPath(scope: ConfigScope, format: ConfigFormat): string {
   return join(baseDir, "waymark", `config.${format}`);
 }
 
-function generateConfig(format: ConfigFormat, preset: ConfigPreset): string {
-  if (format === "toml") {
-    return generateTomlConfig(preset);
-  }
-  if (format === "jsonc") {
-    return generateJsoncConfig(preset);
-  }
-  if (format === "yaml" || format === "yml") {
-    return generateYamlConfig(preset);
-  }
-  throw new Error(`Unsupported format: ${format}`);
-}
-
-function generateTomlConfig(preset: ConfigPreset): string {
-  if (preset === "minimal") {
-    return `# Waymark configuration
-
-type_case = "lowercase"
-`;
-  }
-
-  return `# Waymark configuration
-# For full documentation, see: https://github.com/outfitter-dev/waymark
-
-# Type case normalization (lowercase | uppercase)
-type_case = "lowercase"
-
-# Canonical reference scope (repo | file)
-id_scope = "repo"
-
-# Custom waymark types to allow (in addition to blessed types)
-allow_types = []
-
-# Paths to skip during scanning (glob patterns)
-skip_paths = [
-  "**/.git/**",
-  "**/node_modules/**",
-  "**/dist/**",
-  "**/build/**",
-  "**/.turbo/**",
-  "**/fixtures/**",
-  "**/__fixtures__/**",
-  "**/test-data/**",
-  "**/*.fixture.*",
-  "**/*.invalid.*",
-]
-
-# Paths to explicitly include (overrides skip_paths)
-include_paths = []
-
-# Respect .gitignore files
-respect_gitignore = true
-
-# Formatting options
-[format]
-space_around_sigil = true
-normalize_case = true
-align_continuations = true
-
-# Linting rules
-[lint]
-duplicate_property = "warn"   # Duplicate property keys
-unknown_marker = "warn"        # Unknown waymark types
-dangling_relation = "error"    # Relations without canonical refs
-duplicate_canonical = "error"  # Duplicate canonical declarations
-`;
-}
-
-function generateJsoncConfig(preset: ConfigPreset): string {
-  if (preset === "minimal") {
-    return `{
-  "typeCase": "lowercase"
-}
-`;
-  }
-
-  return `{
-  // Waymark configuration
-  // For full documentation, see: https://github.com/outfitter-dev/waymark
-
-  // Type case normalization (lowercase | uppercase)
-  "typeCase": "lowercase",
-
-  // Canonical reference scope (repo | file)
-  "idScope": "repo",
-
-  // Custom waymark types to allow (in addition to blessed types)
-  "allowTypes": [],
-
-  // Paths to skip during scanning (glob patterns)
-  "skipPaths": [
-    "**/.git/**",
-    "**/node_modules/**",
-    "**/dist/**",
-    "**/build/**",
-    "**/.turbo/**",
-    "**/fixtures/**",
-    "**/__fixtures__/**",
-    "**/test-data/**",
-    "**/*.fixture.*",
-    "**/*.invalid.*"
-  ],
-
-  // Paths to explicitly include (overrides skipPaths)
-  "includePaths": [],
-
-  // Respect .gitignore files
-  "respectGitignore": true,
-
-  // Formatting options
-  "format": {
-    "spaceAroundSigil": true,
-    "normalizeCase": true,
-    "alignContinuations": true
-  },
-
-  // Linting rules
-  "lint": {
-    "duplicateProperty": "warn",   // Duplicate property keys
-    "unknownMarker": "warn",        // Unknown waymark types
-    "danglingRelation": "error",    // Relations without canonical refs
-    "duplicateCanonical": "error"  // Duplicate canonical declarations
-  }
-}
-`;
+function generateConfig(_format: ConfigFormat, preset: ConfigPreset): string {
+  return generateYamlConfig(preset);
 }
 
 function generateYamlConfig(preset: ConfigPreset): string {

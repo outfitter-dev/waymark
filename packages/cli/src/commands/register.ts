@@ -483,11 +483,7 @@ See 'wm skill show lint' for agent-facing documentation.
 
   // Init command
   const initCommand = new Command("init")
-    .option(
-      "--format <format>, -f",
-      "config format (toml|jsonc|yaml|yml)",
-      "toml"
-    )
+    .option("--format <format>, -f", "config format (yaml|yml)", "yaml")
     .option("--preset <preset>, -p", "config preset (full|minimal)", "full")
     .option("--scope <scope>, -s", "config scope (project|user)", "project")
     .option("--force", "overwrite existing config", false)
@@ -512,7 +508,7 @@ See 'wm skill show lint' for agent-facing documentation.
 Examples:
   $ wm config --print                 # Show merged configuration
   $ wm --scope user config --print    # Show user-level configuration
-  $ wm --config ./custom.toml config --print
+  $ wm --config ./custom.yaml config --print
   $ wm config --print --json          # Output compact JSON
       `
     )

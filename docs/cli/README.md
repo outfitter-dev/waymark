@@ -126,7 +126,7 @@ cd your-project
 wm init
 ```
 
-This creates `.waymark/config.toml` with default settings.
+This creates `.waymark/config.yaml` with default settings.
 
 ### 2. Add Your First Waymarks
 

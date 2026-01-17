@@ -333,14 +333,14 @@ Tooling normalizes IDs for consistency:
 
 ### Configuration
 
-Control ID behavior in `.waymark/config.toml`:
+Control ID behavior in `.waymark/config.yaml`:
 
-```toml
-[ids]
-enabled = true              # Enable ID features (default: true)
-auto_assign = false         # Auto-assign hashes on format (default: false)
-track_history = true        # Track ID removals in history.json (default: false)
-alias_required = false      # Require aliases for new IDs (default: false)
+```yaml
+ids:
+  enabled: true # Enable ID features (default: true)
+  auto_assign: false # Auto-assign hashes on format (default: false)
+  track_history: true # Track ID removals in history.json (default: false)
+  alias_required: false # Require aliases for new IDs (default: false)
 ```
 
 ## 8. Grammar Reference

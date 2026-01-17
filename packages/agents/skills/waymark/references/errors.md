@@ -8,7 +8,7 @@ whether the issue is usage, config, or I/O related.
 ## Common Error Types
 
 - Usage errors: invalid flags, missing arguments
-- Config errors: bad TOML/JSON/YAML, missing config file
+- Config errors: bad YAML, missing config file
 - I/O errors: file not found, permission denied
 
 ## Recovery Steps
