@@ -15,7 +15,7 @@ Current todos: !`wm find . --type todo --text 2>/dev/null || rg 'todo\s*:::' -n`
 
 ## Instructions
 
-Load the `find-waymarks` skill for waymark discovery and filtering.
+Load the `waymark-cli` skill for waymark discovery and filtering.
 
 1. Parse the injected waymark data above
 2. Group todos by file or directory for readability

@@ -1,6 +1,6 @@
 // tldr ::: implement the wm skill command outputs [[cli/skill-command]]
 
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { createUsageError } from "../errors.ts";
 import { ExitCode } from "../exit-codes.ts";
 import {
@@ -56,9 +56,7 @@ export async function runSkillCommand(
     };
   }
 
-  const manifest = await loadSkillManifest(skillDir);
-  const entryPath = manifest.entry || "SKILL.md";
-  const core = await loadSkillSection(skillDir, "core", "core", entryPath);
+  const core = await loadSkillSection(skillDir, "core", "core", "SKILL.md");
 
   return {
     output: core.content,
@@ -66,43 +64,31 @@ export async function runSkillCommand(
   };
 }
 
-function resolveSkillSectionEntry(
-  section: string,
-  sectionMap: Record<string, string>,
-  kind: SkillSectionKind
-): { name: string; kind: SkillSectionKind; path: string } | null {
-  const path = sectionMap[section];
-  if (!path) {
-    return null;
-  }
-  return { name: section, kind, path };
-}
-
 function resolveSkillSection(
   manifest: Awaited<ReturnType<typeof loadSkillManifest>>,
   section: string
 ): { name: string; kind: SkillSectionKind; path: string } | null {
-  const commandMatch = resolveSkillSectionEntry(
-    section,
-    manifest.commands ?? {},
-    "command"
-  );
-  if (commandMatch) {
-    return commandMatch;
+  if (manifest.commands.includes(section)) {
+    return {
+      name: section,
+      kind: "command",
+      path: join("commands", `${section}.md`),
+    };
   }
 
-  const referenceMatch = resolveSkillSectionEntry(
-    section,
-    manifest.references ?? {},
-    "reference"
-  );
-  if (referenceMatch) {
-    const kind = referenceMatch.path.startsWith("examples/")
-      ? "example"
-      : "reference";
+  if (manifest.references.includes(section)) {
     return {
-      ...referenceMatch,
-      kind,
+      name: section,
+      kind: "reference",
+      path: join("references", `${section}.md`),
+    };
+  }
+
+  if (manifest.examples.includes(section)) {
+    return {
+      name: section,
+      kind: "example",
+      path: join("examples", `${section}.md`),
     };
   }
 
@@ -110,7 +96,7 @@ function resolveSkillSection(
     return {
       name: "core",
       kind: "core",
-      path: manifest.entry || "SKILL.md",
+      path: "SKILL.md",
     };
   }
 

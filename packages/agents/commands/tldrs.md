@@ -15,7 +15,7 @@ File summaries: !`wm find . --type tldr --text 2>/dev/null || rg 'tldr\s*:::' -n
 
 ## Instructions
 
-Load the `find-waymarks` skill for waymark discovery and filtering.
+Load the `waymark-cli` skill for waymark discovery and filtering.
 
 1. Parse the injected TLDR data above
 2. Organize by directory structure for navigation clarity

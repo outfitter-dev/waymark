@@ -17,7 +17,7 @@ Initialize waymarks in the current project through guided setup.
 
 ## Instructions
 
-Load the `waymark-authoring` skill for grammar and marker guidance.
+Load the `using-waymarks` skill for grammar and marker guidance.
 
 ### Phase 1: Environment Detection
 

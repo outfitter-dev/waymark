@@ -8,7 +8,6 @@
     "README.md",
     "SCRATCHPAD.md",
     "PRD.md",
-    ".waymark/rules/**",
     "docs/waymark/**/*.md"
   ]
 }

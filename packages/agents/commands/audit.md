@@ -23,7 +23,7 @@ Source files: !`git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.rs' '*.go' 
 
 ## Instructions
 
-Load the `auditing-waymarks` skill for detailed audit methodology.
+Load the `waymark-cli` skill for detailed audit methodology.
 
 ### TLDR Audit (default or `--tldr`)
 

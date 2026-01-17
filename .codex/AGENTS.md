@@ -16,10 +16,13 @@ Refer to these documentation files for project-specific conventions:
 
 ## Waymark-Specific Rules
 
-- `.waymark/rules/WAYMARKS.md` — Waymark grammar, markers, and usage
-- `.waymark/rules/CONVENTIONS.md` — Project-specific waymark conventions
-- `.waymark/rules/TLDRs.md` — Writing TLDR waymarks
-- `.waymark/rules/ABOUT.md` — Writing `about :::` waymarks
+Load the `using-waymarks` skill for waymark grammar, markers, and usage guidance. Reference materials are available in `packages/agents/skills/using-waymarks/`:
+
+- `packages/agents/skills/using-waymarks/` — Core waymark authoring skill
+- `packages/agents/skills/using-waymarks/references/tldr-patterns.md` — Writing TLDR waymarks
+- `packages/agents/skills/using-waymarks/references/about-waymarks.md` — Writing `about :::` waymarks
+
+Run `wm skill` for CLI documentation.
 
 ## Quality Checks
 

@@ -38,7 +38,7 @@ tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 
 You are a waymarker specializing in code annotation and documentation through waymarks.
 
-**Load the `waymark-authoring` skill for detailed grammar, markers, and placement rules.**
+**Load the `using-waymarks` skill for detailed grammar, markers, and placement rules.**
 
 ## Core Responsibilities
 

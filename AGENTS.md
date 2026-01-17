@@ -6,14 +6,13 @@ This file provides guidance to agents working in this repository.
 
 ## Skills & Conventions
 
-Use your skills for development methodology (TDD, debugging, architecture, code review). Refer to project documentation in `.agents/rules/` and `.waymark/rules/` for project-specific conventions.
-<!-- note ::: agent-facing CLI guidance lives in `wm skill` and `packages/agents/skills/waymark/` -->
+Use your skills for development methodology (TDD, debugging, architecture, code review). Refer to project documentation in `.agents/rules/` for project-specific conventions. For waymark usage, load the `using-waymarks` skill or run `wm skill` for CLI guidance.
+<!-- note ::: agent-facing CLI guidance lives in `wm skill` and `packages/agents/skills/using-waymarks/` -->
 
 ## Key References
 
 - @README.md
-- @./.waymark/rules/WAYMARKS.md
-- `wm skill` (agent documentation for CLI usage)
+- `wm skill` (agent documentation for CLI and waymark usage)
 
 ## Project Overview
 

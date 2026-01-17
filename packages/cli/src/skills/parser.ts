@@ -1,18 +1,17 @@
 // tldr ::: load and normalize skill docs for the wm skill command [[cli/skill-parser]]
 
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export type SkillManifest = {
   name: string;
-  version: string;
+  version?: string;
   description?: string;
-  entry: string;
-  commands?: Record<string, string>;
-  references?: Record<string, string>;
-  triggers?: string[];
+  commands: string[];
+  references: string[];
+  examples: string[];
 };
 
 export type SkillSectionKind = "core" | "command" | "reference" | "example";
@@ -38,12 +37,12 @@ export type SkillData = SkillManifest & {
 
 const SKILL_DIR_ENV = "WAYMARK_SKILL_DIR";
 const SKILL_DIR_CACHE: { value?: string } = {};
-const SKILL_MANIFEST_FILE = "index.json";
+const SKILL_ENTRY_FILE = "SKILL.md";
 const SKILL_SEARCH_DEPTH = 6;
 const SKILL_DIR_CANDIDATES = [
-  join("skills", "waymark"),
-  join("agents", "skills", "waymark"),
-  join("packages", "agents", "skills", "waymark"),
+  join("skills", "waymark-cli"),
+  join("agents", "skills", "waymark-cli"),
+  join("packages", "agents", "skills", "waymark-cli"),
 ];
 
 function normalizeLineEndings(value: string): string {
@@ -151,7 +150,7 @@ export function resolveSkillDir(): string {
   const envOverride = process.env[SKILL_DIR_ENV];
   if (envOverride) {
     const candidate = resolve(envOverride);
-    if (existsSync(join(candidate, SKILL_MANIFEST_FILE))) {
+    if (existsSync(join(candidate, SKILL_ENTRY_FILE))) {
       SKILL_DIR_CACHE.value = candidate;
       return candidate;
     }
@@ -161,7 +160,7 @@ export function resolveSkillDir(): string {
   for (let depth = 0; depth < SKILL_SEARCH_DEPTH; depth += 1) {
     for (const suffix of SKILL_DIR_CANDIDATES) {
       const candidate = resolve(currentDir, suffix);
-      if (existsSync(join(candidate, SKILL_MANIFEST_FILE))) {
+      if (existsSync(join(candidate, SKILL_ENTRY_FILE))) {
         SKILL_DIR_CACHE.value = candidate;
         return candidate;
       }
@@ -179,6 +178,42 @@ export function resolveSkillDir(): string {
 }
 
 /**
+ * Parse simple YAML key-value pairs from frontmatter content.
+ * @param frontmatter - Raw frontmatter string without delimiters.
+ * @returns Record of parsed key-value pairs.
+ */
+function parseFrontmatterYaml(frontmatter: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const line of frontmatter.split("\n")) {
+    const colonIndex = line.indexOf(":");
+    if (colonIndex === -1) {
+      continue;
+    }
+    const key = line.slice(0, colonIndex).trim();
+    const value = line.slice(colonIndex + 1).trim();
+    if (key && value) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * Discover markdown files in a directory by convention.
+ * @param dir - Directory path to scan.
+ * @returns Sorted list of markdown file basenames without extension.
+ */
+function discoverMarkdownFiles(dir: string): string[] {
+  if (!existsSync(dir)) {
+    return [];
+  }
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => basename(entry.name, ".md"))
+    .sort();
+}
+
+/**
  * Load and parse the skill manifest from a skills directory.
  * @param skillDir - Absolute path to the skills directory.
  * @returns Parsed skill manifest data.
@@ -186,9 +221,20 @@ export function resolveSkillDir(): string {
 export async function loadSkillManifest(
   skillDir: string
 ): Promise<SkillManifest> {
-  const manifestPath = join(skillDir, SKILL_MANIFEST_FILE);
-  const raw = await readFile(manifestPath, "utf8");
-  return JSON.parse(raw) as SkillManifest;
+  const entryPath = join(skillDir, SKILL_ENTRY_FILE);
+  const raw = await readFile(entryPath, "utf8");
+  const { frontmatter } = extractFrontmatter(raw);
+
+  const meta = frontmatter ? parseFrontmatterYaml(frontmatter) : {};
+
+  return {
+    name: meta.name ?? basename(skillDir),
+    ...(meta.version ? { version: meta.version } : {}),
+    ...(meta.description ? { description: meta.description } : {}),
+    commands: discoverMarkdownFiles(join(skillDir, "commands")),
+    references: discoverMarkdownFiles(join(skillDir, "references")),
+    examples: discoverMarkdownFiles(join(skillDir, "examples")),
+  };
 }
 
 /**
@@ -224,28 +270,42 @@ export async function loadSkillSection(
  */
 export async function loadSkillData(skillDir: string): Promise<SkillData> {
   const manifest = await loadSkillManifest(skillDir);
-  const entryPath = manifest.entry || "SKILL.md";
-  const core = await loadSkillSection(skillDir, "core", "core", entryPath);
+  const core = await loadSkillSection(
+    skillDir,
+    "core",
+    "core",
+    SKILL_ENTRY_FILE
+  );
 
-  const commandsEntries = Object.entries(manifest.commands ?? {});
-  const referencesEntries = Object.entries(manifest.references ?? {});
   const commands: Record<string, SkillSection> = {};
   const references: Record<string, SkillSection> = {};
   const examples: Record<string, SkillSection> = {};
 
-  for (const [name, relativePath] of commandsEntries) {
+  for (const name of manifest.commands) {
     commands[name] = await loadSkillSection(
       skillDir,
       name,
       "command",
-      relativePath
+      join("commands", `${name}.md`)
     );
   }
 
-  for (const [name, relativePath] of referencesEntries) {
-    const kind = relativePath.startsWith("examples/") ? "example" : "reference";
-    const target = kind === "example" ? examples : references;
-    target[name] = await loadSkillSection(skillDir, name, kind, relativePath);
+  for (const name of manifest.references) {
+    references[name] = await loadSkillSection(
+      skillDir,
+      name,
+      "reference",
+      join("references", `${name}.md`)
+    );
+  }
+
+  for (const name of manifest.examples) {
+    examples[name] = await loadSkillSection(
+      skillDir,
+      name,
+      "example",
+      join("examples", `${name}.md`)
+    );
   }
 
   return {
@@ -269,22 +329,9 @@ export function listSkillSections(manifest: SkillManifest): {
   references: string[];
   examples: string[];
 } {
-  const commandNames = Object.keys(manifest.commands ?? {});
-  const referenceEntries = Object.entries(manifest.references ?? {});
-  const references: string[] = [];
-  const examples: string[] = [];
-
-  for (const [name, relativePath] of referenceEntries) {
-    if (relativePath.startsWith("examples/")) {
-      examples.push(name);
-    } else {
-      references.push(name);
-    }
-  }
-
   return {
-    commands: commandNames.sort(),
-    references: references.sort(),
-    examples: examples.sort(),
+    commands: manifest.commands,
+    references: manifest.references,
+    examples: manifest.examples,
   };
 }
