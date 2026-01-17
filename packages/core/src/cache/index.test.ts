@@ -324,7 +324,7 @@ describe("WaymarkCache", () => {
   });
 
   test("WaymarkCache allows workspace-local cache paths", () => {
-    const workspacePath = join(process.cwd(), "test-cache", "waymark.db");
+    const workspacePath = join(process.cwd(), ".waymark-test", "waymark.db");
 
     expect(() => {
       const cache = new WaymarkCache({ dbPath: workspacePath });
@@ -334,7 +334,9 @@ describe("WaymarkCache", () => {
 
   test("WaymarkCache allows relative workspace paths", () => {
     expect(() => {
-      const cache = new WaymarkCache({ dbPath: "./fixtures/test-cache.db" });
+      const cache = new WaymarkCache({
+        dbPath: "./.waymark-test/test-cache.db",
+      });
       cache[Symbol.dispose]();
     }).not.toThrow();
   });

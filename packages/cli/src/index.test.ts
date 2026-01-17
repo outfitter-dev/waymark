@@ -116,7 +116,7 @@ describe("CLI handlers", () => {
   test("scan command caches results when enabled", async () => {
     const source = "// todo ::: cached";
     const { file, cleanup } = await withTempFile(source);
-    const cacheRoot = join(process.cwd(), "test-cache");
+    const cacheRoot = join(process.cwd(), ".waymark-test");
     await mkdir(cacheRoot, { recursive: true });
     const cacheDir = await mkdtemp(join(cacheRoot, "scan-cache-"));
     const cachePath = join(cacheDir, "waymark-cache.db");
