@@ -10,7 +10,8 @@
     "rules",
     "commands",
     "instructions",
-    "skills"
+    "skills",
+    "agents"
   ],
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun",

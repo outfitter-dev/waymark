@@ -1,4 +1,4 @@
 {
   "plugins": ["github.com/outfitter-dev/agents"],
-  "disabledPlugins": ["github.com/steveyegge/beads"]
+  "pluginDirs": ["."]
 }

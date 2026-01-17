@@ -34,10 +34,10 @@ lerna-debug.log*
 # Testing
 coverage/
 .nyc_output/
+.waymark-test/
 **/test-cache/
-**/test-cache.db
-**/test-cache.db-shm
-**/test-cache.db-wal
+**/test-cache.db*
+**/fixtures/*.db*
 
 # Temporary files
 tmp/
@@ -51,24 +51,14 @@ temp/
 .waymark/history.json
 .waymark/map.md
 
-# Test cache databases (SQLite artifacts from test runs)
-packages/core/fixtures/test-cache.db*
-packages/core/test-cache/waymark.db*
-
 # Turbo cache
 .turbo/
 
-# Agent archives (historical docs)
-.agents/.archive/
+# Archives (historical docs, working notes)
+.archive/
+**/.archive/
 .scratch/
 SCRATCHPAD.md
-
-# Beads local state (issues.jsonl is tracked)
-.beads/*.db
-.beads/*.db-*
-.beads/daemon.*
-.beads/bd.sock
-.beads/metadata.json
 
 # Local Claude settings
 .claude/settings.local.json

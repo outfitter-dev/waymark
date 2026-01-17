@@ -171,7 +171,7 @@ waymark find --file-category docs --type tldr
 ## 9. Agent Toolkit Hooks
 
 - Rule packs ship from `@waymarks/agents/rules` and land under `.waymark/rules/` when installed.
-- Commands (e.g., Claude slash commands) live in `.claude/commands/waymark/*.md` and reference this guide plus the local rules.
+- Commands (e.g., Claude slash commands) live in `packages/agents/commands/*.md` and reference this guide plus the local rules.
 - Instruction profiles for specific agents are placed under `.waymark/agents/instructions/` when enabled.
 - Always update `AGENTS.md` and `PLAN.md` when installing or modifying agent assets.
 
