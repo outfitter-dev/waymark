@@ -59,6 +59,26 @@ export type InsertionResult = {
   error?: string;
 };
 
+/** Result for a bulk insertion attempt. */
+export type BulkInsertResult = {
+  file: string;
+  requested: {
+    line: number;
+    position: "before" | "after";
+  };
+  inserted?: {
+    line: number;
+    content: string;
+    id?: string;
+  };
+  skipped?: {
+    line: number;
+    reason: string;
+  };
+  status: "success" | "error" | "skipped";
+  error?: string;
+};
+
 /** Options that control how insertions are applied and written. */
 export type InsertOptions = {
   write?: boolean;
@@ -86,6 +106,34 @@ export async function insertWaymarks(
 
   for (const [file, fileSpecs] of grouped) {
     const fileResults = await processFileGroup(file, fileSpecs, options);
+    results.push(...fileResults);
+  }
+
+  return results;
+}
+
+/**
+ * Bulk insert waymarks into files, skipping duplicates when the waymark already exists.
+ * @param specs - Insertion specs describing what to insert.
+ * @param options - Options controlling formatting, writing, and ID management.
+ * @returns Results for each insertion attempt.
+ */
+export async function bulkInsert(
+  specs: InsertionSpec[],
+  options: InsertOptions = {}
+): Promise<BulkInsertResult[]> {
+  if (specs.length === 0) {
+    return [];
+  }
+
+  const grouped = groupByFile(specs);
+  const results: BulkInsertResult[] = [];
+  const orderedFiles = Array.from(grouped.entries()).sort(([a], [b]) =>
+    a.localeCompare(b)
+  );
+
+  for (const [file, fileSpecs] of orderedFiles) {
+    const fileResults = await processFileGroupBulk(file, fileSpecs, options);
     results.push(...fileResults);
   }
 
@@ -153,6 +201,61 @@ async function processFileGroup(
   return results;
 }
 
+async function processFileGroupBulk(
+  file: string,
+  specs: InsertionSpec[],
+  options: InsertOptions
+): Promise<BulkInsertResult[]> {
+  options.logger?.debug("Processing file group", {
+    file,
+    specCount: specs.length,
+  });
+
+  const existing = await readLines(file);
+  if (!existing) {
+    options.logger?.debug("File not found", { file });
+    return specs.map((spec) =>
+      errorBulkResult(file, spec, `File not found: ${file}`)
+    );
+  }
+
+  const { lines, originalEol } = existing;
+  options.logger?.debug("Read file", {
+    file,
+    lineCount: lines.length,
+  });
+
+  const context: FileProcessingContext = {
+    file,
+    lines,
+    commentLeader: detectCommentLeader(file),
+    originalEol,
+    options,
+  };
+
+  const results: BulkInsertResult[] = [];
+  const sorted = sortSpecsForInsertion(specs);
+  for (const spec of sorted) {
+    const result = await applyInsertionWithSkip(spec, context);
+    results.push(result);
+  }
+
+  const successCount = results.filter((r) => r.status === "success").length;
+  if (options.write && successCount > 0) {
+    options.logger?.info("Writing waymarks to file", {
+      file,
+      insertedCount: successCount,
+    });
+    await writeUpdatedFile(context);
+  } else if (options.write) {
+    options.logger?.debug("No new waymarks to write", { file });
+  } else {
+    options.logger?.debug("Dry-run mode, skipping write", { file });
+  }
+
+  return results;
+}
+
 function sortSpecsForInsertion(specs: InsertionSpec[]): InsertionSpec[] {
   return specs
     .map((spec, index) => ({ spec, index }))
@@ -168,6 +271,50 @@ function sortSpecsForInsertion(specs: InsertionSpec[]): InsertionSpec[] {
       return b.spec.line - a.spec.line;
     })
     .map((entry) => entry.spec);
+}
+
+async function applyInsertionWithSkip(
+  spec: InsertionSpec,
+  context: FileProcessingContext
+): Promise<BulkInsertResult> {
+  const insertPos = calculateInsertPosition(spec, context.lines.length);
+  if (insertPos === null) {
+    return errorBulkResult(
+      context.file,
+      spec,
+      `Line ${spec.line} out of bounds (file has ${context.lines.length} lines)`
+    );
+  }
+
+  if (
+    hasExistingWaymarkAtPosition({
+      lines: context.lines,
+      insertPos,
+      spec,
+      commentLeader: context.commentLeader,
+    })
+  ) {
+    return skipResult(
+      context.file,
+      spec,
+      insertPos + 1,
+      "Waymark already exists at location"
+    );
+  }
+
+  const result = await applyInsertion(spec, context);
+  const bulkResult: BulkInsertResult = {
+    file: result.file,
+    requested: result.requested,
+    status: result.status,
+  };
+  if (result.inserted) {
+    bulkResult.inserted = result.inserted;
+  }
+  if (result.error) {
+    bulkResult.error = result.error;
+  }
+  return bulkResult;
 }
 
 async function applyInsertion(
@@ -347,6 +494,33 @@ function errorResult(
   };
 }
 
+function errorBulkResult(
+  file: string,
+  spec: InsertionSpec,
+  message: string
+): BulkInsertResult {
+  return {
+    file,
+    requested: { line: spec.line, position: spec.position ?? "after" },
+    status: "error",
+    error: message,
+  };
+}
+
+function skipResult(
+  file: string,
+  spec: InsertionSpec,
+  line: number,
+  reason: string
+): BulkInsertResult {
+  return {
+    file,
+    requested: { line: spec.line, position: spec.position ?? "after" },
+    skipped: { line, reason },
+    status: "skipped",
+  };
+}
+
 type ReadLinesResult = { lines: string[]; originalEol: string } | null;
 
 async function readLines(path: string): Promise<ReadLinesResult> {
@@ -439,6 +613,35 @@ function resolveCommentLeader(commentLeader: string): {
     return { leader: "<!--", suffix: " -->" };
   }
   return { leader: commentLeader, suffix: "" };
+}
+
+function hasExistingWaymarkAtPosition(args: {
+  lines: string[];
+  insertPos: number;
+  spec: InsertionSpec;
+  commentLeader: string;
+}): boolean {
+  const { lines, insertPos, spec, commentLeader } = args;
+  const line = lines[insertPos];
+  if (!line) {
+    return false;
+  }
+
+  const trimmed = line.trimStart();
+  const { leader, suffix } = resolveCommentLeader(commentLeader);
+  const body = buildWaymarkBody(spec);
+  const expectedPrefix = `${leader} ${body}`;
+
+  if (!trimmed.startsWith(expectedPrefix)) {
+    return false;
+  }
+
+  if (suffix) {
+    return trimmed.endsWith(suffix);
+  }
+
+  const remainder = trimmed.slice(expectedPrefix.length);
+  return remainder.length === 0 || remainder.startsWith(" ");
 }
 
 function buildWaymarkBody(spec: InsertionSpec, resolvedId?: string): string {

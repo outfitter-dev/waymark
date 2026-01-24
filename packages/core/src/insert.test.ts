@@ -6,10 +6,11 @@ import { DEFAULT_CONFIG } from "./config.ts";
 import { JsonIdIndex } from "./id-index.ts";
 import { WaymarkIdManager } from "./ids.ts";
 import type { InsertionSpec } from "./insert.ts";
-import { insertWaymarks } from "./insert.ts";
+import { bulkInsert, insertWaymarks } from "./insert.ts";
 import type { WaymarkIdConfig } from "./types.ts";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
+const BULK_INSERT_RESULT_COUNT = 3;
 
 async function ensureDir(path: string): Promise<void> {
   await mkdir(path, { recursive: true });
@@ -171,6 +172,66 @@ describe("insertWaymarks", () => {
 
     const ids = await index.listIds();
     expect(ids).toHaveLength(0);
+  });
+
+  it("bulk inserts across files and skips existing waymarks", async () => {
+    const filePath = join(workspace, "src/auth.ts");
+    await ensureDir(dirname(filePath));
+    await writeFile(
+      filePath,
+      [
+        "export const foo = true;",
+        "// todo ::: add rate limiting",
+        "export const bar = false;",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const otherPath = join(workspace, "src/worker.ts");
+    await ensureDir(dirname(otherPath));
+    await writeFile(otherPath, "console.log('hi');\n", "utf8");
+
+    const specs: InsertionSpec[] = [
+      {
+        file: filePath,
+        line: 1,
+        type: "todo",
+        content: "add rate limiting",
+      },
+      {
+        file: filePath,
+        line: 3,
+        type: "note",
+        content: "legacy path",
+      },
+      {
+        file: otherPath,
+        line: 1,
+        type: "tldr",
+        content: "worker entrypoint",
+      },
+    ];
+
+    const results = await bulkInsert(specs, { write: true });
+
+    expect(results).toHaveLength(BULK_INSERT_RESULT_COUNT);
+    const statuses = results.map((result) => result.status);
+    expect(statuses).toContain("success");
+    expect(statuses).toContain("skipped");
+
+    const fileContents = await readFile(filePath, "utf8");
+    const lines = fileContents.split(LINE_SPLIT_REGEX);
+    const barIndex = lines.findIndex((line) =>
+      line.includes("export const bar = false;")
+    );
+    const noteIndex = lines.findIndex((line) =>
+      line.includes("note ::: legacy path")
+    );
+    expect(noteIndex).toBe(barIndex + 1);
+
+    const otherContents = await readFile(otherPath, "utf8");
+    expect(otherContents).toContain("tldr ::: worker entrypoint");
   });
 
   afterEach(async () => {

@@ -37,8 +37,13 @@ export {
   fingerprintContext,
   WaymarkIdManager,
 } from "./ids";
-export type { InsertionResult, InsertionSpec, InsertOptions } from "./insert";
-export { InsertionSpecSchema, insertWaymarks } from "./insert";
+export type {
+  BulkInsertResult,
+  InsertionResult,
+  InsertionSpec,
+  InsertOptions,
+} from "./insert";
+export { bulkInsert, InsertionSpecSchema, insertWaymarks } from "./insert";
 export type {
   NormalizeRecordOptions,
   NormalizeTypeOptions,
