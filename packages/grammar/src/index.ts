@@ -11,12 +11,16 @@ export {
   SIGIL,
   SIGNALS,
 } from "./constants";
+export type {
+  DocstringFormat,
+  DocstringInfo,
+  DocstringKind,
+} from "./docstrings";
+export { detectDocstring, extractSummary } from "./docstrings";
 export { isValidType, parse, parseLine } from "./parser";
 export {
   MENTION_REGEX,
   PROPERTY_REGEX,
   TAG_REGEX,
 } from "./properties";
-export { detectDocstring, extractSummary } from "./docstrings";
-export type { DocstringInfo, DocstringFormat, DocstringKind } from "./docstrings";
 export type { ParseOptions, WaymarkRecord } from "./types";
