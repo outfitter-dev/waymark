@@ -39,7 +39,6 @@ export {
 } from "./ids";
 export type { InsertionResult, InsertionSpec, InsertOptions } from "./insert";
 export { InsertionSpecSchema, insertWaymarks } from "./insert";
-export { findTldrInsertionPoint } from "./tldr";
 export type {
   NormalizeRecordOptions,
   NormalizeTypeOptions,
@@ -66,4 +65,5 @@ export {
 } from "./remove";
 export type { SearchQuery } from "./search";
 export { searchRecords } from "./search";
+export { findTldrInsertionPoint } from "./tldr";
 export type { ScanOptions, WaymarkConfig } from "./types";

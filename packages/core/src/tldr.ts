@@ -21,10 +21,11 @@ const JS_DIRECTIVE_REGEX = /^['"](use strict|use client|use server)['"]\s*;?$/;
 const TS_REFERENCE_REGEX = /^\/\/\/\s*<(reference|amd-(module|dependency))\b/i;
 const TS_CHECK_REGEX =
   /^(\/\/\s*@ts-(check|nocheck)\b|\/\*\s*@ts-(check|nocheck)\s*\*\/)$/i;
-const PYTHON_ENCODING_REGEX =
-  /^#\s*([-*_\s]*coding[:=]\s*[-\w.]+|coding\s*[:=]\s*[-\w.]+)\s*$/i;
-const RUBY_MAGIC_COMMENT_REGEX =
-  /^#\s*(frozen_string_literal:\s*\w+|coding[:=]\s*[-\w.]+|encoding:\s*[-\w.]+)\s*$/i;
+const PYTHON_ENCODING_MARKER = "coding";
+const WRAPPING_MARKER = "-*-";
+const WRAPPING_MARKER_LENGTH = WRAPPING_MARKER.length;
+const RUBY_FROZEN_MARKER = "frozen_string_literal";
+const RUBY_ENCODING_MARKERS = new Set(["coding", "encoding"]);
 const RUST_INNER_ATTRIBUTE_REGEX = /^#!\s*\[/;
 const GO_BUILD_TAG_REGEX = /^(\/\/\s*go:build\b|\/\/\s*\+build\b)/;
 
@@ -148,7 +149,7 @@ function skipJavaScriptDirectives(lines: string[], start: number): number {
 
 function skipPythonDirectives(lines: string[], start: number): number {
   let index = start;
-  if (index < lines.length && PYTHON_ENCODING_REGEX.test(lines[index] ?? "")) {
+  if (index < lines.length && isPythonEncodingComment(lines[index])) {
     index += 1;
   }
   return index;
@@ -156,7 +157,7 @@ function skipPythonDirectives(lines: string[], start: number): number {
 
 function skipRubyDirectives(lines: string[], start: number): number {
   let index = start;
-  if (index < lines.length && RUBY_MAGIC_COMMENT_REGEX.test(lines[index] ?? "")) {
+  if (index < lines.length && isRubyMagicComment(lines[index])) {
     index += 1;
   }
   return index;
@@ -191,4 +192,96 @@ function skipGoDirectives(lines: string[], start: number): number {
     index += 1;
   }
   return index;
+}
+
+function isPythonEncodingComment(line: string | undefined): boolean {
+  if (!line) {
+    return false;
+  }
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("#")) {
+    return false;
+  }
+
+  let payload = trimmed.slice(1).trim();
+  payload = stripWrappingMarker(payload);
+  const lower = payload.toLowerCase();
+  if (!lower.startsWith(PYTHON_ENCODING_MARKER)) {
+    return false;
+  }
+
+  const separatorIndex = firstSeparatorIndex(payload);
+  if (separatorIndex === -1) {
+    return false;
+  }
+
+  const key = payload.slice(0, separatorIndex).trim().toLowerCase();
+  if (key !== PYTHON_ENCODING_MARKER) {
+    return false;
+  }
+
+  const value = payload.slice(separatorIndex + 1).trim();
+  return value.length > 0;
+}
+
+function isRubyMagicComment(line: string | undefined): boolean {
+  if (!line) {
+    return false;
+  }
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("#")) {
+    return false;
+  }
+
+  const payload = trimmed.slice(1).trim();
+  const keyValue = parseKeyValue(payload);
+  if (!keyValue) {
+    return false;
+  }
+  const { key, value } = keyValue;
+
+  if (key === RUBY_FROZEN_MARKER) {
+    return value.length > 0;
+  }
+  if (RUBY_ENCODING_MARKERS.has(key)) {
+    return value.length > 0;
+  }
+  return false;
+}
+
+function parseKeyValue(input: string): { key: string; value: string } | null {
+  const separatorIndex = firstSeparatorIndex(input);
+  if (separatorIndex === -1) {
+    return null;
+  }
+  const key = input.slice(0, separatorIndex).trim().toLowerCase();
+  const value = input.slice(separatorIndex + 1).trim();
+  if (!key) {
+    return null;
+  }
+  return { key, value };
+}
+
+function firstSeparatorIndex(value: string): number {
+  const colonIndex = value.indexOf(":");
+  const equalsIndex = value.indexOf("=");
+
+  if (colonIndex === -1) {
+    return equalsIndex;
+  }
+  if (equalsIndex === -1) {
+    return colonIndex;
+  }
+  return Math.min(colonIndex, equalsIndex);
+}
+
+function stripWrappingMarker(value: string): string {
+  let result = value.trim();
+  if (result.startsWith(WRAPPING_MARKER)) {
+    result = result.slice(WRAPPING_MARKER_LENGTH).trim();
+  }
+  if (result.endsWith(WRAPPING_MARKER)) {
+    result = result.slice(0, -WRAPPING_MARKER_LENGTH).trim();
+  }
+  return result;
 }
