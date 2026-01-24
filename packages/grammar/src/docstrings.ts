@@ -76,17 +76,21 @@ function detectJsDocstring(
   content: string,
   language: string
 ): DocstringInfo | null {
-  const regex = /\/\*\*[\s\S]*?\*\//g;
-  const match = regex.exec(content);
-  if (!match) {
+  // Use indexOf to avoid polynomial regex complexity
+  const startIndex = content.indexOf("/**");
+  if (startIndex === -1) {
     return null;
   }
-
-  const raw = match[0];
-  const index = match.index;
-  const { startLine, endLine } = lineRangeFromMatch(content, raw, index);
+  
+  const endIndex = content.indexOf("*/", startIndex + 3);
+  if (endIndex === -1) {
+    return null;
+  }
+  
+  const raw = content.slice(startIndex, endIndex + 2);
+  const { startLine, endLine } = lineRangeFromMatch(content, raw, startIndex);
   const contentText = stripBlockDocstring(raw, "*");
-  const kind = classifyByPlacement(content, index, index + raw.length, JS_ITEM_REGEX);
+  const kind = classifyByPlacement(content, startIndex, endIndex + 2, JS_ITEM_REGEX);
 
   return {
     language,
@@ -103,17 +107,43 @@ function detectPythonDocstring(
   content: string,
   language: string
 ): DocstringInfo | null {
-  const regex = /"""[\s\S]*?"""/g;
-  const match = regex.exec(content);
-  if (!match) {
+  // Support both """ and ''' delimiters
+  const doubleQuoteIndex = content.indexOf('"""');
+  const singleQuoteIndex = content.indexOf("'''");
+  
+  let index = -1;
+  let delimiter = '"""';
+  
+  if (doubleQuoteIndex === -1 && singleQuoteIndex === -1) {
     return null;
   }
-
-  const raw = match[0];
-  const index = match.index;
+  
+  if (doubleQuoteIndex === -1) {
+    index = singleQuoteIndex;
+    delimiter = "'''";
+  } else if (singleQuoteIndex === -1) {
+    index = doubleQuoteIndex;
+    delimiter = '"""';
+  } else {
+    // Both found, use whichever comes first
+    if (doubleQuoteIndex < singleQuoteIndex) {
+      index = doubleQuoteIndex;
+      delimiter = '"""';
+    } else {
+      index = singleQuoteIndex;
+      delimiter = "'''";
+    }
+  }
+  
+  const endIndex = content.indexOf(delimiter, index + 3);
+  if (endIndex === -1) {
+    return null;
+  }
+  
+  const raw = content.slice(index, endIndex + 3);
   const { startLine, endLine } = lineRangeFromMatch(content, raw, index);
-  const contentText = stripDelimitedDocstring(raw, '"""');
-  const kind = classifyPythonPlacement(content, index, index + raw.length);
+  const contentText = stripDelimitedDocstring(raw, delimiter);
+  const kind = classifyPythonPlacement(content, index, endIndex + 3);
 
   return {
     language,
@@ -340,6 +370,10 @@ function isPythonPreambleOnly(content: string): boolean {
       return true;
     }
     if (trimmed.startsWith("#") && trimmed.includes("coding")) {
+      return true;
+    }
+    // Recognize import statements as part of preamble
+    if (trimmed.startsWith("import ") || trimmed.startsWith("from ")) {
       return true;
     }
     return false;

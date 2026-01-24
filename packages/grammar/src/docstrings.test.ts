@@ -42,6 +42,26 @@ describe("detectDocstring", () => {
     expect(extractSummary(info!)).toBe("Add numbers.");
   });
 
+  test("detects Python docstrings with single quotes", () => {
+    const content = `#!/usr/bin/env python\n'''Module summary.\n\nMore detail.\n'''\n\nimport os\n`;
+    const info = detectDocstring(content, "python");
+
+    expect(info).not.toBeNull();
+    expect(info?.format).toBe("python");
+    expect(info?.kind).toBe("file");
+    expect(extractSummary(info!)).toBe("Module summary.");
+  });
+
+  test("detects Python module docstrings after imports", () => {
+    const content = `#!/usr/bin/env python\nimport os\nimport sys\n\"\"\"Module summary.\n\nMore detail.\n\"\"\"\n\ndef foo():\n    pass\n`;
+    const info = detectDocstring(content, "python");
+
+    expect(info).not.toBeNull();
+    expect(info?.format).toBe("python");
+    expect(info?.kind).toBe("file");
+    expect(extractSummary(info!)).toBe("Module summary.");
+  });
+
   test("detects Ruby header comments", () => {
     const content = `# Module summary.\n# More detail.\n\nclass Greeter\nend\n`;
     const info = detectDocstring(content, "ruby");
