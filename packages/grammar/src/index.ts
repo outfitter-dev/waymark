@@ -17,4 +17,6 @@ export {
   PROPERTY_REGEX,
   TAG_REGEX,
 } from "./properties";
+export { detectDocstring, extractSummary } from "./docstrings";
+export type { DocstringInfo, DocstringFormat, DocstringKind } from "./docstrings";
 export type { ParseOptions, WaymarkRecord } from "./types";
