@@ -9,8 +9,8 @@ import {
 import type { WaymarkRecord } from "./types";
 
 const LEADING_SPACES_REGEX = /^\s+/;
-const HTML_COMMENT_CLOSE_REGEX = /\s*-->\s*$/;
-const BLOCK_COMMENT_CLOSE_REGEX = /\s*\*\/\s*$/;
+const HTML_COMMENT_CLOSE = "-->";
+const BLOCK_COMMENT_CLOSE = "*/";
 
 export type ContentSegment = {
   text: string;
@@ -35,7 +35,7 @@ export function stripHtmlCommentClosure(
   commentLeader: string
 ): string {
   if (commentLeader === "<!--") {
-    return content.replace(HTML_COMMENT_CLOSE_REGEX, "");
+    return stripTrailingClosure(content, HTML_COMMENT_CLOSE);
   }
   return content;
 }
@@ -51,7 +51,7 @@ export function stripBlockCommentClosure(
   commentLeader: string
 ): string {
   if (commentLeader === "/*") {
-    return content.replace(BLOCK_COMMENT_CLOSE_REGEX, "");
+    return stripTrailingClosure(content, BLOCK_COMMENT_CLOSE);
   }
   return content;
 }
@@ -61,6 +61,15 @@ function stripCommentClosure(content: string, commentLeader: string): string {
     stripHtmlCommentClosure(content, commentLeader),
     commentLeader
   );
+}
+
+function stripTrailingClosure(content: string, token: string): string {
+  const trimmedEnd = content.trimEnd();
+  if (!trimmedEnd.endsWith(token)) {
+    return content;
+  }
+  const beforeToken = trimmedEnd.slice(0, -token.length);
+  return beforeToken.trimEnd();
 }
 
 /**

@@ -65,4 +65,5 @@ export {
 } from "./remove";
 export type { SearchQuery } from "./search";
 export { searchRecords } from "./search";
+export { findTldrInsertionPoint } from "./tldr";
 export type { ScanOptions, WaymarkConfig } from "./types";
