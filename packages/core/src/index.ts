@@ -39,6 +39,7 @@ export {
 } from "./ids";
 export type { InsertionResult, InsertionSpec, InsertOptions } from "./insert";
 export { InsertionSpecSchema, insertWaymarks } from "./insert";
+export { findTldrInsertionPoint } from "./tldr";
 export type {
   NormalizeRecordOptions,
   NormalizeTypeOptions,
