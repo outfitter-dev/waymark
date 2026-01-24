@@ -11,6 +11,12 @@ export {
   SIGIL,
   SIGNALS,
 } from "./constants";
+export type {
+  DocstringFormat,
+  DocstringInfo,
+  DocstringKind,
+} from "./docstrings";
+export { detectDocstring, extractSummary } from "./docstrings";
 export { isValidType, parse, parseLine } from "./parser";
 export {
   MENTION_REGEX,
