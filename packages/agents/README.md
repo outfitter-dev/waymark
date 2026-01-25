@@ -1,13 +1,16 @@
 <!-- tldr ::: agent skills and resources for waymark tooling -->
 
-# @waymarks/agents
+# Waymark Agent Resources
 
-Agent skills and resources for waymark tooling. This package provides skills that can be consumed by AI agents (Claude, etc.) to effectively use the waymark CLI.
+Agent skills and resources for waymark tooling. This directory provides skills, commands, agents, and hooks that can be consumed by AI agents (Claude, etc.) to effectively use the waymark CLI.
 
 ## Structure
 
 ```text
 packages/agents/
+├── agents/                    # Agent runbooks or specialized roles
+├── commands/                  # Prebuilt agent commands
+├── hooks/                     # Agent hooks (optional)
 └── skills/
     └── waymark/
         ├── SKILL.md           # Core skill - overview, concepts
@@ -31,7 +34,7 @@ packages/agents/
 
 ## Usage with Claude Code
 
-Map this package as a Claude plugin to make skills available:
+Map this directory as a Claude plugin to make skills available:
 
 ```json
 {
@@ -74,4 +77,4 @@ Modular skill for agents to use the `wm` CLI effectively.
 - Batch operations
 - Integration patterns (MCP, CI/CD)
 
-Access via `wm skill` command or directly from this package.
+Access via `wm skill` command or directly from this directory.

@@ -5,6 +5,8 @@
   "commands": ["./packages/agents/commands/"],
   "skills": ["./packages/agents/skills/"],
   "agents": ["./packages/agents/agents/"],
+  "hooks": ["./packages/agents/hooks/"],
+  "mcp": "./.mcp.json",
   "author": {
     "name": "Matt Galligan",
     "url": "https://github.com/galligan"

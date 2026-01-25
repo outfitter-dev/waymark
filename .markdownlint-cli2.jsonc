@@ -9,6 +9,7 @@
     "**/.waymark/index",
     ".migrate/**",
     ".agents/.archive/**",
+    ".archive/**",
     ".trail/**",
     ".scratch/**"
   ],

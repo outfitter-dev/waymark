@@ -18,7 +18,7 @@ import {
   TypeDocReader,
 } from "typedoc";
 
-type PackageKey = "core" | "cli" | "grammar" | "mcp" | "agents";
+type PackageKey = "core" | "cli" | "grammar" | "mcp";
 
 type PackageConfig = {
   key: PackageKey;
@@ -59,13 +59,6 @@ const PACKAGES: Record<PackageKey, PackageConfig> = {
     tsconfig: "apps/mcp/tsconfig.build.json",
     rootDir: "apps/mcp",
   },
-  agents: {
-    key: "agents",
-    name: "@waymarks/agents",
-    entryPoint: "packages/agents/src/index.ts",
-    tsconfig: "packages/agents/tsconfig.build.json",
-    rootDir: "packages/agents",
-  },
 };
 
 const DEFAULT_ENFORCED_PACKAGES: PackageKey[] = [
@@ -73,7 +66,6 @@ const DEFAULT_ENFORCED_PACKAGES: PackageKey[] = [
   "cli",
   "grammar",
   "mcp",
-  "agents",
 ];
 
 const DOC_KINDS: ReflectionKind[] = [
