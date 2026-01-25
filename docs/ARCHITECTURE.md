@@ -418,5 +418,4 @@ Areas for potential architectural evolution:
 ## References
 
 - [Specification](./waymark/SPEC.md) - Canonical grammar and v1 scope
-- [TypeScript Conventions](../.agents/rules/conventions/typescript.md)
-- [Bun Conventions](../.agents/rules/conventions/bun.md)
+- [AGENTS.md](../AGENTS.md) - Agent guidance and local conventions

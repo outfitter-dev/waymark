@@ -6,7 +6,7 @@ This file provides guidance to agents working in this repository.
 
 ## Skills & Conventions
 
-Use your skills for development methodology (TDD, debugging, architecture, code review). Refer to project documentation in `.agents/rules/` for project-specific conventions. For waymark usage, load the `using-waymarks` skill or run `wm skill` for CLI guidance.
+Use your skills for development methodology (TDD, debugging, architecture, code review). For waymark usage, load the `using-waymarks` skill or run `wm skill` for CLI guidance.
 <!-- note ::: agent-facing CLI guidance lives in `wm skill` and `packages/agents/skills/using-waymarks/` -->
 
 ## Key References
@@ -67,6 +67,13 @@ The pre-push hook will automatically run these checks, but running them manually
 - Keep documentation focused and scannable
 - Link related docs for navigation
 - No prefix = pure note (e.g., `<!-- ::: this explains the context -->`)
+
+### Docstrings for Public Exports
+
+- Use `/** ... */` TSDoc on exported functions/types in packages and apps
+- Describe what/why, document parameters/returns, and add `@throws` when relevant
+- Keep docstrings concise (aim for ~10 lines); link to docs when deeper context is needed
+- Update docstrings alongside behavior changes to avoid stale guidance
 
 ### Examples
 

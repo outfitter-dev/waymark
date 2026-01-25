@@ -179,81 +179,14 @@ apps/
 - Turborepo caching speeds up builds
 - Easy to understand scope of changes
 
-## Agent Rules Structure
+## Agent Guidance
 
-### Directory Organization
+Primary sources for agent guidance in this repo:
 
-```text
-.agents/
-├── rules/
-│   ├── CORE.md                    # Agent identity and core behaviors
-│   ├── IMPORTANT.md               # Quick reference to key rules
-│   ├── ARCHITECTURE.md            # Architectural patterns
-│   ├── DEVELOPMENT.md             # Development workflow
-│   ├── MONOREPO.md                # Monorepo patterns
-│   ├── MCP.md                     # MCP server guidelines
-│   ├── conventions/
-│   │   ├── typescript.md          # TypeScript rules ("Use X, not Y")
-│   │   └── bun.md                 # Bun-specific patterns
-│   └── (additional domain-specific rules)
-└── .archive/                      # Superseded rules
-```
-
-### Rule Organization Philosophy
-
-**CORE.md** - Agent identity, operating principles, and expertise areas
-
-- Defines how the agent thinks and approaches problems
-- Non-negotiable engineering standards
-- Response patterns and communication style
-
-**IMPORTANT.md** - Quick reference to critical rules
-
-- Points to other rule files
-- Prevents needing to load everything at once
-
-**Domain Rules** - Specific guidance for areas
-
-- ARCHITECTURE.md: Module organization, patterns, anti-patterns
-- MONOREPO.md: Package structure, workspace patterns
-- MCP.md: MCP server implementation guidance
-
-**Convention Rules** - Language-specific patterns
-
-- typescript.md: "Use X, not Y" format for clarity
-- bun.md: Bun-specific APIs and patterns
-
-### Writing Effective Rules
-
-**Format: "Use X, not Y"**
-
-```markdown
-## Type Safety
-
-- Use discriminated unions, not enums
-- Use `unknown` at boundaries, not `any`
-- Use `as const`, not widened literals
-```
-
-**Why This Works:**
-
-- Direct, actionable guidance
-- No ambiguity about preferred approach
-- Easy for agents to pattern match
-- Searchable by keyword
-
-**Bad:**
-
-```markdown
-Consider using discriminated unions in some cases where enums might
-be used, though enums are also okay in certain situations...
-```
-
-**Good:**
-
-```markdown
-Use discriminated unions, not enums or `const enum`.
-```
+- `AGENTS.md` (root) is the canonical guidance
+- `packages/agents/skills/` and `wm skill` provide task-specific workflows
+- `.agents/notes/` and `.agents/scripts/` contain working notes and helpers
+- `.archive/` is gitignored historical material and is not authoritative
 
 ## Working with Agents
 
@@ -536,7 +469,6 @@ waymark find --type todo # Find specific types
 
 ## References
 
-- [CORE.md](../.agents/rules/CORE.md) - Agent identity and principles
-- [TypeScript Conventions](../.agents/rules/conventions/typescript.md) - Language rules
+- [AGENTS.md](../AGENTS.md) - Agent guidance for this repo
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Module organization patterns
 - [SPEC.md](./waymark/SPEC.md) - Waymark specification
