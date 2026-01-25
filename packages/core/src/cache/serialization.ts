@@ -2,6 +2,7 @@
 
 import type { WaymarkRecord } from "@waymarks/grammar";
 
+/** Serialized cache row representation of a waymark record. */
 export type WaymarkRow = {
   filePath: string;
   startLine: number;
