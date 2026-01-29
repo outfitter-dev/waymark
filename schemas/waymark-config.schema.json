@@ -133,6 +133,11 @@
           "type": "boolean",
           "default": false,
           "description": "Skip files with unrecognized extensions"
+        },
+        "skip_unknown": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip files with unrecognized extensions (snake_case alias)"
         }
       },
       "additionalProperties": false
