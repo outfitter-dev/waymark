@@ -536,4 +536,58 @@ describe("custom registry support", () => {
     expect(cap?.language).toBe("custom-typescript");
     expect(cap?.leaders).toEqual(["###"]);
   });
+
+  test(".d.mts uses .mts mapping when available in custom registry", () => {
+    const customRegistry = {
+      byExtension: new Map([
+        [".mts", { language: "custom-mts", leaders: ["//"] as const }],
+        [".ts", { language: "custom-ts", leaders: ["//"] as const }],
+      ]),
+      byBasename: new Map(),
+    };
+
+    const cap = getCommentCapability("types.d.mts", customRegistry);
+    expect(cap).toBeDefined();
+    expect(cap?.language).toBe("custom-mts");
+  });
+
+  test(".d.cts uses .cts mapping when available in custom registry", () => {
+    const customRegistry = {
+      byExtension: new Map([
+        [".cts", { language: "custom-cts", leaders: ["//"] as const }],
+        [".ts", { language: "custom-ts", leaders: ["//"] as const }],
+      ]),
+      byBasename: new Map(),
+    };
+
+    const cap = getCommentCapability("types.d.cts", customRegistry);
+    expect(cap).toBeDefined();
+    expect(cap?.language).toBe("custom-cts");
+  });
+
+  test(".d.mts falls back to .ts when .mts not in registry", () => {
+    const customRegistry = {
+      byExtension: new Map([
+        [".ts", { language: "custom-ts", leaders: ["//"] as const }],
+      ]),
+      byBasename: new Map(),
+    };
+
+    const cap = getCommentCapability("types.d.mts", customRegistry);
+    expect(cap).toBeDefined();
+    expect(cap?.language).toBe("custom-ts");
+  });
+
+  test(".d.cts falls back to .ts when .cts not in registry", () => {
+    const customRegistry = {
+      byExtension: new Map([
+        [".ts", { language: "custom-ts", leaders: ["//"] as const }],
+      ]),
+      byBasename: new Map(),
+    };
+
+    const cap = getCommentCapability("types.d.cts", customRegistry);
+    expect(cap).toBeDefined();
+    expect(cap?.language).toBe("custom-ts");
+  });
 });

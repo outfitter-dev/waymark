@@ -332,15 +332,17 @@ export function getCommentCapability(
 
   // Handle special case: .d.ts, .d.tsx, .d.mts, .d.cts
   const lower = filePath.toLowerCase();
-  if (
-    lower.endsWith(".d.ts") ||
-    lower.endsWith(".d.mts") ||
-    lower.endsWith(".d.cts")
-  ) {
+  if (lower.endsWith(".d.ts")) {
     return registry.byExtension.get(".ts");
   }
   if (lower.endsWith(".d.tsx")) {
     return registry.byExtension.get(".tsx");
+  }
+  if (lower.endsWith(".d.mts")) {
+    return registry.byExtension.get(".mts") ?? registry.byExtension.get(".ts");
+  }
+  if (lower.endsWith(".d.cts")) {
+    return registry.byExtension.get(".cts") ?? registry.byExtension.get(".ts");
   }
 
   // Check extension (case-insensitive)
