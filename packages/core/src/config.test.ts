@@ -116,3 +116,123 @@ test("user scope reads from XDG_CONFIG_HOME", async () => {
     expect(config.skipPaths).toContain("**/build/**");
   });
 });
+
+test("loadConfigFromDisk parses languages.extensions option", async () => {
+  await withTempDir("waymark-config-lang-ext-", async (dir) => {
+    const configDir = join(dir, ".waymark");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(
+      join(configDir, "config.yaml"),
+      `languages:
+  extensions:
+    .custom: ["//", "#"]
+    vue: ["<!--"]
+`,
+      "utf8"
+    );
+
+    const config = await loadConfigFromDisk({
+      cwd: dir,
+      scope: "project",
+    });
+
+    expect(config.languages).toBeDefined();
+    expect(config.languages?.extensions?.[".custom"]).toEqual(["//", "#"]);
+    // Extensions without leading dot should get normalized
+    expect(config.languages?.extensions?.[".vue"]).toEqual(["<!--"]);
+  });
+});
+
+test("loadConfigFromDisk parses languages.basenames option", async () => {
+  await withTempDir("waymark-config-lang-basename-", async (dir) => {
+    const configDir = join(dir, ".waymark");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(
+      join(configDir, "config.yaml"),
+      `languages:
+  basenames:
+    Makefile: ["#"]
+    Dockerfile: ["#"]
+`,
+      "utf8"
+    );
+
+    const config = await loadConfigFromDisk({
+      cwd: dir,
+      scope: "project",
+    });
+
+    expect(config.languages).toBeDefined();
+    expect(config.languages?.basenames?.Makefile).toEqual(["#"]);
+    expect(config.languages?.basenames?.Dockerfile).toEqual(["#"]);
+  });
+});
+
+test("loadConfigFromDisk parses languages.skipUnknown boolean (camelCase)", async () => {
+  await withTempDir("waymark-config-lang-skip-camel-", async (dir) => {
+    const configDir = join(dir, ".waymark");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(
+      join(configDir, "config.yaml"),
+      `languages:
+  skipUnknown: true
+`,
+      "utf8"
+    );
+
+    const config = await loadConfigFromDisk({
+      cwd: dir,
+      scope: "project",
+    });
+
+    expect(config.languages?.skipUnknown).toBe(true);
+  });
+});
+
+test("loadConfigFromDisk parses languages.skip_unknown boolean (snake_case)", async () => {
+  await withTempDir("waymark-config-lang-skip-snake-", async (dir) => {
+    const configDir = join(dir, ".waymark");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(
+      join(configDir, "config.yaml"),
+      `languages:
+  skip_unknown: true
+`,
+      "utf8"
+    );
+
+    const config = await loadConfigFromDisk({
+      cwd: dir,
+      scope: "project",
+    });
+
+    expect(config.languages?.skipUnknown).toBe(true);
+  });
+});
+
+test("loadConfigFromDisk ignores invalid languages.extensions (non-array leaders)", async () => {
+  await withTempDir("waymark-config-lang-invalid-", async (dir) => {
+    const configDir = join(dir, ".waymark");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(
+      join(configDir, "config.yaml"),
+      `languages:
+  extensions:
+    .valid: ["//"]
+    .invalid: "not-an-array"
+    .alsoInvalid: 123
+`,
+      "utf8"
+    );
+
+    const config = await loadConfigFromDisk({
+      cwd: dir,
+      scope: "project",
+    });
+
+    expect(config.languages?.extensions?.[".valid"]).toEqual(["//"]);
+    // Invalid entries should be silently ignored
+    expect(config.languages?.extensions?.[".invalid"]).toBeUndefined();
+    expect(config.languages?.extensions?.[".alsoInvalid"]).toBeUndefined();
+  });
+});
