@@ -1,0 +1,350 @@
+#!/usr/bin/env bash
+# coverage-report - Show waymark coverage across source files
+# Reports files with TLDRs, missing TLDRs, and overall coverage stats
+
+set -euo pipefail
+
+VERSION="1.0.0"
+
+show_help() {
+  cat <<'HELP'
+coverage-report - Analyze waymark coverage in your codebase
+
+USAGE:
+    coverage-report [OPTIONS] [PATH...]
+
+OPTIONS:
+    --with-tldr       Show files that have TLDRs
+    --missing-tldr    Show files missing TLDRs (default if no option given)
+    --all             Show both with and without TLDRs
+    --stats           Show only summary statistics
+    --json            Output as JSON
+    -h, --help        Show this help
+    -V, --version     Show version
+
+EXAMPLES:
+    coverage-report                      # Files missing TLDRs in cwd
+    coverage-report src/                 # Files missing TLDRs in src/
+    coverage-report --all                # All files with coverage status
+    coverage-report --stats              # Just the numbers
+    coverage-report --json               # JSON output for tooling
+
+OUTPUT:
+    Files are categorized as:
+    ✓  Has TLDR waymark
+    ✗  Missing TLDR waymark
+
+EXCLUDED:
+    - .gitignore patterns
+    - node_modules/, dist/, build/, .next/, coverage/
+    - *.d.ts, *.generated.*, *.min.*
+    - Lock files (package-lock.json, bun.lockb, yarn.lock, etc.)
+    - Binary and media files
+HELP
+}
+
+show_version() {
+  echo "coverage-report $VERSION"
+}
+
+# --- Defaults ---
+SHOW_WITH_TLDR=false
+SHOW_MISSING_TLDR=false
+STATS_ONLY=false
+JSON_OUTPUT=false
+PATHS=()
+
+# --- Parse args ---
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --with-tldr)
+      SHOW_WITH_TLDR=true
+      shift
+      ;;
+    --missing-tldr)
+      SHOW_MISSING_TLDR=true
+      shift
+      ;;
+    --all)
+      SHOW_WITH_TLDR=true
+      SHOW_MISSING_TLDR=true
+      shift
+      ;;
+    --stats)
+      STATS_ONLY=true
+      shift
+      ;;
+    --json)
+      JSON_OUTPUT=true
+      shift
+      ;;
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    -V|--version)
+      show_version
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      echo "Run 'coverage-report --help' for usage" >&2
+      exit 2
+      ;;
+    *)
+      PATHS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+# Default to current directory
+if [[ ${#PATHS[@]} -eq 0 ]]; then
+  PATHS=(".")
+fi
+
+# Default to showing missing if no specific option given
+if [[ "$SHOW_WITH_TLDR" == false && "$SHOW_MISSING_TLDR" == false && "$STATS_ONLY" == false ]]; then
+  SHOW_MISSING_TLDR=true
+fi
+
+# --- Check dependencies ---
+if ! command -v rg &>/dev/null; then
+  echo "Error: ripgrep (rg) is required but not installed." >&2
+  exit 1
+fi
+
+# --- Exclusion patterns ---
+# Directories to always exclude
+EXCLUDE_DIRS=(
+  "node_modules"
+  "dist"
+  "build"
+  ".next"
+  "coverage"
+  ".git"
+  ".svn"
+  "__pycache__"
+  ".pytest_cache"
+  ".mypy_cache"
+  "vendor"
+  "target"        # Rust
+  "pkg"           # Go
+  ".turbo"
+  ".vercel"
+  ".netlify"
+)
+
+# File patterns to exclude
+EXCLUDE_PATTERNS=(
+  "*.d.ts"
+  "*.generated.*"
+  "*.min.*"
+  "*.map"
+  "*.lock"
+  "package-lock.json"
+  "bun.lockb"
+  "yarn.lock"
+  "pnpm-lock.yaml"
+  "Cargo.lock"
+  "composer.lock"
+  "Gemfile.lock"
+  "poetry.lock"
+)
+
+# Build rg glob exclusions
+RG_GLOBS=()
+for dir in "${EXCLUDE_DIRS[@]}"; do
+  RG_GLOBS+=("--glob" "!${dir}/**")
+done
+for pattern in "${EXCLUDE_PATTERNS[@]}"; do
+  RG_GLOBS+=("--glob" "!${pattern}")
+done
+
+# --- Source file extensions ---
+# Files that should have TLDRs - must support comments.
+#
+# SOURCE OF TRUTH: @waymarks/grammar DEFAULT_LANGUAGE_REGISTRY
+# This list should stay in sync with extensions that have non-empty
+# comment leaders in packages/grammar/src/languages.ts
+#
+# Note: .json is excluded (no comment syntax). Use .jsonc or .json5 for
+# JSON files that need waymarks.
+SOURCE_EXTS=(
+  # TypeScript/JavaScript
+  "ts" "tsx" "mts" "cts"
+  "js" "jsx" "mjs" "cjs"
+  # JSON with comments
+  "jsonc" "json5"
+  # Systems languages
+  "go" "rs"
+  "c" "h" "cpp" "cc" "cxx" "hpp" "hxx"
+  # JVM languages
+  "java" "kt" "kts" "scala" "groovy"
+  # .NET
+  "cs" "fs"
+  # Mobile
+  "swift" "m" "mm"
+  # Web
+  "php" "dart" "v" "zig"
+  # CSS/styling
+  "css" "scss" "sass" "less" "styl"
+  # Python
+  "py" "pyi" "pyw" "pyx"
+  # Ruby
+  "rb" "rake" "gemspec"
+  # Shell
+  "sh" "bash" "zsh" "fish" "ksh" "csh"
+  # Config formats
+  "yaml" "yml" "toml" "ini" "conf" "cfg"
+  # Other scripting
+  "r" "R" "pl" "pm"
+  "ex" "exs"  # Elixir
+  "jl"        # Julia
+  "lua"
+  "coffee"
+  "cr"        # Crystal
+  "nim"
+  # Lisp family
+  "clj" "cljs" "cljc" "edn"
+  "el"        # Emacs Lisp
+  "lisp" "cl" "scm" "rkt"
+  # Haskell/ML
+  "hs" "lhs"
+  "ml" "mli"
+  # SQL
+  "sql" "pgsql" "plsql"
+  # Markup/docs
+  "md" "mdx" "markdown"
+  "html" "htm" "xhtml"
+  "xml" "svg"
+  # Frontend frameworks
+  "vue" "svelte" "astro"
+  # Infrastructure
+  "tf" "tfvars" "hcl"
+  "dockerfile"
+  "nix"
+  # PowerShell
+  "ps1" "psm1" "psd1"
+  # LaTeX
+  "tex" "sty" "cls" "bib"
+  # Erlang
+  "erl" "hrl"
+  # Ada/VHDL
+  "ada" "adb" "ads"
+  "vhd" "vhdl"
+  # Assembly
+  "asm" "s" "S"
+)
+
+# Build type filter
+TYPE_GLOBS=()
+for ext in "${SOURCE_EXTS[@]}"; do
+  TYPE_GLOBS+=("--glob" "*.${ext}")
+done
+# Add explicit basename patterns for files without extensions
+# (the "dockerfile" ext only matches *.dockerfile, not Dockerfile/Containerfile)
+TYPE_GLOBS+=("--glob" "Dockerfile")
+TYPE_GLOBS+=("--glob" "Containerfile")
+
+# --- Find all source files ---
+all_files=()
+for path in "${PATHS[@]}"; do
+  while IFS= read -r file; do
+    [[ -n "$file" ]] && all_files+=("$file")
+  done < <(rg --files "${RG_GLOBS[@]}" "${TYPE_GLOBS[@]}" "$path" 2>/dev/null | sort)
+done
+
+# --- Find files with TLDRs ---
+# Use the same TYPE_GLOBS filter as all_files to avoid inflating coverage
+# with non-source files (.rst, .txt) that happen to contain TLDRs
+files_with_tldr=()
+tldr_output=$(rg -l 'tldr\s+:::' "${RG_GLOBS[@]}" "${TYPE_GLOBS[@]}" "${PATHS[@]}" 2>/dev/null || true)
+while IFS= read -r file; do
+  [[ -n "$file" ]] && files_with_tldr+=("$file")
+done <<< "$tldr_output"
+
+# --- Calculate missing ---
+declare -A tldr_map
+for file in "${files_with_tldr[@]}"; do
+  tldr_map["$file"]=1
+done
+
+files_missing_tldr=()
+for file in "${all_files[@]}"; do
+  if [[ -z "${tldr_map[$file]:-}" ]]; then
+    files_missing_tldr+=("$file")
+  fi
+done
+
+# --- Calculate stats ---
+total=${#all_files[@]}
+with_tldr=${#files_with_tldr[@]}
+missing_tldr=${#files_missing_tldr[@]}
+if [[ $total -gt 0 ]]; then
+  coverage_pct=$((with_tldr * 100 / total))
+else
+  coverage_pct=0
+fi
+
+# --- Output ---
+if [[ "$JSON_OUTPUT" == true ]]; then
+  # JSON output
+  echo "{"
+  echo "  \"total\": $total,"
+  echo "  \"with_tldr\": $with_tldr,"
+  echo "  \"missing_tldr\": $missing_tldr,"
+  echo "  \"coverage_percent\": $coverage_pct,"
+
+  if [[ "$STATS_ONLY" == false ]]; then
+    echo "  \"files_with_tldr\": ["
+    first=true
+    for file in "${files_with_tldr[@]}"; do
+      [[ "$first" == true ]] && first=false || echo ","
+      printf '    "%s"' "$file"
+    done
+    echo ""
+    echo "  ],"
+
+    echo "  \"files_missing_tldr\": ["
+    first=true
+    for file in "${files_missing_tldr[@]}"; do
+      [[ "$first" == true ]] && first=false || echo ","
+      printf '    "%s"' "$file"
+    done
+    echo ""
+    echo "  ]"
+  fi
+  echo "}"
+  exit 0
+fi
+
+# Text output
+if [[ "$STATS_ONLY" == true ]]; then
+  echo "Coverage Report"
+  echo "==============="
+  echo "Total files:    $total"
+  echo "With TLDR:      $with_tldr ($coverage_pct%)"
+  echo "Missing TLDR:   $missing_tldr"
+  exit 0
+fi
+
+if [[ "$SHOW_WITH_TLDR" == true ]]; then
+  echo "Files with TLDR ($with_tldr):"
+  echo "─────────────────────────────"
+  for file in "${files_with_tldr[@]}"; do
+    echo "✓ $file"
+  done
+  echo ""
+fi
+
+if [[ "$SHOW_MISSING_TLDR" == true ]]; then
+  echo "Files missing TLDR ($missing_tldr):"
+  echo "───────────────────────────────────"
+  for file in "${files_missing_tldr[@]}"; do
+    echo "✗ $file"
+  done
+  echo ""
+fi
+
+echo "Summary: $with_tldr/$total files have TLDRs ($coverage_pct% coverage)"
