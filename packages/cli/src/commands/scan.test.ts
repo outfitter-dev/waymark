@@ -225,4 +225,75 @@ describe("scanRecords capability check", () => {
     expect(metrics.parsedFiles).toBe(1);
     expect(metrics.skippedFiles).toBe(2); // .lockb and .json
   });
+
+  test("config changes are honored even with cached data", async () => {
+    // This test verifies the fix: capability check must happen BEFORE cache lookup.
+    // Without the fix, config changes would be ignored for cached files.
+    const jsonPath = join(workspace, "config.json");
+
+    // Cache must be within allowed directories (project or ~/.cache/waymark)
+    const cacheDir = join(process.cwd(), ".waymark", "test-cache");
+    await mkdir(cacheDir, { recursive: true });
+    const cachePath = join(cacheDir, `cache-${Date.now()}.db`);
+
+    try {
+      await writeFile(
+        jsonPath,
+        '// todo ::: validate schema\n{"key": "value"}\n',
+        "utf8"
+      );
+
+      // First scan: config enables JSON comments, populating cache
+      const configWithJson = resolveConfig({
+        languages: {
+          extensions: { ".json": ["//"] },
+        },
+      });
+      const metrics1: ScanMetrics = {
+        totalFiles: 0,
+        parsedFiles: 0,
+        cachedFiles: 0,
+        skippedFiles: 0,
+        durationMs: 0,
+      };
+
+      const records1 = await scanRecords([jsonPath], configWithJson, {
+        cache: true,
+        cachePath,
+        metrics: metrics1,
+      });
+
+      // Verify first scan found the waymark and cached it
+      expect(records1.length).toBe(1);
+      expect(records1[0]?.type).toBe("todo");
+      expect(metrics1.parsedFiles).toBe(1);
+      expect(metrics1.cachedFiles).toBe(0);
+
+      // Second scan: config disables JSON comments (default behavior)
+      // The capability check should run BEFORE cache lookup,
+      // so the file should be skipped despite being cached
+      const configWithoutJson = resolveConfig();
+      const metrics2: ScanMetrics = {
+        totalFiles: 0,
+        parsedFiles: 0,
+        cachedFiles: 0,
+        skippedFiles: 0,
+        durationMs: 0,
+      };
+
+      const records2 = await scanRecords([jsonPath], configWithoutJson, {
+        cache: true,
+        cachePath,
+        metrics: metrics2,
+      });
+
+      // Should NOT return cached data - config change must be honored
+      expect(records2.length).toBe(0);
+      expect(metrics2.skippedFiles).toBe(1);
+      expect(metrics2.cachedFiles).toBe(0);
+    } finally {
+      // Clean up test cache
+      await rm(cachePath, { force: true });
+    }
+  });
 });
