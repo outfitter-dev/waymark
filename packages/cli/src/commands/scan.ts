@@ -132,6 +132,13 @@ export async function scanRecords(
 
   try {
     for (const filePath of files) {
+      // Skip files that cannot have waymarks (e.g., .json, binary files)
+      // Check capability BEFORE cache lookup so config changes are honored
+      if (!canHaveWaymarks(filePath, config)) {
+        skippedFiles += 1;
+        continue;
+      }
+
       const fileStats = cacheEnabled
         ? await stat(filePath).catch(() => null)
         : null;
@@ -142,12 +149,6 @@ export async function scanRecords(
       ) {
         records.push(...cache.findByFile(filePath));
         cachedFiles += 1;
-        continue;
-      }
-
-      // Skip files that cannot have waymarks (e.g., .json, binary files)
-      if (!canHaveWaymarks(filePath, config)) {
-        skippedFiles += 1;
         continue;
       }
 
