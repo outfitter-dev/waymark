@@ -17,6 +17,13 @@ export type {
   DocstringKind,
 } from "./docstrings";
 export { detectDocstring, extractSummary } from "./docstrings";
+export type { CommentCapability, LanguageRegistry } from "./languages";
+export {
+  canHaveComments,
+  DEFAULT_LANGUAGE_REGISTRY,
+  getCommentCapability,
+  getLanguageId,
+} from "./languages";
 export { isValidType, parse, parseLine } from "./parser";
 export {
   MENTION_REGEX,
