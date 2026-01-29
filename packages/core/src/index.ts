@@ -44,6 +44,11 @@ export type {
   InsertOptions,
 } from "./insert";
 export { bulkInsert, InsertionSpecSchema, insertWaymarks } from "./insert";
+export {
+  buildLanguageRegistry,
+  canHaveWaymarks,
+  getCommentLeaders,
+} from "./languages";
 export type {
   NormalizeRecordOptions,
   NormalizeTypeOptions,
@@ -71,4 +76,4 @@ export {
 export type { SearchQuery } from "./search";
 export { searchRecords } from "./search";
 export { findTldrInsertionPoint } from "./tldr";
-export type { ScanOptions, WaymarkConfig } from "./types";
+export type { LanguageConfig, ScanOptions, WaymarkConfig } from "./types";
