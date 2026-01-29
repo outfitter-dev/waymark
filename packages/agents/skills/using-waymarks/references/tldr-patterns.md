@@ -10,7 +10,7 @@ This reference provides extended patterns and examples for writing effective TLD
 
 The TLDR must be the first waymark in the file, after any language preambles:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: handles user authentication and session management
 
 import { hash } from 'bcrypt';
@@ -28,7 +28,7 @@ set -euo pipefail
 
 ### After Front Matter
 
-```markdown
+```markdown wm:ignore
 ---
 title: API Guide
 author: Team
@@ -41,7 +41,7 @@ author: Team
 
 ### After Encoding Declarations
 
-```python
+```python wm:ignore
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -92,7 +92,7 @@ Prefer active, specific verbs:
 
 Use `*tldr` for critical files that must be read first:
 
-```typescript
+```typescript wm:ignore
 // *tldr ::: main application entry wiring Express middleware
 // *tldr ::: core authentication service all routes depend on
 ```
@@ -112,7 +112,7 @@ Audit periodically: `rg '\*tldr\s*:::'`
 
 Documentation TLDRs **must** include `#docs`:
 
-```markdown
+```markdown wm:ignore
 <!-- tldr ::: API authentication guide using JWT tokens #docs/guide -->
 <!-- tldr ::: database schema migration reference #docs/reference -->
 ```
@@ -138,7 +138,7 @@ rg ':::.+#docs' | head -20
 
 Declare the file's canonical anchor with `ref:#token`:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: payment gateway service ref:#payments/gateway #payments
 ```
 
@@ -152,7 +152,7 @@ Declare the file's canonical anchor with `ref:#token`:
 
 ### Backend Services
 
-```typescript
+```typescript wm:ignore
 // tldr ::: user registration service with email verification
 // tldr ::: order processing pipeline with inventory checks
 // tldr ::: webhook receiver validating Stripe event signatures
@@ -161,7 +161,7 @@ Declare the file's canonical anchor with `ref:#token`:
 
 ### Frontend Components
 
-```typescript
+```typescript wm:ignore
 // tldr ::: dashboard page displaying analytics charts #frontend
 // tldr ::: form component with validation and submission #ui
 // tldr ::: authentication context provider for React tree
@@ -170,7 +170,7 @@ Declare the file's canonical anchor with `ref:#token`:
 
 ### CLI Tools
 
-```typescript
+```typescript wm:ignore
 // tldr ::: CLI entry point dispatching subcommands #cli
 // tldr ::: argument parser with validation and help text
 // tldr ::: command handler for database migrations
@@ -178,7 +178,7 @@ Declare the file's canonical anchor with `ref:#token`:
 
 ### Configuration
 
-```typescript
+```typescript wm:ignore
 // tldr ::: ESLint configuration extending Ultracite rules
 // tldr ::: Vite build configuration with code splitting
 // tldr ::: TypeScript compiler configuration for strict mode
@@ -186,7 +186,7 @@ Declare the file's canonical anchor with `ref:#token`:
 
 ### Tests
 
-```typescript
+```typescript wm:ignore
 // tldr ::: integration tests for payment processing flows #test
 // tldr ::: unit tests for authentication service #test/unit
 // tldr ::: end-to-end tests for checkout workflow #e2e
@@ -194,7 +194,7 @@ Declare the file's canonical anchor with `ref:#token`:
 
 ### Documentation
 
-```markdown
+```markdown wm:ignore
 <!-- tldr ::: API quickstart guide with curl examples #docs/guide -->
 <!-- tldr ::: deployment runbook for production releases #docs/ops -->
 <!-- tldr ::: architecture decision record for caching strategy #docs/adr -->
@@ -212,7 +212,7 @@ Declare the file's canonical anchor with `ref:#token`:
 
 ### Libraries / Utilities
 
-```typescript
+```typescript wm:ignore
 // tldr ::: date formatting utilities with timezone support
 // tldr ::: HTTP client wrapper with retry and timeout logic
 // tldr ::: validation helpers for common data patterns
@@ -242,7 +242,7 @@ Before committing a TLDR:
 
 ### Too Vague
 
-```typescript
+```typescript wm:ignore
 // Bad
 // tldr ::: utilities
 
@@ -252,7 +252,7 @@ Before committing a TLDR:
 
 ### Too Long
 
-```typescript
+```typescript wm:ignore
 // Bad
 // tldr ::: this file contains the main authentication service that handles user login, registration, password reset, and session management using JWT tokens
 
@@ -262,7 +262,7 @@ Before committing a TLDR:
 
 ### Wrong Placement
 
-```typescript
+```typescript wm:ignore
 // Bad
 import { hash } from 'bcrypt';
 
@@ -276,7 +276,7 @@ import { hash } from 'bcrypt';
 
 ### Missing Required Tag
 
-```markdown
+```markdown wm:ignore
 <!-- Bad -->
 <!-- tldr ::: API documentation for user endpoints -->
 

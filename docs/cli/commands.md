@@ -84,7 +84,7 @@ A waymark is a structured comment following this pattern:
 
 Examples:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement rate limiting
 // *fix ::: validate email format
 // ~wip ::: refactoring auth flow
@@ -148,7 +148,7 @@ Types (formerly called "markers") categorize the waymark's purpose:
 
 Properties are `key:value` pairs in the content:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement caching owner:@alice priority:high
 // fix ::: memory leak from:#auth/session
 // note ::: coordinates with @backend team
@@ -156,7 +156,7 @@ Properties are `key:value` pairs in the content:
 
 **Canonical Anchors** (`ref:#token`):
 
-```typescript
+```typescript wm:ignore
 // tldr ::: payment processor service ref:#payments/core
 ```
 
@@ -169,14 +169,14 @@ Properties are `key:value` pairs in the content:
 
 **Hashtags** (tags and references):
 
-```typescript
+```typescript wm:ignore
 // todo ::: optimize query #perf:hotpath
 // fix ::: XSS vulnerability #sec:boundary
 ```
 
 **Mentions** (ownership and delegation):
 
-```typescript
+```typescript wm:ignore
 // todo ::: @agent implement OAuth flow
 // review ::: @alice check security implications
 ```
@@ -516,7 +516,7 @@ wm src/
 
 Output:
 
-```text
+```text wm:ignore
 src/auth.ts
     42  todo ::: implement rate limiting
     56  *fix ::: validate email format

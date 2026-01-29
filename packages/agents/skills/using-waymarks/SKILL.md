@@ -44,7 +44,7 @@ Every waymark follows this structure:
 
 **Examples:**
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement rate limiting
 // *fix ::: security vulnerability in auth handler
 // ~todo ::: refactoring in progress on this branch
@@ -127,7 +127,7 @@ TLDR waymarks provide file-level summaries that help humans and agents quickly u
 
 The TLDR must be the first waymark in the file:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: handles user authentication and session management
 
 import { hash } from 'bcrypt';
@@ -135,7 +135,7 @@ import { hash } from 'bcrypt';
 
 After language preambles:
 
-```python
+```python wm:ignore
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -146,7 +146,7 @@ import sqlite3
 
 For documentation files, use HTML comments with `#docs` tag:
 
-```markdown
+```markdown wm:ignore
 ---
 title: API Guide
 ---
@@ -184,7 +184,7 @@ See `references/tldr-patterns.md` for extended patterns and examples.
 
 Place `about :::` on the comment line directly above the construct:
 
-```typescript
+```typescript wm:ignore
 // about ::: validates JWT tokens and extracts claims
 export function validateToken(token: string): Claims {
   // ...
@@ -193,7 +193,7 @@ export function validateToken(token: string): Claims {
 
 Focus on the upcoming section only. Do not restate the file-level TLDR:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: user authentication service
 
 // about ::: validates password against security policy
@@ -223,7 +223,7 @@ See `references/about-waymarks.md` for detailed patterns by language.
 
 Properties use `key:value` pairs in the content:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement caching owner:@alice priority:high
 // note ::: reason:"waiting for API approval" status:blocked
 ```
@@ -235,7 +235,7 @@ Properties use `key:value` pairs in the content:
 
 Any `#` followed by non-whitespace is a tag:
 
-```typescript
+```typescript wm:ignore
 // todo ::: optimize query #perf:hotpath
 // fix ::: XSS vulnerability #sec:boundary
 ```
@@ -253,7 +253,7 @@ Before inventing a new tag, search for existing usage: `rg '#perf'`
 
 Mentions start with `@` followed by a lowercase letter:
 
-```typescript
+```typescript wm:ignore
 // todo ::: @agent implement OAuth flow
 // review ::: @alice check security implications
 ```
@@ -276,7 +276,7 @@ Place the actor immediately after `:::` to assign ownership. Mentions later in t
 
 Declare the authoritative anchor for a concept with `ref:#token`:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: authentication service ref:#auth/service
 ```
 
@@ -287,7 +287,7 @@ Reference elsewhere via relation properties:
 - `from:#token` - Depends on or derived from
 - `replaces:#token` - Supersedes another waymark
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement refunds from:#payments/charge
 // note ::: supersedes old implementation see:#legacy/auth
 ```
@@ -298,7 +298,7 @@ Waymarks complement docstrings; they never replace them. Place waymarks outside 
 
 **TypeScript/JavaScript:**
 
-```typescript
+```typescript wm:ignore
 /**
  * Authenticates a user and returns a session token.
  * @param request - User login credentials
@@ -313,7 +313,7 @@ export async function authenticate(request: AuthRequest) {
 
 **Python:**
 
-```python
+```python wm:ignore
 def send_email(message: Email) -> None:
     """Send an email using the configured transport."""
     # about ::: orchestrates outbound email delivery #comm/email
@@ -322,7 +322,7 @@ def send_email(message: Email) -> None:
 
 **Go:**
 
-```go
+```go wm:ignore
 // sanitize normalizes webhook payloads before verification.
 // about ::: ensures Stripe event payload conforms to canonical schema #payments/stripe
 func sanitize(event Event) Event { /* ... */ }
@@ -390,7 +390,7 @@ See `references/ripgrep.md` for comprehensive search patterns.
 
 Continue waymarks using markerless `:::` lines:
 
-```typescript
+```typescript wm:ignore
 // todo ::: refactor authentication flow to support OAuth 2.0
 //      ::: coordinate with @backend team on token format
 //      ::: update documentation when complete
@@ -398,7 +398,7 @@ Continue waymarks using markerless `:::` lines:
 
 Align continuation `:::` with the parent waymark's sigil for readability. Properties can appear on continuation lines:
 
-```typescript
+```typescript wm:ignore
 // tldr  ::: payment processor service
 // see   ::: #payments/core
 // owner ::: @alice
@@ -419,7 +419,7 @@ For projects with the CLI installed, consider loading the `waymark-cli` skill fo
 
 ## Quick Reference
 
-```javascript
+```javascript wm:ignore
 // Basic waymarks
 // todo ::: implement validation
 // fix ::: memory leak in handler

@@ -262,7 +262,7 @@ wm src/ --tag "#auth/service"
 
 **Goal**: Add detailed context without cluttering single lines.
 
-```typescript
+```typescript wm:ignore
 // todo ::: refactor authentication flow for OAuth 2.0
 //      ::: coordinate with @backend team
 //      ::: update docs once complete
@@ -469,7 +469,7 @@ Add to `.vscode/tasks.json`:
 
 Add to VS Code snippets (`.vscode/waymark.code-snippets`):
 
-```json
+```json wm:ignore
 {
   "Waymark TODO": {
     "prefix": "wmtodo",
@@ -505,7 +505,7 @@ Have a useful workflow? Contribute it!
 
 **Guide template**:
 
-```markdown
+```markdown wm:ignore
 <!-- tldr ::: [brief description] #docs/howto -->
 
 # [Guide Title]

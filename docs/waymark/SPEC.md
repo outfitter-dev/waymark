@@ -6,7 +6,7 @@ Waymark is a lightweight, comment-based grammar for embedding code-adjacent cont
 
 ## 1. Line Form
 
-```text
+```text wm:ignore
 [comment leader] [signals][marker] ::: [content]
 ```
 
@@ -23,7 +23,7 @@ Waymark is a lightweight, comment-based grammar for embedding code-adjacent cont
 
 For long content use markerless `:::` continuation lines:
 
-```ts
+```ts wm:ignore
 // todo ::: rewrite parser for streaming
 //      ::: preserve backwards-compatible signature
 //      ::: coordinate rollout with @devops
@@ -40,7 +40,7 @@ For long content use markerless `:::` continuation lines:
 
 **Property-as-marker continuations**: Known property keys (`ref`, `owner`, `since`, `until`, `priority`, `status`) can appear as pseudo-markers:
 
-```ts
+```ts wm:ignore
 // tldr  ::: payment processor service
 // ref   ::: #payments/core
 // owner ::: @alice
@@ -53,7 +53,7 @@ This parses as a single `tldr` waymark with properties extracted from the contin
 
 **HTML comments**: Each line requires proper `<!-- ... -->` closure:
 
-```html
+```html wm:ignore
 <!-- tldr ::: component library documentation -->
 <!--       ::: covers setup and API reference -->
 ```
@@ -134,7 +134,7 @@ Properties are `key:value` pairs in the content region. Keys match `[A-Za-z][A-Z
 
 Use `sym:<symbol>` to associate a waymark with a specific code symbol (function, class, variable, etc.):
 
-```typescript
+```typescript wm:ignore
 // todo ::: sym:handleAuth implement token refresh
 // fix ::: sym:validateInput escape special characters
 ```
@@ -154,7 +154,7 @@ Use `sym:<symbol>` to associate a waymark with a specific code symbol (function,
 
 **Examples**:
 
-```typescript
+```typescript wm:ignore
 // about ::: sym:AuthService manages user sessions and JWT tokens
 export class AuthService { /* ... */ }
 
@@ -188,7 +188,7 @@ Mentions must follow strict rules to avoid false positives:
 
 **Valid mentions** start with `@` followed by a lowercase letter, then alphanumeric characters, underscores, hyphens, or dots:
 
-```typescript
+```typescript wm:ignore
 // Valid:
 // todo ::: @alice implement OAuth
 // todo ::: @agent add caching
@@ -207,7 +207,7 @@ Mentions must follow strict rules to avoid false positives:
 
 **Examples of rejection**:
 
-```typescript
+```typescript wm:ignore
 // These do NOT extract mentions:
 // note ::: contact user@example.com for help      // Email - no mention
 // note ::: uses @Component decorator              // Decorator - no mention
@@ -225,7 +225,7 @@ Mentions must follow strict rules to avoid false positives:
 
 Recommended ripgrep patterns:
 
-```bash
+```bash wm:ignore
 rg ':::'                          # all waymarks
 rg ':::\s*@agent'                 # generic agent work
 rg '\*\w+\s*:::'                  # high-priority waymarks
@@ -252,7 +252,7 @@ Waymarks can be assigned stable identifiers using wikilink-style syntax. IDs ena
 
 IDs use double-bracket notation with three supported forms:
 
-```text
+```text wm:ignore
 [[hash]]          - Full ID (7-character alphanumeric hash)
 [[hash|alias]]    - ID with human-readable alias
 [[alias]]         - Draft/alias-only (no hash yet)
@@ -260,7 +260,7 @@ IDs use double-bracket notation with three supported forms:
 
 **Examples**:
 
-```typescript
+```typescript wm:ignore
 // todo ::: [[a1b2c3d]] implement rate limiting
 // fix ::: [[x9y8z7w|auth-bug]] resolve authentication failure
 // idea ::: [[session-cache]] consider Redis for sessions
@@ -287,7 +287,7 @@ Aliases provide human-readable identifiers alongside the hash:
 - **Purpose**: Readable references in documentation and conversation
 - **Uniqueness**: Aliases should be unique within a repository but are not enforced as strictly as hashes
 
-```typescript
+```typescript wm:ignore
 // tldr ::: [[f3g4h5j|stripe-webhook]] Stripe webhook handler ref:#payments/stripe
 // todo ::: [[auth-refresh]] implement token refresh from:#auth/service
 ```
@@ -302,7 +302,7 @@ Aliases provide human-readable identifiers alongside the hash:
 
 Reference waymarks by their ID in relations and content:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement retry logic see:[[a1b2c3d]]
 // fix ::: address feedback from:[[x9y8z7w|auth-bug]]
 // note ::: supersedes [[old-impl]] with new approach
@@ -323,7 +323,7 @@ Tooling normalizes IDs for consistency:
 - Whitespace around `|` separator is trimmed
 - Invalid characters are rejected
 
-```typescript
+```typescript wm:ignore
 // Input (non-canonical):
 // todo ::: [[ A1B2C3D | My Alias ]] fix bug
 
@@ -377,7 +377,7 @@ IDENT_NS      = ALNUM , { ALNUM | "_" | "-" | "." | "/" | ":" } ;
 
 ## 9. Reference Examples
 
-```ts
+```ts wm:ignore
 // tldr ::: payment processor entry point ref:#payments/stripe-webhook #payments
 // about ::: Stripe webhook verification handler #perf:hotpath
 // todo ::: @agent add idempotency key handling fixes:#payments/stripe-webhook
@@ -387,12 +387,12 @@ IDENT_NS      = ALNUM , { ALNUM | "_" | "-" | "." | "/" | ":" } ;
 export async function handleWebhook(body: StripePayload) { /* ... */ }
 ```
 
-```md
+```md wm:ignore
 <!-- tldr ::: Waymark CLI spec defining v1 scope and requirements #docs/spec -->
 <!-- about ::: workflow overview for installing the CLI -->
 ```
 
-```py
+```py wm:ignore
 def send_email(message: Email) -> None:
     """Send an email using the configured transport."""
     # about ::: orchestrates outbound email delivery #comm/email
@@ -401,7 +401,7 @@ def send_email(message: Email) -> None:
 
 **Multi-line continuation examples**:
 
-```ts
+```ts wm:ignore
 // Text continuation with alignment
 // todo ::: refactor this parser for streaming
 //      ::: preserve backward-compatible API surface
@@ -414,7 +414,7 @@ def send_email(message: Email) -> None:
 // since ::: 2025-01-01
 ```
 
-```html
+```html wm:ignore
 <!-- Multi-line in HTML comments -->
 <!-- tldr ::: component library documentation -->
 <!--       ::: covers setup and API reference -->
