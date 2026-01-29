@@ -3,6 +3,19 @@
 // Re-export grammar types for convenience
 export type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";
 
+/**
+ * Configuration for language-specific comment handling.
+ * Allows overriding or extending the default language registry.
+ */
+export type LanguageConfig = {
+  /** Map file extension (with leading dot) to comment leaders */
+  extensions?: Record<string, string[]>;
+  /** Map exact basename to comment leaders */
+  basenames?: Record<string, string[]>;
+  /** When true, skip files with unknown extensions (default: false = try to parse) */
+  skipUnknown?: boolean;
+};
+
 /** Formatting controls for rendered waymark comments. */
 export type WaymarkFormatConfig = {
   spaceAroundSigil: boolean;
@@ -38,6 +51,7 @@ export type WaymarkConfig = {
   lint: WaymarkLintConfig;
   ids: WaymarkIdConfig;
   index: WaymarkIndexConfig;
+  languages?: LanguageConfig;
 };
 
 /** Partial configuration shape for overrides. */
@@ -53,6 +67,7 @@ export type PartialWaymarkConfig = {
   lint?: Partial<WaymarkLintConfig>;
   ids?: Partial<WaymarkIdConfig>;
   index?: Partial<WaymarkIndexConfig>;
+  languages?: Partial<LanguageConfig>;
 };
 
 /** Options that control scanning and filtering waymarks. */
