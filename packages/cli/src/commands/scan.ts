@@ -4,6 +4,7 @@ import { readFile, stat } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 
 import {
+  canHaveWaymarks,
   parse,
   WaymarkCache,
   type WaymarkConfig,
@@ -114,6 +115,7 @@ function scanCodetags(source: string, filePath: string): WaymarkRecord[] {
  * @param options - Runtime scan options (cache, cachePath, metrics).
  * @returns Parsed waymark records.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential file processing with necessary branching
 export async function scanRecords(
   filePaths: string[],
   config: WaymarkConfig,
@@ -140,6 +142,12 @@ export async function scanRecords(
       ) {
         records.push(...cache.findByFile(filePath));
         cachedFiles += 1;
+        continue;
+      }
+
+      // Skip files that cannot have waymarks (e.g., .json, binary files)
+      if (!canHaveWaymarks(filePath, config)) {
+        skippedFiles += 1;
         continue;
       }
 
