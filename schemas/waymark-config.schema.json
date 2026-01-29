@@ -108,6 +108,39 @@
           "pattern": "^@[a-z][A-Za-z0-9/_-]*$"
         }
       }
+    },
+    "languages": {
+      "type": "object",
+      "description": "Language and comment capability configuration",
+      "properties": {
+        "extensions": {
+          "type": "object",
+          "description": "Map file extensions to comment leaders",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "basenames": {
+          "type": "object",
+          "description": "Map basenames to comment leaders",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "skipUnknown": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip files with unrecognized extensions"
+        },
+        "skip_unknown": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip files with unrecognized extensions (snake_case alias)"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
