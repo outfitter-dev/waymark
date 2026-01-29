@@ -158,7 +158,10 @@ export async function scanRecords(
         continue;
       }
 
-      const parsed = parse(source, { file: filePath });
+      const parsed = parse(source, {
+        file: filePath,
+        includeIgnored: config.scan?.includeIgnored,
+      });
       if (config.scan?.includeCodetags) {
         parsed.push(...scanCodetags(source, filePath));
       }
