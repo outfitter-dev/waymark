@@ -8,6 +8,7 @@ import { dirname, extname, join, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 
 import type {
+  LanguageConfig,
   PartialWaymarkConfig,
   WaymarkConfig,
   WaymarkFormatConfig,
@@ -280,6 +281,7 @@ function normalizeConfigShape(
   assignLintOptions(result, raw);
   assignIdOptions(result, raw);
   assignIndexOptions(result, raw);
+  assignLanguageOptions(result, raw);
 
   return result;
 }
@@ -486,6 +488,59 @@ function assignIndexOptions(
     ...(result.index ?? DEFAULT_CONFIG.index),
     ...out,
   };
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: config parsing requires nested validation
+function assignLanguageOptions(
+  result: Partial<WaymarkConfig>,
+  raw: Record<string, unknown>
+): void {
+  const languagesRaw = readObject(raw, "languages");
+  if (!languagesRaw) {
+    return;
+  }
+
+  const languages: Partial<LanguageConfig> = {};
+
+  // Handle extensions map
+  const extensions = readObject(languagesRaw, "extensions");
+  if (extensions) {
+    languages.extensions = {};
+    for (const [ext, leaders] of Object.entries(extensions)) {
+      if (Array.isArray(leaders)) {
+        const key = ext.startsWith(".") ? ext : `.${ext}`;
+        languages.extensions[key] = leaders.filter(
+          (l): l is string => typeof l === "string"
+        );
+      }
+    }
+  }
+
+  // Handle basenames map
+  const basenames = readObject(languagesRaw, "basenames");
+  if (basenames) {
+    languages.basenames = {};
+    for (const [name, leaders] of Object.entries(basenames)) {
+      if (Array.isArray(leaders)) {
+        languages.basenames[name] = leaders.filter(
+          (l): l is string => typeof l === "string"
+        );
+      }
+    }
+  }
+
+  // Handle skipUnknown boolean
+  const skipUnknown = readBoolean(languagesRaw, [
+    "skipUnknown",
+    "skip_unknown",
+  ]);
+  if (typeof skipUnknown === "boolean") {
+    languages.skipUnknown = skipUnknown;
+  }
+
+  if (Object.keys(languages).length > 0) {
+    result.languages = languages as LanguageConfig;
+  }
 }
 
 function readString(
