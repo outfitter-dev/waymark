@@ -32,4 +32,6 @@ export type WaymarkRecord = {
 export type ParseOptions = {
   file?: string;
   language?: string;
+  /** Include waymarks inside wm:ignore fences (default: false). */
+  includeIgnored?: boolean;
 };
