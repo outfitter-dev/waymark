@@ -1,6 +1,7 @@
 // tldr ::: file language and category inference for waymark records
 
 import { extname } from "node:path";
+import { getLanguageId } from "./languages";
 import type { WaymarkRecord } from "./types";
 
 // todo ::: @codex externalize comment leader detection into shared language metadata #lib/parser
@@ -44,6 +45,9 @@ const TEST_TOKEN_PATTERNS = [
 
 /**
  * Infer language identifier from a file path.
+ * Uses the language registry as the primary source of truth,
+ * falling back to extension-based logic for edge cases.
+ *
  * @param filePath - File path to inspect.
  * @returns Language identifier string.
  */
@@ -52,6 +56,13 @@ export function inferLanguageFromFile(filePath: string | undefined): string {
     return "unknown";
   }
 
+  // Try language registry first (single source of truth)
+  const langId = getLanguageId(filePath);
+  if (langId) {
+    return langId;
+  }
+
+  // Fall back to existing logic for edge cases not in registry
   const lower = filePath.toLowerCase();
 
   if (lower.endsWith(".d.ts")) {
