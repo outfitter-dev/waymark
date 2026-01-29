@@ -242,6 +242,10 @@ TYPE_GLOBS=()
 for ext in "${SOURCE_EXTS[@]}"; do
   TYPE_GLOBS+=("--glob" "*.${ext}")
 done
+# Add explicit basename patterns for files without extensions
+# (the "dockerfile" ext only matches *.dockerfile, not Dockerfile/Containerfile)
+TYPE_GLOBS+=("--glob" "Dockerfile")
+TYPE_GLOBS+=("--glob" "Containerfile")
 
 # --- Find all source files ---
 all_files=()
@@ -252,8 +256,10 @@ for path in "${PATHS[@]}"; do
 done
 
 # --- Find files with TLDRs ---
+# Use the same TYPE_GLOBS filter as all_files to avoid inflating coverage
+# with non-source files (.rst, .txt) that happen to contain TLDRs
 files_with_tldr=()
-tldr_output=$(rg -l 'tldr\s+:::' "${RG_GLOBS[@]}" "${PATHS[@]}" 2>/dev/null || true)
+tldr_output=$(rg -l 'tldr\s+:::' "${RG_GLOBS[@]}" "${TYPE_GLOBS[@]}" "${PATHS[@]}" 2>/dev/null || true)
 while IFS= read -r file; do
   [[ -n "$file" ]] && files_with_tldr+=("$file")
 done <<< "$tldr_output"
