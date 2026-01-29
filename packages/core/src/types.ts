@@ -36,6 +36,8 @@ export type WaymarkLintConfig = {
 /** Scan-time toggles for including additional markers. */
 export type WaymarkScanConfig = {
   includeCodetags: boolean;
+  /** Include waymarks inside wm:ignore fences (default: false). */
+  includeIgnored: boolean;
 };
 
 /** Full configuration shape for waymark operations. */

@@ -19,7 +19,7 @@ const BASE_CONFIG = {
   skipPaths: [] as string[],
   includePaths: [] as string[],
   respectGitignore: true,
-  scan: { includeCodetags: false },
+  scan: { includeCodetags: false, includeIgnored: false },
   format: { spaceAroundSigil: true, normalizeCase: true },
   lint: {
     duplicateProperty: "warn" as const,
