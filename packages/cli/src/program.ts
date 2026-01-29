@@ -95,11 +95,13 @@ function resolveGlobalOptions(program: Command): GlobalOptions {
   const configPath =
     configPathRaw.trim().length > 0 ? configPathRaw : undefined;
   const cacheEnabled = Boolean(opts.cache);
+  const includeIgnored = Boolean(opts.includeIgnored);
 
   return {
     scope: normalizeScope(scopeValue),
     ...(configPath ? { configPath } : {}),
     ...(cacheEnabled ? { cache: true } : {}),
+    ...(includeIgnored ? { includeIgnored: true } : {}),
   };
 }
 
@@ -1170,6 +1172,7 @@ export async function createProgram(): Promise<Command> {
     )
     .option("--config <path>", "load additional config file (JSON/YAML/TOML)")
     .option("--cache", "use scan cache for faster repeated runs")
+    .option("--include-ignored", "include waymarks inside wm:ignore fences")
     .option("--no-input", "fail if interactive input required")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")

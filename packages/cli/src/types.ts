@@ -10,6 +10,7 @@ export type GlobalOptions = {
   scope?: CliScopeOption;
   logLevel?: LogLevel;
   cache?: boolean;
+  includeIgnored?: boolean;
 };
 
 export type CommandContext = {

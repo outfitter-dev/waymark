@@ -28,6 +28,15 @@ export async function createContext(
     const message = error instanceof Error ? error.message : String(error);
     throw createConfigError(message);
   }
+
+  // Merge CLI-level scan overrides into config
+  if (globalOptions.includeIgnored) {
+    config = {
+      ...config,
+      scan: { ...config.scan, includeIgnored: true },
+    };
+  }
+
   const workspaceRoot = resolveWorkspaceRoot(loadOptions.cwd);
 
   return { config, globalOptions, workspaceRoot };
