@@ -209,9 +209,9 @@ SOURCE_EXTS=(
   "clj" "cljs" "cljc" "edn"
   "el"        # Emacs Lisp
   "lisp" "cl" "scm" "rkt"
-  # Haskell/ML
+  "pro"       # Prolog
+  # Haskell
   "hs" "lhs"
-  "ml" "mli"
   # SQL
   "sql" "pgsql" "plsql"
   # Markup/docs
