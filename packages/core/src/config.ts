@@ -36,6 +36,7 @@ export const DEFAULT_CONFIG: WaymarkConfig = {
   respectGitignore: true,
   scan: {
     includeCodetags: false,
+    includeIgnored: false,
   },
   format: {
     spaceAroundSigil: true,
