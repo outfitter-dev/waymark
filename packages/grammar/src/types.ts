@@ -37,4 +37,7 @@ export type ParseOptions = {
   /** Comment leaders to use for parsing. When provided, only these leaders
    *  are recognized. Typically sourced from LanguageRegistry for the file type. */
   leaders?: readonly string[];
+  /** File category registry for classification. When provided, overrides
+   *  the default registry for inferring file categories. */
+  categoryRegistry?: import("./metadata").FileCategoryRegistry;
 };

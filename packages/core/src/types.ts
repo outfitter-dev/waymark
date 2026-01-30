@@ -16,6 +16,26 @@ export type LanguageConfig = {
   skipUnknown?: boolean;
 };
 
+/**
+ * Configuration for file category classification.
+ * Allows overriding file extensions and patterns for category inference.
+ */
+export type FileCategoryConfig = {
+  /** Extensions to classify as documentation (e.g., [".md", ".rst"]) */
+  docs?: string[];
+  /** Extensions to classify as configuration (e.g., [".json", ".yaml"]) */
+  config?: string[];
+  /** Extensions to classify as data files (e.g., [".csv", ".parquet"]) */
+  data?: string[];
+  /** Test file patterns */
+  test?: {
+    /** File suffixes that indicate test files (e.g., [".test.ts", ".spec.js"]) */
+    suffixes?: string[];
+    /** Path tokens that indicate test directories (e.g., ["__tests__", "cypress"]) */
+    pathTokens?: string[];
+  };
+};
+
 /** Formatting controls for rendered waymark comments. */
 export type WaymarkFormatConfig = {
   spaceAroundSigil: boolean;
@@ -54,6 +74,7 @@ export type WaymarkConfig = {
   ids: WaymarkIdConfig;
   index: WaymarkIndexConfig;
   languages?: LanguageConfig;
+  categories?: FileCategoryConfig;
 };
 
 /** Partial configuration shape for overrides. */
@@ -70,6 +91,7 @@ export type PartialWaymarkConfig = {
   ids?: Partial<WaymarkIdConfig>;
   index?: Partial<WaymarkIndexConfig>;
   languages?: Partial<LanguageConfig>;
+  categories?: Partial<FileCategoryConfig>;
 };
 
 /** Options that control scanning and filtering waymarks. */
