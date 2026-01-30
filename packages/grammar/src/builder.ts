@@ -47,7 +47,7 @@ export function buildRecord(args: BuildRecordArgs): WaymarkRecord {
   const { options, header, raw, contentText, startLine, endLine } = args;
   const file = options.file ?? "";
   const language = options.language ?? inferLanguageFromFile(file);
-  const fileCategory = inferFileCategory(file);
+  const fileCategory = inferFileCategory(file, options.categoryRegistry);
 
   const { properties, relations, canonicals, mentions, tags } =
     analyzeContent(contentText);

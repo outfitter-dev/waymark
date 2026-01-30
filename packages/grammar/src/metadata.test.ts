@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  buildFileCategoryRegistry,
   DEFAULT_FILE_CATEGORY_REGISTRY,
   type FileCategoryRegistry,
   inferFileCategory,
@@ -285,5 +286,82 @@ describe("custom registry support", () => {
 
     expect(inferFileCategory("anything.ts", emptyRegistry)).toBe("code");
     expect(inferFileCategory("README.md", emptyRegistry)).toBe("code");
+  });
+});
+
+describe("buildFileCategoryRegistry", () => {
+  test("returns default registry when no config provided", () => {
+    const registry = buildFileCategoryRegistry(undefined);
+    expect(registry).toBe(DEFAULT_FILE_CATEGORY_REGISTRY);
+  });
+
+  test("returns default registry for empty config", () => {
+    const registry = buildFileCategoryRegistry({});
+    expect(registry.docs.extensions.has(".md")).toBe(true);
+    expect(registry.config.extensions.has(".json")).toBe(true);
+  });
+
+  test("adds custom doc extensions to defaults", () => {
+    const registry = buildFileCategoryRegistry({
+      docs: [".adoc", ".asciidoc"],
+    });
+
+    // New extensions added
+    expect(registry.docs.extensions.has(".adoc")).toBe(true);
+    expect(registry.docs.extensions.has(".asciidoc")).toBe(true);
+    // Default extensions still present
+    expect(registry.docs.extensions.has(".md")).toBe(true);
+  });
+
+  test("adds custom config extensions to defaults", () => {
+    const registry = buildFileCategoryRegistry({ config: [".properties"] });
+
+    expect(registry.config.extensions.has(".properties")).toBe(true);
+    expect(registry.config.extensions.has(".json")).toBe(true);
+  });
+
+  test("adds custom data extensions to defaults", () => {
+    const registry = buildFileCategoryRegistry({ data: [".xlsx", ".xls"] });
+
+    expect(registry.data.extensions.has(".xlsx")).toBe(true);
+    expect(registry.data.extensions.has(".xls")).toBe(true);
+    expect(registry.data.extensions.has(".csv")).toBe(true);
+  });
+
+  test("adds custom test suffixes to defaults", () => {
+    const registry = buildFileCategoryRegistry({
+      test: { suffixes: [".e2e.ts", ".integration.ts"] },
+    });
+
+    expect(registry.test.suffixes.has(".e2e.ts")).toBe(true);
+    expect(registry.test.suffixes.has(".integration.ts")).toBe(true);
+    expect(registry.test.suffixes.has(".test.ts")).toBe(true);
+  });
+
+  test("adds custom test path tokens to defaults", () => {
+    const registry = buildFileCategoryRegistry({
+      test: { pathTokens: ["cypress", "playwright"] },
+    });
+
+    expect(registry.test.pathTokens.has("cypress")).toBe(true);
+    expect(registry.test.pathTokens.has("playwright")).toBe(true);
+    expect(registry.test.pathTokens.has("__tests__")).toBe(true);
+  });
+
+  test("normalizes extensions without leading dot", () => {
+    const registry = buildFileCategoryRegistry({
+      docs: ["wiki"],
+      config: ["env"],
+    });
+
+    expect(registry.docs.extensions.has(".wiki")).toBe(true);
+    expect(registry.config.extensions.has(".env")).toBe(true);
+  });
+
+  test("works with inferFileCategory for custom extensions", () => {
+    const registry = buildFileCategoryRegistry({ docs: [".adoc"] });
+
+    expect(inferFileCategory("guide.adoc", registry)).toBe("docs");
+    expect(inferFileCategory("README.md", registry)).toBe("docs");
   });
 });

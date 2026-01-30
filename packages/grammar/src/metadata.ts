@@ -80,6 +80,89 @@ export const DEFAULT_FILE_CATEGORY_REGISTRY: FileCategoryRegistry =
   });
 
 /**
+ * Configuration shape for file category overrides.
+ * Used to customize file category inference via config files.
+ */
+export type FileCategoryConfig = {
+  docs?: string[];
+  config?: string[];
+  data?: string[];
+  test?: {
+    suffixes?: string[];
+    pathTokens?: string[];
+  };
+};
+
+/**
+ * Merge custom extensions into a default set, normalizing to include leading dot.
+ */
+function mergeExtensions(
+  defaults: ReadonlySet<string>,
+  custom?: string[]
+): Set<string> {
+  const result = new Set(defaults);
+  if (custom) {
+    for (const ext of custom) {
+      result.add(ext.startsWith(".") ? ext : `.${ext}`);
+    }
+  }
+  return result;
+}
+
+/**
+ * Merge custom strings into a default set without modification.
+ */
+function mergeStrings(
+  defaults: ReadonlySet<string>,
+  custom?: string[]
+): Set<string> {
+  const result = new Set(defaults);
+  if (custom) {
+    for (const item of custom) {
+      result.add(item);
+    }
+  }
+  return result;
+}
+
+/**
+ * Build a file category registry from config, merging with defaults.
+ * Extensions provided in config are added to the default sets.
+ *
+ * @param config - Optional category configuration overrides.
+ * @returns A complete FileCategoryRegistry merged with defaults.
+ *
+ * @example
+ * ```typescript
+ * // Add custom doc extension
+ * const registry = buildFileCategoryRegistry({ docs: [".adoc"] });
+ * inferFileCategory("file.adoc", registry) // => "docs"
+ * ```
+ */
+export function buildFileCategoryRegistry(
+  config?: FileCategoryConfig
+): FileCategoryRegistry {
+  if (!config) {
+    return DEFAULT_FILE_CATEGORY_REGISTRY;
+  }
+
+  return {
+    docs: { extensions: mergeExtensions(DEFAULT_DOC_EXTENSIONS, config.docs) },
+    config: {
+      extensions: mergeExtensions(DEFAULT_CONFIG_EXTENSIONS, config.config),
+    },
+    data: { extensions: mergeExtensions(DEFAULT_DATA_EXTENSIONS, config.data) },
+    test: {
+      suffixes: mergeStrings(DEFAULT_TEST_SUFFIXES, config.test?.suffixes),
+      pathTokens: mergeStrings(
+        DEFAULT_TEST_PATH_TOKENS,
+        config.test?.pathTokens
+      ),
+    },
+  };
+}
+
+/**
  * Infer language identifier from a file path.
  * Uses the language registry as the primary source of truth,
  * falling back to extension-based logic for edge cases.

@@ -24,6 +24,13 @@ export {
   getCommentCapability,
   getLanguageId,
 } from "./languages";
+export type { FileCategoryConfig, FileCategoryRegistry } from "./metadata";
+export {
+  buildFileCategoryRegistry,
+  DEFAULT_FILE_CATEGORY_REGISTRY,
+  inferFileCategory,
+  inferLanguageFromFile,
+} from "./metadata";
 export { isValidType, parse, parseLine } from "./parser";
 export {
   MENTION_REGEX,
