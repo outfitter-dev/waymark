@@ -2,6 +2,15 @@
 
 import { SIGIL } from "./constants";
 
+/**
+ * Default comment leaders used when no language-specific leaders are provided.
+ * Prefer passing leaders from LanguageRegistry.getCommentCapability() for
+ * accurate language-specific comment detection.
+ *
+ * @remarks
+ * Order matters: longer prefixes (like "<!--") must precede shorter ones
+ * that they contain to ensure correct matching.
+ */
 const COMMENT_LEADERS = ["<!--", "//", "--", "#", "/*"] as const;
 const ANY_WHITESPACE_REGEX = /\s/;
 const LEADING_WHITESPACE_REGEX = /^\s*/;
@@ -32,10 +41,16 @@ export function normalizeLine(line: string): string {
 /**
  * Find the comment leader at the start of a string.
  * @param text - Text to inspect.
+ * @param leaders - Optional array of comment leaders to use instead of defaults.
+ *                  When provided, only these leaders are checked.
  * @returns Comment leader token or null.
  */
-export function findCommentLeader(text: string): string | null {
-  for (const leader of COMMENT_LEADERS) {
+export function findCommentLeader(
+  text: string,
+  leaders?: readonly string[]
+): string | null {
+  const leaderList = leaders ?? COMMENT_LEADERS;
+  for (const leader of leaderList) {
     if (text.startsWith(leader)) {
       return leader;
     }
@@ -107,14 +122,18 @@ export function parseSignalsAndType(segment: string): {
 /**
  * Parse a full waymark header line into structured data.
  * @param line - Raw line text.
+ * @param leaders - Optional comment leaders to use instead of defaults.
  * @returns Parsed header or null when invalid.
  */
-export function parseHeader(line: string): ParsedHeader | null {
+export function parseHeader(
+  line: string,
+  leaders?: readonly string[]
+): ParsedHeader | null {
   const indentMatch = line.match(LEADING_WHITESPACE_REGEX);
   const indent = indentMatch ? indentMatch[0].length : 0;
   const trimmed = line.slice(indent);
 
-  const commentLeader = findCommentLeader(trimmed);
+  const commentLeader = findCommentLeader(trimmed, leaders);
   if (!commentLeader) {
     return null;
   }

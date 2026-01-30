@@ -34,4 +34,7 @@ export type ParseOptions = {
   language?: string;
   /** Include waymarks inside wm:ignore fences (default: false). */
   includeIgnored?: boolean;
+  /** Comment leaders to use for parsing. When provided, only these leaders
+   *  are recognized. Typically sourced from LanguageRegistry for the file type. */
+  leaders?: readonly string[];
 };
