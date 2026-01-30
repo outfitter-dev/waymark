@@ -12,6 +12,48 @@ import type { ParseOptions, WaymarkRecord } from "./types";
 
 const LINE_SPLIT_REGEX = /\r?\n/;
 
+// Fence detection for wm:ignore blocks (markdown code fences)
+const FENCE_OPEN_REGEX = /^(\s*)(`{3,})(.*)$/;
+const WM_IGNORE_ATTR = /\bwm:ignore\b/i;
+
+type FenceState = {
+  inIgnoredFence: boolean;
+  backtickCount: number;
+};
+
+/**
+ * Update fence state based on current line.
+ * @param line - Current line to check for fence markers.
+ * @param state - Current fence state.
+ * @returns Updated fence state.
+ */
+function updateFenceState(line: string, state: FenceState): FenceState {
+  const fenceMatch = line.match(FENCE_OPEN_REGEX);
+  if (!fenceMatch) {
+    return state;
+  }
+
+  const backtickCount = fenceMatch[2]?.length ?? 0;
+  const infoString = fenceMatch[3] ?? "";
+
+  if (state.inIgnoredFence) {
+    // Check if this closes the fence (same or more backticks, empty info string)
+    const isClosingFence =
+      backtickCount >= state.backtickCount && infoString.trim() === "";
+    if (isClosingFence) {
+      return { inIgnoredFence: false, backtickCount: 0 };
+    }
+    return state;
+  }
+
+  // Check for opening fence with wm:ignore attribute
+  if (WM_IGNORE_ATTR.test(infoString)) {
+    return { inIgnoredFence: true, backtickCount };
+  }
+
+  return state;
+}
+
 /**
  * Parse a single line into a waymark record when possible.
  * @param line - Raw line of text to parse.
@@ -58,9 +100,20 @@ export function parse(
   const lines = text.split(LINE_SPLIT_REGEX);
   const records: WaymarkRecord[] = [];
   let inWaymarkContext = false;
+  let fenceState: FenceState = { inIgnoredFence: false, backtickCount: 0 };
 
   for (let index = 0; index < lines.length; index += 1) {
     const rawLine = normalizeLine(lines[index] ?? "");
+
+    // Update fence state for wm:ignore blocks
+    fenceState = updateFenceState(rawLine, fenceState);
+
+    // Skip waymark processing when inside an ignored fence (unless includeIgnored)
+    if (fenceState.inIgnoredFence && !options.includeIgnored) {
+      inWaymarkContext = false;
+      continue;
+    }
+
     if (!rawLine.includes(SIGIL)) {
       inWaymarkContext = false;
       continue;

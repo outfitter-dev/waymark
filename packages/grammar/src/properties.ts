@@ -48,6 +48,10 @@ export function splitRelationValues(value: string): string[] {
 // note ::: URL schemes to preserve without # prefix in relation values
 const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
 
+/** Keys reserved for directives, excluded from property extraction. */
+// about ::: prevents "wm:ignore" in content from being extracted as { wm: "ignore" }
+const RESERVED_KEYS = new Set(["wm"]);
+
 /**
  * Determine whether a value is a URL.
  * @param value - Value to test.
@@ -186,9 +190,15 @@ export function extractPropertiesAndRelations(content: string): {
       continue;
     }
 
+    const normalizedKey = keyRaw.toLowerCase();
+
+    // Skip reserved directive keys (e.g., wm:ignore)
+    if (RESERVED_KEYS.has(normalizedKey)) {
+      continue;
+    }
+
     const quotedValue = match[2];
     const unquotedValue = match[3];
-    const normalizedKey = keyRaw.toLowerCase();
 
     const rawValue = quotedValue ?? unquotedValue ?? "";
     // Unmask any backticks in the value

@@ -528,6 +528,22 @@ describe("parse", () => {
     expect(record?.contentText).toContain("`example:value`");
   });
 
+  test("ignores reserved directive keys like wm:ignore in content", () => {
+    // about ::: wm:ignore is a fence directive, not a property
+    const record = parseLine(
+      "<!-- tldr ::: guide for excluding waymarks using wm:ignore fences -->",
+      LINE_ONE,
+      { file: "docs/guide.md" }
+    );
+
+    expect(record).not.toBeNull();
+    expect(record?.type).toBe("tldr");
+    expect(record?.properties).toEqual({});
+    expect(record?.contentText).toBe(
+      "guide for excluding waymarks using wm:ignore fences"
+    );
+  });
+
   test("allows quoted properties with spaces after colon", () => {
     // about ::: quoted values can have spaces anywhere
     const record = parseLine(
@@ -580,5 +596,162 @@ describe("parse", () => {
       sym: "AuthService",
       owner: "@alice",
     });
+  });
+});
+
+describe("wm:ignore fence handling", () => {
+  test("fence with wm:ignore skips waymarks inside", () => {
+    const source = [
+      "// note ::: real waymark before fence",
+      "```typescript wm:ignore",
+      "// todo ::: example waymark in docs",
+      "// fix ::: another example",
+      "```",
+      "// note ::: real waymark after fence",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(2);
+
+    expect(records[0]?.type).toBe("note");
+    expect(records[0]?.contentText).toBe("real waymark before fence");
+
+    expect(records[1]?.type).toBe("note");
+    expect(records[1]?.contentText).toBe("real waymark after fence");
+  });
+
+  test("fence without wm:ignore attribute parses waymarks normally", () => {
+    const source = [
+      "```typescript",
+      "// todo ::: this waymark should be parsed",
+      "```",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("todo");
+  });
+
+  test("multiple fences in sequence work correctly", () => {
+    const source = [
+      "```typescript wm:ignore",
+      "// todo ::: ignored",
+      "```",
+      "// note ::: real waymark",
+      "```javascript wm:ignore",
+      "// fix ::: also ignored",
+      "```",
+      "// warn ::: another real waymark",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(2);
+
+    expect(records[0]?.type).toBe("note");
+    expect(records[1]?.type).toBe("warn");
+  });
+
+  test("unclosed fence gracefully skips remaining content", () => {
+    const source = [
+      "// note ::: waymark before unclosed fence",
+      "```typescript wm:ignore",
+      "// todo ::: this is inside unclosed fence",
+      "// fix ::: so is this",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("note");
+    expect(records[0]?.contentText).toBe("waymark before unclosed fence");
+  });
+
+  test("wm:ignore is case insensitive", () => {
+    const sources = [
+      "```typescript WM:IGNORE\n// todo ::: ignored\n```",
+      "```typescript WM:Ignore\n// todo ::: ignored\n```",
+      "```typescript wm:Ignore\n// todo ::: ignored\n```",
+    ];
+
+    for (const source of sources) {
+      const records = parse(source, { file: "docs/guide.md" });
+      expect(records).toHaveLength(0);
+    }
+  });
+
+  test("wm:ignore works with different backtick counts", () => {
+    const source = [
+      "````typescript wm:ignore",
+      "// todo ::: ignored in 4-backtick fence",
+      "```",
+      "// still inside because only 3 backticks",
+      "````",
+      "// note ::: real waymark after fence",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("note");
+  });
+
+  test("wm:ignore works with indented fences", () => {
+    const source = [
+      "  ```typescript wm:ignore",
+      "  // todo ::: ignored",
+      "  ```",
+      "// note ::: real waymark",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("note");
+  });
+
+  test("fence closing requires empty info string", () => {
+    const source = [
+      "```typescript wm:ignore",
+      "// todo ::: ignored",
+      "```typescript",
+      "// still ignored because closing fence had info string",
+      "```",
+      "// note ::: real waymark",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("note");
+  });
+
+  test("wm:ignore anywhere in info string", () => {
+    const source = [
+      '```typescript title="example" wm:ignore highlight={1}',
+      "// todo ::: ignored",
+      "```",
+    ].join("\n");
+
+    const records = parse(source, { file: "docs/guide.md" });
+    expect(records).toHaveLength(0);
+  });
+
+  test("includeIgnored option parses waymarks inside wm:ignore fences", () => {
+    const source = [
+      "// note ::: real waymark",
+      "```typescript wm:ignore",
+      "// todo ::: example in docs",
+      "// fix ::: another example",
+      "```",
+    ].join("\n");
+
+    const withoutFlag = parse(source, { file: "docs/guide.md" });
+    expect(withoutFlag).toHaveLength(1);
+    expect(withoutFlag[0]?.type).toBe("note");
+
+    const withFlag = parse(source, {
+      file: "docs/guide.md",
+      includeIgnored: true,
+    });
+    expect(withFlag).toHaveLength(3);
+    expect(withFlag[0]?.type).toBe("note");
+    expect(withFlag[1]?.type).toBe("todo");
+    expect(withFlag[2]?.type).toBe("fix");
   });
 });
