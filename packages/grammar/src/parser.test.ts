@@ -755,3 +755,72 @@ describe("wm:ignore fence handling", () => {
     expect(withFlag[2]?.type).toBe("fix");
   });
 });
+
+describe("custom leaders option", () => {
+  test("parseLine uses custom leaders when provided", () => {
+    // Python-style # comment with only # leader
+    const record = parseLine("# todo ::: python task", LINE_ONE, {
+      file: "script.py",
+      leaders: ["#"],
+    });
+
+    expect(record).not.toBeNull();
+    expect(record?.type).toBe("todo");
+    expect(record?.commentLeader).toBe("#");
+  });
+
+  test("parseLine rejects unrecognized leaders", () => {
+    // // comment should be rejected when only # is allowed
+    const record = parseLine("// todo ::: javascript task", LINE_ONE, {
+      file: "script.py",
+      leaders: ["#"],
+    });
+
+    expect(record).toBeNull();
+  });
+
+  test("parse uses custom leaders for all lines", () => {
+    const source = [
+      "-- todo ::: sql task",
+      "--      ::: with continuation",
+      "// note ::: this should not parse",
+    ].join("\n");
+
+    const records = parse(source, {
+      file: "schema.sql",
+      leaders: ["--"],
+    });
+
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("todo");
+    expect(records[0]?.commentLeader).toBe("--");
+    expect(records[0]?.contentText).toBe("sql task\nwith continuation");
+  });
+
+  test("parse respects CSS-style leaders (/* only)", () => {
+    const source = [
+      "/* tldr ::: button styles */",
+      "// this is not a CSS comment",
+    ].join("\n");
+
+    const records = parse(source, {
+      file: "styles.css",
+      leaders: ["/*"],
+    });
+
+    expect(records).toHaveLength(1);
+    expect(records[0]?.type).toBe("tldr");
+    expect(records[0]?.commentLeader).toBe("/*");
+  });
+
+  test("empty leaders array matches nothing", () => {
+    const source = "// todo ::: should not match";
+
+    const records = parse(source, {
+      file: "data.json",
+      leaders: [],
+    });
+
+    expect(records).toHaveLength(0);
+  });
+});

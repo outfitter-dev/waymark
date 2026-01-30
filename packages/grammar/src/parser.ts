@@ -67,7 +67,7 @@ export function parseLine(
   options: ParseOptions = {}
 ): WaymarkRecord | null {
   const normalizedLine = normalizeLine(line);
-  const header = parseHeader(normalizedLine);
+  const header = parseHeader(normalizedLine, options.leaders);
 
   if (!header) {
     return null;
@@ -119,7 +119,7 @@ export function parse(
       continue;
     }
 
-    const header = parseHeader(rawLine);
+    const header = parseHeader(rawLine, options.leaders);
     if (!header) {
       inWaymarkContext = false;
       continue;
