@@ -6,8 +6,29 @@ import type { WaymarkRecord } from "./types";
 
 // todo ::: @codex externalize comment leader detection into shared language metadata #lib/parser
 
-const DOC_EXTENSIONS = new Set([".md", ".mdx", ".markdown", ".txt", ".rst"]);
-const CONFIG_EXTENSIONS = new Set([
+/**
+ * Registry for file category classification.
+ * Maps file extensions and path patterns to category types.
+ */
+export type FileCategoryRegistry = {
+  readonly docs: { readonly extensions: ReadonlySet<string> };
+  readonly config: { readonly extensions: ReadonlySet<string> };
+  readonly data: { readonly extensions: ReadonlySet<string> };
+  readonly test: {
+    readonly suffixes: ReadonlySet<string>;
+    readonly pathTokens: ReadonlySet<string>;
+  };
+};
+
+// Default extension sets for file categories
+const DEFAULT_DOC_EXTENSIONS = new Set([
+  ".md",
+  ".mdx",
+  ".markdown",
+  ".txt",
+  ".rst",
+]);
+const DEFAULT_CONFIG_EXTENSIONS = new Set([
   ".json",
   ".jsonc",
   ".yaml",
@@ -18,14 +39,14 @@ const CONFIG_EXTENSIONS = new Set([
   ".cfg",
   ".rc",
 ]);
-const DATA_EXTENSIONS = new Set([
+const DEFAULT_DATA_EXTENSIONS = new Set([
   ".csv",
   ".tsv",
   ".ndjson",
   ".jsonl",
   ".parquet",
 ]);
-const TEST_EXTENSIONS = new Set([
+const DEFAULT_TEST_SUFFIXES = new Set([
   ".test.ts",
   ".test.tsx",
   ".test.js",
@@ -35,13 +56,28 @@ const TEST_EXTENSIONS = new Set([
   ".spec.js",
   ".spec.jsx",
 ]);
-const TEST_TOKEN_PATTERNS = [
+const DEFAULT_TEST_PATH_TOKENS = new Set([
   ".test.",
   ".spec.",
   ".stories.",
   "__tests__",
   "__mocks__",
-];
+]);
+
+/**
+ * Default file category registry with comprehensive extension and pattern mappings.
+ * Covers documentation, configuration, data, and test file types.
+ */
+export const DEFAULT_FILE_CATEGORY_REGISTRY: FileCategoryRegistry =
+  Object.freeze({
+    docs: Object.freeze({ extensions: DEFAULT_DOC_EXTENSIONS }),
+    config: Object.freeze({ extensions: DEFAULT_CONFIG_EXTENSIONS }),
+    data: Object.freeze({ extensions: DEFAULT_DATA_EXTENSIONS }),
+    test: Object.freeze({
+      suffixes: DEFAULT_TEST_SUFFIXES,
+      pathTokens: DEFAULT_TEST_PATH_TOKENS,
+    }),
+  });
 
 /**
  * Infer language identifier from a file path.
@@ -120,40 +156,63 @@ export function inferLanguageFromFile(filePath: string | undefined): string {
   }
 }
 
-// todo ::: @codex allow configurable overrides for file category inference #lib/parser
+// done ::: allow configurable overrides for file category inference #lib/parser
 /**
  * Infer a file category (code/docs/config/etc) from a file path.
+ * Uses the registry for category classification with code as the default fallback.
+ *
  * @param filePath - File path to inspect.
+ * @param registry - File category registry to use (defaults to DEFAULT_FILE_CATEGORY_REGISTRY).
  * @returns File category value.
+ *
+ * @example
+ * ```typescript
+ * inferFileCategory("README.md")           // => "docs"
+ * inferFileCategory("package.json")        // => "config"
+ * inferFileCategory("data.csv")            // => "data"
+ * inferFileCategory("utils.test.ts")       // => "test"
+ * inferFileCategory("index.ts")            // => "code"
+ *
+ * // With custom registry
+ * const custom = { docs: { extensions: new Set([".doc"]) }, ... };
+ * inferFileCategory("report.doc", custom)  // => "docs"
+ * ```
  */
 export function inferFileCategory(
-  filePath: string | undefined
+  filePath: string | undefined,
+  registry: FileCategoryRegistry = DEFAULT_FILE_CATEGORY_REGISTRY
 ): WaymarkRecord["fileCategory"] {
   if (!filePath) {
     return "code";
   }
 
   const lower = filePath.toLowerCase();
+  const ext = extname(lower);
 
-  if (DOC_EXTENSIONS.has(extname(lower))) {
+  // Check docs extensions
+  if (registry.docs.extensions.has(ext)) {
     return "docs";
   }
 
-  if (CONFIG_EXTENSIONS.has(extname(lower))) {
+  // Check config extensions
+  if (registry.config.extensions.has(ext)) {
     return "config";
   }
 
-  if (DATA_EXTENSIONS.has(extname(lower))) {
+  // Check data extensions
+  if (registry.data.extensions.has(ext)) {
     return "data";
   }
 
-  for (const suffix of TEST_EXTENSIONS) {
+  // Check test suffixes
+  for (const suffix of registry.test.suffixes) {
     if (lower.endsWith(suffix)) {
       return "test";
     }
   }
 
-  for (const token of TEST_TOKEN_PATTERNS) {
+  // Check test path tokens
+  for (const token of registry.test.pathTokens) {
     if (lower.includes(token)) {
       return "test";
     }
