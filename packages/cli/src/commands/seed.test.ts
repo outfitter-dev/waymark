@@ -290,12 +290,16 @@ export function testJsonl() {}
     expect(lines.length).toBeGreaterThanOrEqual(2);
 
     // First line should be a result
-    const firstLine = JSON.parse(lines[0]);
-    expect(firstLine).toHaveProperty("file");
+    const firstLine = lines[0];
+    expect(firstLine).toBeDefined();
+    const parsedFirst = JSON.parse(firstLine as string);
+    expect(parsedFirst).toHaveProperty("file");
 
     // Last line should be summary
-    const lastLine = JSON.parse(lines.at(-1));
-    expect(lastLine).toHaveProperty("summary");
+    const lastLine = lines.at(-1);
+    expect(lastLine).toBeDefined();
+    const parsedLast = JSON.parse(lastLine as string);
+    expect(parsedLast).toHaveProperty("summary");
   });
 
   test("processes multiple files", async () => {
