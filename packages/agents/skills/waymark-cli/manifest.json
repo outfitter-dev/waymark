@@ -14,6 +14,7 @@
     "init",
     "lint",
     "rm",
+    "seed",
     "skill",
     "update"
   ],
@@ -124,6 +125,14 @@
         "path": "commands/rm.md",
         "metadata": {
           "wm-cmd": "rm"
+        }
+      },
+      {
+        "name": "seed",
+        "kind": "command",
+        "path": "commands/seed.md",
+        "metadata": {
+          "wm-cmd": "seed"
         }
       },
       {
