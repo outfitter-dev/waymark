@@ -25,7 +25,7 @@ Waymarks **complement** docstrings; they never replace them.
 
 Place waymarks adjacent to docstrings, never inside them:
 
-```typescript
+```typescript wm:ignore
 /**
  * Authenticates a user and returns a session token.
  * @param request - User login credentials
@@ -40,7 +40,7 @@ export async function authenticate(request: AuthRequest) {
 
 ### Waymarks in Practice
 
-```typescript
+```typescript wm:ignore
 // tldr ::: managing customer authentication flow
 
 export async function authenticate(request: AuthRequest) {
@@ -69,7 +69,7 @@ Line comments are preferred for waymarks. Use block comments only in languages w
 
 Get an instant overview of your codebase with file-level `tldr` summaries:
 
-```bash
+```bash wm:ignore
 $ wm find src/ --type tldr
 
 src/auth.ts:1

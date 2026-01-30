@@ -321,7 +321,7 @@ After agent work:
 
 Write tests first, then implementation:
 
-```typescript
+```typescript wm:ignore
 // Step 1: Write failing test
 test('parseHeader extracts signals and marker', () => {
   const result = parseHeader('// ~*todo ::: fix bug');
@@ -445,7 +445,7 @@ Our agent-assisted development is working when:
 
 ## Tools and Commands
 
-```bash
+```bash wm:ignore
 # Quality checks
 bun run check:all          # Full pipeline (lint, typecheck, test)
 bun run lint               # Lint all packages

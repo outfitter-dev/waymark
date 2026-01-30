@@ -304,7 +304,7 @@ export type { WaymarkRecord } from './types.ts';
 
 Test individual modules in isolation:
 
-```typescript
+```typescript wm:ignore
 // tokenizer.test.ts
 import { parseHeader } from './tokenizer.ts';
 
@@ -321,7 +321,7 @@ test('parseHeader extracts signals and marker', () => {
 
 Test orchestration layers:
 
-```typescript
+```typescript wm:ignore
 // parser.test.ts
 import { parse } from './parser.ts';
 

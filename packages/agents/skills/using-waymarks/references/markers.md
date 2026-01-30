@@ -12,7 +12,7 @@ These markers indicate tasks and actions to be taken.
 
 Task to complete.
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement user validation
 // todo ::: @agent add rate limiting #sec
 ```
@@ -21,7 +21,7 @@ Task to complete.
 
 Bug to address.
 
-```typescript
+```typescript wm:ignore
 // fix ::: memory leak in connection pool
 // fixme ::: handle null case in parser
 ```
@@ -30,7 +30,7 @@ Bug to address.
 
 Work in progress. Indicates incomplete code.
 
-```typescript
+```typescript wm:ignore
 // wip ::: implementing OAuth flow
 // wip ::: refactoring database layer
 ```
@@ -39,7 +39,7 @@ Work in progress. Indicates incomplete code.
 
 Completed task. Temporary handoff marker, typically removed after acknowledgment.
 
-```typescript
+```typescript wm:ignore
 // done ::: implemented caching layer
 // done ::: fixed authentication bug
 ```
@@ -48,7 +48,7 @@ Completed task. Temporary handoff marker, typically removed after acknowledgment
 
 Needs code review.
 
-```typescript
+```typescript wm:ignore
 // review ::: check edge cases in validation
 // review ::: @alice verify security implications
 ```
@@ -57,7 +57,7 @@ Needs code review.
 
 Needs testing.
 
-```typescript
+```typescript wm:ignore
 // test ::: add unit tests for edge cases
 // test ::: needs integration testing
 ```
@@ -66,7 +66,7 @@ Needs testing.
 
 Needs verification.
 
-```typescript
+```typescript wm:ignore
 // check ::: verify performance under load
 // check ::: confirm compatibility with v2 API
 ```
@@ -79,7 +79,7 @@ These markers provide context and documentation.
 
 General observation or information.
 
-```typescript
+```typescript wm:ignore
 // note ::: tokens expire after 24 hours
 // note ::: assumes UTC timestamps
 ```
@@ -88,7 +88,7 @@ General observation or information.
 
 Background or reasoning for a decision.
 
-```typescript
+```typescript wm:ignore
 // context ::: using polling because webhooks unreliable
 // why ::: disabled retry logic per compliance requirement
 ```
@@ -97,7 +97,7 @@ Background or reasoning for a decision.
 
 File-level summary. **One per file, at top.**
 
-```typescript
+```typescript wm:ignore
 // tldr ::: authentication service with JWT tokens
 // tldr ::: Stripe webhook handler verifying signatures
 ```
@@ -112,7 +112,7 @@ File-level summary. **One per file, at top.**
 
 Section or block summary. Describes the code immediately following.
 
-```typescript
+```typescript wm:ignore
 // about ::: validates webhook signatures before processing
 export function verifyWebhook() {}
 
@@ -130,7 +130,7 @@ class ConnectionPool {}
 
 Usage example.
 
-```typescript
+```typescript wm:ignore
 // example ::: cache.get("user:123") returns User or null
 // example ::: call with { retries: 3 } for automatic retry
 ```
@@ -139,7 +139,7 @@ Usage example.
 
 Suggestion or potential improvement.
 
-```typescript
+```typescript wm:ignore
 // idea ::: could use Redis for distributed caching
 // idea ::: consider splitting into microservices
 ```
@@ -148,7 +148,7 @@ Suggestion or potential improvement.
 
 General commentary.
 
-```typescript
+```typescript wm:ignore
 // comment ::: this approach chosen for simplicity
 // comment ::: inherited from legacy codebase
 ```
@@ -161,7 +161,7 @@ These markers flag potential issues or quality concerns.
 
 Warning about behavior or usage.
 
-```typescript
+```typescript wm:ignore
 // warn ::: not thread-safe, use mutex for concurrent access
 // warn ::: modifies input array in place
 ```
@@ -170,7 +170,7 @@ Warning about behavior or usage.
 
 Critical attention needed.
 
-```typescript
+```typescript wm:ignore
 // alert ::: security-critical code path
 // alert ::: changes here affect billing calculations
 ```
@@ -179,7 +179,7 @@ Critical attention needed.
 
 Outdated code scheduled for removal.
 
-```typescript
+```typescript wm:ignore
 // deprecated ::: use AuthV2 service instead
 // deprecated ::: will be removed in v3.0
 ```
@@ -188,7 +188,7 @@ Outdated code scheduled for removal.
 
 Temporary code that should be removed.
 
-```typescript
+```typescript wm:ignore
 // temp ::: hardcoded for demo, needs config
 // tmp ::: remove after feature flag rollout
 ```
@@ -197,7 +197,7 @@ Temporary code that should be removed.
 
 Workaround or temporary solution.
 
-```typescript
+```typescript wm:ignore
 // hack ::: workaround for upstream bug #1234
 // stub ::: placeholder until API is ready
 ```
@@ -210,7 +210,7 @@ These markers indicate workflow state.
 
 Cannot proceed due to external dependency.
 
-```typescript
+```typescript wm:ignore
 // blocked ::: waiting for API approval from partner
 // blocked ::: depends on database migration
 ```
@@ -219,7 +219,7 @@ Cannot proceed due to external dependency.
 
 Dependency or requirement.
 
-```typescript
+```typescript wm:ignore
 // needs ::: database migration before enabling
 // needs ::: approval from security team
 ```
@@ -230,7 +230,7 @@ Dependency or requirement.
 
 Question or uncertainty needing clarification.
 
-```typescript
+```typescript wm:ignore
 // question ::: should we retry on 429 responses?
 // ask ::: is this the correct business logic?
 ```
@@ -239,7 +239,7 @@ Question or uncertainty needing clarification.
 
 Any marker can be combined with signals:
 
-```typescript
+```typescript wm:ignore
 // *fix ::: critical security vulnerability
 // ~todo ::: refactoring in progress
 // ~*fix ::: urgent bug I am actively working on

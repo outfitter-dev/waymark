@@ -87,7 +87,7 @@ Waymarks **complement** docstrings; they never replace them. Docstrings describe
 
 Place waymarks adjacent to docstrings, never inside them:
 
-```typescript
+```typescript wm:ignore
 /**
  * Authenticates a user and returns a session token.
  * @param request - User login credentials
@@ -126,7 +126,7 @@ export async function authenticate(request: AuthRequest) {
 
 **Example**:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement rate limiting
 ```
 
@@ -170,7 +170,7 @@ Signals are optional prefixes that indicate state or priority.
 
 The tilde (`~`) marks a waymark as **flagged**—indicating work that's actively in progress on the current branch.
 
-```typescript
+```typescript wm:ignore
 // ~todo ::: refactoring auth module
 // ~fix ::: handle edge case with empty arrays
 // ~note ::: revisiting this algorithm, may refactor
@@ -196,7 +196,7 @@ The tilde (`~`) marks a waymark as **flagged**—indicating work that's actively
 
 The star (`*`) marks a waymark as **starred**—indicating high priority or importance.
 
-```typescript
+```typescript wm:ignore
 // *fix ::: security vulnerability in auth handler
 // *todo ::: critical path for launch
 // *warn ::: do not modify without approval
@@ -218,7 +218,7 @@ The star (`*`) marks a waymark as **starred**—indicating high priority or impo
 
 Signals can be combined. When both are present, the canonical order is `~*` (flagged first, then starred):
 
-```typescript
+```typescript wm:ignore
 // ~*todo ::: urgent fix I'm actively working on
 // ~*fix ::: high-priority bug, in progress
 ```
@@ -298,13 +298,13 @@ These types are first-class and built into the tooling:
 
 **Example**:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: Stripe webhook handler verifying signatures and queuing retries
 ```
 
 **Documentation TLDRs**: Use in HTML comments with `#docs` tag:
 
-```markdown
+```markdown wm:ignore
 <!-- tldr ::: REST API documentation for backend services #docs/api -->
 ```
 
@@ -316,7 +316,7 @@ These types are first-class and built into the tooling:
 
 **Example**:
 
-```typescript
+```typescript wm:ignore
 // about ::: validates webhook signatures using HMAC-SHA256
 function verifySignature(payload: string, signature: string): boolean {
   // ...
@@ -346,7 +346,7 @@ Without allowlisting, unknown types trigger lint warnings.
 
 Use markerless `:::` lines to continue waymark content across multiple lines:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement OAuth flow
 //      ::: with PKCE support
 //      ::: and token refresh
@@ -362,7 +362,7 @@ Use markerless `:::` lines to continue waymark content across multiple lines:
 
 **Context sensitivity**: A markerless `:::` only becomes a continuation when the parser is tracking an active waymark. Isolated `:::` lines in code (e.g., random comments containing `:::`) are safely ignored.
 
-```typescript
+```typescript wm:ignore
 // This is NOT a continuation (no preceding waymark):
 // ::: this line is ignored by the parser
 
@@ -374,7 +374,7 @@ Use markerless `:::` lines to continue waymark content across multiple lines:
 
 Properties can act as pseudo-markers in continuation context, but **only for known property keys**:
 
-```typescript
+```typescript wm:ignore
 // tldr  ::: payment processor service
 // see   ::: #payments/core
 // owner ::: @alice
@@ -411,7 +411,7 @@ Parsed as a single `tldr` waymark with three properties:
 
 **Important**: Blessed markers (like `needs` or `blocks`) are NOT treated as property continuations even when followed by `:::`. A line like `// needs ::: something` starts a new waymark, not a continuation:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement feature
 // needs ::: database migration first  // <-- This is a NEW waymark, not a continuation
 ```
@@ -420,7 +420,7 @@ Parsed as a single `tldr` waymark with three properties:
 
 Multi-line waymarks in HTML comments require proper closing on each line:
 
-```html
+```html wm:ignore
 <!-- tldr ::: component library documentation -->
 <!--       ::: covers setup and API reference -->
 <!--       ::: includes migration guides -->
@@ -436,7 +436,7 @@ The formatter ensures each continuation line:
 
 Formatters align continuation `:::` with the parent waymark's sigil by default:
 
-```typescript
+```typescript wm:ignore
 // Before formatting:
 // todo ::: long task description
 // ::: continues here
@@ -461,7 +461,7 @@ format:
 
 When `align_continuations` is `false`, continuations appear flush with the comment leader:
 
-```typescript
+```typescript wm:ignore
 // With align_continuations = false:
 // todo ::: long task description
 // ::: continues here
@@ -471,7 +471,7 @@ When `align_continuations` is `false`, continuations appear flush with the comme
 
 Parsers tolerate flexible spacing around `:::`:
 
-```typescript
+```typescript wm:ignore
 // All of these parse identically:
 // todo ::: description
 // todo:::description
@@ -480,7 +480,7 @@ Parsers tolerate flexible spacing around `:::`:
 
 Formatters normalize to canonical form (single space before and after `:::` when a marker is present):
 
-```typescript
+```typescript wm:ignore
 // Canonical form:
 // todo ::: description
 ```
@@ -493,7 +493,7 @@ Formatters normalize to canonical form (single space before and after `:::` when
 
 Properties are `key:value` pairs in the content:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement caching owner:@alice priority:high
 ```
 
@@ -507,7 +507,7 @@ Properties are `key:value` pairs in the content:
 
 Use double quotes for values containing spaces:
 
-```typescript
+```typescript wm:ignore
 // note ::: reason:"waiting for API approval" status:blocked
 ```
 
@@ -520,7 +520,7 @@ Use double quotes for values containing spaces:
 
 If a key appears multiple times, the **last value wins**:
 
-```typescript
+```typescript wm:ignore
 // todo ::: fix bug owner:@alice owner:@bob
 // Result: { owner: "@bob" }
 ```
@@ -531,7 +531,7 @@ Linters warn on duplicates.
 
 The `sym:` property associates a waymark with a specific code symbol:
 
-```typescript
+```typescript wm:ignore
 // todo ::: sym:handleAuth implement token refresh
 // fix ::: sym:validateInput escape special characters
 // about ::: sym:AuthService manages user sessions
@@ -572,7 +572,7 @@ The `sym:` property associates a waymark with a specific code symbol:
 
 Use `ref:#token` to declare the authoritative anchor for a concept:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: authentication service ref:#auth/service
 ```
 
@@ -624,7 +624,7 @@ Relations express dependencies between waymarks:
 
 **Syntax**: Hash is always on the value, not the key:
 
-```typescript
+```typescript wm:ignore
 // Correct:
 // todo ::: implement refunds from:#payments/charge
 
@@ -636,7 +636,7 @@ Relations express dependencies between waymarks:
 
 Use relations to track dependencies:
 
-```typescript
+```typescript wm:ignore
 // File: src/payments/charge.ts
 // tldr ::: charge processing service ref:#payments/charge
 
@@ -654,7 +654,7 @@ wm src/ --graph
 
 A relation is "dangling" if it references a non-existent canonical:
 
-```typescript
+```typescript wm:ignore
 // Error: no canonical for #nonexistent
 // todo ::: fix bug from:#nonexistent
 ```
@@ -679,7 +679,7 @@ IDs use double-bracket notation with three supported forms:
 
 **Examples**:
 
-```typescript
+```typescript wm:ignore
 // todo ::: [[a1b2c3d]] implement rate limiting
 // fix ::: [[x9y8z7w|auth-bug]] resolve authentication failure
 // idea ::: [[session-cache]] consider Redis for sessions
@@ -706,7 +706,7 @@ Aliases provide human-readable identifiers alongside the hash:
 - **Purpose**: Readable references in documentation and conversation
 - **Uniqueness**: Aliases should be unique within a repository but are not enforced as strictly as hashes
 
-```typescript
+```typescript wm:ignore
 // tldr ::: [[f3g4h5j|stripe-webhook]] Stripe webhook handler ref:#payments/stripe
 // todo ::: [[auth-refresh]] implement token refresh from:#auth/service
 ```
@@ -721,7 +721,7 @@ Aliases provide human-readable identifiers alongside the hash:
 
 Reference waymarks by their ID in relations and content:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement retry logic see:[[a1b2c3d]]
 // fix ::: address feedback from:[[x9y8z7w|auth-bug]]
 // note ::: supersedes [[old-impl]] with new approach
@@ -737,7 +737,7 @@ Reference waymarks by their ID in relations and content:
 
 Relations can reference waymarks by ID instead of (or in addition to) canonical tokens:
 
-```typescript
+```typescript wm:ignore
 // todo ::: implement caching from:[[a1b2c3d]] see:#cache/redis
 // fix ::: resolve bug replaces:[[old-fix|deprecated-workaround]]
 ```
@@ -751,7 +751,7 @@ Tooling normalizes IDs for consistency:
 - Whitespace around `|` separator is trimmed
 - Invalid characters are rejected
 
-```typescript
+```typescript wm:ignore
 // Input (non-canonical):
 // todo ::: [[ A1B2C3D | My Alias ]] fix bug
 
@@ -777,7 +777,7 @@ ids:
 
 Any `#` followed by non-whitespace is a tag:
 
-```typescript
+```typescript wm:ignore
 // todo ::: optimize query #perf:hotpath
 // fix ::: XSS vulnerability #sec:boundary
 ```
@@ -821,7 +821,7 @@ rg '#perf'  # Find all performance tags
 
 Mentions start with `@` followed by a **lowercase letter**:
 
-```typescript
+```typescript wm:ignore
 // todo ::: @agent implement OAuth flow
 // review ::: @alice check security implications
 // todo ::: @dev-team coordinate rollout
@@ -844,7 +844,7 @@ Parsers must reject patterns that look like mentions but are not:
 
 **Valid mentions**:
 
-```typescript
+```typescript wm:ignore
 // todo ::: @alice implement feature           // Valid: lowercase start
 // todo ::: @agent add caching                 // Valid: lowercase start
 // todo ::: @dev-team review changes           // Valid: lowercase with hyphen
@@ -853,7 +853,7 @@ Parsers must reject patterns that look like mentions but are not:
 
 **Invalid patterns** (not extracted as mentions):
 
-```typescript
+```typescript wm:ignore
 // note ::: contact user@example.com           // Email - NOT a mention
 // note ::: uses @Component decorator          // Decorator - NOT a mention
 // note ::: depends on @angular/core           // Scoped package - NOT a mention
@@ -862,7 +862,7 @@ Parsers must reject patterns that look like mentions but are not:
 
 **Mixed content** extracts only valid mentions:
 
-```typescript
+```typescript wm:ignore
 // todo ::: @alice contact user@example.com
 // Extracted mentions: ["@alice"]
 // "user@example.com" is ignored (email pattern)
@@ -876,13 +876,13 @@ Parsers must reject patterns that look like mentions but are not:
 
 Place actor **immediately after `:::`** to assign ownership:
 
-```typescript
+```typescript wm:ignore
 // todo ::: @agent add rate limiting
 ```
 
 Mentions later in the sentence indicate involvement without ownership:
 
-```typescript
+```typescript wm:ignore
 // todo ::: @alice coordinate with @backend team
 // Ownership: @alice
 // Involvement: @backend
@@ -921,7 +921,7 @@ wm src/ --mention @agents  # Matches all agent handles
 
 Every waymark parses into a structured record:
 
-```typescript
+```typescript wm:ignore
 interface WaymarkRecord {
   file: string;              // "src/auth.ts"
   language: string | null;   // "ts"
@@ -1045,7 +1045,7 @@ Parsers must:
 
 ### TypeScript
 
-```typescript
+```typescript wm:ignore
 // tldr ::: authentication service ref:#auth/service
 
 export class AuthService {
@@ -1068,7 +1068,7 @@ export class AuthService {
 
 ### Python
 
-```python
+```python wm:ignore
 # tldr ::: Stripe webhook processor ref:#payments/webhook
 
 def process_webhook(payload: dict) -> None:
@@ -1085,7 +1085,7 @@ def process_webhook(payload: dict) -> None:
 
 ### Go
 
-```go
+```go wm:ignore
 // tldr ::: cache service with Redis backend ref:#cache/redis
 
 package cache
@@ -1105,7 +1105,7 @@ func (c *CacheService) Get(key string) (string, error) {
 
 ### Markdown
 
-```markdown
+```markdown wm:ignore
 <!-- tldr ::: REST API documentation for backend services #docs/api -->
 
 # API Documentation
@@ -1122,7 +1122,7 @@ func (c *CacheService) Get(key string) (string, error) {
 
 **Multi-line with properties**:
 
-```typescript
+```typescript wm:ignore
 // todo  ::: refactor authentication flow to support OAuth 2.0
 //       ::: coordinate with @backend team on token format
 //       ::: update documentation when complete
@@ -1134,7 +1134,7 @@ func (c *CacheService) Get(key string) (string, error) {
 
 **Dependency chain**:
 
-```typescript
+```typescript wm:ignore
 // File: src/auth/jwt.ts
 // tldr ::: JWT token service ref:#auth/jwt
 
@@ -1147,7 +1147,7 @@ func (c *CacheService) Get(key string) (string, error) {
 
 **Security boundary**:
 
-```typescript
+```typescript wm:ignore
 // note ::: validates all inputs at API boundary #sec:boundary
 // warn ::: XSS risk if input not sanitized #sec
 export function validateInput(input: string): boolean {
@@ -1158,7 +1158,7 @@ export function validateInput(input: string): boolean {
 
 **With waymark IDs**:
 
-```typescript
+```typescript wm:ignore
 // tldr ::: [[f3g4h5j|auth-service]] authentication service ref:#auth/service
 // todo ::: [[a1b2c3d]] implement token refresh from:#auth/jwt
 // fix ::: [[x9y8z7w|rate-limit-bug]] add rate limiting see:[[a1b2c3d]]
@@ -1167,7 +1167,7 @@ export function validateInput(input: string): boolean {
 
 **Draft IDs** (alias-only, hash assigned later):
 
-```typescript
+```typescript wm:ignore
 // todo ::: [[implement-caching]] add Redis caching layer
 // idea ::: [[refactor-auth]] consider splitting auth module
 ```
@@ -1180,35 +1180,35 @@ export function validateInput(input: string): boolean {
 
 ❌ Place waymarks in string literals or docstrings:
 
-```typescript
+```typescript wm:ignore
 // Bad
 const note = "// todo ::: fix this";  // Not a waymark
 ```
 
 ❌ Use double signals:
 
-```typescript
+```typescript wm:ignore
 // Bad
 // **fix ::: critical bug  // Invalid syntax
 ```
 
 ❌ Put hash on property keys:
 
-```typescript
+```typescript wm:ignore
 // Bad
 // todo ::: fix bug #from:auth  // Should be from:#auth
 ```
 
 ❌ Create one-off tags without checking existing patterns:
 
-```typescript
+```typescript wm:ignore
 // Bad
 // todo ::: optimize #fast  // Check if #perf or #perf:optimize exists first
 ```
 
 ❌ Use numeric-only hashtags (collision with issue numbers):
 
-```typescript
+```typescript wm:ignore
 // Bad
 // fix ::: #123  // Ambiguous - issue #123 or tag?
 ```
@@ -1217,7 +1217,7 @@ const note = "// todo ::: fix this";  // Not a waymark
 
 ✅ Keep waymarks in non-rendered comments:
 
-```typescript
+```typescript wm:ignore
 // Good
 // todo ::: implement feature
 function foo() { /* ... */ }
@@ -1225,7 +1225,7 @@ function foo() { /* ... */ }
 
 ✅ Use namespaced tags:
 
-```typescript
+```typescript wm:ignore
 // Good
 // todo ::: optimize #perf:hotpath
 ```
@@ -1238,14 +1238,14 @@ rg 'ref:#auth'  # See what exists first
 
 ✅ Use proper relation syntax:
 
-```typescript
+```typescript wm:ignore
 // Good
 // todo ::: fix bug from:#auth/service
 ```
 
 ✅ Use wikilink-style IDs:
 
-```typescript
+```typescript wm:ignore
 // Good
 // todo ::: [[a1b2c3d]] implement feature
 // todo ::: [[a1b2c3d|my-feature]] implement feature with alias
