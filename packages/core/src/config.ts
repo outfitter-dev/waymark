@@ -8,6 +8,7 @@ import { dirname, extname, join, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 
 import type {
+  FileCategoryConfig,
   LanguageConfig,
   PartialWaymarkConfig,
   WaymarkConfig,
@@ -283,6 +284,7 @@ function normalizeConfigShape(
   assignIdOptions(result, raw);
   assignIndexOptions(result, raw);
   assignLanguageOptions(result, raw);
+  assignCategoryOptions(result, raw);
 
   return result;
 }
@@ -541,6 +543,66 @@ function assignLanguageOptions(
 
   if (Object.keys(languages).length > 0) {
     result.languages = languages as LanguageConfig;
+  }
+}
+
+function assignCategoryOptions(
+  result: Partial<WaymarkConfig>,
+  raw: Record<string, unknown>
+): void {
+  const categoriesRaw = readObject(raw, "categories");
+  if (!categoriesRaw) {
+    return;
+  }
+
+  const categories: Partial<FileCategoryConfig> = {};
+
+  // Handle docs extensions array
+  const docs = readStringArray(categoriesRaw, ["docs"]);
+  if (docs) {
+    categories.docs = docs.map((ext) =>
+      ext.startsWith(".") ? ext : `.${ext}`
+    );
+  }
+
+  // Handle config extensions array
+  const config = readStringArray(categoriesRaw, ["config"]);
+  if (config) {
+    categories.config = config.map((ext) =>
+      ext.startsWith(".") ? ext : `.${ext}`
+    );
+  }
+
+  // Handle data extensions array
+  const data = readStringArray(categoriesRaw, ["data"]);
+  if (data) {
+    categories.data = data.map((ext) =>
+      ext.startsWith(".") ? ext : `.${ext}`
+    );
+  }
+
+  // Handle test patterns object
+  const testRaw = readObject(categoriesRaw, "test");
+  if (testRaw) {
+    const test: FileCategoryConfig["test"] = {};
+
+    const suffixes = readStringArray(testRaw, ["suffixes"]);
+    if (suffixes) {
+      test.suffixes = suffixes;
+    }
+
+    const pathTokens = readStringArray(testRaw, ["pathTokens", "path_tokens"]);
+    if (pathTokens) {
+      test.pathTokens = pathTokens;
+    }
+
+    if (Object.keys(test).length > 0) {
+      categories.test = test;
+    }
+  }
+
+  if (Object.keys(categories).length > 0) {
+    result.categories = categories as FileCategoryConfig;
   }
 }
 
