@@ -38,6 +38,11 @@ import {
 } from "./commands/remove.ts";
 import { type ScanRuntimeOptions, scanRecords } from "./commands/scan.ts";
 import {
+  buildSeedArgs,
+  runSeedCommand,
+  type SeedCommandOptions,
+} from "./commands/seed.ts";
+import {
   runSkillCommand,
   runSkillListCommand,
   runSkillPathCommand,
@@ -740,14 +745,14 @@ function displaySelectedWaymark(
   if (Object.keys(selected.properties).length > 0) {
     writeStdout("\nProperties:");
     for (const [key, value] of Object.entries(selected.properties)) {
-      writeStdout(`  ${key}: ${value}`);
+      writeStdout(`${key}: ${value}`);
     }
   }
 
   if (selected.relations.length > 0) {
     writeStdout("\nRelations:");
     for (const rel of selected.relations) {
-      writeStdout(`  ${rel.kind}: ${rel.token}`);
+      writeStdout(`${rel.kind}: ${rel.token}`);
     }
   }
 
@@ -837,6 +842,33 @@ async function handleCheckCommand(
   // Exit with appropriate code
   if (!report.passed) {
     throw new CliError("Check found issues", ExitCode.failure);
+  }
+}
+
+// about ::: executes seed command to auto-generate TLDRs from docstrings
+async function handleSeedCommand(
+  program: Command,
+  paths: string[],
+  options: SeedCommandOptions
+): Promise<void> {
+  const context = await createContext(resolveGlobalOptions(program));
+
+  // If no paths provided, default to current directory
+  const pathsToSeed = paths.length > 0 ? paths : ["."];
+
+  const parsed = buildSeedArgs({
+    paths: pathsToSeed,
+    options,
+  });
+
+  const result = await runSeedCommand(parsed, context);
+
+  if (result.output.length > 0) {
+    writeStdout(result.output);
+  }
+
+  if (result.exitCode !== 0) {
+    throw new CliError("Seed command failed", ExitCode.failure);
   }
 }
 
@@ -935,6 +967,7 @@ const COMMAND_ORDER = [
   "fmt",
   "lint",
   "check",
+  "seed",
   "init",
   "config",
   "skill",
@@ -947,7 +980,8 @@ const COMMAND_ORDER = [
 const HIDDEN_COMMANDS = new Set(["fmt", "lint"]);
 
 /**
- * Sort comparator for commands based on predefined order.
+
+- Sort comparator for commands based on predefined order.
  */
 function compareCommandOrder(a: Command, b: Command): number {
   const aIndex = COMMAND_ORDER.indexOf(a.name());
@@ -965,7 +999,8 @@ function compareCommandOrder(a: Command, b: Command): number {
 }
 
 /**
- * Filter and sort commands for help display.
+
+- Filter and sort commands for help display.
  */
 function getVisibleCommands(commands: readonly Command[]): Command[] {
   return commands
@@ -1012,7 +1047,7 @@ function renderOptionSection(
   }
   let section = `\n\n${title}:\n`;
   for (const opt of options) {
-    section += `  ${helper.optionTerm(opt).padEnd(termWidth)}  ${helper.optionDescription(opt)}\n`;
+    section += `${helper.optionTerm(opt).padEnd(termWidth)}  ${helper.optionDescription(opt)}\n`;
   }
   return section;
 }
@@ -1038,13 +1073,13 @@ function formatRootHelp(
     output += "\n\nCommands:\n";
     for (const c of visibleCommands) {
       const name = c.name() + (c.alias() ? `|${c.alias()}` : "");
-      output += `  ${name.padEnd(termWidth)}  ${c.description()}\n`;
+      output += `${name.padEnd(termWidth)}  ${c.description()}\n`;
     }
   }
 
   if (helpTopicNames.length > 0) {
     output += "\n\nTopics:\n";
-    output += `  Run 'wm help <topic>' for syntax guides (${helpTopicNames.join(
+    output += `Run 'wm help <topic>' for syntax guides (${helpTopicNames.join(
       ", "
     )})\n`;
   }
@@ -1053,7 +1088,8 @@ function formatRootHelp(
 }
 
 /**
- * Format help text for commander with custom command ordering.
+
+- Format help text for commander with custom command ordering.
  */
 function formatCustomHelp(
   cmd: Command,
@@ -1075,7 +1111,7 @@ function formatCustomHelp(
   if (argumentList.length > 0) {
     output += "\n\nArguments:\n";
     for (const arg of argumentList) {
-      output += `  ${helper.argumentTerm(arg).padEnd(termWidth)}  ${helper.argumentDescription(arg)}\n`;
+      output += `${helper.argumentTerm(arg).padEnd(termWidth)}  ${helper.argumentDescription(arg)}\n`;
     }
   }
 
@@ -1084,7 +1120,7 @@ function formatCustomHelp(
   if (optionList.length > 0) {
     output += "\n\nOptions:\n";
     for (const opt of optionList) {
-      output += `  ${helper.optionTerm(opt).padEnd(termWidth)}  ${helper.optionDescription(opt)}\n`;
+      output += `${helper.optionTerm(opt).padEnd(termWidth)}  ${helper.optionDescription(opt)}\n`;
     }
   }
 
@@ -1093,7 +1129,7 @@ function formatCustomHelp(
     output += "\n\nCommands:\n";
     for (const c of visibleCommands) {
       const name = c.name() + (c.alias() ? `|${c.alias()}` : "");
-      output += `  ${name.padEnd(termWidth)}  ${c.description()}\n`;
+      output += `${name.padEnd(termWidth)}  ${c.description()}\n`;
     }
   }
 
@@ -1101,8 +1137,9 @@ function formatCustomHelp(
 }
 
 /**
- * Build custom help formatter for commander.
- * Filters out hidden commands and reorders visible commands.
+
+- Build custom help formatter for commander.
+- Filters out hidden commands and reorders visible commands.
  */
 function buildCustomHelpFormatter() {
   return (cmd: Command, helper: ReturnType<Command["createHelp"]>) => {
@@ -1112,8 +1149,9 @@ function buildCustomHelpFormatter() {
 }
 
 /**
- * Build a Commander program with all CLI commands registered.
- * @returns Configured Commander program instance.
+
+- Build a Commander program with all CLI commands registered.
+- @returns Configured Commander program instance.
  */
 export async function createProgram(): Promise<Command> {
   // Read version from package.json
@@ -1224,6 +1262,7 @@ Note: For agent-facing documentation, use "wm skill".
     handleDoctorCommand,
     handleCheckCommand,
     handleUnifiedCommand,
+    handleSeedCommand,
     writeStdout,
   });
 
@@ -1246,8 +1285,9 @@ Note: For agent-facing documentation, use "wm skill".
 }
 
 /**
- * Run the CLI using process.argv when invoked as a script. Exits the process with appropriate exit code.
- * @returns No return value; process exits after execution.
+
+- Run the CLI using process.argv when invoked as a script. Exits the process with appropriate exit code.
+- @returns No return value; process exits after execution.
  */
 export function runMain(): void {
   registerSignalHandlers();
@@ -1262,9 +1302,10 @@ export function runMain(): void {
 }
 
 /**
- * Run the CLI with a custom argv array, capturing stdout/stderr.
- * @param argv - Command-line arguments (excluding node and binary).
- * @returns Exit code and captured stdout/stderr.
+
+- Run the CLI with a custom argv array, capturing stdout/stderr.
+- @param argv - Command-line arguments (excluding node and binary).
+- @returns Exit code and captured stdout/stderr.
  */
 export async function runCli(argv: string[]): Promise<{
   exitCode: number;
