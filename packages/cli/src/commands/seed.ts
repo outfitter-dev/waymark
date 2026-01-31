@@ -1,13 +1,8 @@
-// tldr ::: seed command implementation for auto-generating TLDRs from docstrings
+// tldr ::: seed command for discovering TLDR candidates from docstrings and codetags
 
 import { readFile } from "node:fs/promises";
 
-import {
-  type BulkInsertResult,
-  bulkInsert,
-  findTldrInsertionPoint,
-  type InsertionSpec,
-} from "@waymarks/core";
+import { findTldrInsertionPoint } from "@waymarks/core";
 import {
   detectDocstring,
   extractSummary,
@@ -19,7 +14,9 @@ import { expandInputPaths } from "../utils/fs.ts";
 
 /** Options for the seed command. */
 export type SeedCommandOptions = {
-  write: boolean;
+  docstrings: boolean;
+  codetags: boolean;
+  all: boolean;
   json: boolean;
   jsonl: boolean;
 };
@@ -36,23 +33,37 @@ export type ParsedSeedArgs = {
   options: SeedCommandOptions;
 };
 
-/** Summary of seed operation. */
-export type SeedSummary = {
-  total: number;
-  inserted: number;
-  skipped: number;
-  wouldInsert: number;
-  filesProcessed: number;
+/** Type of candidate source. */
+export type CandidateSource = "docstring" | "codetag";
+
+/** A TLDR candidate discovered in a file. */
+export type SeedCandidate = {
+  file: string;
+  source: CandidateSource;
+  line: number;
+  content: string;
+  insertionPoint: number;
 };
 
 /** Result of processing a single file. */
 export type SeedFileResult = {
   file: string;
-  status: "inserted" | "skipped" | "error" | "would-insert";
-  content?: string;
-  line?: number;
+  status: "candidate" | "skipped" | "error";
+  candidate?: SeedCandidate;
   reason?: string;
   error?: string;
+};
+
+/** Summary of seed operation. */
+export type SeedSummary = {
+  total: number;
+  candidates: number;
+  skipped: number;
+  errors: number;
+  bySource: {
+    docstrings: number;
+    codetags: number;
+  };
 };
 
 /** Result of the seed command. */
@@ -63,19 +74,34 @@ export type SeedCommandResult = {
   exitCode: number;
 };
 
-/**
+// Codetag patterns to detect
+const CODETAG_PATTERNS = [
+  { pattern: /^\s*(?:\/\/|#|--|%)\s*TODO\s*[:-]?\s*(.+)/im, tag: "TODO" },
+  { pattern: /^\s*(?:\/\/|#|--|%)\s*FIXME\s*[:-]?\s*(.+)/im, tag: "FIXME" },
+  { pattern: /^\s*(?:\/\/|#|--|%)\s*NOTE\s*[:-]?\s*(.+)/im, tag: "NOTE" },
+  { pattern: /^\s*(?:\/\/|#|--|%)\s*HACK\s*[:-]?\s*(.+)/im, tag: "HACK" },
+];
 
-- Build seed command arguments from input.
-- @param input - Raw command input with paths and options.
-- @returns Parsed seed arguments.
+/** Maximum lines to search for codetags (file-level context). */
+const CODETAG_SEARCH_LIMIT = 50;
+
+/**
+ * Build seed command arguments from input.
+ * @param input - Raw command input with paths and options.
+ * @returns Parsed seed arguments.
  */
 export function buildSeedArgs(input: SeedCommandInput): ParsedSeedArgs {
   const paths = input.paths.length > 0 ? input.paths : ["."];
+  const all = Boolean(input.options.all);
 
   return {
     paths,
     options: {
-      write: Boolean(input.options.write),
+      // If --all, enable both; otherwise use explicit flags (default to docstrings if none specified)
+      docstrings:
+        all || Boolean(input.options.docstrings) || !input.options.codetags,
+      codetags: all || Boolean(input.options.codetags),
+      all,
       json: Boolean(input.options.json),
       jsonl: Boolean(input.options.jsonl),
     },
@@ -83,11 +109,10 @@ export function buildSeedArgs(input: SeedCommandInput): ParsedSeedArgs {
 }
 
 /**
-
-- Execute the seed command.
-- @param parsed - Parsed seed arguments.
-- @param context - CLI context with config.
-- @returns Results, summary, output text, and exit code.
+ * Execute the seed command (discovery mode).
+ * @param parsed - Parsed seed arguments.
+ * @param context - CLI context with config.
+ * @returns Results, summary, output text, and exit code.
  */
 export async function runSeedCommand(
   parsed: ParsedSeedArgs,
@@ -95,35 +120,14 @@ export async function runSeedCommand(
 ): Promise<SeedCommandResult> {
   const expandedPaths = await expandInputPaths(parsed.paths, context.config);
   const results: SeedFileResult[] = [];
-  const insertionSpecs: InsertionSpec[] = [];
 
-  // Process each file to detect docstrings and build insertion specs
+  // Process each file to find TLDR candidates
   for (const filePath of expandedPaths) {
-    const fileResult = await processFileForSeed(filePath);
+    const fileResult = await processFileForCandidates(filePath, parsed.options);
     results.push(fileResult);
-
-    if (fileResult.status === "would-insert" && fileResult.line !== undefined) {
-      insertionSpecs.push({
-        file: filePath,
-        line: fileResult.line,
-        type: "tldr",
-        content: fileResult.content ?? "",
-        position: "before",
-      });
-    }
   }
 
-  // If write mode, apply insertions
-  if (parsed.options.write && insertionSpecs.length > 0) {
-    const bulkResults = await bulkInsert(insertionSpecs, {
-      write: true,
-      config: context.config,
-    });
-
-    updateResultsFromBulkInsert(results, bulkResults);
-  }
-
-  const summary = buildSummary(results, parsed.options.write);
+  const summary = buildSummary(results);
   const output = formatOutput(results, summary, parsed.options);
   const exitCode = results.some((r) => r.status === "error") ? 1 : 0;
 
@@ -131,10 +135,12 @@ export async function runSeedCommand(
 }
 
 /**
-
-- Process a single file to detect docstring and determine TLDR content.
+ * Process a single file to find TLDR candidates.
  */
-async function processFileForSeed(filePath: string): Promise<SeedFileResult> {
+async function processFileForCandidates(
+  filePath: string,
+  options: SeedCommandOptions
+): Promise<SeedFileResult> {
   try {
     const content = await readFile(filePath, "utf8");
     const language = getLanguageId(filePath);
@@ -157,31 +163,44 @@ async function processFileForSeed(filePath: string): Promise<SeedFileResult> {
       };
     }
 
-    // Detect docstring
-    const docstring = detectDocstring(content, language);
-    if (!docstring) {
-      return {
-        file: filePath,
-        status: "skipped",
-        reason: "no docstring",
-      };
+    // Try docstrings first if enabled
+    if (options.docstrings) {
+      const docstringCandidate = findDocstringCandidate(
+        filePath,
+        content,
+        language,
+        insertionPoint
+      );
+      if (docstringCandidate) {
+        return docstringCandidate;
+      }
     }
 
-    // Extract summary from docstring
-    const summary = extractSummary(docstring);
-    if (!summary || summary.length === 0) {
-      return {
-        file: filePath,
-        status: "skipped",
-        reason: "empty docstring summary",
-      };
+    // Try codetags if enabled
+    if (options.codetags) {
+      const codetagCandidate = findCodetagCandidate(
+        filePath,
+        content,
+        insertionPoint
+      );
+      if (codetagCandidate) {
+        return codetagCandidate;
+      }
+    }
+
+    // No candidates found
+    const reasons: string[] = [];
+    if (options.docstrings) {
+      reasons.push("no file-level docstring");
+    }
+    if (options.codetags) {
+      reasons.push("no codetags");
     }
 
     return {
       file: filePath,
-      status: "would-insert",
-      content: summary,
-      line: insertionPoint,
+      status: "skipped",
+      reason: reasons.join(", "),
     };
   } catch (error) {
     return {
@@ -193,91 +212,116 @@ async function processFileForSeed(filePath: string): Promise<SeedFileResult> {
 }
 
 /**
-
-- Apply bulk result status to a seed result.
+ * Find a docstring candidate in the file.
  */
-function applyBulkResultStatus(
-  result: SeedFileResult,
-  bulkResult: BulkInsertResult
-): void {
-  if (bulkResult.status === "success") {
-    result.status = "inserted";
-    if (bulkResult.inserted) {
-      result.line = bulkResult.inserted.line;
-      result.content = bulkResult.inserted.content;
-    }
-    return;
+function findDocstringCandidate(
+  filePath: string,
+  content: string,
+  language: string,
+  insertionPoint: number
+): SeedFileResult | null {
+  const docstring = detectDocstring(content, language);
+  if (!docstring) {
+    return null;
   }
 
-  if (bulkResult.status === "error") {
-    result.status = "error";
-    if (bulkResult.error) {
-      result.error = bulkResult.error;
-    }
-    return;
+  // Only use file-level docstrings for TLDRs
+  if (docstring.kind !== "file") {
+    return null;
   }
 
-  if (bulkResult.status === "skipped") {
-    result.status = "skipped";
-    result.reason = bulkResult.skipped?.reason ?? "skipped by bulk insert";
+  const summary = extractSummary(docstring);
+  if (!summary || summary.length === 0) {
+    return null;
   }
+
+  return {
+    file: filePath,
+    status: "candidate",
+    candidate: {
+      file: filePath,
+      source: "docstring",
+      line: docstring.startLine,
+      content: summary,
+      insertionPoint,
+    },
+  };
 }
 
 /**
-
-- Update results from bulk insert operation.
+ * Find a codetag candidate in the file.
  */
-function updateResultsFromBulkInsert(
-  results: SeedFileResult[],
-  bulkResults: BulkInsertResult[]
-): void {
-  const bulkResultMap = new Map<string, BulkInsertResult>();
-  for (const br of bulkResults) {
-    bulkResultMap.set(br.file, br);
-  }
+function findCodetagCandidate(
+  filePath: string,
+  content: string,
+  insertionPoint: number
+): SeedFileResult | null {
+  const lines = content.split("\n");
 
-  for (const result of results) {
-    const bulkResult = bulkResultMap.get(result.file);
-    if (bulkResult) {
-      applyBulkResultStatus(result, bulkResult);
+  const searchLimit = Math.min(CODETAG_SEARCH_LIMIT, lines.length);
+
+  for (let i = 0; i < searchLimit; i++) {
+    const line = lines[i];
+    if (!line) {
+      continue;
+    }
+
+    for (const { pattern, tag } of CODETAG_PATTERNS) {
+      const match = line.match(pattern);
+      if (match?.[1]) {
+        return {
+          file: filePath,
+          status: "candidate",
+          candidate: {
+            file: filePath,
+            source: "codetag",
+            line: i + 1,
+            content: `${tag}: ${match[1].trim()}`,
+            insertionPoint,
+          },
+        };
+      }
     }
   }
+
+  return null;
 }
 
 /**
-
-- Build summary from results.
+ * Build summary from results.
  */
-function buildSummary(
-  results: SeedFileResult[],
-  writeMode: boolean
-): SeedSummary {
+function buildSummary(results: SeedFileResult[]): SeedSummary {
   const summary: SeedSummary = {
     total: results.length,
-    inserted: 0,
+    candidates: 0,
     skipped: 0,
-    wouldInsert: 0,
-    filesProcessed: results.length,
+    errors: 0,
+    bySource: {
+      docstrings: 0,
+      codetags: 0,
+    },
   };
 
   for (const result of results) {
-    if (result.status === "inserted") {
-      summary.inserted += 1;
+    if (result.status === "candidate" && result.candidate) {
+      summary.candidates += 1;
+      if (result.candidate.source === "docstring") {
+        summary.bySource.docstrings += 1;
+      } else {
+        summary.bySource.codetags += 1;
+      }
     } else if (result.status === "skipped") {
       summary.skipped += 1;
-    } else if (result.status === "would-insert") {
-      summary.wouldInsert += writeMode ? 0 : 1;
-      summary.inserted += writeMode ? 1 : 0;
+    } else if (result.status === "error") {
+      summary.errors += 1;
     }
-    // "error" status doesn't count toward any category
   }
 
   return summary;
 }
 
 /**
-
-- Format output based on options.
+ * Format output based on options.
  */
 function formatOutput(
   results: SeedFileResult[],
@@ -292,23 +336,24 @@ function formatOutput(
     return formatJsonlOutput(results, summary);
   }
 
-  return formatTextOutput(results, summary, options.write);
+  return formatTextOutput(results, summary);
 }
 
 /**
-
-- Format as JSON.
+ * Format as JSON.
  */
 function formatJsonOutput(
   results: SeedFileResult[],
   summary: SeedSummary
 ): string {
-  return JSON.stringify({ results, summary }, null, 2);
+  const candidates = results
+    .filter((r) => r.status === "candidate" && r.candidate)
+    .map((r) => r.candidate);
+  return JSON.stringify({ candidates, summary }, null, 2);
 }
 
 /**
-
-- Format as JSONL.
+ * Format as JSONL.
  */
 function formatJsonlOutput(
   results: SeedFileResult[],
@@ -316,104 +361,62 @@ function formatJsonlOutput(
 ): string {
   const lines: string[] = [];
   for (const result of results) {
-    lines.push(JSON.stringify(result));
+    if (result.status === "candidate" && result.candidate) {
+      lines.push(JSON.stringify(result.candidate));
+    }
   }
   lines.push(JSON.stringify({ summary }));
   return lines.join("\n");
 }
 
 /**
-
-- Format inserted results section.
- */
-function formatInsertedSection(results: SeedFileResult[]): string[] {
-  const lines: string[] = [`Inserted ${results.length} TLDR(s):`];
-  for (const result of results) {
-    lines.push(`✓ ${result.file}:${result.line}`);
-    if (result.content) {
-      lines.push(`tldr ::: ${result.content}`);
-    }
-  }
-  return lines;
-}
-
-/**
-
-- Format would-insert results section.
- */
-function formatWouldInsertSection(results: SeedFileResult[]): string[] {
-  const lines: string[] = [`Would insert ${results.length} TLDR(s):`];
-  for (const result of results) {
-    lines.push(`○ ${result.file}:${result.line}`);
-    if (result.content) {
-      lines.push(`tldr ::: ${result.content}`);
-    }
-  }
-  return lines;
-}
-
-/**
-
-- Format skipped results section.
- */
-function formatSkippedSection(results: SeedFileResult[]): string[] {
-  const lines: string[] = [`\nSkipped ${results.length} file(s):`];
-  for (const result of results) {
-    lines.push(`- ${result.file}: ${result.reason}`);
-  }
-  return lines;
-}
-
-/**
-
-- Format error results section.
- */
-function formatErrorsSection(results: SeedFileResult[]): string[] {
-  const lines: string[] = [`\nErrors in ${results.length} file(s):`];
-  for (const result of results) {
-    lines.push(`✗ ${result.file}: ${result.error}`);
-  }
-  return lines;
-}
-
-/**
-
-- Format as human-readable text.
+ * Format as human-readable text.
  */
 function formatTextOutput(
   results: SeedFileResult[],
-  summary: SeedSummary,
-  writeMode: boolean
+  summary: SeedSummary
 ): string {
   const lines: string[] = [];
+  const candidates = results.filter(
+    (r) => r.status === "candidate" && r.candidate
+  );
 
-  // Group by status
-  const inserted = results.filter((r) => r.status === "inserted");
-  const wouldInsert = results.filter((r) => r.status === "would-insert");
-  const skipped = results.filter((r) => r.status === "skipped");
-  const errors = results.filter((r) => r.status === "error");
-
-  if (writeMode && inserted.length > 0) {
-    lines.push(...formatInsertedSection(inserted));
+  if (candidates.length === 0) {
+    lines.push("No TLDR candidates found.");
+    lines.push("");
+    lines.push(`Scanned ${summary.total} file(s), ${summary.skipped} skipped.`);
+    return lines.join("\n");
   }
 
-  if (!writeMode && wouldInsert.length > 0) {
-    lines.push(...formatWouldInsertSection(wouldInsert));
+  lines.push(`Found ${candidates.length} TLDR candidate(s):\n`);
+
+  for (const result of candidates) {
+    const candidate = result.candidate;
+    if (!candidate) {
+      continue;
+    }
+
+    lines.push(`${candidate.file} (${candidate.source})`);
+    lines.push(`  line ${candidate.line}: "${candidate.content}"`);
+    lines.push(`  insertion point: line ${candidate.insertionPoint}`);
+    lines.push("");
   }
 
-  if (skipped.length > 0) {
-    lines.push(...formatSkippedSection(skipped));
+  // Summary
+  lines.push("---");
+  lines.push(
+    `Summary: ${summary.candidates} candidates, ${summary.skipped} skipped`
+  );
+  if (summary.bySource.docstrings > 0 || summary.bySource.codetags > 0) {
+    const parts: string[] = [];
+    if (summary.bySource.docstrings > 0) {
+      parts.push(`${summary.bySource.docstrings} from docstrings`);
+    }
+    if (summary.bySource.codetags > 0) {
+      parts.push(`${summary.bySource.codetags} from codetags`);
+    }
+    lines.push(`  (${parts.join(", ")})`);
   }
-
-  if (errors.length > 0) {
-    lines.push(...formatErrorsSection(errors));
-  }
-
-  // Summary line
-  const countLabel = writeMode
-    ? `${summary.inserted} inserted`
-    : `${summary.wouldInsert} would insert`;
-  lines.push(`\nSummary: ${countLabel}, ${summary.skipped} skipped`);
 
   return lines.join("\n");
 }

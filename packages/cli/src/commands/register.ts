@@ -501,7 +501,7 @@ See 'wm skill show lint' for agent-facing documentation.
 
   program.addCommand(lintCommand, { hidden: true });
 
-  // Init command
+  // Init command with seed subcommand
   const initCommand = new Command("init")
     .option("--format <format>, -f", "config format (yaml|yml)", "yaml")
     .option("--preset <preset>, -p", "config preset (full|minimal)", "full")
@@ -516,6 +516,44 @@ See 'wm skill show lint' for agent-facing documentation.
       }
     });
 
+  // Seed subcommand - discover TLDR candidates from docstrings and codetags
+  const seedSubcommand = new Command("seed")
+    .argument("[paths...]", "files or directories to scan")
+    .option("--docstrings", "find candidates from docstrings (default)")
+    .option("--codetags", "find candidates from codetags (TODO/FIXME/etc)")
+    .option("--all", "find candidates from both docstrings and codetags")
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
+    .description(
+      "discover TLDR candidates from existing docstrings and codetags"
+    )
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm init seed src/                   # Find docstring candidates
+  $ wm init seed src/ --codetags        # Find codetag candidates
+  $ wm init seed src/ --all             # Find all candidates
+  $ wm init seed src/ --json            # JSON output for agents
+
+Output:
+  Lists files that have docstrings or codetags but no TLDR waymark.
+  Agents can use this output to prioritize and write TLDRs via 'wm add'.
+
+Note:
+  This command does not write files. Use 'wm add' to insert TLDRs.
+  The candidate content is a starting point - agents should apply judgment.
+    `
+    )
+    .action(async (paths: string[], options: SeedCommandOptions) => {
+      try {
+        await handleSeedCommand(program, paths, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  initCommand.addCommand(seedSubcommand);
   program.addCommand(initCommand);
 
   const configCommand = new Command("config")
@@ -698,49 +736,6 @@ See 'wm skill show check' for agent-facing documentation.
     });
 
   program.addCommand(checkCommand);
-
-  // Seed command - auto-generate TLDRs from docstrings
-  const seedCommand = new Command("seed")
-    .argument("[paths...]", "files or directories to seed")
-    .option("--write, -w", "apply changes (default: preview)", false)
-    .option("--json", "output as JSON")
-    .option("--jsonl", "output as JSON Lines")
-    .description("auto-generate TLDR waymarks from docstrings")
-    .addHelpText(
-      "after",
-      `
-Examples:
-  $ wm seed src/                        # Preview TLDR insertions
-  $ wm seed src/ --write                # Apply TLDR insertions
-  $ wm seed src/auth.ts --json          # JSON output for tooling
-  $ wm seed . --write                   # Seed all files in current directory
-
-Behavior:
-
-- Detects module-level docstrings (JSDoc, Python docstrings, etc.)
-- Extracts summary text (first sentence/paragraph)
-- Inserts "tldr ::: <summary>" at the appropriate location
-- Skips files that already have a TLDR waymark
-- Skips files without detectable docstrings
-
-Supported Languages:
-
-- TypeScript/JavaScript (JSDoc /** ... */)
-- Python (module docstrings """ ... """)
-- More languages coming soon
-
-See 'wm skill show seed' for agent-facing documentation.
-    `
-    )
-    .action(async (paths: string[], options: SeedCommandOptions) => {
-      try {
-        await handleSeedCommand(program, paths, options);
-      } catch (error) {
-        handleCommandError(program, error);
-      }
-    });
-
-  program.addCommand(seedCommand);
 
   // Find command - explicit scan and filter (WAY-31)
   const findCommand = new Command("find")

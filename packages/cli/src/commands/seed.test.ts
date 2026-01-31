@@ -1,7 +1,7 @@
-// tldr ::: unit tests for wm seed command
+// tldr ::: unit tests for wm init seed command (discovery mode)
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -11,25 +11,47 @@ import type { CommandContext } from "../types";
 import { buildSeedArgs, runSeedCommand } from "./seed";
 
 describe("buildSeedArgs", () => {
-  test("parses paths argument", () => {
+  test("defaults to docstrings when no flags specified", () => {
     const parsed = buildSeedArgs({
       paths: ["src/"],
       options: {},
     });
 
     expect(parsed.paths).toEqual(["src/"]);
-    expect(parsed.options.write).toBe(false);
-    expect(parsed.options.json).toBe(false);
-    expect(parsed.options.jsonl).toBe(false);
+    expect(parsed.options.docstrings).toBe(true);
+    expect(parsed.options.codetags).toBe(false);
+    expect(parsed.options.all).toBe(false);
   });
 
-  test("parses --write flag", () => {
+  test("parses --docstrings flag", () => {
     const parsed = buildSeedArgs({
       paths: ["src/"],
-      options: { write: true },
+      options: { docstrings: true },
     });
 
-    expect(parsed.options.write).toBe(true);
+    expect(parsed.options.docstrings).toBe(true);
+    expect(parsed.options.codetags).toBe(false);
+  });
+
+  test("parses --codetags flag", () => {
+    const parsed = buildSeedArgs({
+      paths: ["src/"],
+      options: { codetags: true },
+    });
+
+    expect(parsed.options.docstrings).toBe(false);
+    expect(parsed.options.codetags).toBe(true);
+  });
+
+  test("parses --all flag enables both", () => {
+    const parsed = buildSeedArgs({
+      paths: ["src/"],
+      options: { all: true },
+    });
+
+    expect(parsed.options.docstrings).toBe(true);
+    expect(parsed.options.codetags).toBe(true);
+    expect(parsed.options.all).toBe(true);
   });
 
   test("parses --json flag", () => {
@@ -39,15 +61,6 @@ describe("buildSeedArgs", () => {
     });
 
     expect(parsed.options.json).toBe(true);
-  });
-
-  test("parses --jsonl flag", () => {
-    const parsed = buildSeedArgs({
-      paths: ["src/"],
-      options: { jsonl: true },
-    });
-
-    expect(parsed.options.jsonl).toBe(true);
   });
 
   test("defaults to current directory when no paths provided", () => {
@@ -71,15 +84,16 @@ describe("runSeedCommand", () => {
     await rm(workspace, { recursive: true, force: true });
   });
 
-  test("detects docstring and generates TLDR in preview mode", async () => {
+  test("discovers docstring candidate", async () => {
     const sourceDir = join(workspace, "src");
     await mkdir(sourceDir, { recursive: true });
     const sourcePath = join(sourceDir, "service.ts");
+    // File-level docstring with @module tag
     await writeFile(
       sourcePath,
       `/**
  * Handles user authentication and session management.
- * @param request - The authentication request
+ * @module
  */
 export function authenticate(request: AuthRequest) {
   // implementation
@@ -103,28 +117,23 @@ export function authenticate(request: AuthRequest) {
     const result = await runSeedCommand(parsed, context);
     expect(result.exitCode).toBe(0);
     expect(result.summary.total).toBe(1);
-    expect(result.summary.wouldInsert).toBe(1);
-    expect(result.output).toContain("Would insert");
-    expect(result.output).toContain("tldr");
+    expect(result.summary.candidates).toBe(1);
+    expect(result.summary.bySource.docstrings).toBe(1);
+    expect(result.output).toContain("TLDR candidate");
+    expect(result.output).toContain("docstring");
     expect(result.output).toContain(
       "Handles user authentication and session management"
     );
-
-    // File should not be modified in preview mode
-    const fileContents = await readFile(sourcePath, "utf8");
-    expect(fileContents).not.toContain("tldr :::");
   });
 
-  test("inserts TLDR when --write is set", async () => {
+  test("discovers codetag candidate when --codetags enabled", async () => {
     const sourceDir = join(workspace, "src");
     await mkdir(sourceDir, { recursive: true });
-    const sourcePath = join(sourceDir, "handler.ts");
+    const sourcePath = join(sourceDir, "utils.ts");
     await writeFile(
       sourcePath,
-      `/**
- * Processes incoming webhook events.
- */
-export function handleWebhook(event: WebhookEvent) {
+      `// TODO: refactor this module for better performance
+export function slowFunction() {
   // implementation
 }
 `,
@@ -133,7 +142,7 @@ export function handleWebhook(event: WebhookEvent) {
 
     const parsed = buildSeedArgs({
       paths: [sourcePath],
-      options: { write: true },
+      options: { codetags: true },
     });
 
     const config = resolveConfig({});
@@ -145,13 +154,54 @@ export function handleWebhook(event: WebhookEvent) {
 
     const result = await runSeedCommand(parsed, context);
     expect(result.exitCode).toBe(0);
-    expect(result.summary.total).toBe(1);
-    expect(result.summary.inserted).toBe(1);
+    expect(result.summary.candidates).toBe(1);
+    expect(result.summary.bySource.codetags).toBe(1);
+    expect(result.output).toContain("codetag");
+    expect(result.output).toContain("TODO");
+  });
 
-    const fileContents = await readFile(sourcePath, "utf8");
-    expect(fileContents).toContain(
-      "tldr ::: Processes incoming webhook events"
+  test("discovers both sources with --all", async () => {
+    const sourceDir = join(workspace, "src");
+    await mkdir(sourceDir, { recursive: true });
+
+    // File with docstring
+    await writeFile(
+      join(sourceDir, "auth.ts"),
+      `/**
+ * Authentication utilities.
+ * @module
+ */
+export function login() {}
+`,
+      "utf8"
     );
+
+    // File with codetag
+    await writeFile(
+      join(sourceDir, "utils.ts"),
+      `// TODO: optimize this module
+export function slow() {}
+`,
+      "utf8"
+    );
+
+    const parsed = buildSeedArgs({
+      paths: [sourceDir],
+      options: { all: true },
+    });
+
+    const config = resolveConfig({});
+    const context: CommandContext = {
+      config,
+      workspaceRoot: workspace,
+      globalOptions: {},
+    };
+
+    const result = await runSeedCommand(parsed, context);
+    expect(result.exitCode).toBe(0);
+    expect(result.summary.candidates).toBe(2);
+    expect(result.summary.bySource.docstrings).toBe(1);
+    expect(result.summary.bySource.codetags).toBe(1);
   });
 
   test("skips files that already have TLDRs", async () => {
@@ -162,7 +212,8 @@ export function handleWebhook(event: WebhookEvent) {
       sourcePath,
       `// tldr ::: already has a summary
 /**
- * This function has a docstring but already has a TLDR.
+ * This file has a docstring but already has a TLDR.
+ * @module
  */
 export function existing() {}
 `,
@@ -171,7 +222,7 @@ export function existing() {}
 
     const parsed = buildSeedArgs({
       paths: [sourcePath],
-      options: { write: true },
+      options: {},
     });
 
     const config = resolveConfig({});
@@ -183,20 +234,25 @@ export function existing() {}
 
     const result = await runSeedCommand(parsed, context);
     expect(result.exitCode).toBe(0);
-    expect(result.summary.total).toBe(1);
+    expect(result.summary.candidates).toBe(0);
     expect(result.summary.skipped).toBe(1);
-    expect(result.summary.inserted).toBe(0);
-    expect(result.output).toContain("already has TLDR");
+    expect(result.output).toContain("No TLDR candidates found");
   });
 
-  test("skips files without docstrings", async () => {
+  test("skips function-level docstrings", async () => {
     const sourceDir = join(workspace, "src");
     await mkdir(sourceDir, { recursive: true });
-    const sourcePath = join(sourceDir, "noDocstring.ts");
+    const sourcePath = join(sourceDir, "functionDoc.ts");
+    // This file has a docstring, but it's for the function, not the file
     await writeFile(
       sourcePath,
-      `export function noDocstring() {
-  // no docstring here
+      `/**
+ * Formats a date for display in the UI.
+ * @param date - The date to format
+ * @returns Formatted date string
+ */
+export function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US').format(date);
 }
 `,
       "utf8"
@@ -204,7 +260,7 @@ export function existing() {}
 
     const parsed = buildSeedArgs({
       paths: [sourcePath],
-      options: { write: true },
+      options: {},
     });
 
     const config = resolveConfig({});
@@ -216,10 +272,8 @@ export function existing() {}
 
     const result = await runSeedCommand(parsed, context);
     expect(result.exitCode).toBe(0);
-    expect(result.summary.total).toBe(1);
+    expect(result.summary.candidates).toBe(0);
     expect(result.summary.skipped).toBe(1);
-    expect(result.summary.inserted).toBe(0);
-    expect(result.output).toContain("no docstring");
   });
 
   test("outputs JSON format when --json is set", async () => {
@@ -230,6 +284,7 @@ export function existing() {}
       sourcePath,
       `/**
  * Test function for JSON output.
+ * @module
  */
 export function testJson() {}
 `,
@@ -252,9 +307,13 @@ export function testJson() {}
     expect(result.exitCode).toBe(0);
 
     const json = JSON.parse(result.output);
-    expect(json).toHaveProperty("results");
+    expect(json).toHaveProperty("candidates");
     expect(json).toHaveProperty("summary");
-    expect(json.summary.total).toBe(1);
+    expect(json.candidates).toHaveLength(1);
+    expect(json.candidates[0]).toHaveProperty("file");
+    expect(json.candidates[0]).toHaveProperty("source", "docstring");
+    expect(json.candidates[0]).toHaveProperty("content");
+    expect(json.candidates[0]).toHaveProperty("insertionPoint");
   });
 
   test("outputs JSONL format when --jsonl is set", async () => {
@@ -265,6 +324,7 @@ export function testJson() {}
       sourcePath,
       `/**
  * Test function for JSONL output.
+ * @module
  */
 export function testJsonl() {}
 `,
@@ -289,65 +349,18 @@ export function testJsonl() {}
     const lines = result.output.trim().split("\n");
     expect(lines.length).toBeGreaterThanOrEqual(2);
 
-    // First line should be a result
+    // First line should be a candidate
     const firstLine = lines[0];
     expect(firstLine).toBeDefined();
     const parsedFirst = JSON.parse(firstLine as string);
     expect(parsedFirst).toHaveProperty("file");
+    expect(parsedFirst).toHaveProperty("source");
 
     // Last line should be summary
     const lastLine = lines.at(-1);
     expect(lastLine).toBeDefined();
     const parsedLast = JSON.parse(lastLine as string);
     expect(parsedLast).toHaveProperty("summary");
-  });
-
-  test("processes multiple files", async () => {
-    const sourceDir = join(workspace, "src");
-    await mkdir(sourceDir, { recursive: true });
-
-    await writeFile(
-      join(sourceDir, "file1.ts"),
-      `/**
- * First file description.
- */
-export function file1() {}
-`,
-      "utf8"
-    );
-
-    await writeFile(
-      join(sourceDir, "file2.ts"),
-      `/**
- * Second file description.
- */
-export function file2() {}
-`,
-      "utf8"
-    );
-
-    const parsed = buildSeedArgs({
-      paths: [sourceDir],
-      options: { write: true },
-    });
-
-    const config = resolveConfig({});
-    const context: CommandContext = {
-      config,
-      workspaceRoot: workspace,
-      globalOptions: {},
-    };
-
-    const result = await runSeedCommand(parsed, context);
-    expect(result.exitCode).toBe(0);
-    expect(result.summary.total).toBe(2);
-    expect(result.summary.inserted).toBe(2);
-
-    const file1Contents = await readFile(join(sourceDir, "file1.ts"), "utf8");
-    expect(file1Contents).toContain("tldr ::: First file description");
-
-    const file2Contents = await readFile(join(sourceDir, "file2.ts"), "utf8");
-    expect(file2Contents).toContain("tldr ::: Second file description");
   });
 
   test("handles Python docstrings", async () => {
@@ -368,7 +381,7 @@ def process_data():
 
     const parsed = buildSeedArgs({
       paths: [sourcePath],
-      options: { write: true },
+      options: {},
     });
 
     const config = resolveConfig({});
@@ -380,24 +393,20 @@ def process_data():
 
     const result = await runSeedCommand(parsed, context);
     expect(result.exitCode).toBe(0);
-    expect(result.summary.inserted).toBe(1);
-
-    const fileContents = await readFile(sourcePath, "utf8");
-    expect(fileContents).toContain(
-      "# tldr ::: Utility functions for data processing"
-    );
+    expect(result.summary.candidates).toBe(1);
+    expect(result.output).toContain("Utility functions for data processing");
   });
 
-  test("respects TLDR insertion point after shebang and directives", async () => {
+  test("reports insertion point for agents", async () => {
     const sourceDir = join(workspace, "src");
     await mkdir(sourceDir, { recursive: true });
-    const sourcePath = join(sourceDir, "script.ts");
+    const sourcePath = join(sourceDir, "with-shebang.ts");
     await writeFile(
       sourcePath,
       `#!/usr/bin/env node
-"use strict";
 /**
- * CLI entry point for the application.
+ * CLI entry point.
+ * @module
  */
 export function main() {}
 `,
@@ -406,7 +415,7 @@ export function main() {}
 
     const parsed = buildSeedArgs({
       paths: [sourcePath],
-      options: { write: true },
+      options: { json: true },
     });
 
     const config = resolveConfig({});
@@ -418,31 +427,27 @@ export function main() {}
 
     const result = await runSeedCommand(parsed, context);
     expect(result.exitCode).toBe(0);
-    expect(result.summary.inserted).toBe(1);
 
-    const fileContents = await readFile(sourcePath, "utf8");
-    // TLDR should be after shebang and use strict, but before the docstring
-    const lines = fileContents.split("\n");
-    const shebangIndex = lines.findIndex((l) => l.startsWith("#!"));
-    const useStrictIndex = lines.findIndex((l) => l.includes("use strict"));
-    const tldrIndex = lines.findIndex((l) => l.includes("tldr :::"));
-    expect(tldrIndex).toBeGreaterThan(shebangIndex);
-    expect(tldrIndex).toBeGreaterThan(useStrictIndex);
+    const json = JSON.parse(result.output);
+    expect(json.candidates[0].insertionPoint).toBeGreaterThan(1); // After shebang
   });
 
-  test("is idempotent - running twice produces same result", async () => {
+  test("detects FIXME codetags", async () => {
     const sourceDir = join(workspace, "src");
     await mkdir(sourceDir, { recursive: true });
-    const sourcePath = join(sourceDir, "idempotent.ts");
+    const sourcePath = join(sourceDir, "fixme.ts");
     await writeFile(
       sourcePath,
-      `/**
- * Test for idempotency.
- */
-export function idempotent() {}
+      `// FIXME: memory leak in event handler
+export function leaky() {}
 `,
       "utf8"
     );
+
+    const parsed = buildSeedArgs({
+      paths: [sourcePath],
+      options: { codetags: true },
+    });
 
     const config = resolveConfig({});
     const context: CommandContext = {
@@ -451,26 +456,44 @@ export function idempotent() {}
       globalOptions: {},
     };
 
-    // First run
-    const parsed1 = buildSeedArgs({
+    const result = await runSeedCommand(parsed, context);
+    expect(result.exitCode).toBe(0);
+    expect(result.summary.candidates).toBe(1);
+    expect(result.output).toContain("FIXME");
+    expect(result.output).toContain("memory leak");
+  });
+
+  test("does not modify files (discovery only)", async () => {
+    const sourceDir = join(workspace, "src");
+    await mkdir(sourceDir, { recursive: true });
+    const sourcePath = join(sourceDir, "readonly.ts");
+    const originalContent = `/**
+ * This file should not be modified.
+ * @module
+ */
+export function untouched() {}
+`;
+    await writeFile(sourcePath, originalContent, "utf8");
+
+    const parsed = buildSeedArgs({
       paths: [sourcePath],
-      options: { write: true },
+      options: {},
     });
-    const result1 = await runSeedCommand(parsed1, context);
-    expect(result1.summary.inserted).toBe(1);
 
-    const contentAfterFirst = await readFile(sourcePath, "utf8");
+    const config = resolveConfig({});
+    const context: CommandContext = {
+      config,
+      workspaceRoot: workspace,
+      globalOptions: {},
+    };
 
-    // Second run
-    const parsed2 = buildSeedArgs({
-      paths: [sourcePath],
-      options: { write: true },
-    });
-    const result2 = await runSeedCommand(parsed2, context);
-    expect(result2.summary.skipped).toBe(1);
-    expect(result2.summary.inserted).toBe(0);
+    const result = await runSeedCommand(parsed, context);
+    expect(result.exitCode).toBe(0);
+    expect(result.summary.candidates).toBe(1);
 
-    const contentAfterSecond = await readFile(sourcePath, "utf8");
-    expect(contentAfterSecond).toBe(contentAfterFirst);
+    // Verify file was not modified
+    const { readFile } = await import("node:fs/promises");
+    const afterContent = await readFile(sourcePath, "utf8");
+    expect(afterContent).toBe(originalContent);
   });
 });
