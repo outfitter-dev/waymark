@@ -1,19 +1,21 @@
 // tldr ::: config loading helpers for MCP server
 
 import { resolve } from "node:path";
-import type { ConfigScope } from "@waymarks/core";
+import type { ConfigScope, WaymarkConfig } from "@waymarks/core";
 import { loadConfigFromDisk } from "@waymarks/core";
 import type { ExpandedConfig } from "../types";
 
 /**
  * Load MCP configuration based on scope and optional explicit path.
+ * Unwraps the Result from loadConfigFromDisk; throws on error.
+ *
  * @param options - Scope and optional config path.
  * @returns Resolved configuration loaded from disk.
  */
-export function loadConfig(options: {
+export async function loadConfig(options: {
   scope: ConfigScope;
   configPath?: string;
-}): Promise<Awaited<ReturnType<typeof loadConfigFromDisk>>> {
+}): Promise<WaymarkConfig> {
   const loadOptions: ExpandedConfig = {
     cwd: process.cwd(),
     env: process.env,
@@ -23,7 +25,8 @@ export function loadConfig(options: {
       : {}),
   };
 
-  return loadConfigFromDisk(loadOptions);
+  const result = await loadConfigFromDisk(loadOptions);
+  return result.unwrap();
 }
 
 /**

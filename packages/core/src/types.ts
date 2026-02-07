@@ -1,4 +1,6 @@
-// tldr ::: configuration and scanning types for waymark core
+// tldr ::: configuration and scanning types with Zod schemas for waymark core
+
+import { z } from "zod";
 
 // Re-export grammar types for convenience
 export type { ParseOptions, WaymarkRecord } from "@waymarks/grammar";
@@ -123,3 +125,180 @@ export type CoreLogger = {
   warn: (msg: string, meta?: Record<string, unknown>) => void;
   error: (msg: string, meta?: Record<string, unknown>) => void;
 };
+
+// ---------------------------------------------------------------------------
+// Zod Schemas
+// ---------------------------------------------------------------------------
+
+/**
+ * Rename snake_case keys to camelCase in a shallow object.
+ * Leaves keys that are already camelCase untouched.
+ */
+function snakeToCamel(input: unknown): unknown {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return input;
+  }
+  const raw = input as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(raw)) {
+    const camelKey = key.replace(/_([a-z])/g, (_, c: string) =>
+      c.toUpperCase()
+    );
+    out[camelKey] = raw[key];
+  }
+  return out;
+}
+
+/** Lint severity levels used in waymark configuration. */
+const LintSeveritySchema = z.enum(["warn", "error", "ignore"]);
+
+/** Zod schema for {@link WaymarkScanConfig}. Accepts snake_case aliases. */
+export const WaymarkScanConfigSchema = z.preprocess(
+  snakeToCamel,
+  z.object({
+    includeCodetags: z.boolean(),
+    includeIgnored: z.boolean(),
+  })
+);
+
+/** Zod schema for {@link WaymarkFormatConfig}. Accepts snake_case aliases. */
+export const WaymarkFormatConfigSchema = z.preprocess(
+  snakeToCamel,
+  z.object({
+    spaceAroundSigil: z.boolean(),
+    normalizeCase: z.boolean(),
+    alignContinuations: z.boolean().optional(),
+    wrapEnabled: z.boolean().optional(),
+    wrapWidth: z.number().int().positive().optional(),
+  })
+);
+
+/** Zod schema for {@link WaymarkLintConfig}. Accepts snake_case aliases. */
+export const WaymarkLintConfigSchema = z.preprocess(
+  snakeToCamel,
+  z.object({
+    duplicateProperty: LintSeveritySchema,
+    unknownMarker: LintSeveritySchema,
+    danglingRelation: LintSeveritySchema,
+    duplicateCanonical: LintSeveritySchema,
+  })
+);
+
+/** Zod schema for {@link WaymarkIdConfig}. Accepts snake_case aliases. */
+export const WaymarkIdConfigSchema = z.preprocess(
+  snakeToCamel,
+  z.object({
+    mode: z.enum(["auto", "prompt", "off", "manual"]),
+    length: z.number().int().positive(),
+    rememberUserChoice: z.boolean(),
+    trackHistory: z.boolean(),
+    assignOnRefresh: z.boolean(),
+  })
+);
+
+/** Zod schema for {@link WaymarkIndexConfig}. Accepts snake_case aliases. */
+export const WaymarkIndexConfigSchema = z.preprocess(
+  snakeToCamel,
+  z.object({
+    refreshTriggers: z.array(z.string()),
+    autoRefreshAfterMinutes: z.number().min(0),
+  })
+);
+
+/**
+ * Normalizes extension map entries: filters non-array values and ensures
+ * keys have a leading dot.
+ */
+function normalizeExtensionMap(
+  input: unknown
+): Record<string, string[]> | undefined {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return;
+  }
+  const raw = input as Record<string, unknown>;
+  const out: Record<string, string[]> = {};
+  for (const [ext, leaders] of Object.entries(raw)) {
+    if (!Array.isArray(leaders)) {
+      continue;
+    }
+    const filtered = leaders.filter((l): l is string => typeof l === "string");
+    const key = ext.startsWith(".") ? ext : `.${ext}`;
+    out[key] = filtered;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** Zod schema for {@link LanguageConfig}. Accepts snake_case aliases. */
+export const LanguageConfigSchema = z.preprocess(
+  snakeToCamel,
+  z
+    .object({
+      extensions: z.preprocess(
+        normalizeExtensionMap,
+        z.record(z.string(), z.array(z.string())).optional()
+      ),
+      basenames: z.record(z.string(), z.array(z.string())).optional(),
+      skipUnknown: z.boolean().optional(),
+    })
+    .strict()
+    .optional()
+);
+
+/**
+ * Normalizes category extension arrays: ensures entries have a leading dot.
+ */
+function normalizeDotArray(input: unknown): string[] | undefined {
+  if (!Array.isArray(input)) {
+    return;
+  }
+  return input
+    .filter((item): item is string => typeof item === "string")
+    .map((ext) => (ext.startsWith(".") ? ext : `.${ext}`));
+}
+
+/** Zod schema for {@link FileCategoryConfig}. Accepts snake_case aliases. */
+export const FileCategoryConfigSchema = z.preprocess(
+  snakeToCamel,
+  z
+    .object({
+      docs: z.preprocess(normalizeDotArray, z.array(z.string()).optional()),
+      config: z.preprocess(normalizeDotArray, z.array(z.string()).optional()),
+      data: z.preprocess(normalizeDotArray, z.array(z.string()).optional()),
+      test: z.preprocess(
+        snakeToCamel,
+        z
+          .object({
+            suffixes: z.array(z.string()).optional(),
+            pathTokens: z.array(z.string()).optional(),
+          })
+          .optional()
+      ),
+    })
+    .strict()
+    .optional()
+);
+
+/**
+ * Zod schema for the full {@link WaymarkConfig}.
+ *
+ * Accepts both camelCase and snake_case keys at the top level and within
+ * nested objects. Use `.safeParse()` to validate unknown input from disk.
+ */
+export const WaymarkConfigSchema = z.preprocess(
+  snakeToCamel,
+  z.object({
+    typeCase: z.enum(["lowercase", "uppercase"]),
+    idScope: z.enum(["repo", "file"]),
+    allowTypes: z.array(z.string()),
+    skipPaths: z.array(z.string()),
+    includePaths: z.array(z.string()),
+    respectGitignore: z.boolean(),
+    scan: WaymarkScanConfigSchema,
+    format: WaymarkFormatConfigSchema,
+    lint: WaymarkLintConfigSchema,
+    ids: WaymarkIdConfigSchema,
+    index: WaymarkIndexConfigSchema,
+    languages: LanguageConfigSchema,
+    categories: FileCategoryConfigSchema,
+  })
+);
