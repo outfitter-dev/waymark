@@ -1,4 +1,4 @@
-// tldr ::: enhanced ripgrep-style formatter with chalk styling and alignment
+// tldr ::: enhanced ripgrep-style formatter with ANSI styling and alignment
 
 import type { WaymarkRecord } from "@waymarks/core";
 import type { DisplayOptions } from "../types";
