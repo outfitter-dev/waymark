@@ -65,29 +65,33 @@ const baseRecord = (overrides: Partial<WaymarkRecord>): WaymarkRecord => {
 
 describe("WaymarkCache", () => {
   test("replaceFileWaymarks replaces prior records and updates metadata", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
-    cache.replaceFileWaymarks({
-      filePath: "src/example.ts",
-      mtime: INITIAL_MTIME,
-      size: INITIAL_SIZE,
-      records: [baseRecord({ type: "todo", startLine: 1 })],
-    });
+    cache
+      .replaceFileWaymarks({
+        filePath: "src/example.ts",
+        mtime: INITIAL_MTIME,
+        size: INITIAL_SIZE,
+        records: [baseRecord({ type: "todo", startLine: 1 })],
+      })
+      .unwrap();
 
     expect(
-      cache.isFileStale("src/example.ts", INITIAL_MTIME, INITIAL_SIZE)
+      cache.isFileStale("src/example.ts", INITIAL_MTIME, INITIAL_SIZE).unwrap()
     ).toBe(false);
 
-    cache.replaceFileWaymarks({
-      filePath: "src/example.ts",
-      mtime: UPDATED_MTIME,
-      size: UPDATED_SIZE,
-      records: [
-        baseRecord({ type: "note", startLine: 2, contentText: "updated" }),
-      ],
-    });
+    cache
+      .replaceFileWaymarks({
+        filePath: "src/example.ts",
+        mtime: UPDATED_MTIME,
+        size: UPDATED_SIZE,
+        records: [
+          baseRecord({ type: "note", startLine: 2, contentText: "updated" }),
+        ],
+      })
+      .unwrap();
 
-    const records = cache.findByFile("src/example.ts");
+    const records = cache.findByFile("src/example.ts").unwrap();
     expect(records).toHaveLength(1);
     expect(records[0]?.type).toBe("note");
     expect(records[0]?.startLine).toBe(2);
@@ -95,24 +99,24 @@ describe("WaymarkCache", () => {
     expect(records[0]?.commentLeader).toBe("//");
     expect(records[0]?.raw).toBe("// note ::: updated");
     expect(
-      cache.isFileStale("src/example.ts", UPDATED_MTIME, UPDATED_SIZE)
+      cache.isFileStale("src/example.ts", UPDATED_MTIME, UPDATED_SIZE).unwrap()
     ).toBe(false);
     expect(
-      cache.isFileStale("src/example.ts", INITIAL_MTIME, INITIAL_SIZE)
+      cache.isFileStale("src/example.ts", INITIAL_MTIME, INITIAL_SIZE).unwrap()
     ).toBe(true);
 
-    cache.deleteFile("src/example.ts");
-    expect(cache.findByFile("src/example.ts")).toHaveLength(0);
+    cache.deleteFile("src/example.ts").unwrap();
+    expect(cache.findByFile("src/example.ts").unwrap()).toHaveLength(0);
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("insertWaymarksBatch handles multiple files in transaction", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // First insert file metadata
-    cache.updateFileInfo("file1.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("file2.ts", UPDATED_MTIME, UPDATED_SIZE);
+    cache.updateFileInfo("file1.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("file2.ts", UPDATED_MTIME, UPDATED_SIZE).unwrap();
 
     const recordsByFile = new Map<string, WaymarkRecord[]>([
       [
@@ -125,177 +129,199 @@ describe("WaymarkCache", () => {
       ["file2.ts", [baseRecord({ file: "file2.ts", type: "note" })]],
     ]);
 
-    cache.insertWaymarksBatch(recordsByFile);
+    cache.insertWaymarksBatch(recordsByFile).unwrap();
 
-    const file1Records = cache.findByFile("file1.ts");
+    const file1Records = cache.findByFile("file1.ts").unwrap();
     expect(file1Records).toHaveLength(2);
     expect(file1Records[0]?.fileCategory).toBe("code");
     expect(file1Records[0]?.indent).toBe(0);
 
-    const file2Records = cache.findByFile("file2.ts");
+    const file2Records = cache.findByFile("file2.ts").unwrap();
     expect(file2Records).toHaveLength(1);
     expect(file2Records[0]?.raw).toBe("// note ::: content");
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("findByType returns all records with matching marker", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Insert file metadata first
-    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
 
-    cache.insertWaymarks([
-      baseRecord({ file: "a.ts", type: "todo" }),
-      baseRecord({ file: "b.ts", type: "fix" }),
-      baseRecord({ file: "c.ts", type: "todo" }),
-    ]);
+    cache
+      .insertWaymarks([
+        baseRecord({ file: "a.ts", type: "todo" }),
+        baseRecord({ file: "b.ts", type: "fix" }),
+        baseRecord({ file: "c.ts", type: "todo" }),
+      ])
+      .unwrap();
 
-    const todos = cache.findByType("todo");
+    const todos = cache.findByType("todo").unwrap();
     expect(todos).toHaveLength(2);
     expect(todos[0]?.file).toBe("a.ts");
     expect(todos[1]?.file).toBe("c.ts");
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("findByTag returns records containing specific tags", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Insert file metadata first
-    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
 
-    cache.insertWaymarks([
-      baseRecord({ file: "a.ts", tags: ["#perf", "#hotpath"] }),
-      baseRecord({ file: "b.ts", tags: ["#security"] }),
-      baseRecord({ file: "c.ts", tags: ["#perf", "#cache"] }),
-    ]);
+    cache
+      .insertWaymarks([
+        baseRecord({ file: "a.ts", tags: ["#perf", "#hotpath"] }),
+        baseRecord({ file: "b.ts", tags: ["#security"] }),
+        baseRecord({ file: "c.ts", tags: ["#perf", "#cache"] }),
+      ])
+      .unwrap();
 
-    const perfRecords = cache.findByTag("#perf");
+    const perfRecords = cache.findByTag("#perf").unwrap();
     expect(perfRecords).toHaveLength(2);
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("findByMention returns records with specific mentions", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Insert file metadata first
-    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
 
-    cache.insertWaymarks([
-      baseRecord({ file: "a.ts", mentions: ["@alice", "@bob"] }),
-      baseRecord({ file: "b.ts", mentions: ["@charlie"] }),
-      baseRecord({ file: "c.ts", mentions: ["@alice"] }),
-    ]);
+    cache
+      .insertWaymarks([
+        baseRecord({ file: "a.ts", mentions: ["@alice", "@bob"] }),
+        baseRecord({ file: "b.ts", mentions: ["@charlie"] }),
+        baseRecord({ file: "c.ts", mentions: ["@alice"] }),
+      ])
+      .unwrap();
 
-    const aliceRecords = cache.findByMention("@alice");
+    const aliceRecords = cache.findByMention("@alice").unwrap();
     expect(aliceRecords).toHaveLength(2);
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("findByTag handles wildcard characters safely", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
-    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
 
-    cache.insertWaymarks([
-      baseRecord({ file: "a.ts", tags: ["#perf%critical"] }),
-      baseRecord({ file: "b.ts", tags: ["#perf_normal"] }),
-    ]);
+    cache
+      .insertWaymarks([
+        baseRecord({ file: "a.ts", tags: ["#perf%critical"] }),
+        baseRecord({ file: "b.ts", tags: ["#perf_normal"] }),
+      ])
+      .unwrap();
 
-    const exactMatch = cache.findByTag("#perf%critical");
+    const exactMatch = cache.findByTag("#perf%critical").unwrap();
     expect(exactMatch).toHaveLength(1);
     expect(exactMatch[0]?.file).toBe("a.ts");
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("searchContent returns records matching content query", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Insert file metadata first
-    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("c.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
 
-    cache.insertWaymarks([
-      baseRecord({
-        file: "a.ts",
-        contentText: "implement user authentication",
-      }),
-      baseRecord({ file: "b.ts", contentText: "fix memory leak" }),
-      baseRecord({ file: "c.ts", contentText: "user profile updates" }),
-    ]);
+    cache
+      .insertWaymarks([
+        baseRecord({
+          file: "a.ts",
+          contentText: "implement user authentication",
+        }),
+        baseRecord({ file: "b.ts", contentText: "fix memory leak" }),
+        baseRecord({ file: "c.ts", contentText: "user profile updates" }),
+      ])
+      .unwrap();
 
-    const userRecords = cache.searchContent("user");
+    const userRecords = cache.searchContent("user").unwrap();
     expect(userRecords).toHaveLength(2);
     expect(userRecords[0]?.file).toBe("a.ts");
     expect(userRecords[1]?.file).toBe("c.ts");
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("searchContent escapes LIKE wildcards", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
-    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE);
+    cache.updateFileInfo("a.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache.updateFileInfo("b.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
 
-    cache.insertWaymarks([
-      baseRecord({ file: "a.ts", contentText: "handle_user_input" }),
-      baseRecord({ file: "b.ts", contentText: "handleXuser_input" }),
-    ]);
+    cache
+      .insertWaymarks([
+        baseRecord({ file: "a.ts", contentText: "handle_user_input" }),
+        baseRecord({ file: "b.ts", contentText: "handleXuser_input" }),
+      ])
+      .unwrap();
 
-    const matches = cache.searchContent("handle_user_input");
+    const matches = cache.searchContent("handle_user_input").unwrap();
     expect(matches).toHaveLength(1);
     expect(matches[0]?.file).toBe("a.ts");
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("handles empty inserts gracefully", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
-    cache.insertWaymarks([]);
-    cache.insertWaymarksBatch(new Map());
+    cache.insertWaymarks([]).unwrap();
+    cache.insertWaymarksBatch(new Map()).unwrap();
 
-    const records = cache.findByFile("nonexistent.ts");
+    const records = cache.findByFile("nonexistent.ts").unwrap();
     expect(records).toHaveLength(0);
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("isFileStale returns true for non-existent files", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
     const nonexistentMtime = 1000;
     const nonexistentSize = 100;
 
     expect(
-      cache.isFileStale("never-seen.ts", nonexistentMtime, nonexistentSize)
+      cache
+        .isFileStale("never-seen.ts", nonexistentMtime, nonexistentSize)
+        .unwrap()
     ).toBe(true);
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("WaymarkCache rejects path traversal attempts", () => {
-    expect(() => {
-      new WaymarkCache({ dbPath: "../../etc/waymark.db" });
-    }).toThrow(SECURITY_ERROR_PATTERN);
+    const result = WaymarkCache.open({
+      dbPath: "../../etc/waymark.db",
+    });
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toMatch(
+      SECURITY_ERROR_PATTERN
+    );
   });
 
   test("WaymarkCache rejects absolute paths outside cache", () => {
-    expect(() => {
-      new WaymarkCache({ dbPath: "/tmp/malicious.db" });
-    }).toThrow(SECURITY_ERROR_PATTERN);
+    const result = WaymarkCache.open({
+      dbPath: "/tmp/malicious.db",
+    });
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toMatch(
+      SECURITY_ERROR_PATTERN
+    );
   });
 
   test("WaymarkCache rejects workspace symlink that escapes allowed roots", async () => {
@@ -305,9 +331,13 @@ describe("WaymarkCache", () => {
 
     await symlink(outsideDir, linkDir, "dir");
 
-    expect(() => {
-      new WaymarkCache({ dbPath: join(linkDir, "cache.db") });
-    }).toThrow(SECURITY_ERROR_PATTERN);
+    const result = WaymarkCache.open({
+      dbPath: join(linkDir, "cache.db"),
+    });
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toMatch(
+      SECURITY_ERROR_PATTERN
+    );
 
     await rm(workspace, { recursive: true, force: true });
     await rm(outsideDir, { recursive: true, force: true });
@@ -317,51 +347,62 @@ describe("WaymarkCache", () => {
     const cacheDir = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
     const validPath = join(cacheDir, "waymark", "test.db");
 
-    expect(() => {
-      const cache = new WaymarkCache({ dbPath: validPath });
-      cache[Symbol.dispose]();
-    }).not.toThrow();
+    const result = WaymarkCache.open({ dbPath: validPath });
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      result.value[Symbol.dispose]();
+    }
   });
 
   test("WaymarkCache allows workspace-local cache paths", () => {
     const workspacePath = join(process.cwd(), ".waymark-test", "waymark.db");
 
-    expect(() => {
-      const cache = new WaymarkCache({ dbPath: workspacePath });
-      cache[Symbol.dispose]();
-    }).not.toThrow();
+    const result = WaymarkCache.open({ dbPath: workspacePath });
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      result.value[Symbol.dispose]();
+    }
   });
 
   test("WaymarkCache allows relative workspace paths", () => {
-    expect(() => {
-      const cache = new WaymarkCache({
-        dbPath: "./.waymark-test/test-cache.db",
-      });
-      cache[Symbol.dispose]();
-    }).not.toThrow();
+    const result = WaymarkCache.open({
+      dbPath: "./.waymark-test/test-cache.db",
+    });
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      result.value[Symbol.dispose]();
+    }
   });
 
   test("WaymarkCache rejects paths outside workspace and cache", () => {
-    expect(() => {
-      new WaymarkCache({ dbPath: "/etc/waymark.db" });
-    }).toThrow(SECURITY_ERROR_PATTERN);
+    const result = WaymarkCache.open({ dbPath: "/etc/waymark.db" });
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toMatch(
+      SECURITY_ERROR_PATTERN
+    );
   });
 
   test("schema migration invalidates cache on version mismatch", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Insert initial data with current schema
-    cache.updateFileInfo("test.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.insertWaymarks([
-      baseRecord({ file: "test.ts", type: "todo", contentText: "original" }),
-    ]);
+    cache.updateFileInfo("test.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache
+      .insertWaymarks([
+        baseRecord({
+          file: "test.ts",
+          type: "todo",
+          contentText: "original",
+        }),
+      ])
+      .unwrap();
 
     // Verify data exists
-    const beforeRecords = cache.findByFile("test.ts");
+    const beforeRecords = cache.findByFile("test.ts").unwrap();
     expect(beforeRecords).toHaveLength(1);
     expect(beforeRecords[0]?.contentText).toBe("original");
 
-    cache.close();
+    cache.close().unwrap();
 
     // Now simulate schema version change by manually creating a database with old version
     const db = new Database(":memory:");
@@ -373,7 +414,7 @@ describe("WaymarkCache", () => {
         value INTEGER NOT NULL
       ) STRICT
     `);
-    setSchemaVersion(db, 1);
+    setSchemaVersion(db, 1).unwrap();
 
     db.exec(`
       CREATE TABLE files (
@@ -425,7 +466,7 @@ describe("WaymarkCache", () => {
     `);
 
     // Verify old schema version
-    expect(getSchemaVersion(db)).toBe(1);
+    expect(getSchemaVersion(db).unwrap()).toBe(1);
 
     // Verify data exists in old schema
     const oldData = db
@@ -437,39 +478,48 @@ describe("WaymarkCache", () => {
   });
 
   test("fresh cache initializes with current schema version", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Access the internal database (cast to access private property for testing)
     const db = (cache as unknown as { db: Database }).db;
 
-    expect(getSchemaVersion(db)).toBe(CACHE_SCHEMA_VERSION);
+    expect(getSchemaVersion(db).unwrap()).toBe(CACHE_SCHEMA_VERSION);
 
-    cache.close();
+    cache.close().unwrap();
   });
 
   test("schema migration preserves cache after same-version reopening", () => {
-    const cache = new WaymarkCache({ dbPath: ":memory:" });
+    const cache = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Insert data
-    cache.updateFileInfo("test.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    cache.insertWaymarks([
-      baseRecord({ file: "test.ts", type: "note", contentText: "preserved" }),
-    ]);
+    cache.updateFileInfo("test.ts", DEFAULT_MTIME, DEFAULT_SIZE).unwrap();
+    cache
+      .insertWaymarks([
+        baseRecord({
+          file: "test.ts",
+          type: "note",
+          contentText: "preserved",
+        }),
+      ])
+      .unwrap();
 
-    const beforeRecords = cache.findByFile("test.ts");
+    const beforeRecords = cache.findByFile("test.ts").unwrap();
     expect(beforeRecords).toHaveLength(1);
 
     // Close and reopen with same schema version
-    cache.close();
+    cache.close().unwrap();
 
-    const cache2 = new WaymarkCache({ dbPath: ":memory:" });
+    const cache2 = WaymarkCache.open({ dbPath: ":memory:" }).unwrap();
 
     // Note: In-memory databases don't persist, so this test verifies
     // that createSchema is idempotent and doesn't break on same version
-    expect(() => {
-      cache2.updateFileInfo("test2.ts", DEFAULT_MTIME, DEFAULT_SIZE);
-    }).not.toThrow();
+    const result = cache2.updateFileInfo(
+      "test2.ts",
+      DEFAULT_MTIME,
+      DEFAULT_SIZE
+    );
+    expect(result.isOk()).toBe(true);
 
-    cache2.close();
+    cache2.close().unwrap();
   });
 });

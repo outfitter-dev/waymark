@@ -14,7 +14,7 @@ import {
 describe("Cache Schema Versioning", () => {
   test("getSchemaVersion returns 0 for fresh database", () => {
     const db = new Database(":memory:");
-    expect(getSchemaVersion(db)).toBe(0);
+    expect(getSchemaVersion(db).unwrap()).toBe(0);
     db.close();
   });
 
@@ -29,9 +29,9 @@ describe("Cache Schema Versioning", () => {
       ) STRICT
     `);
 
-    const TestVersion = 42;
-    setSchemaVersion(db, TestVersion);
-    expect(getSchemaVersion(db)).toBe(TestVersion);
+    const testVersion = 42;
+    setSchemaVersion(db, testVersion).unwrap();
+    expect(getSchemaVersion(db).unwrap()).toBe(testVersion);
 
     db.close();
   });
@@ -46,11 +46,11 @@ describe("Cache Schema Versioning", () => {
       ) STRICT
     `);
 
-    setSchemaVersion(db, 1);
-    expect(getSchemaVersion(db)).toBe(1);
+    setSchemaVersion(db, 1).unwrap();
+    expect(getSchemaVersion(db).unwrap()).toBe(1);
 
-    setSchemaVersion(db, 2);
-    expect(getSchemaVersion(db)).toBe(2);
+    setSchemaVersion(db, 2).unwrap();
+    expect(getSchemaVersion(db).unwrap()).toBe(2);
 
     db.close();
   });
@@ -93,7 +93,7 @@ describe("Cache Schema Versioning", () => {
     db.exec(
       "INSERT INTO files (path, mtime, size) VALUES ('test.ts', 100, 10)"
     );
-    setSchemaVersion(db, 1);
+    setSchemaVersion(db, 1).unwrap();
 
     // Verify tables exist
     const beforeTables = db
@@ -104,7 +104,7 @@ describe("Cache Schema Versioning", () => {
     expect(beforeTables.length).toBeGreaterThan(0);
 
     // Invalidate cache
-    invalidateCache(db);
+    invalidateCache(db).unwrap();
 
     // Verify all tables are dropped
     const afterTables = db
@@ -120,9 +120,9 @@ describe("Cache Schema Versioning", () => {
   test("createSchema initializes fresh database with current version", () => {
     const db = new Database(":memory:");
 
-    createSchema(db);
+    createSchema(db).unwrap();
 
-    expect(getSchemaVersion(db)).toBe(CACHE_SCHEMA_VERSION);
+    expect(getSchemaVersion(db).unwrap()).toBe(CACHE_SCHEMA_VERSION);
 
     // Verify all tables exist
     const tables = db
@@ -144,11 +144,11 @@ describe("Cache Schema Versioning", () => {
     const db = new Database(":memory:");
 
     // Create schema multiple times
-    createSchema(db);
-    createSchema(db);
-    createSchema(db);
+    createSchema(db).unwrap();
+    createSchema(db).unwrap();
+    createSchema(db).unwrap();
 
-    expect(getSchemaVersion(db)).toBe(CACHE_SCHEMA_VERSION);
+    expect(getSchemaVersion(db).unwrap()).toBe(CACHE_SCHEMA_VERSION);
 
     db.close();
   });
@@ -163,7 +163,7 @@ describe("Cache Schema Versioning", () => {
         value INTEGER NOT NULL
       ) STRICT
     `);
-    setSchemaVersion(db, 1);
+    setSchemaVersion(db, 1).unwrap();
 
     db.exec(`
       CREATE TABLE files (
@@ -185,15 +185,15 @@ describe("Cache Schema Versioning", () => {
     db.exec("INSERT INTO files (path, mtime, size) VALUES ('old.ts', 100, 10)");
 
     // Verify old schema exists
-    expect(getSchemaVersion(db)).toBe(1);
+    expect(getSchemaVersion(db).unwrap()).toBe(1);
     const oldFiles = db.prepare("SELECT * FROM files").all();
     expect(oldFiles).toHaveLength(1);
 
     // Create new schema (should invalidate)
-    createSchema(db);
+    createSchema(db).unwrap();
 
     // Verify version updated
-    expect(getSchemaVersion(db)).toBe(CACHE_SCHEMA_VERSION);
+    expect(getSchemaVersion(db).unwrap()).toBe(CACHE_SCHEMA_VERSION);
 
     // Verify old data is gone (cache invalidated)
     const newFiles = db.prepare("SELECT * FROM files").all();
@@ -214,7 +214,7 @@ describe("Cache Schema Versioning", () => {
     const db = new Database(":memory:");
 
     // Create schema with current version
-    createSchema(db);
+    createSchema(db).unwrap();
 
     // Insert data
     db.exec(
@@ -225,12 +225,12 @@ describe("Cache Schema Versioning", () => {
     expect(beforeFiles).toHaveLength(1);
 
     // Call createSchema again
-    createSchema(db);
+    createSchema(db).unwrap();
 
     // Verify data still exists
     const afterFiles = db.prepare("SELECT * FROM files").all();
     expect(afterFiles).toHaveLength(1);
-    expect(getSchemaVersion(db)).toBe(CACHE_SCHEMA_VERSION);
+    expect(getSchemaVersion(db).unwrap()).toBe(CACHE_SCHEMA_VERSION);
 
     db.close();
   });

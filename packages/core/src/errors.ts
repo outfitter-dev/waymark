@@ -10,7 +10,7 @@ export {
   InternalError,
   NotFoundError,
   type OutfitterError,
-  type Result,
+  Result,
   ValidationError,
 } from "@outfitter/contracts";
 

@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { WaymarkRecord } from "@waymarks/grammar";
 
+import { InternalError, Result } from "../errors.ts";
 import { isFileStale, updateFileInfo } from "./files.ts";
 import {
   findByCanonical,
@@ -33,43 +34,41 @@ export class WaymarkCache {
   private readonly db: Database;
   private readonly dbPath: string;
 
-  constructor(options: WaymarkCacheOptions = {}) {
-    this.dbPath = options.dbPath ?? this.getCacheDbPath();
-    this.ensureCacheDirectory();
-    this.db = new Database(this.dbPath);
-    configureForPerformance(this.db);
-    createSchema(this.db);
+  private constructor(db: Database, dbPath: string) {
+    this.db = db;
+    this.dbPath = dbPath;
   }
 
-  private getCacheDbPath(): string {
-    const cacheDir = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
-    return join(cacheDir, "waymark", "waymark-cache.db");
-  }
+  /**
+   * Open a new cache instance, creating the database and schema as needed.
+   * @param options - Cache configuration options.
+   * @returns Result with the cache instance or an InternalError.
+   */
+  static open(
+    options: WaymarkCacheOptions = {}
+  ): Result<WaymarkCache, InternalError> {
+    return Result.gen(function* () {
+      const dbPath = options.dbPath ?? getDefaultCacheDbPath();
 
-  private ensureCacheDirectory(): void {
-    // Allow special SQLite URIs
-    if (this.dbPath === ":memory:" || this.dbPath.startsWith("file:")) {
-      return;
-    }
+      yield* ensureCacheDirectory(dbPath);
 
-    // Resolve to absolute path
-    const resolved = resolve(this.dbPath);
+      const db = yield* Result.try({
+        try: () => new Database(dbPath),
+        catch: (cause) =>
+          new InternalError({
+            message: `Failed to open cache database: ${cause instanceof Error ? cause.message : String(cause)}`,
+            context: {
+              dbPath,
+              cause: cause instanceof Error ? cause.message : String(cause),
+            },
+          }),
+      });
 
-    // Determine allowed parent directories
-    const cacheHome = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
-    const allowedParents = [
-      resolve(cacheHome, "waymark"),
-      resolve(process.cwd()),
-    ];
-    const allowedRealParents = expandAllowedParents(allowedParents);
+      yield* configureForPerformance(db);
+      yield* createSchema(db);
 
-    ensurePathWithinAllowed(resolved, allowedParents, allowedRealParents);
-
-    // Create directory if needed
-    const dir = dirname(resolved);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
+      return Result.ok(new WaymarkCache(db, dbPath));
+    });
   }
 
   /**
@@ -77,9 +76,13 @@ export class WaymarkCache {
    * @param filePath - File path to check.
    * @param mtime - Modified time in milliseconds.
    * @param size - File size in bytes.
-   * @returns True when cached metadata is stale or missing.
+   * @returns Result with true when cached metadata is stale or missing.
    */
-  isFileStale(filePath: string, mtime: number, size: number): boolean {
+  isFileStale(
+    filePath: string,
+    mtime: number,
+    size: number
+  ): Result<boolean, InternalError> {
     return isFileStale(this.db, filePath, mtime, size);
   }
 
@@ -89,39 +92,45 @@ export class WaymarkCache {
    * @param mtime - Modified time in milliseconds.
    * @param size - File size in bytes.
    * @param hash - Optional content hash.
+   * @returns Result indicating success or an InternalError.
    */
   updateFileInfo(
     filePath: string,
     mtime: number,
     size: number,
     hash?: string | null
-  ): void {
+  ): Result<void, InternalError> {
     const info =
       hash === undefined
         ? { filePath, mtime, size }
         : { filePath, mtime, size, hash };
-    updateFileInfo(this.db, info);
+    return updateFileInfo(this.db, info);
   }
 
   /**
    * Insert records into the cache.
    * @param records - Waymark records to insert.
+   * @returns Result indicating success or an InternalError.
    */
-  insertWaymarks(records: WaymarkRecord[]): void {
-    insertWaymarks(this.db, records);
+  insertWaymarks(records: WaymarkRecord[]): Result<void, InternalError> {
+    return insertWaymarks(this.db, records);
   }
 
   /**
    * Insert records in a batched transaction grouped by file.
    * @param recordsByFile - Map of file paths to waymark records.
+   * @returns Result indicating success or an InternalError.
    */
-  insertWaymarksBatch(recordsByFile: Map<string, WaymarkRecord[]>): void {
-    insertWaymarksBatch(this.db, recordsByFile);
+  insertWaymarksBatch(
+    recordsByFile: Map<string, WaymarkRecord[]>
+  ): Result<void, InternalError> {
+    return insertWaymarksBatch(this.db, recordsByFile);
   }
 
   /**
    * Replace cached records for a single file.
    * @param args - File metadata and records to replace in the cache.
+   * @returns Result indicating success or an InternalError.
    */
   replaceFileWaymarks(args: {
     filePath: string;
@@ -129,88 +138,152 @@ export class WaymarkCache {
     size: number;
     hash?: string | null;
     records: WaymarkRecord[];
-  }): void {
-    replaceFileWaymarks(this.db, args);
+  }): Result<void, InternalError> {
+    return replaceFileWaymarks(this.db, args);
   }
 
   /**
    * Remove cached records for the given file path.
    * @param filePath - File path to remove.
+   * @returns Result indicating success or an InternalError.
    */
-  deleteFile(filePath: string): void {
-    deleteFile(this.db, filePath);
+  deleteFile(filePath: string): Result<void, InternalError> {
+    return deleteFile(this.db, filePath);
   }
 
   /**
    * Retrieve cached records for a specific file.
    * @param filePath - File path to look up.
-   * @returns Cached waymark records for the file.
+   * @returns Result with cached waymark records for the file.
    */
-  findByFile(filePath: string): WaymarkRecord[] {
+  findByFile(filePath: string): Result<WaymarkRecord[], InternalError> {
     return findByFile(this.db, filePath);
   }
 
   /**
    * Retrieve cached records filtered by marker type.
    * @param marker - Marker type to filter by.
-   * @returns Cached records matching the marker.
+   * @returns Result with cached records matching the marker.
    */
-  findByType(marker: string): WaymarkRecord[] {
+  findByType(marker: string): Result<WaymarkRecord[], InternalError> {
     return findByType(this.db, marker);
   }
 
   /**
    * Retrieve cached records that include the given tag.
    * @param tag - Tag to filter by.
-   * @returns Cached records containing the tag.
+   * @returns Result with cached records containing the tag.
    */
-  findByTag(tag: string): WaymarkRecord[] {
+  findByTag(tag: string): Result<WaymarkRecord[], InternalError> {
     return findByTag(this.db, tag);
   }
 
   /**
    * Retrieve cached records that include the given mention.
    * @param mention - Mention to filter by.
-   * @returns Cached records containing the mention.
+   * @returns Result with cached records containing the mention.
    */
-  findByMention(mention: string): WaymarkRecord[] {
+  findByMention(mention: string): Result<WaymarkRecord[], InternalError> {
     return findByMention(this.db, mention);
   }
 
   /**
    * Retrieve cached records that reference a canonical token.
    * @param canonical - Canonical token to match.
-   * @returns Cached records referencing the canonical token.
+   * @returns Result with cached records referencing the canonical token.
    */
-  findByCanonical(canonical: string): WaymarkRecord[] {
+  findByCanonical(canonical: string): Result<WaymarkRecord[], InternalError> {
     return findByCanonical(this.db, canonical);
   }
 
   /**
    * Search cached records by content text.
    * @param query - Search query text.
-   * @returns Cached records matching the query.
+   * @returns Result with cached records matching the query.
    */
-  searchContent(query: string): WaymarkRecord[] {
+  searchContent(query: string): Result<WaymarkRecord[], InternalError> {
     return searchContent(this.db, query);
   }
 
-  /** Flush and close the underlying SQLite connection. */
-  close(): void {
-    // Run optimization before closing
-    this.db.exec("PRAGMA optimize");
-
-    // Checkpoint WAL file
-    this.db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
-
-    this.db.close();
+  /**
+   * Flush and close the underlying SQLite connection.
+   * @returns Result indicating success or an InternalError.
+   */
+  close(): Result<void, InternalError> {
+    return Result.try({
+      try: () => {
+        // Run optimization before closing
+        this.db.exec("PRAGMA optimize");
+        // Checkpoint WAL file
+        this.db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+        this.db.close();
+      },
+      catch: (cause) =>
+        new InternalError({
+          message: `Failed to close cache database: ${cause instanceof Error ? cause.message : String(cause)}`,
+          context: {
+            dbPath: this.dbPath,
+            cause: cause instanceof Error ? cause.message : String(cause),
+          },
+        }),
+    });
   }
 
-  // Implement disposable pattern for automatic cleanup
   /** Dispose the cache by closing the database connection. */
   [Symbol.dispose](): void {
+    // Best-effort close; ignore errors during disposal
     this.close();
   }
+}
+
+function getDefaultCacheDbPath(): string {
+  const cacheDir = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
+  return join(cacheDir, "waymark", "waymark-cache.db");
+}
+
+function ensureCacheDirectory(dbPath: string): Result<void, InternalError> {
+  // Allow special SQLite URIs
+  if (dbPath === ":memory:" || dbPath.startsWith("file:")) {
+    return Result.ok();
+  }
+
+  // Resolve to absolute path
+  const resolved = resolve(dbPath);
+
+  // Determine allowed parent directories
+  const cacheHome = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
+  const allowedParents = [
+    resolve(cacheHome, "waymark"),
+    resolve(process.cwd()),
+  ];
+  const allowedRealParents = expandAllowedParents(allowedParents);
+
+  const securityResult = ensurePathWithinAllowed(
+    resolved,
+    allowedParents,
+    allowedRealParents
+  );
+  if (securityResult.isErr()) {
+    return securityResult;
+  }
+
+  // Create directory if needed
+  return Result.try({
+    try: () => {
+      const dir = dirname(resolved);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+    },
+    catch: (cause) =>
+      new InternalError({
+        message: `Failed to create cache directory: ${cause instanceof Error ? cause.message : String(cause)}`,
+        context: {
+          dbPath,
+          cause: cause instanceof Error ? cause.message : String(cause),
+        },
+      }),
+  });
 }
 
 function expandAllowedParents(parents: string[]): string[] {
@@ -230,21 +303,23 @@ function ensurePathWithinAllowed(
   target: string,
   allowedDisplayParents: string[],
   allowedParents: string[]
-): void {
+): Result<void, InternalError> {
   const absolute = resolve(target);
   if (!isWithinAllowedParents(absolute, allowedParents)) {
-    throwSecurityError(absolute, allowedDisplayParents);
+    return makeSecurityError(absolute, allowedDisplayParents);
   }
 
   const existingAncestor = findExistingAncestor(absolute);
   if (!existingAncestor) {
-    return;
+    return Result.ok();
   }
 
   const ancestorReal = tryRealpathSync(existingAncestor);
   if (ancestorReal && !isWithinAllowedParents(ancestorReal, allowedParents)) {
-    throwSecurityError(ancestorReal, allowedDisplayParents);
+    return makeSecurityError(ancestorReal, allowedDisplayParents);
   }
+
+  return Result.ok();
 }
 
 function findExistingAncestor(pathValue: string): string | null {
@@ -266,13 +341,17 @@ function isWithinAllowedParents(candidate: string, parents: string[]): boolean {
   });
 }
 
-function throwSecurityError(
+function makeSecurityError(
   pathValue: string,
   allowedParents: string[]
-): never {
-  throw new Error(
-    `Cache path must be within ${allowedParents.join(" or ")}, got: ${pathValue}\n` +
-      "This is a security restriction to prevent writing outside cache directories."
+): Result<never, InternalError> {
+  return Result.err(
+    new InternalError({
+      message:
+        `Cache path must be within ${allowedParents.join(" or ")}, got: ${pathValue}\n` +
+        "This is a security restriction to prevent writing outside cache directories.",
+      context: { path: pathValue, allowedParents },
+    })
   );
 }
 
