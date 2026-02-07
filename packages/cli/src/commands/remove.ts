@@ -289,10 +289,10 @@ export async function runRemoveCommand(
     ...(mergedOptions.reason ? { reason: mergedOptions.reason } : {}),
     removedBy: "cli",
     logger: {
-      debug: (msg, meta) => logger.debug(meta ?? {}, msg),
-      info: (msg, meta) => logger.info(meta ?? {}, msg),
-      warn: (msg, meta) => logger.warn(meta ?? {}, msg),
-      error: (msg, meta) => logger.error(meta ?? {}, msg),
+      debug: (msg, meta) => logger.debug(msg, meta),
+      info: (msg, meta) => logger.info(msg, meta),
+      warn: (msg, meta) => logger.warn(msg, meta),
+      error: (msg, meta) => logger.error(msg, meta),
     },
   };
 

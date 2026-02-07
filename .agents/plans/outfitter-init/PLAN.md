@@ -24,7 +24,7 @@ Adopt `@outfitter/*` packages in the Waymark monorepo to replace ad-hoc error ha
 
 ## Current State (Scan Results)
 
-```
+```text
 Anti-Pattern                 Count    Files
 ─────────────────────────────────────────────
 throw statements             103      ~30 files

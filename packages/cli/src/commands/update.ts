@@ -77,10 +77,9 @@ export function detectInstallMethod(executablePath?: string): InstallDetection {
       ? realpathSync(executablePath)
       : realpathSync(process.argv[1] ?? "");
   } catch (error) {
-    logger.debug(
-      { error },
-      "Failed to resolve executable path for update detection"
-    );
+    logger.debug("Failed to resolve executable path for update detection", {
+      error,
+    });
     resolvedPath = executablePath ?? "";
   }
 
@@ -228,7 +227,7 @@ export async function runUpdateCommand(
   }
 
   if (options.command && command !== "npm") {
-    logger.warn({ command }, "Using custom update command for wm update");
+    logger.warn("Using custom update command for wm update", { command });
   }
 
   if (options.dryRun) {
@@ -254,16 +253,13 @@ export async function runUpdateCommand(
     return confirmationResult;
   }
 
-  logger.info(
-    {
-      command,
-      args: NPM_UPDATE_ARGS,
-      cwd: process.cwd(),
-      method: detection.method,
-      location: detection.binaryPath,
-    },
-    "Executing wm update via npm"
-  );
+  logger.info("Executing wm update via npm", {
+    command,
+    args: NPM_UPDATE_ARGS,
+    cwd: process.cwd(),
+    method: detection.method,
+    location: detection.binaryPath,
+  });
 
   try {
     const exitCode = await runChild(command, NPM_UPDATE_ARGS);
@@ -273,7 +269,7 @@ export async function runUpdateCommand(
       exitCode,
     };
   } catch (error) {
-    logger.error({ error }, "wm update failed to launch npm command");
+    logger.error("wm update failed to launch npm command", { error });
     return {
       command: commandString,
       method: detection.method,

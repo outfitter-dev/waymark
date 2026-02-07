@@ -1,4 +1,4 @@
-// tldr ::: tests for pino logger configuration and level control
+// tldr ::: tests for @outfitter/logging-based CLI logger with level control
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { createLogger } from "./logger.ts";
@@ -36,7 +36,7 @@ describe("logger utility", () => {
     expect(logger.level).toBe("error");
   });
 
-  test("logger level can be changed after creation", () => {
+  test("logger level can be changed after creation via setter", () => {
     const logger = createLogger({ level: "warn" });
     expect(logger.level).toBe("warn");
 
@@ -44,16 +44,21 @@ describe("logger utility", () => {
     expect(logger.level).toBe("debug");
   });
 
-  test("creates logger with pretty format in development", () => {
-    process.env.NODE_ENV = "development";
+  test("logger level can be changed after creation via setLevel", () => {
+    const logger = createLogger({ level: "warn" });
+    expect(logger.level).toBe("warn");
+
+    logger.setLevel("debug");
+    expect(logger.level).toBe("debug");
+  });
+
+  test("creates logger with pretty option without crashing", () => {
     const logger = createLogger({ pretty: true });
-    // Can't easily test pino-pretty integration, but verify it doesn't crash
     expect(logger).toBeDefined();
     expect(logger.level).toBe("warn");
   });
 
-  test("creates logger without pretty format in production", () => {
-    process.env.NODE_ENV = "production";
+  test("creates logger with pretty disabled", () => {
     const logger = createLogger({ pretty: false });
     expect(logger).toBeDefined();
     expect(logger.level).toBe("warn");
@@ -79,5 +84,6 @@ describe("logger utility", () => {
     expect(typeof logger.warn).toBe("function");
     expect(typeof logger.error).toBe("function");
     expect(typeof logger.fatal).toBe("function");
+    expect(typeof logger.setLevel).toBe("function");
   });
 });
