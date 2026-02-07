@@ -5,6 +5,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerResources } from "./resources";
 import { registerTools } from "./tools";
+import { logger } from "./utils/logger";
 
 const VERSION = process.env.npm_package_version ?? "1.0.0-beta.1";
 
@@ -21,7 +22,7 @@ async function main(): Promise<void> {
 main().catch((error) => {
   const message =
     error instanceof Error ? (error.stack ?? error.message) : String(error);
-  process.stderr.write(`${message}\n`);
+  logger.fatal(message, { error });
   process.exit(1);
 });
 

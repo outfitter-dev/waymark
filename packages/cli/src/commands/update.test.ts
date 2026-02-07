@@ -43,7 +43,9 @@ describe("runUpdateCommand", () => {
       return Promise.resolve(0);
     });
 
-    const result = (await runUpdateCommand({ force: true, yes: true })).unwrap();
+    const result = (
+      await runUpdateCommand({ force: true, yes: true })
+    ).unwrap();
 
     expect(result.skipped).toBeUndefined();
     expect(calls).toHaveLength(1);
@@ -68,7 +70,7 @@ describe("runUpdateCommand", () => {
       return Promise.resolve(0);
     });
 
-    const result = (
+    const _result = (
       await runUpdateCommand({
         command: "pnpm",
         force: true,
