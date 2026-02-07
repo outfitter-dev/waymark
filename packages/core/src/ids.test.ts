@@ -56,8 +56,16 @@ describe("WaymarkIdManager", () => {
         new JsonIdIndex({ workspaceRoot: workspaceB })
       );
 
-      const idA = await managerA.reserveId(metadata);
-      const idB = await managerB.reserveId(metadata);
+      const resultA = await managerA.reserveId(metadata);
+      const resultB = await managerB.reserveId(metadata);
+
+      expect(resultA.isOk()).toBe(true);
+      expect(resultB.isOk()).toBe(true);
+      if (!(resultA.isOk() && resultB.isOk())) {
+        throw new Error("Expected successful reservation");
+      }
+      const idA = resultA.value;
+      const idB = resultB.value;
 
       expect(idA).toBeDefined();
       expect(idB).toBeDefined();

@@ -1,9 +1,17 @@
 // tldr ::: waymark ID management utilities backed by the JSON index
 
 import { createHash } from "node:crypto";
+import {
+  ConflictError,
+  InternalError,
+  NotFoundError,
+  Result,
+  ValidationError,
+} from "./errors.ts";
 
 const MIN_ID_SLICE_LENGTH = 4;
 const BASE36_RADIX = 36;
+const MAX_ID_GENERATION_ATTEMPTS = 25;
 
 // note ::: content/context fingerprints use SHA-256 for cryptographic properties
 // note ::: IDs use wyhash for speed (10-20x faster, sufficient collision resistance)
@@ -39,93 +47,140 @@ export class WaymarkIdManager {
    * Call {@link commitReservedId} after the file write succeeds to persist the mapping.
    * @param metadata - Metadata used to generate or validate the ID.
    * @param requestedId - Optional explicit ID to reserve.
-   * @returns Reserved ID or undefined when no ID should be assigned.
+   * @returns Result containing reserved ID or undefined when no ID should be assigned.
    */
   async reserveId(
     metadata: WaymarkIdMetadata,
     requestedId?: string | null
-  ): Promise<string | undefined> {
+  ): Promise<
+    Result<string | undefined, ValidationError | ConflictError | InternalError>
+  > {
     const preferredId = requestedId ?? undefined;
 
     if (preferredId) {
-      const normalized = this.normalizeId(preferredId);
-      await this.validateAvailability(normalized, metadata);
+      const normalizedResult = this.normalizeId(preferredId);
+      if (normalizedResult.isErr()) {
+        return normalizedResult;
+      }
+      const normalized = normalizedResult.value;
+
+      const availabilityResult = await this.validateAvailability(
+        normalized,
+        metadata
+      );
+      if (availabilityResult.isErr()) {
+        return availabilityResult;
+      }
+
       if (this.reserved.has(normalized)) {
-        throw new Error(
-          `Waymark ID already reserved in current batch: ${normalized}`
+        return Result.err(
+          new ConflictError({
+            message: `Waymark ID already reserved in current batch: ${normalized}`,
+          })
         );
       }
       this.reserved.add(normalized);
-      return normalized;
+      return Result.ok(normalized);
     }
 
     if (this.config.mode === "off" || this.config.mode === "manual") {
-      return;
+      return Result.ok(undefined);
     }
 
     if (this.config.mode === "prompt") {
       // Core layer does not prompt; caller should handle prompting and rerun with an explicit ID.
-      return;
+      return Result.ok(undefined);
     }
 
-    const generated = await this.generateUniqueId(metadata);
-    this.reserved.add(generated);
-    return generated;
+    const generatedResult = await this.generateUniqueId(metadata);
+    if (generatedResult.isErr()) {
+      return generatedResult;
+    }
+    this.reserved.add(generatedResult.value);
+    return Result.ok(generatedResult.value);
   }
 
   /**
    * Persist a previously reserved ID to the on-disk index.
    * @param id - Reserved ID to persist.
    * @param metadata - Metadata associated with the ID.
-   * @returns Promise that resolves when saved.
+   * @returns Result indicating success or a not-found error.
    */
   async commitReservedId(
     id: string,
     metadata: WaymarkIdMetadata
-  ): Promise<void> {
-    const normalized = this.normalizeId(id);
+  ): Promise<Result<void, ValidationError | NotFoundError>> {
+    const normalizedResult = this.normalizeId(id);
+    if (normalizedResult.isErr()) {
+      return normalizedResult;
+    }
+    const normalized = normalizedResult.value;
+
     if (!this.reserved.has(normalized)) {
-      throw new Error(`Waymark ID ${normalized} was not reserved`);
+      return Result.err(
+        new NotFoundError({
+          message: `Waymark ID ${normalized} was not reserved`,
+          resourceType: "waymark-id",
+          resourceId: normalized,
+        })
+      );
     }
     await this.index.set(this.buildEntry(normalized, metadata));
     this.reserved.delete(normalized);
+    return Result.ok();
   }
 
   /**
    * Update the stored location metadata for an existing ID.
    * @param id - Waymark ID to update.
    * @param metadata - Updated metadata for the ID.
-   * @returns Promise that resolves when saved.
+   * @returns Result indicating success or a not-found/validation error.
    */
-  async updateLocation(id: string, metadata: WaymarkIdMetadata): Promise<void> {
-    const normalized = this.normalizeId(id);
-    await this.index.update(normalized, () =>
+  async updateLocation(
+    id: string,
+    metadata: WaymarkIdMetadata
+  ): Promise<Result<void, ValidationError | NotFoundError>> {
+    const normalizedResult = this.normalizeId(id);
+    if (normalizedResult.isErr()) {
+      return normalizedResult;
+    }
+    const normalized = normalizedResult.value;
+
+    const updateResult = await this.index.update(normalized, () =>
       this.buildEntry(normalized, metadata)
     );
+    return updateResult;
   }
 
   /**
    * Remove an ID from the index and optionally record a removal reason.
    * @param id - Waymark ID to remove.
    * @param options - Optional removal metadata.
-   * @returns Promise that resolves when saved.
+   * @returns Result indicating success or a validation error.
    */
   async remove(
     id: string,
     options?: { reason?: string; removedBy?: string }
-  ): Promise<void> {
-    const normalized = this.normalizeId(id);
-    await this.index.delete(normalized, options);
+  ): Promise<Result<void, ValidationError>> {
+    const normalizedResult = this.normalizeId(id);
+    if (normalizedResult.isErr()) {
+      return normalizedResult;
+    }
+    await this.index.delete(normalizedResult.value, options);
+    return Result.ok();
   }
 
   /**
    * Fetch a stored ID entry by ID.
    * @param id - Waymark ID to fetch.
-   * @returns Entry if found, otherwise null.
+   * @returns Entry if found, otherwise null. Returns null for invalid IDs.
    */
   get(id: string): Promise<IdIndexEntry | null> {
-    const normalized = this.normalizeId(id);
-    return this.index.get(normalized);
+    const normalizedResult = this.normalizeId(id);
+    if (normalizedResult.isErr()) {
+      return Promise.resolve(null);
+    }
+    return this.index.get(normalizedResult.value);
   }
 
   /**
@@ -160,55 +215,73 @@ export class WaymarkIdManager {
     return entry;
   }
 
-  private normalizeId(id: string): string {
+  private normalizeId(id: string): Result<string, ValidationError> {
     // Already in [[hash]] or [[hash|alias]] format
     if (id.startsWith("[[") && id.endsWith("]]")) {
       const content = id.slice(2, -2);
       // Reject empty brackets or whitespace-only content
       if (!content || content.trim().length === 0) {
-        throw new Error(`Invalid waymark ID format: ${id}`);
+        return Result.err(
+          new ValidationError({
+            message: `Invalid waymark ID format: ${id}`,
+            field: "id",
+          })
+        );
       }
-      return id;
+      return Result.ok(id);
     }
-    return `[[${id}]]`;
+    return Result.ok(`[[${id}]]`);
   }
 
   private async validateAvailability(
     id: string,
     metadata: WaymarkIdMetadata,
     options: { allowExisting?: boolean } = {}
-  ): Promise<void> {
+  ): Promise<Result<void, ConflictError>> {
     const exists = await this.index.get(id);
     if (!exists) {
-      return;
+      return Result.ok();
     }
     if (options.allowExisting) {
       const sameLocation =
         exists.file === metadata.file && exists.line === metadata.line;
       if (sameLocation) {
-        return;
+        return Result.ok();
       }
     }
-    throw new Error(`Waymark ID already in use: ${id}`);
+    return Result.err(
+      new ConflictError({
+        message: `Waymark ID already in use: ${id}`,
+        context: { id, existingFile: exists.file, existingLine: exists.line },
+      })
+    );
   }
 
-  private async generateUniqueId(metadata: WaymarkIdMetadata): Promise<string> {
+  private async generateUniqueId(
+    metadata: WaymarkIdMetadata
+  ): Promise<Result<string, InternalError>> {
     const baseInput = `${metadata.file}|${metadata.line}|${metadata.type}|${metadata.content}`;
     let attempt = 0;
-    const maxAttempts = 25;
 
-    while (attempt < maxAttempts) {
+    while (attempt < MAX_ID_GENERATION_ATTEMPTS) {
       const candidate = this.makeId(baseInput, attempt);
       const alreadyReserved = this.reserved.has(candidate);
       const exists = await this.index.has(candidate);
       if (!(alreadyReserved || exists)) {
-        return candidate;
+        return Result.ok(candidate);
       }
       attempt++;
     }
 
-    throw new Error(
-      "Unable to generate unique waymark ID after multiple attempts"
+    return Result.err(
+      new InternalError({
+        message: "Unable to generate unique waymark ID after multiple attempts",
+        context: {
+          file: metadata.file,
+          line: metadata.line,
+          attempts: MAX_ID_GENERATION_ATTEMPTS,
+        },
+      })
     );
   }
 
