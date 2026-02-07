@@ -2,6 +2,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { promptConfirm, promptSelect, promptText } from "@outfitter/cli/prompt";
+import { InternalError, Result } from "@outfitter/contracts";
 import {
   fingerprintContent,
   fingerprintContext,
@@ -40,7 +41,6 @@ export type ModifyTarget = {
 export type ModifyCommandResult = {
   output: string;
   payload: ModifyPayload;
-  exitCode: number;
 };
 
 type ModifySignals = {
@@ -109,13 +109,28 @@ type InteractiveAnswers = {
  * @param targetArg - Target file/line input.
  * @param options - Modify command options.
  * @param io - IO adapters for prompts and stdin.
- * @returns CLI result payload and exit code.
+ * @returns CLI result payload wrapped in a Result.
  */
-export async function runModifyCommand(
+export function runModifyCommand(
   context: CommandContext,
   targetArg: string | undefined,
   options: ModifyOptions,
   io: ModifyIo = DEFAULT_IO
+): Promise<Result<ModifyCommandResult, InternalError>> {
+  return Result.tryPromise({
+    try: () => runModifyCommandInner(context, targetArg, options, io),
+    catch: (cause) =>
+      new InternalError({
+        message: `Modify failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function runModifyCommandInner(
+  context: CommandContext,
+  targetArg: string | undefined,
+  options: ModifyOptions,
+  io: ModifyIo
 ): Promise<ModifyCommandResult> {
   const target = await resolveTarget(context, targetArg, options.id);
   const snapshot = await loadWaymarkSnapshot(target);
@@ -161,7 +176,6 @@ export async function runModifyCommand(
             indexRefreshed: false,
             noChange: true,
           },
-          exitCode: 1,
         };
       }
       throw error;
@@ -234,8 +248,7 @@ export async function runModifyCommand(
     target,
   });
 
-  const exitCode = 0;
-  return { output, payload, exitCode };
+  return { output, payload };
 }
 
 type Snapshot = {

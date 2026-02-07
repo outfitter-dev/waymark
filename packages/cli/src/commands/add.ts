@@ -2,6 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 
+import { InternalError, Result } from "@outfitter/contracts";
 import {
   type InsertionResult,
   type InsertionSpec,
@@ -342,21 +343,35 @@ function buildInsertOptions(state: InsertParseState): AddCommandOptions {
   return { ...state.optionState };
 }
 
+export type AddCommandResult = {
+  results: InsertionResult[];
+  summary: AddSummary;
+  output: string;
+};
+
 /**
  * Execute the `wm add` command with parsed inputs.
  * @param parsed - Parsed insertion specs and options.
  * @param context - CLI context with config, logger, and filesystem helpers.
- * @returns Results, summary, output text, and exit code.
+ * @returns Results, summary, and output text wrapped in a Result.
  */
-export async function runAddCommand(
+export function runAddCommand(
   parsed: ParsedAddArgs,
   context: CommandContext
-): Promise<{
-  results: InsertionResult[];
-  summary: AddSummary;
-  output: string;
-  exitCode: number;
-}> {
+): Promise<Result<AddCommandResult, InternalError>> {
+  return Result.tryPromise({
+    try: () => runAddCommandInner(parsed, context),
+    catch: (cause) =>
+      new InternalError({
+        message: `Add failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function runAddCommandInner(
+  parsed: ParsedAddArgs,
+  context: CommandContext
+): Promise<AddCommandResult> {
   const specs = parsed.options.from
     ? await loadSpecsFromSource(parsed.options.from)
     : parsed.specs;
@@ -389,9 +404,8 @@ export async function runAddCommand(
 
   const summary = summarize(results);
   const output = formatOutput(results, summary, parsed.options);
-  const exitCode = results.some((result) => result.status === "error") ? 1 : 0;
 
-  return { results, summary, output, exitCode };
+  return { results, summary, output };
 }
 
 async function loadSpecsFromSource(path: string): Promise<InsertionSpec[]> {

@@ -2,6 +2,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 
+import { InternalError, Result } from "@outfitter/contracts";
 import type { FormatResult, WaymarkConfig } from "@waymarks/core";
 import { formatText } from "@waymarks/core";
 
@@ -20,9 +21,22 @@ const IGNORE_FILE_MARKER_PATTERN =
  * Format a single file and optionally write changes.
  * @param options - Target file and write preference.
  * @param context - CLI context with config.
- * @returns Formatting result details.
+ * @returns Formatting result details wrapped in a Result.
  */
-export async function formatFile(
+export function formatFile(
+  options: { filePath: string; write: boolean },
+  context: CommandContext
+): Promise<Result<FormatResult, InternalError>> {
+  return Result.tryPromise({
+    try: () => formatFileInner(options, context),
+    catch: (cause) =>
+      new InternalError({
+        message: `Format failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function formatFileInner(
   options: { filePath: string; write: boolean },
   context: CommandContext
 ): Promise<FormatResult> {
@@ -83,14 +97,22 @@ async function filterFilesWithWaymarks(paths: string[]): Promise<string[]> {
  * Expand input globs and filter to files with waymarks.
  * @param inputs - Input paths or globs.
  * @param config - Resolved waymark configuration.
- * @returns Expanded list of file paths.
+ * @returns Expanded list of file paths wrapped in a Result.
  */
-export async function expandFormatPaths(
+export function expandFormatPaths(
   inputs: string[],
   config: WaymarkConfig
-): Promise<string[]> {
-  const expanded = await expandInputPaths(inputs, config);
-  return await filterFilesWithWaymarks(expanded);
+): Promise<Result<string[], InternalError>> {
+  return Result.tryPromise({
+    try: async () => {
+      const expanded = await expandInputPaths(inputs, config);
+      return await filterFilesWithWaymarks(expanded);
+    },
+    catch: (cause) =>
+      new InternalError({
+        message: `Path expansion failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
 }
 
 /**

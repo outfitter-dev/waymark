@@ -76,14 +76,14 @@ describe("runRemoveCommand", () => {
       options: { write: true },
     });
 
-    const preview = await runRemoveCommand(parsed, context, {
-      writeOverride: false,
-    });
+    const preview = (
+      await runRemoveCommand(parsed, context, { writeOverride: false })
+    ).unwrap();
     expect(preview.summary.successful).toBe(2);
 
-    const actual = await runRemoveCommand(parsed, context, {
-      writeOverride: true,
-    });
+    const actual = (
+      await runRemoveCommand(parsed, context, { writeOverride: true })
+    ).unwrap();
 
     expect(actual.summary.successful).toBe(2);
     const contents = await readFile(filePath, "utf8");
@@ -122,9 +122,9 @@ describe("runRemoveCommand", () => {
       options: { write: true, id: ["[[test-456]]"] },
     });
 
-    const actual = await runRemoveCommand(parsed, context, {
-      writeOverride: true,
-    });
+    const actual = (
+      await runRemoveCommand(parsed, context, { writeOverride: true })
+    ).unwrap();
 
     expect(actual.summary.successful).toBe(1);
     const remaining = await readFile(filePath, "utf8");
@@ -163,9 +163,9 @@ describe("runRemoveCommand", () => {
       targets: [],
       options: { from: jsonPath, write: true, json: true },
     });
-    const actual = await runRemoveCommand(parsed, context, {
-      writeOverride: true,
-    });
+    const actual = (
+      await runRemoveCommand(parsed, context, { writeOverride: true })
+    ).unwrap();
     expect(actual.summary.successful).toBe(1);
     expect(actual.options.write).toBe(true);
     expect(actual.options.json).toBe(true);
@@ -190,9 +190,11 @@ describe("runRemoveCommand", () => {
       options: { from: invalidJsonPath },
     });
 
-    await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
-      JSON_VALIDATION_ERROR_REGEX
-    );
+    const result = await runRemoveCommand(parsed, context);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toMatch(JSON_VALIDATION_ERROR_REGEX);
+    }
   });
 
   test("rejects invalid criteria with clear errors", async () => {
@@ -209,9 +211,11 @@ describe("runRemoveCommand", () => {
       options: { from: invalidJsonPath },
     });
 
-    await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
-      JSON_VALIDATION_ERROR_REGEX
-    );
+    const result = await runRemoveCommand(parsed, context);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toMatch(JSON_VALIDATION_ERROR_REGEX);
+    }
   });
 
   test("validates removal spec types properly", async () => {
@@ -229,9 +233,11 @@ describe("runRemoveCommand", () => {
       options: { from: invalidJsonPath },
     });
 
-    await expect(runRemoveCommand(parsed, context)).rejects.toThrow(
-      JSON_VALIDATION_ERROR_REGEX
-    );
+    const result = await runRemoveCommand(parsed, context);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toMatch(JSON_VALIDATION_ERROR_REGEX);
+    }
   });
 
   test("accepts valid JSON with all removal methods", async () => {
@@ -273,6 +279,6 @@ describe("runRemoveCommand", () => {
     });
     // Since we're testing validation, not actual removal logic,
     // we just check that it doesn't throw a validation error
-    expect(result.exitCode).toBeDefined();
+    expect(result.isOk()).toBe(true);
   });
 });

@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { promptSelect } from "@outfitter/cli/prompt";
+import { InternalError, Result } from "@outfitter/contracts";
 import { CliError } from "../errors.ts";
 import { ExitCode } from "../exit-codes.ts";
 import { logger } from "../utils/logger.ts";
@@ -28,10 +29,22 @@ const CONFIG_SCOPES: ConfigScope[] = ["project", "user"];
 /**
  * Execute the `wm init` command to generate configuration files.
  * @param options - CLI options for format, preset, and scope.
- * @returns Promise that resolves when initialization completes.
+ * @returns Result wrapping void on success.
  */
+export function runInitCommand(
+  options: InitCommandOptions = {}
+): Promise<Result<void, InternalError>> {
+  return Result.tryPromise({
+    try: () => runInitCommandInner(options),
+    catch: (cause) =>
+      new InternalError({
+        message: `Init failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential prompt branching for interactive init
-export async function runInitCommand(
+async function runInitCommandInner(
   options: InitCommandOptions = {}
 ): Promise<void> {
   let format: ConfigFormat;

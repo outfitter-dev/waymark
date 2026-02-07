@@ -2,6 +2,7 @@
 
 import { readFile } from "node:fs/promises";
 
+import { InternalError, Result } from "@outfitter/contracts";
 import {
   type RemovalResult,
   type RemovalSpec,
@@ -257,24 +258,39 @@ function buildCriteriaSpec(state: RemoveParseState): RemovalSpec | undefined {
   };
 }
 
+export type RemoveCommandResult = {
+  results: RemovalResult[];
+  summary: RemoveSummary;
+  output: string;
+  options: RemoveCommandOptions;
+};
+
 /**
  * Execute the `wm remove` command with parsed inputs.
  * @param parsed - Parsed removal args.
  * @param context - CLI context with config and filesystem helpers.
  * @param execution - Optional execution overrides (write, etc.).
- * @returns Removal results, summary, output, and exit code.
+ * @returns Removal results, summary, output, and options wrapped in a Result.
  */
-export async function runRemoveCommand(
+export function runRemoveCommand(
   parsed: ParsedRemoveArgs,
   context: CommandContext,
   execution: { writeOverride?: boolean } = {}
-): Promise<{
-  results: RemovalResult[];
-  summary: RemoveSummary;
-  output: string;
-  exitCode: number;
-  options: RemoveCommandOptions;
-}> {
+): Promise<Result<RemoveCommandResult, InternalError>> {
+  return Result.tryPromise({
+    try: () => runRemoveCommandInner(parsed, context, execution),
+    catch: (cause) =>
+      new InternalError({
+        message: `Remove failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function runRemoveCommandInner(
+  parsed: ParsedRemoveArgs,
+  context: CommandContext,
+  execution: { writeOverride?: boolean }
+): Promise<RemoveCommandResult> {
   const { mergedOptions, normalizedSpecs, shouldWrite } =
     await resolveRemoveInput(parsed, context, execution);
 
@@ -304,9 +320,8 @@ export async function runRemoveCommand(
     jsonl: mergedOptions.jsonl,
     dryRun: !shouldWrite,
   });
-  const exitCode = results.some((result) => result.status === "error") ? 1 : 0;
 
-  return { results, summary, output, exitCode, options: mergedOptions };
+  return { results, summary, output, options: mergedOptions };
 }
 
 async function resolveRemoveInput(

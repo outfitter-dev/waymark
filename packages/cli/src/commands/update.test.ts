@@ -31,8 +31,7 @@ describe("update command detection", () => {
 
 describe("runUpdateCommand", () => {
   test("dry run returns command string without execution", async () => {
-    const result = await runUpdateCommand({ dryRun: true });
-    expect(result.exitCode).toBe(0);
+    const result = (await runUpdateCommand({ dryRun: true })).unwrap();
     expect(result.skipped).toBe(true);
     expect(result.command).toContain("npm install -g @waymarks/cli");
     expect(result.message).toContain("Dry run");
@@ -44,9 +43,8 @@ describe("runUpdateCommand", () => {
       return Promise.resolve(0);
     });
 
-    const result = await runUpdateCommand({ force: true, yes: true });
+    const result = (await runUpdateCommand({ force: true, yes: true })).unwrap();
 
-    expect(result.exitCode).toBe(0);
     expect(result.skipped).toBeUndefined();
     expect(calls).toHaveLength(1);
     expect(calls[0]?.command).toBe("npm");
@@ -57,9 +55,10 @@ describe("runUpdateCommand", () => {
 
   test("rejects unsupported update commands", async () => {
     const result = await runUpdateCommand({ command: "rm" });
-    expect(result.exitCode).toBe(1);
-    expect(result.skipped).toBe(true);
-    expect(result.message).toContain("Unsupported update command");
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toContain("Unsupported update command");
+    }
   });
 
   test("accepts allowed update command override", async () => {
@@ -69,13 +68,14 @@ describe("runUpdateCommand", () => {
       return Promise.resolve(0);
     });
 
-    const result = await runUpdateCommand({
-      command: "pnpm",
-      force: true,
-      yes: true,
-    });
+    const result = (
+      await runUpdateCommand({
+        command: "pnpm",
+        force: true,
+        yes: true,
+      })
+    ).unwrap();
 
-    expect(result.exitCode).toBe(0);
     expect(calls[0]?.command).toBe("pnpm");
     expect(calls[0]?.args).toEqual(["install", "-g", "@waymarks/cli"]);
 
