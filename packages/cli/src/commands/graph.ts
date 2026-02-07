@@ -25,11 +25,11 @@ export async function graphRecords(
   config: WaymarkConfig,
   scanOptions?: ScanRuntimeOptions
 ) {
-  const records: WaymarkRecord[] = await scanRecords(
-    filePaths,
-    config,
-    scanOptions
-  );
+  const scanResult = await scanRecords(filePaths, config, scanOptions);
+  if (scanResult.isErr()) {
+    throw scanResult.error;
+  }
+  const records: WaymarkRecord[] = scanResult.value;
   return buildRelationGraph(records).edges;
 }
 

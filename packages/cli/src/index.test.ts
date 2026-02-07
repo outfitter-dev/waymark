@@ -46,7 +46,8 @@ const defaultContext: CommandContext = {
 async function runUnified(
   options: UnifiedCommandOptions
 ): Promise<UnifiedCommandResult> {
-  return await runUnifiedCommand(options, defaultContext);
+  const result = await runUnifiedCommand(options, defaultContext);
+  return result.unwrap();
 }
 
 async function runUnifiedOutput(
@@ -107,7 +108,7 @@ describe("CLI handlers", () => {
       "\n"
     );
     const { file, cleanup } = await withTempFile(source);
-    const records = await scanRecords([file], defaultContext.config);
+    const records = (await scanRecords([file], defaultContext.config)).unwrap();
     expect(records).toHaveLength(2);
     expect(records[0]?.type).toBe("todo");
     await cleanup();
@@ -129,11 +130,13 @@ describe("CLI handlers", () => {
         skippedFiles: 0,
         durationMs: 0,
       };
-      const first = await scanRecords([file], defaultContext.config, {
-        cache: true,
-        cachePath,
-        metrics: firstMetrics,
-      });
+      const first = (
+        await scanRecords([file], defaultContext.config, {
+          cache: true,
+          cachePath,
+          metrics: firstMetrics,
+        })
+      ).unwrap();
       expect(first).toHaveLength(1);
       expect(firstMetrics.parsedFiles).toBe(1);
       expect(firstMetrics.cachedFiles).toBe(0);
@@ -145,11 +148,13 @@ describe("CLI handlers", () => {
         skippedFiles: 0,
         durationMs: 0,
       };
-      const second = await scanRecords([file], defaultContext.config, {
-        cache: true,
-        cachePath,
-        metrics: secondMetrics,
-      });
+      const second = (
+        await scanRecords([file], defaultContext.config, {
+          cache: true,
+          cachePath,
+          metrics: secondMetrics,
+        })
+      ).unwrap();
       expect(second).toHaveLength(1);
       expect(secondMetrics.cachedFiles).toBe(1);
       expect(secondMetrics.parsedFiles).toBe(0);
@@ -162,10 +167,12 @@ describe("CLI handlers", () => {
   test("scan command includes codetags when enabled", async () => {
     const source = "// TODO: codetag task";
     const { file, cleanup } = await withTempFile(source);
-    const records = await scanRecords([file], {
-      ...defaultContext.config,
-      scan: { ...defaultContext.config.scan, includeCodetags: true },
-    });
+    const records = (
+      await scanRecords([file], {
+        ...defaultContext.config,
+        scan: { ...defaultContext.config.scan, includeCodetags: true },
+      })
+    ).unwrap();
     const codetag = records.find((record) => record.codetag);
     expect(codetag).toBeDefined();
     expect(codetag?.type).toBe("todo");
@@ -179,7 +186,7 @@ describe("CLI handlers", () => {
     await mkdir(nested);
     await writeFile(join(nested, "child.ts"), "// note ::: child", "utf8");
 
-    const records = await scanRecords([dir], defaultContext.config);
+    const records = (await scanRecords([dir], defaultContext.config)).unwrap();
 
     expect(records.map((record) => record.type)).toEqual(["todo", "note"]);
     await cleanup();
@@ -242,7 +249,7 @@ describe("CLI handlers", () => {
     );
 
     // Scan the directory
-    const records = await scanRecords([dir], defaultContext.config);
+    const records = (await scanRecords([dir], defaultContext.config)).unwrap();
 
     // Should only find waymarks from non-ignored files
     expect(records).toHaveLength(2);
@@ -283,7 +290,7 @@ describe("CLI handlers", () => {
       skipPaths: ["**/temp/**", "**/build/**"],
     });
 
-    const records = await scanRecords([dir], config);
+    const records = (await scanRecords([dir], config)).unwrap();
 
     expect(records).toHaveLength(1);
     expect(records[0]?.type).toBe("todo");
@@ -334,7 +341,7 @@ describe("CLI handlers", () => {
       includePaths: ["**/important.ts", "**/critical.ts"],
     });
 
-    const records = await scanRecords([dir], config);
+    const records = (await scanRecords([dir], config)).unwrap();
 
     expect(records).toHaveLength(2);
     expect(records.map((r) => r.type).sort()).toEqual(["note", "tldr"]);
@@ -366,7 +373,7 @@ describe("CLI handlers", () => {
       respectGitignore: false,
     });
 
-    const records = await scanRecords([dir], config);
+    const records = (await scanRecords([dir], config)).unwrap();
 
     expect(records).toHaveLength(2);
     expect(records.map((r) => r.type).sort()).toEqual(["note", "todo"]);
@@ -423,7 +430,7 @@ describe("CLI handlers", () => {
       respectGitignore: true,
     });
 
-    const records = await scanRecords([dir], config);
+    const records = (await scanRecords([dir], config)).unwrap();
 
     // Should get: src.ts (no rules), important.ts (includePaths), critical.ts (includePaths)
     const ExpectedRecordCount = 3;
@@ -447,7 +454,7 @@ describe("CLI handlers", () => {
   test("renderRecords formats jsonl output", async () => {
     const source = ["// tldr ::: summary", "// todo ::: follow up"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const records = await scanRecords([file], defaultContext.config);
+    const records = (await scanRecords([file], defaultContext.config)).unwrap();
     const jsonl = renderRecords(records, "jsonl");
     const lines = jsonl.split("\n").filter(Boolean);
     expect(lines).toHaveLength(2);
@@ -460,7 +467,7 @@ describe("CLI handlers", () => {
   test("renderRecords formats text output with indentation", async () => {
     const source = "// todo ::: detailed task";
     const { file, cleanup } = await withTempFile(source);
-    const records = await scanRecords([file], defaultContext.config);
+    const records = (await scanRecords([file], defaultContext.config)).unwrap();
     const text = renderRecords(records, "text");
     expect(text).toContain("\n  {");
     expect(() => JSON.parse(text)).not.toThrow();
@@ -497,11 +504,13 @@ describe("CLI handlers", () => {
   test("lint command detects invalid markers", async () => {
     const source = ["// todooo ::: typo marker", "// todo ::: ok"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const report = await lintFiles(
-      [file],
-      defaultContext.config.allowTypes,
-      defaultContext.config
-    );
+    const report = (
+      await lintFiles(
+        [file],
+        defaultContext.config.allowTypes,
+        defaultContext.config
+      )
+    ).unwrap();
     expect(report.issues).toHaveLength(1);
     const issue = report.issues[0];
     expect(issue?.rule).toBe("unknown-marker");
@@ -513,11 +522,13 @@ describe("CLI handlers", () => {
   test("lint command detects duplicate properties", async () => {
     const source = "// todo ::: owner:@alice owner:@bob\n";
     const { file, cleanup } = await withTempFile(source);
-    const report = await lintFiles(
-      [file],
-      defaultContext.config.allowTypes,
-      defaultContext.config
-    );
+    const report = (
+      await lintFiles(
+        [file],
+        defaultContext.config.allowTypes,
+        defaultContext.config
+      )
+    ).unwrap();
     const duplicateIssue = report.issues.find(
       (issue) => issue.rule === "duplicate-property"
     );
@@ -529,11 +540,13 @@ describe("CLI handlers", () => {
   test("lint command detects multiple tldr waymarks", async () => {
     const source = ["// tldr ::: one", "// tldr ::: two"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const report = await lintFiles(
-      [file],
-      defaultContext.config.allowTypes,
-      defaultContext.config
-    );
+    const report = (
+      await lintFiles(
+        [file],
+        defaultContext.config.allowTypes,
+        defaultContext.config
+      )
+    ).unwrap();
     const tldrIssue = report.issues.find(
       (issue) => issue.rule === "multiple-tldr"
     );
@@ -546,11 +559,13 @@ describe("CLI handlers", () => {
   test("lint command detects codetag patterns", async () => {
     const source = ["// TODO: codetag task", "// note ::: ok"].join("\n");
     const { file, cleanup } = await withTempFile(source);
-    const report = await lintFiles(
-      [file],
-      defaultContext.config.allowTypes,
-      defaultContext.config
-    );
+    const report = (
+      await lintFiles(
+        [file],
+        defaultContext.config.allowTypes,
+        defaultContext.config
+      )
+    ).unwrap();
     const codetagIssue = report.issues.find(
       (issue) => issue.rule === "codetag-pattern"
     );

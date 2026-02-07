@@ -57,6 +57,7 @@ import type {
   GlobalOptions,
   ModifyCliOptions,
 } from "./types.ts";
+import { mapErrorToExitCode, runCommand } from "./utils/command-runner.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
@@ -121,6 +122,18 @@ function resolveExitCode(error: unknown): ExitCode {
   }
   if (error instanceof CommanderError) {
     return resolveCommanderExitCode(error);
+  }
+  // Check for @outfitter/contracts tagged errors with a category property
+  if (
+    error &&
+    typeof error === "object" &&
+    "category" in error &&
+    typeof (error as { category: unknown }).category === "string"
+  ) {
+    return mapErrorToExitCode(
+      (error as { category: import("@outfitter/contracts").ErrorCategory })
+        .category
+    );
   }
   if (
     error &&
@@ -237,12 +250,10 @@ async function handleLintCommand(
   });
 
   spinner.start();
-  let report: Awaited<ReturnType<typeof runLint>>;
+  let report: import("./commands/lint.ts").LintReport;
   try {
-    report = await runLint(
-      pathsToLint,
-      context.config.allowTypes,
-      context.config
+    report = await runCommand(() =>
+      runLint(pathsToLint, context.config.allowTypes, context.config)
     );
   } finally {
     spinner.stop();
@@ -373,7 +384,11 @@ async function resolveInteractiveTarget(
   config: WaymarkConfig,
   scanOptions?: ScanRuntimeOptions
 ): Promise<{ target: string; id?: string | undefined }> {
-  const records = await scanRecords([workspaceRoot], config, scanOptions);
+  const scanResult = await scanRecords([workspaceRoot], config, scanOptions);
+  if (scanResult.isErr()) {
+    throw new CliError(scanResult.error.message, ExitCode.failure);
+  }
+  const records = scanResult.value;
   if (records.length === 0) {
     throw new CliError("No waymarks found to edit.", ExitCode.failure);
   }
@@ -780,9 +795,9 @@ async function handleDoctorCommand(
   });
 
   spinner.start();
-  let report: Awaited<ReturnType<typeof runDoctorCommand>>;
+  let report: import("./commands/doctor.ts").DoctorReport;
   try {
-    report = await runDoctorCommand(context, options);
+    report = await runCommand(() => runDoctorCommand(context, options));
   } finally {
     spinner.stop();
   }
@@ -819,9 +834,9 @@ async function handleCheckCommand(
   });
 
   spinner.start();
-  let report: Awaited<ReturnType<typeof runCheckCommand>>;
+  let report: import("./commands/check.ts").CheckReport;
   try {
-    report = await runCheckCommand(context, options);
+    report = await runCommand(() => runCheckCommand(context, options));
   } finally {
     spinner.stop();
   }
@@ -863,7 +878,7 @@ function normalizeUnifiedColor(
 
 async function handleUnifiedInteractiveSelection(
   options: Record<string, unknown>,
-  result: Awaited<ReturnType<typeof runUnifiedCommand>>
+  result: import("./commands/unified/index.ts").UnifiedCommandResult
 ): Promise<boolean> {
   if (!(options.interactive && result.records) || result.records.length === 0) {
     return false;
@@ -908,9 +923,9 @@ async function handleUnifiedCommand(
   });
 
   spinner.start();
-  let result: Awaited<ReturnType<typeof runUnifiedCommand>>;
+  let result: import("./commands/unified/index.ts").UnifiedCommandResult;
   try {
-    result = await runUnifiedCommand(unifiedOptions, context);
+    result = await runCommand(() => runUnifiedCommand(unifiedOptions, context));
   } finally {
     spinner.stop();
   }

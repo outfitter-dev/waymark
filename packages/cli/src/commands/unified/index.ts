@@ -1,5 +1,6 @@
 // tldr ::: unified wm command orchestration and execution
 
+import { type AnyKitError, InternalError, Result } from "@outfitter/contracts";
 import type { WaymarkRecord } from "@waymarks/grammar";
 import chalk from "chalk";
 import type { CommandContext } from "../../types";
@@ -21,9 +22,22 @@ const DEFAULT_CHALK_LEVEL = chalk.level;
  * Unified command handler that routes to scan/find/graph behavior.
  * @param options - Unified command options.
  * @param context - CLI context with config and globals.
- * @returns Output payload and optional records.
+ * @returns Result containing output payload and optional records, or an error.
  */
-export async function runUnifiedCommand(
+export function runUnifiedCommand(
+  options: UnifiedCommandOptions,
+  context: CommandContext
+): Promise<Result<UnifiedCommandResult, AnyKitError>> {
+  return Result.tryPromise({
+    try: () => runUnifiedCommandInner(options, context),
+    catch: (cause) =>
+      new InternalError({
+        message: `Unified command failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function runUnifiedCommandInner(
   options: UnifiedCommandOptions,
   context: CommandContext
 ): Promise<UnifiedCommandResult> {
@@ -61,7 +75,11 @@ export async function runUnifiedCommand(
   }
 
   // Scan + filter mode (find behavior)
-  const records = await scanRecords(filePaths, context.config, scanOptions);
+  const scanResult = await scanRecords(filePaths, context.config, scanOptions);
+  if (scanResult.isErr()) {
+    throw scanResult.error;
+  }
+  const records = scanResult.value;
   const filtered = applyFilters(records, options);
 
   // If JSON output requested, use renderRecords

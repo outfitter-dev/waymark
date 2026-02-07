@@ -1,7 +1,7 @@
 // tldr ::: lint command helpers for waymark CLI
 
 import { readFile } from "node:fs/promises";
-
+import { InternalError, Result } from "@outfitter/contracts";
 import {
   isValidType,
   parse,
@@ -412,9 +412,23 @@ export function parseLintArgs(argv: string[]): LintCommandOptions {
  * @param filePaths - Paths or globs to scan.
  * @param allowTypes - Allowed marker types from config.
  * @param config - Resolved waymark configuration.
- * @returns Lint report with collected issues.
+ * @returns Result containing lint report or an InternalError.
  */
-export async function lintFiles(
+export function lintFiles(
+  filePaths: string[],
+  allowTypes: string[],
+  config: WaymarkConfig
+): Promise<Result<LintReport, InternalError>> {
+  return Result.tryPromise({
+    try: () => lintFilesInner(filePaths, allowTypes, config),
+    catch: (cause) =>
+      new InternalError({
+        message: `Lint failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function lintFilesInner(
   filePaths: string[],
   allowTypes: string[],
   config: WaymarkConfig

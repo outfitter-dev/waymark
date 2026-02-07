@@ -29,7 +29,11 @@ export async function findRecords(
   options: FindCommandOptions
 ): Promise<WaymarkRecord[]> {
   const { filePath, types, tags, mentions, config, scanOptions } = options;
-  const records = await scanRecords([filePath], config, scanOptions);
+  const scanResult = await scanRecords([filePath], config, scanOptions);
+  if (scanResult.isErr()) {
+    throw scanResult.error;
+  }
+  const records = scanResult.value;
 
   const query: Parameters<typeof searchRecords>[1] = {};
   if (types && types.length > 0) {
