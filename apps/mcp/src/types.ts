@@ -44,21 +44,6 @@ export const waymarkToolInputSchema = z.discriminatedUnion("action", [
   helpInputSchema.extend({ action: z.literal("help") }),
 ]);
 
-export const waymarkToolInputShape = {
-  action: waymarkActionSchema,
-  configPath: configOptionsSchema.shape.configPath,
-  scope: configOptionsSchema.shape.scope,
-  paths: scanInputSchema.shape.paths.optional(),
-  format: scanInputSchema.shape.format.optional(),
-  filePath: addWaymarkInputSchema.shape.filePath.optional(),
-  type: addWaymarkInputSchema.shape.type.optional(),
-  content: addWaymarkInputSchema.shape.content.optional(),
-  id: addWaymarkInputSchema.shape.id.optional(),
-  line: addWaymarkInputSchema.shape.line.optional(),
-  signals: addWaymarkInputSchema.shape.signals.optional(),
-  topic: helpInputSchema.shape.topic.optional(),
-};
-
 export type ScanInput = z.infer<typeof scanInputSchema>;
 export type HelpInput = z.infer<typeof helpInputSchema>;
 export type WaymarkToolInput = z.infer<typeof waymarkToolInputSchema>;
@@ -76,3 +61,8 @@ export type CommentStyle = {
 };
 
 export const TODOS_RESOURCE_URI = "waymark://todos";
+
+/** MCP tool response shape compatible with the SDK's CallToolResult. */
+export type ToolContent = {
+  content: Array<{ type: string; mimeType: string; text: string }>;
+};

@@ -1,7 +1,6 @@
 // tldr ::: help action handler for waymark MCP tool
 
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { HelpInput } from "../types";
+import type { HelpInput, ToolContent } from "../types";
 
 type HelpActionInput = HelpInput & { action: "help" };
 
@@ -92,7 +91,7 @@ const DEFAULT_HELP = [
  * @param input - Help action input payload.
  * @returns MCP tool result with help text.
  */
-export function handleHelp(input: HelpActionInput): CallToolResult {
+export function handleHelp(input: HelpActionInput): ToolContent {
   const topic = input.topic?.trim().toLowerCase();
   const selected = topic ? HELP_TOPICS[topic] : undefined;
   const text = selected ? selected.body : DEFAULT_HELP;

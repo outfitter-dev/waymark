@@ -1,9 +1,8 @@
 // tldr ::: scan tool handler for waymark MCP server
 
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ConfigScope, WaymarkRecord } from "@waymarks/core";
 import { parse } from "@waymarks/core";
-import type { RenderFormat } from "../types";
+import type { RenderFormat, ToolContent } from "../types";
 import { scanInputSchema } from "../types";
 import { loadConfig } from "../utils/config";
 import { safeReadFile } from "../utils/errors";
@@ -18,7 +17,7 @@ import {
  * @param input - Raw tool input payload.
  * @returns MCP tool result with scan output.
  */
-export async function handleScan(input: unknown): Promise<CallToolResult> {
+export async function handleScan(input: unknown): Promise<ToolContent> {
   const { paths, format, configPath, scope } = scanInputSchema.parse(input);
   const collectOptions: { configPath?: string; scope?: ConfigScope } = {};
   if (configPath) {
@@ -90,7 +89,7 @@ function renderRecords(records: WaymarkRecord[], format: RenderFormat): string {
   }
 }
 
-function toTextResponse(text: string, mimeType: string): CallToolResult {
+function toTextResponse(text: string, mimeType: string): ToolContent {
   return {
     content: [
       {
@@ -112,10 +111,3 @@ function mimeForFormat(format: RenderFormat): string {
       return "text/plain";
   }
 }
-
-export const scanToolDefinition = {
-  title: "Scan files for waymarks",
-  description:
-    "Parses one or more files (or directories) and returns waymark records in the requested format.",
-  inputSchema: scanInputSchema.shape,
-} as const;

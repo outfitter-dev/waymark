@@ -1,8 +1,8 @@
 // tldr ::: graph tool handler for waymark MCP server
 
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ConfigScope, WaymarkRecord } from "@waymarks/core";
 import { buildRelationGraph, parse } from "@waymarks/core";
+import type { ToolContent } from "../types";
 import { graphInputSchema } from "../types";
 import { loadConfig } from "../utils/config";
 import { safeReadFile } from "../utils/errors";
@@ -17,7 +17,7 @@ import {
  * @param input - Raw tool input payload.
  * @returns MCP tool result with graph output.
  */
-export async function handleGraph(input: unknown): Promise<CallToolResult> {
+export async function handleGraph(input: unknown): Promise<ToolContent> {
   const { paths, configPath, scope } = graphInputSchema.parse(input);
   const collectOptions: { configPath?: string; scope?: ConfigScope } = {};
   if (configPath) {
@@ -68,7 +68,7 @@ async function collectRecords(
   return { records };
 }
 
-function toJsonResponse(value: unknown): CallToolResult {
+function toJsonResponse(value: unknown): ToolContent {
   return {
     content: [
       {
@@ -79,10 +79,3 @@ function toJsonResponse(value: unknown): CallToolResult {
     ],
   };
 }
-
-export const graphToolDefinition = {
-  title: "Generate relation graph",
-  description:
-    "Produces the relation edges (ref/depends/needs/etc.) extracted from the provided files.",
-  inputSchema: graphInputSchema.shape,
-} as const;

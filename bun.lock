@@ -28,11 +28,11 @@
         "waymark-mcp": "dist/index.js",
       },
       "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.18.2",
         "@outfitter/contracts": "0.1.0",
         "@outfitter/logging": "0.1.0",
+        "@outfitter/mcp": "0.1.0",
         "@waymarks/core": "workspace:*",
-        "zod": "^3.23.8",
+        "zod": "^4.3.5",
       },
       "devDependencies": {
         "@types/bun": "1.2.22",
@@ -51,7 +51,6 @@
         "@outfitter/contracts": "0.1.0",
         "@outfitter/logging": "0.1.0",
         "@waymarks/core": "workspace:*",
-        "chalk": "5.6.2",
         "commander": "14.0.1",
         "ignore": "7.0.5",
         "ora": "9.0.0",
@@ -70,7 +69,6 @@
         "@outfitter/config": "0.1.0",
         "@outfitter/contracts": "0.1.0",
         "@waymarks/grammar": "workspace:*",
-        "pino": "^9.11.0",
         "safe-regex": "2.1.1",
         "type-fest": "^5.0.1",
         "yaml": "2.8.1",
@@ -187,6 +185,8 @@
     "@outfitter/contracts": ["@outfitter/contracts@0.1.0", "", { "dependencies": { "better-result": "^2.5.0", "zod": "^4.3.5" } }, "sha512-JtSOTZhE3f9xfFdO8mtt0EGLEk0j8WuCLyUSDIeBCv9hB58OgCsaamRQUDicHYGNsb7oLSLCPSiFwVELaPRvlA=="],
 
     "@outfitter/logging": ["@outfitter/logging@0.1.0", "", { "dependencies": { "@logtape/logtape": "^2.0.0", "@outfitter/contracts": "0.1.0" } }, "sha512-mTm/SKDwERvE7Y8EGUxd4UwI+eaEPs0jd7TJAYFo1Ph2D+orp9QMXyywINIr87e4gAewLm08jPcwlYv5V7trWw=="],
+
+    "@outfitter/mcp": ["@outfitter/mcp@0.1.0", "", { "dependencies": { "@modelcontextprotocol/sdk": "^1.12.1", "@outfitter/contracts": "0.1.0", "@outfitter/logging": "0.1.0", "zod": "^4.3.5" } }, "sha512-LQKwSwYiUCcz41ontwXj40GvS4JbXaHnK9oFMPMCJs7LsXn1joR6oHByvDSb/s3PjhWuBvCeuTCuRZSxlXVaNA=="],
 
     "@outfitter/types": ["@outfitter/types@0.1.0", "", { "dependencies": { "@outfitter/contracts": "0.1.0", "better-result": "^2.5.0" } }, "sha512-Dk8YQA9LQDJIumxfJB5+YeT83NT4dYb4iAp8a/EFBp2vOBiEiCHtX4Hd/+fjzAk/e2r5DCWdfPmtsZswj5o+NA=="],
 
@@ -872,7 +872,9 @@
 
     "@outfitter/contracts/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
-    "@waymarks/mcp/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
+    "@outfitter/mcp/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+
+    "@waymarks/mcp/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
     "body-parser/iconv-lite": ["iconv-lite@0.6.3", "", { "dependencies": { "safer-buffer": ">= 2.1.2 < 3.0.0" } }, "sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw=="],
 
