@@ -1,13 +1,5 @@
 // tldr ::: terminal detection helpers for CLI output [[cli/terminal]]
 
-export type TerminalInfo = {
-  isTty: boolean;
-  supportsColor: boolean;
-  width: number;
-};
-
-const DEFAULT_TERMINAL_WIDTH = 80;
-
 function hasNoColor(): boolean {
   return process.env.NO_COLOR !== undefined;
 }
@@ -50,17 +42,4 @@ export function shouldUseColor(noColorFlag?: boolean): boolean {
     return false;
   }
   return true;
-}
-
-/**
- * Get terminal capability information.
- * @returns Terminal info (TTY, color support, width).
- */
-export function getTerminalInfo(): TerminalInfo {
-  const isTty = Boolean(process.stdout.isTTY);
-  const width = isTty
-    ? (process.stdout.columns ?? DEFAULT_TERMINAL_WIDTH)
-    : DEFAULT_TERMINAL_WIDTH;
-  const supportsColor = shouldUseColor();
-  return { isTty, supportsColor, width };
 }
