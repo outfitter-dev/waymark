@@ -1,8 +1,7 @@
 // tldr ::: edit command implementation for wm CLI
 
 import { readFile, writeFile } from "node:fs/promises";
-import readline from "node:readline";
-
+import { promptConfirm, promptSelect, promptText } from "@outfitter/cli/prompt";
 import {
   fingerprintContent,
   fingerprintContext,
@@ -12,7 +11,6 @@ import {
   type WaymarkConfig,
   type WaymarkRecord,
 } from "@waymarks/core";
-import inquirer from "inquirer";
 
 import type { CommandContext } from "../types.ts";
 import { parseFileLineTarget } from "../utils/file-line.ts";
@@ -88,10 +86,6 @@ const DEFAULT_IO: ModifyIo = {
   stdin: process.stdin,
 };
 
-if (process.stdin.isTTY) {
-  readline.emitKeypressEvents(process.stdin);
-}
-
 class InteractiveCancelError extends Error {
   constructor() {
     super("Interactive session cancelled");
@@ -107,14 +101,6 @@ type InteractiveAnswers = {
   updateContent?: boolean;
   content?: string;
   apply?: boolean;
-};
-
-type StepName = keyof InteractiveAnswers;
-
-type InteractiveStep = {
-  name: StepName;
-  shouldSkip?: (state: InteractiveAnswers) => boolean;
-  build: (state: InteractiveAnswers) => Record<string, unknown>;
 };
 
 /**
@@ -501,6 +487,7 @@ function normalizeId(id: string): string {
   return `[[${id}]]`;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential prompt flow with per-step cancellation checks
 async function runInteractiveSession(
   context: CommandContext,
   record: WaymarkRecord,
@@ -508,21 +495,86 @@ async function runInteractiveSession(
   options: ModifyOptions
 ): Promise<ModifyOptions> {
   assertPromptAllowed("interactive editing");
-  logger.info(
-    "Interactive mode: Backspace on an empty input to go back. Press Esc to cancel."
-  );
+  logger.info("Interactive mode: Press Ctrl+C to cancel.");
 
   const markers = resolveMarkerChoices(context.config, record.type);
-  const prompt = inquirer.createPromptModule();
   const answers: InteractiveAnswers = {};
-  const steps = buildInteractiveSteps({
-    answers,
-    baseContent,
-    markers,
-    options,
-    record,
+
+  // Step 1: Select waymark type
+  const typeResult = await promptSelect<string>({
+    message: "Waymark type",
+    options: markers.map((marker) => ({
+      value: marker,
+      label: marker,
+    })),
+    initialValue: record.type,
   });
-  await runInteractiveWizard(prompt, steps, answers);
+  if (typeResult.isErr()) {
+    throw new InteractiveCancelError();
+  }
+  answers.type = typeResult.value;
+
+  // Step 2: Add flagged signal?
+  const flaggedResult = await promptConfirm({
+    message: "Add flagged signal (~)?",
+    initialValue: record.signals.flagged ?? options.flagged ?? false,
+  });
+  if (flaggedResult.isErr()) {
+    throw new InteractiveCancelError();
+  }
+  answers.addFlagged = flaggedResult.value;
+
+  // Step 3: Add starred signal?
+  const starredResult = await promptConfirm({
+    message: "Add starred signal (*) to mark as important/valuable?",
+    initialValue: record.signals.starred ?? options.starred ?? false,
+  });
+  if (starredResult.isErr()) {
+    throw new InteractiveCancelError();
+  }
+  answers.addStarred = starredResult.value;
+
+  // Step 4: Clear all signals?
+  const clearSignalsResult = await promptConfirm({
+    message: "Remove all signals?",
+    initialValue: false,
+  });
+  if (clearSignalsResult.isErr()) {
+    throw new InteractiveCancelError();
+  }
+  answers.clearSignals = clearSignalsResult.value;
+
+  // Step 5: Update content?
+  const updateContentResult = await promptConfirm({
+    message: "Update content text?",
+    initialValue: false,
+  });
+  if (updateContentResult.isErr()) {
+    throw new InteractiveCancelError();
+  }
+  answers.updateContent = updateContentResult.value;
+
+  // Step 6: New content (only if updating)
+  if (answers.updateContent) {
+    const contentResult = await promptText({
+      message: "New content (leave blank to read from stdin)",
+      defaultValue: stripTrailingId(baseContent),
+    });
+    if (contentResult.isErr()) {
+      throw new InteractiveCancelError();
+    }
+    answers.content = contentResult.value;
+  }
+
+  // Step 7: Apply modifications?
+  const applyResult = await promptConfirm({
+    message: "Apply modifications (write to file)?",
+    initialValue: options.write ?? false,
+  });
+  if (applyResult.isErr()) {
+    throw new InteractiveCancelError();
+  }
+  answers.apply = applyResult.value;
 
   const nextOptions: ModifyOptions = {
     ...options,
@@ -563,272 +615,6 @@ async function runInteractiveSession(
   }
 
   return nextOptions;
-}
-
-function buildInteractiveSteps(args: {
-  answers: InteractiveAnswers;
-  baseContent: string;
-  markers: string[];
-  options: ModifyOptions;
-  record: WaymarkRecord;
-}): InteractiveStep[] {
-  const { answers, baseContent, markers, options, record } = args;
-  return [
-    {
-      name: "type",
-      build: () => ({
-        type: "list",
-        name: "type",
-        message: "Waymark type",
-        choices: markers.map((marker) => ({
-          name: marker,
-          value: marker,
-          short: marker,
-        })),
-        default: answers.type ?? record.type,
-      }),
-    },
-    {
-      name: "addFlagged",
-      build: () => ({
-        type: "confirm",
-        name: "addFlagged",
-        message: "Add flagged signal (~)?",
-        default:
-          answers.addFlagged ??
-          record.signals.flagged ??
-          options.flagged ??
-          false,
-      }),
-    },
-    {
-      name: "addStarred",
-      build: () => ({
-        type: "confirm",
-        name: "addStarred",
-        message: "Add starred signal (*) to mark as important/valuable?",
-        default:
-          answers.addStarred ??
-          record.signals.starred ??
-          options.starred ??
-          false,
-      }),
-    },
-    {
-      name: "clearSignals",
-      build: () => ({
-        type: "confirm",
-        name: "clearSignals",
-        message: "Remove all signals?",
-        default: answers.clearSignals ?? false,
-      }),
-    },
-    {
-      name: "updateContent",
-      build: () => ({
-        type: "confirm",
-        name: "updateContent",
-        message: "Update content text?",
-        default: answers.updateContent ?? false,
-      }),
-    },
-    {
-      name: "content",
-      shouldSkip: (state) => !state.updateContent,
-      build: () => ({
-        type: "input",
-        name: "content",
-        message: "New content (leave blank to read from stdin)",
-        default: answers.content ?? stripTrailingId(baseContent),
-      }),
-    },
-    {
-      name: "apply",
-      build: () => ({
-        type: "confirm",
-        name: "apply",
-        message: "Apply modifications (write to file)?",
-        default: answers.apply ?? Boolean(options.write),
-      }),
-    },
-  ];
-}
-
-async function runInteractiveWizard(
-  promptModule: ReturnType<typeof inquirer.createPromptModule>,
-  steps: InteractiveStep[],
-  answers: InteractiveAnswers
-): Promise<void> {
-  let index = 0;
-  while (index < steps.length) {
-    const step = steps[index];
-    if (!step) {
-      break;
-    }
-    if (step.shouldSkip?.(answers)) {
-      index += 1;
-      continue;
-    }
-
-    const outcome = await promptStep(promptModule, step, answers);
-    if (outcome.type === "cancel") {
-      throw new InteractiveCancelError();
-    }
-    if (outcome.type === "back") {
-      index = Math.max(index - 1, 0);
-      continue;
-    }
-    Object.assign(answers, outcome.value);
-    index += 1;
-  }
-}
-
-type PromptOutcome =
-  | { type: "answered"; value: Record<string, unknown> }
-  | { type: "back" }
-  | { type: "cancel" };
-
-function getDefaultValueAsString(question: unknown): string {
-  if (
-    typeof question === "object" &&
-    question !== null &&
-    "default" in question
-  ) {
-    const defaultValue = (question as { default?: unknown }).default;
-    return typeof defaultValue === "string" ? defaultValue : "";
-  }
-  return "";
-}
-
-type KeypressState = {
-  buffer: string;
-  requestedBack: boolean;
-  requestedCancel: boolean;
-};
-
-function createKeypressHandler(
-  state: KeypressState,
-  isTextInput: boolean,
-  runner: { abortController: AbortController }
-) {
-  const appendIfPrintable = (key?: {
-    sequence?: string;
-    ctrl?: boolean;
-    meta?: boolean;
-  }) => {
-    if (!(isTextInput && key) || key.ctrl || key.meta) {
-      return;
-    }
-    const { sequence } = key;
-    if (!sequence || sequence.length === 0) {
-      return;
-    }
-    state.buffer += sequence;
-  };
-
-  return (
-    _chunk: string,
-    key?: { name?: string; sequence?: string; ctrl?: boolean; meta?: boolean }
-  ) => {
-    const keyName = key?.name;
-
-    if (keyName === "escape") {
-      state.requestedCancel = true;
-      runner.abortController.abort("cancelled");
-      return;
-    }
-    if (keyName === "backspace") {
-      if (!isTextInput || state.buffer.length === 0) {
-        state.requestedBack = true;
-        runner.abortController.abort("back");
-        return;
-      }
-      state.buffer = state.buffer.slice(0, -1);
-      return;
-    }
-    if (isTextInput && (keyName === "return" || keyName === "enter")) {
-      state.buffer = "";
-      return;
-    }
-
-    appendIfPrintable(key);
-  };
-}
-
-function resolvePromptAbortOutcome(
-  error: unknown,
-  state: KeypressState
-): PromptOutcome | undefined {
-  if (
-    !(error instanceof Error) ||
-    (error.name !== "AbortPromptError" && error.name !== "ExitPromptError")
-  ) {
-    return;
-  }
-
-  if (state.requestedCancel) {
-    return { type: "cancel" };
-  }
-  if (state.requestedBack) {
-    return { type: "back" };
-  }
-  return;
-}
-
-async function promptStep(
-  promptModule: ReturnType<typeof inquirer.createPromptModule>,
-  step: InteractiveStep,
-  answers: InteractiveAnswers
-): Promise<PromptOutcome> {
-  const question = step.build(answers);
-  // biome-ignore lint/suspicious/noExplicitAny: prompt typing requires cast
-  const ticket = promptModule([question as any], answers);
-  const runner = (
-    ticket as unknown as {
-      ui: { abortController: AbortController };
-    }
-  ).ui;
-
-  const isTextInput = isInputQuestion(question);
-
-  // Initialize buffer with default value to allow editing pre-filled content
-  const state: KeypressState = {
-    buffer: isTextInput ? getDefaultValueAsString(question) : "",
-    requestedBack: false,
-    requestedCancel: false,
-  };
-
-  const stdin = process.stdin;
-  const hasTty = Boolean(stdin?.isTTY);
-  const onKeypress = createKeypressHandler(state, isTextInput, runner);
-
-  if (hasTty) {
-    stdin.on("keypress", onKeypress);
-  }
-
-  try {
-    const result = await ticket;
-    return { type: "answered", value: result };
-  } catch (error) {
-    const outcome = resolvePromptAbortOutcome(error, state);
-    if (outcome) {
-      return outcome;
-    }
-    throw error;
-  } finally {
-    if (hasTty) {
-      stdin.removeListener("keypress", onKeypress);
-    }
-  }
-}
-
-function isInputQuestion(question: unknown): boolean {
-  return (
-    typeof question === "object" &&
-    question !== null &&
-    "type" in question &&
-    question.type === "input"
-  );
 }
 
 function resolveMarkerChoices(
