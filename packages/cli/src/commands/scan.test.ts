@@ -38,7 +38,9 @@ describe("scanRecords capability check", () => {
       durationMs: 0,
     };
 
-    const records = await scanRecords([workspace], config, { metrics });
+    const records = (
+      await scanRecords([workspace], config, { metrics })
+    ).unwrap();
 
     // Should find the waymark in the .ts file
     expect(records.length).toBe(1);
@@ -69,7 +71,9 @@ describe("scanRecords capability check", () => {
       durationMs: 0,
     };
 
-    const records = await scanRecords([jsoncPath], config, { metrics });
+    const records = (
+      await scanRecords([jsoncPath], config, { metrics })
+    ).unwrap();
 
     // Should find the waymark in the .jsonc file
     expect(records.length).toBe(1);
@@ -92,7 +96,9 @@ describe("scanRecords capability check", () => {
       durationMs: 0,
     };
 
-    const records = await scanRecords([unknownPath], config, { metrics });
+    const records = (
+      await scanRecords([unknownPath], config, { metrics })
+    ).unwrap();
 
     // Should attempt to parse unknown extensions
     expect(records.length).toBe(1);
@@ -117,7 +123,9 @@ describe("scanRecords capability check", () => {
       durationMs: 0,
     };
 
-    const records = await scanRecords([unknownPath], config, { metrics });
+    const records = (
+      await scanRecords([unknownPath], config, { metrics })
+    ).unwrap();
 
     // Should skip unknown extensions
     expect(records.length).toBe(0);
@@ -148,7 +156,9 @@ describe("scanRecords capability check", () => {
       durationMs: 0,
     };
 
-    const records = await scanRecords([jsonPath], config, { metrics });
+    const records = (
+      await scanRecords([jsonPath], config, { metrics })
+    ).unwrap();
 
     // Should parse JSON when overridden
     expect(records.length).toBe(1);
@@ -185,7 +195,7 @@ describe("scanRecords capability check", () => {
       durationMs: 0,
     };
 
-    const records = await scanRecords([srcDir], config, { metrics });
+    const records = (await scanRecords([srcDir], config, { metrics })).unwrap();
 
     // Should find waymarks in .ts and .css files
     expect(records.length).toBe(3); // 2 from ts files, 1 from css
@@ -217,7 +227,9 @@ describe("scanRecords capability check", () => {
       durationMs: 0,
     };
 
-    const records = await scanRecords([workspace], config, { metrics });
+    const records = (
+      await scanRecords([workspace], config, { metrics })
+    ).unwrap();
 
     // Should only find waymark in .ts file
     expect(records.length).toBe(1);
@@ -257,11 +269,13 @@ describe("scanRecords capability check", () => {
         durationMs: 0,
       };
 
-      const records1 = await scanRecords([jsonPath], configWithJson, {
-        cache: true,
-        cachePath,
-        metrics: metrics1,
-      });
+      const records1 = (
+        await scanRecords([jsonPath], configWithJson, {
+          cache: true,
+          cachePath,
+          metrics: metrics1,
+        })
+      ).unwrap();
 
       // Verify first scan found the waymark and cached it
       expect(records1.length).toBe(1);
@@ -281,11 +295,13 @@ describe("scanRecords capability check", () => {
         durationMs: 0,
       };
 
-      const records2 = await scanRecords([jsonPath], configWithoutJson, {
-        cache: true,
-        cachePath,
-        metrics: metrics2,
-      });
+      const records2 = (
+        await scanRecords([jsonPath], configWithoutJson, {
+          cache: true,
+          cachePath,
+          metrics: metrics2,
+        })
+      ).unwrap();
 
       // Should NOT return cached data - config change must be honored
       expect(records2.length).toBe(0);

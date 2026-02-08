@@ -76,7 +76,7 @@ describe("Schema conformance", () => {
   test("scan output matches scan-result schema", async () => {
     const { file, cleanup } = await withTempFile("// todo ::: schema check\n");
     const config = resolveConfig();
-    const records = await scanRecords([file], config);
+    const records = (await scanRecords([file], config)).unwrap();
     const output = renderRecords(records, "json");
     const parsed = JSON.parse(output) as unknown;
     const ajv = await createValidator();
@@ -91,7 +91,9 @@ describe("Schema conformance", () => {
   test("lint report matches lint-report schema", async () => {
     const { file, cleanup } = await withTempFile("// unknown ::: lint me\n");
     const config = resolveConfig();
-    const report = await lintFiles([file], config.allowTypes, config);
+    const report = (
+      await lintFiles([file], config.allowTypes, config)
+    ).unwrap();
     const ajv = await createValidator();
     assertValid(
       ajv,
@@ -109,7 +111,7 @@ describe("Schema conformance", () => {
       globalOptions: {},
       workspaceRoot: dir,
     };
-    const report = await runDoctorCommand(context, { json: true });
+    const report = (await runDoctorCommand(context, { json: true })).unwrap();
     const ajv = await createValidator();
     assertValid(
       ajv,

@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { InternalError, Result } from "@outfitter/contracts";
 import chalk from "chalk";
 import type { CommandContext } from "../types";
 import { logger } from "../utils/logger";
@@ -56,9 +57,22 @@ export type DoctorCommandOptions = {
  * Run the doctor diagnostics and return a report.
  * @param context - CLI context with config and logger.
  * @param options - Doctor command options.
- * @returns Comprehensive doctor report.
+ * @returns Result containing comprehensive doctor report or an InternalError.
  */
-export async function runDoctorCommand(
+export function runDoctorCommand(
+  context: CommandContext,
+  options: DoctorCommandOptions
+): Promise<Result<DoctorReport, InternalError>> {
+  return Result.tryPromise({
+    try: () => runDoctorCommandInner(context, options),
+    catch: (cause) =>
+      new InternalError({
+        message: `Doctor diagnostics failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function runDoctorCommandInner(
   context: CommandContext,
   options: DoctorCommandOptions
 ): Promise<DoctorReport> {

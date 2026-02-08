@@ -2,7 +2,7 @@
 
 import { readFile, stat } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
-
+import { InternalError, Result } from "@outfitter/contracts";
 import {
   canHaveWaymarks,
   parse,
@@ -113,13 +113,27 @@ function scanCodetags(source: string, filePath: string): WaymarkRecord[] {
  * @param filePaths - Paths or globs to scan.
  * @param config - Resolved waymark configuration.
  * @param options - Runtime scan options (cache, cachePath, metrics).
- * @returns Parsed waymark records.
+ * @returns Result containing parsed waymark records or an InternalError.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential file processing with necessary branching
-export async function scanRecords(
+export function scanRecords(
   filePaths: string[],
   config: WaymarkConfig,
   options: ScanRuntimeOptions = {}
+): Promise<Result<WaymarkRecord[], InternalError>> {
+  return Result.tryPromise({
+    try: () => scanRecordsInner(filePaths, config, options),
+    catch: (cause) =>
+      new InternalError({
+        message: `Scan failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential file processing with necessary branching
+async function scanRecordsInner(
+  filePaths: string[],
+  config: WaymarkConfig,
+  options: ScanRuntimeOptions
 ): Promise<WaymarkRecord[]> {
   const files = await expandInputPaths(filePaths, config);
   const records: WaymarkRecord[] = [];

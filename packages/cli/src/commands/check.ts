@@ -1,5 +1,6 @@
 // tldr ::: cross-file content integrity validation for waymarks
 
+import { InternalError, Result } from "@outfitter/contracts";
 import { parse, type WaymarkRecord } from "@waymarks/core";
 import chalk from "chalk";
 import type { CommandContext } from "../types.ts";
@@ -325,9 +326,22 @@ async function parseFiles(
  * Run content integrity checks on waymarks.
  * @param context - CLI context with config.
  * @param options - Check command options.
- * @returns Check report with issues found.
+ * @returns Result containing check report or an InternalError.
  */
-export async function runCheckCommand(
+export function runCheckCommand(
+  context: CommandContext,
+  options: CheckCommandOptions
+): Promise<Result<CheckReport, InternalError>> {
+  return Result.tryPromise({
+    try: () => runCheckCommandInner(context, options),
+    catch: (cause) =>
+      new InternalError({
+        message: `Check failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function runCheckCommandInner(
   context: CommandContext,
   options: CheckCommandOptions
 ): Promise<CheckReport> {
