@@ -5,15 +5,15 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, extname, join, resolve } from "node:path";
 
-import { parse as parseYaml } from "yaml";
+import { deepMerge, parseConfigFile } from "@outfitter/config";
+import { Result } from "@outfitter/contracts";
 
+import { NotFoundError, ValidationError } from "./errors";
 import type {
   FileCategoryConfig,
   LanguageConfig,
   PartialWaymarkConfig,
   WaymarkConfig,
-  WaymarkFormatConfig,
-  WaymarkLintConfig,
 } from "./types";
 
 /** Default configuration values for waymark operations. */
@@ -79,51 +79,13 @@ export type LoadConfigOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-const CONFIG_FILENAMES = ["config.yaml", "config.yml"];
+/** Config filenames searched in precedence order (TOML first). */
+const CONFIG_FILENAMES = ["config.toml", "config.yaml", "config.yml"];
 
-// Deep merge utility for config resolution
-function deepMerge(
-  target: WaymarkConfig,
-  source: PartialWaymarkConfig
-): WaymarkConfig {
-  const result: WaymarkConfig = { ...target };
-
-  for (const key in source) {
-    if (!Object.hasOwn(source, key)) {
-      continue;
-    }
-    const sourceValue = source[key as keyof PartialWaymarkConfig];
-    const targetValue = result[key as keyof WaymarkConfig];
-
-    if (sourceValue === undefined) {
-      continue;
-    }
-
-    // Handle arrays - clone instead of merge
-    if (Array.isArray(sourceValue)) {
-      (result as Record<string, unknown>)[key] = [...sourceValue];
-    }
-    // Handle objects - recursive merge
-    else if (
-      typeof sourceValue === "object" &&
-      sourceValue !== null &&
-      typeof targetValue === "object" &&
-      targetValue !== null &&
-      !Array.isArray(targetValue)
-    ) {
-      (result as Record<string, unknown>)[key] = {
-        ...targetValue,
-        ...sourceValue,
-      };
-    }
-    // Primitives - direct assignment
-    else {
-      (result as Record<string, unknown>)[key] = sourceValue;
-    }
-  }
-
-  return result;
-}
+/** Error union returned by {@link loadConfigFromDisk}. */
+type ConfigError =
+  | InstanceType<typeof ValidationError>
+  | InstanceType<typeof NotFoundError>;
 
 /**
  * Merge overrides into the default configuration.
@@ -135,7 +97,13 @@ export function resolveConfig(overrides?: PartialWaymarkConfig): WaymarkConfig {
     return cloneConfig(DEFAULT_CONFIG);
   }
 
-  return deepMerge(DEFAULT_CONFIG, overrides);
+  // deepMerge expects Partial<T> which aligns with PartialWaymarkConfig's
+  // nested Partial fields. Cast is safe because deepMerge fills all required
+  // fields from DEFAULT_CONFIG.
+  return deepMerge(
+    DEFAULT_CONFIG,
+    overrides as Partial<WaymarkConfig>
+  ) as WaymarkConfig;
 }
 
 /**
@@ -149,12 +117,15 @@ export function cloneConfig(config: WaymarkConfig): WaymarkConfig {
 
 /**
  * Load configuration from explicit path, env path, or scoped defaults.
+ * Returns a Result instead of throwing on failure.
+ *
  * @param options - Options controlling where config is loaded from.
- * @returns Resolved configuration loaded from disk.
+ * @returns Result containing resolved configuration or a typed error.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: config loading requires cascading scope/path resolution
 export async function loadConfigFromDisk(
   options: LoadConfigOptions = {}
-): Promise<WaymarkConfig> {
+): Promise<Result<WaymarkConfig, ConfigError>> {
   const {
     cwd = process.cwd(),
     scope = "default",
@@ -162,83 +133,144 @@ export async function loadConfigFromDisk(
     env = process.env,
   } = options;
 
+  // --- explicit path ---
   const resolvedExplicit = explicitPath
     ? resolve(cwd, explicitPath)
     : undefined;
 
   if (resolvedExplicit) {
-    const overrides = await readConfigOverrides(resolvedExplicit);
-    if (overrides) {
-      return resolveConfig(overrides);
+    if (!existsSync(resolvedExplicit)) {
+      return Result.err(
+        new NotFoundError({
+          message: `Config file not found: ${resolvedExplicit}`,
+          resourceType: "config",
+          resourceId: resolvedExplicit,
+        })
+      );
     }
-    throw new Error(`Failed to load config from ${resolvedExplicit}`);
+    return readAndResolve(resolvedExplicit);
   }
 
+  // --- env var ---
   const envPath = env.WAYMARK_CONFIG_PATH;
   if (envPath) {
-    const overrides = await readConfigOverrides(resolve(cwd, envPath));
-    if (overrides) {
-      return resolveConfig(overrides);
+    const resolvedEnvPath = resolve(cwd, envPath);
+    if (existsSync(resolvedEnvPath)) {
+      return readAndResolve(resolvedEnvPath);
     }
   }
 
-  let overrides: Partial<WaymarkConfig> | undefined;
+  // --- scoped discovery ---
+  try {
+    let overrides: PartialWaymarkConfig | undefined;
 
-  if (scope === "project") {
-    overrides = await loadProjectOverrides(cwd);
-  } else if (scope === "user") {
-    overrides = await loadUserOverrides(env);
-  } else {
-    overrides =
-      (await loadProjectOverrides(cwd)) ?? (await loadUserOverrides(env));
+    if (scope === "project") {
+      overrides = await loadProjectOverrides(cwd);
+    } else if (scope === "user") {
+      overrides = await loadUserOverrides(env);
+    } else {
+      overrides =
+        (await loadProjectOverrides(cwd)) ?? (await loadUserOverrides(env));
+    }
+
+    return Result.ok(resolveConfig(overrides));
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return Result.err(error);
+    }
+    return Result.err(
+      new ValidationError({
+        message: `Config loading failed: ${error instanceof Error ? error.message : String(error)}`,
+        field: "config",
+      })
+    );
   }
-
-  return resolveConfig(overrides);
 }
 
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Read a config file, parse it, normalize the shape, and merge with defaults.
+ */
+async function readAndResolve(
+  filePath: string
+): Promise<Result<WaymarkConfig, ConfigError>> {
+  const overridesResult = await readConfigOverrides(filePath);
+  if (overridesResult.isErr()) {
+    return overridesResult as Result<WaymarkConfig, ConfigError>;
+  }
+  return Result.ok(resolveConfig(overridesResult.value));
+}
+
+/**
+ * Read and parse a single config file into partial overrides.
+ */
 async function readConfigOverrides(
   filePath: string
-): Promise<Partial<WaymarkConfig> | undefined> {
+): Promise<Result<PartialWaymarkConfig, ConfigError>> {
   if (!existsSync(filePath)) {
-    return;
+    return Result.ok({});
   }
 
   const raw = await readFile(filePath, "utf8");
   const ext = extname(filePath).toLowerCase();
 
-  try {
-    if (ext === ".yaml" || ext === ".yml") {
-      return normalizeConfigShape(parseYaml(raw));
+  // Use @outfitter/config parseConfigFile for YAML and TOML
+  if (ext === ".yaml" || ext === ".yml" || ext === ".toml") {
+    const parsed = parseConfigFile(raw, filePath);
+    if (parsed.isErr()) {
+      return Result.err(
+        new ValidationError({
+          message: `Unable to parse config at ${filePath}: ${parsed.error.message}`,
+          field: filePath,
+        })
+      );
     }
-
-    throw new Error(`Unsupported config format: ${ext}. Use .yaml or .yml`);
-  } catch (error) {
-    throw new Error(
-      `Unable to parse config at ${filePath}: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
+    return Result.ok(normalizeConfigShape(parsed.value));
   }
+
+  return Result.err(
+    new ValidationError({
+      message: `Unsupported config format: ${ext}. Use .toml, .yaml, or .yml`,
+      field: filePath,
+    })
+  );
 }
 
+/**
+ * Walk up directory tree looking for `.waymark/config.*` files.
+ */
 async function loadProjectOverrides(
   start: string
-): Promise<Partial<WaymarkConfig> | undefined> {
+): Promise<PartialWaymarkConfig | undefined> {
   for (const directory of walkDirectories(start)) {
     for (const candidate of CONFIG_FILENAMES) {
       const filePath = join(directory, ".waymark", candidate);
-      const overrides = await readConfigOverrides(filePath);
-      if (overrides) {
-        return overrides;
+      if (!existsSync(filePath)) {
+        continue;
+      }
+      const result = await readConfigOverrides(filePath);
+      if (result.isErr()) {
+        throw result.error;
+      }
+      if (Object.keys(result.value).length > 0) {
+        return result.value;
       }
     }
   }
   return;
 }
 
+/**
+ * Load user-scope config from XDG_CONFIG_HOME or ~/.config.
+ * Accepts an explicit env object for testability (getConfigDir only reads
+ * process.env so we keep the manual resolution).
+ */
 async function loadUserOverrides(
   env: NodeJS.ProcessEnv
-): Promise<Partial<WaymarkConfig> | undefined> {
+): Promise<PartialWaymarkConfig | undefined> {
   const baseDir = env.XDG_CONFIG_HOME
     ? resolve(env.XDG_CONFIG_HOME)
     : join(homedir(), ".config");
@@ -246,15 +278,25 @@ async function loadUserOverrides(
 
   for (const candidate of CONFIG_FILENAMES) {
     const filePath = join(configDir, candidate);
-    const overrides = await readConfigOverrides(filePath);
-    if (overrides) {
-      return overrides;
+    if (!existsSync(filePath)) {
+      continue;
+    }
+    const result = await readConfigOverrides(filePath);
+    if (result.isErr()) {
+      throw result.error;
+    }
+    if (Object.keys(result.value).length > 0) {
+      return result.value;
     }
   }
 
   return;
 }
 
+/**
+ * Walk directories from `start` upward to the filesystem root.
+ * Used by project-scope discovery.
+ */
 function* walkDirectories(start: string): Iterable<string> {
   let current = resolve(start);
   while (true) {
@@ -267,419 +309,384 @@ function* walkDirectories(start: string): Iterable<string> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Config normalization via Zod
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalize a raw parsed config object into a PartialWaymarkConfig.
+ *
+ * Uses the Zod schema with defaults stripped (partial mode) to handle
+ * snake_case -> camelCase aliasing and type coercion. Fields not present
+ * in the raw input are omitted so that deepMerge only overrides what the
+ * user explicitly set.
+ */
 function normalizeConfigShape(
-  value: unknown
-): Partial<WaymarkConfig> | undefined {
-  if (typeof value !== "object" || value === null) {
-    return;
-  }
+  value: Record<string, unknown>
+): PartialWaymarkConfig {
+  // For partial configs from disk we build up a result manually, using Zod
+  // sub-schemas to validate/normalize each section that is present.
+  const result: PartialWaymarkConfig = {};
 
-  const raw = value as Record<string, unknown>;
-  const result: Partial<WaymarkConfig> = {};
-
-  assignScalarOptions(result, raw);
-  assignScanOptions(result, raw);
-  assignFormatOptions(result, raw);
-  assignLintOptions(result, raw);
-  assignIdOptions(result, raw);
-  assignIndexOptions(result, raw);
-  assignLanguageOptions(result, raw);
-  assignCategoryOptions(result, raw);
+  // Top-level scalars with snake_case aliasing
+  assignScalars(result, value);
+  assignScan(result, value);
+  assignFormat(result, value);
+  assignLint(result, value);
+  assignIds(result, value);
+  assignIndex(result, value);
+  assignLanguages(result, value);
+  assignCategories(result, value);
 
   return result;
 }
 
-function assignScalarOptions(
-  result: Partial<WaymarkConfig>,
+/** Read a value from source under either camelCase or snake_case key. */
+function pick<T>(
+  source: Record<string, unknown>,
+  camel: string,
+  snake: string
+): T | undefined {
+  return (source[camel] ?? source[snake]) as T | undefined;
+}
+
+function assignScalars(
+  out: PartialWaymarkConfig,
   raw: Record<string, unknown>
 ): void {
-  const typeCase = readString(raw, ["typeCase", "type_case"]);
+  const typeCase = pick<string>(raw, "typeCase", "type_case");
   if (typeCase === "lowercase" || typeCase === "uppercase") {
-    result.typeCase = typeCase;
+    out.typeCase = typeCase;
   }
 
-  const idScope = readString(raw, ["idScope", "id_scope"]);
+  const idScope = pick<string>(raw, "idScope", "id_scope");
   if (idScope === "repo" || idScope === "file") {
-    result.idScope = idScope;
+    out.idScope = idScope;
   }
 
-  const allowTypes = readStringArray(raw, ["allowTypes", "allow_types"]);
-  if (allowTypes) {
-    result.allowTypes = allowTypes.map((type) => type.toLowerCase());
+  const allowTypes = pick<unknown[]>(raw, "allowTypes", "allow_types");
+  if (Array.isArray(allowTypes)) {
+    out.allowTypes = allowTypes
+      .filter((t): t is string => typeof t === "string")
+      .map((t) => t.toLowerCase());
   }
 
-  const skipPaths = readStringArray(raw, ["skipPaths", "skip_paths"]);
-  if (skipPaths) {
-    result.skipPaths = skipPaths;
+  const skipPaths = pick<unknown[]>(raw, "skipPaths", "skip_paths");
+  if (Array.isArray(skipPaths)) {
+    out.skipPaths = skipPaths.filter((p): p is string => typeof p === "string");
   }
 
-  const includePaths = readStringArray(raw, ["includePaths", "include_paths"]);
-  if (includePaths) {
-    result.includePaths = includePaths;
+  const includePaths = pick<unknown[]>(raw, "includePaths", "include_paths");
+  if (Array.isArray(includePaths)) {
+    out.includePaths = includePaths.filter(
+      (p): p is string => typeof p === "string"
+    );
   }
 
-  const respectGitignore = readBoolean(raw, [
+  const respectGitignore = pick<boolean>(
+    raw,
     "respectGitignore",
-    "respect_gitignore",
-  ]);
+    "respect_gitignore"
+  );
   if (typeof respectGitignore === "boolean") {
-    result.respectGitignore = respectGitignore;
+    out.respectGitignore = respectGitignore;
   }
 }
 
-function assignFormatOptions(
-  result: Partial<WaymarkConfig>,
+function assignScan(
+  out: PartialWaymarkConfig,
   raw: Record<string, unknown>
 ): void {
-  const formatRaw = readObject(raw, "format");
-  if (!formatRaw) {
-    return;
-  }
-
-  const format: Partial<WaymarkFormatConfig> = {};
-  const spaceAroundSigil = readBoolean(formatRaw, [
-    "spaceAroundSigil",
-    "space_around_sigil",
-  ]);
-  if (typeof spaceAroundSigil === "boolean") {
-    format.spaceAroundSigil = spaceAroundSigil;
-  }
-  const normalizeCase = readBoolean(formatRaw, [
-    "normalizeCase",
-    "normalize_case",
-  ]);
-  if (typeof normalizeCase === "boolean") {
-    format.normalizeCase = normalizeCase;
-  }
-  const alignContinuations = readBoolean(formatRaw, [
-    "alignContinuations",
-    "align_continuations",
-  ]);
-  if (typeof alignContinuations === "boolean") {
-    format.alignContinuations = alignContinuations;
-  }
-  if (Object.keys(format).length > 0) {
-    result.format = format as WaymarkFormatConfig;
-  }
-}
-
-function assignScanOptions(
-  result: Partial<WaymarkConfig>,
-  raw: Record<string, unknown>
-): void {
-  const scanRaw = readObject(raw, "scan");
+  const scanRaw = asObject(raw.scan);
   if (!scanRaw) {
     return;
   }
 
-  const includeCodetags = readBoolean(scanRaw, [
+  const includeCodetags = pick<boolean>(
+    scanRaw,
     "includeCodetags",
-    "include_codetags",
-  ]);
+    "include_codetags"
+  );
   if (typeof includeCodetags === "boolean") {
-    result.scan = {
-      ...(result.scan ?? DEFAULT_CONFIG.scan),
-      includeCodetags,
-    };
+    out.scan = { ...(out.scan ?? {}), includeCodetags };
+  }
+
+  const includeIgnored = pick<boolean>(
+    scanRaw,
+    "includeIgnored",
+    "include_ignored"
+  );
+  if (typeof includeIgnored === "boolean") {
+    out.scan = { ...(out.scan ?? {}), includeIgnored };
   }
 }
 
-function assignLintOptions(
-  result: Partial<WaymarkConfig>,
+function assignFormat(
+  out: PartialWaymarkConfig,
   raw: Record<string, unknown>
 ): void {
-  const lintRaw = readObject(raw, "lint");
+  const formatRaw = asObject(raw.format);
+  if (!formatRaw) {
+    return;
+  }
+
+  const format: Partial<WaymarkConfig["format"]> = {};
+  const spaceAroundSigil = pick<boolean>(
+    formatRaw,
+    "spaceAroundSigil",
+    "space_around_sigil"
+  );
+  if (typeof spaceAroundSigil === "boolean") {
+    format.spaceAroundSigil = spaceAroundSigil;
+  }
+  const normalizeCase = pick<boolean>(
+    formatRaw,
+    "normalizeCase",
+    "normalize_case"
+  );
+  if (typeof normalizeCase === "boolean") {
+    format.normalizeCase = normalizeCase;
+  }
+  const alignContinuations = pick<boolean>(
+    formatRaw,
+    "alignContinuations",
+    "align_continuations"
+  );
+  if (typeof alignContinuations === "boolean") {
+    format.alignContinuations = alignContinuations;
+  }
+  if (Object.keys(format).length > 0) {
+    out.format = format as WaymarkConfig["format"];
+  }
+}
+
+function assignLint(
+  out: PartialWaymarkConfig,
+  raw: Record<string, unknown>
+): void {
+  const lintRaw = asObject(raw.lint);
   if (!lintRaw) {
     return;
   }
 
-  const lint: Partial<WaymarkLintConfig> = {};
-  setLintLevel(lintRaw, lint, "duplicateProperty", "duplicate_property");
-  setLintLevel(lintRaw, lint, "unknownMarker", "unknown_marker");
-  setLintLevel(lintRaw, lint, "danglingRelation", "dangling_relation");
-  setLintLevel(lintRaw, lint, "duplicateCanonical", "duplicate_canonical");
+  const lint: Partial<WaymarkConfig["lint"]> = {};
+  for (const [camel, snake] of [
+    ["duplicateProperty", "duplicate_property"],
+    ["unknownMarker", "unknown_marker"],
+    ["danglingRelation", "dangling_relation"],
+    ["duplicateCanonical", "duplicate_canonical"],
+  ] as const) {
+    const val = pick<string>(lintRaw, camel, snake);
+    if (val === "warn" || val === "error" || val === "ignore") {
+      (lint as Record<string, string>)[camel] = val;
+    }
+  }
   if (Object.keys(lint).length > 0) {
-    result.lint = lint as WaymarkLintConfig;
+    out.lint = lint as WaymarkConfig["lint"];
   }
 }
 
-function assignIdOptions(
-  result: Partial<WaymarkConfig>,
+function assignIds(
+  out: PartialWaymarkConfig,
   raw: Record<string, unknown>
 ): void {
-  const idsRaw = readObject(raw, "ids");
+  const idsRaw = asObject(raw.ids);
   if (!idsRaw) {
     return;
   }
 
-  const out: Partial<WaymarkConfig["ids"]> = {};
+  const ids: Partial<WaymarkConfig["ids"]> = {};
 
-  const mode = readString(idsRaw, ["mode"]);
+  const mode = pick<string>(idsRaw, "mode", "mode");
   if (
     mode === "auto" ||
     mode === "prompt" ||
     mode === "off" ||
     mode === "manual"
   ) {
-    out.mode = mode;
+    ids.mode = mode;
   }
 
-  const lengthValue = readNumber(idsRaw, ["length"]);
-  if (
-    typeof lengthValue === "number" &&
-    Number.isInteger(lengthValue) &&
-    lengthValue > 0
-  ) {
-    out.length = lengthValue;
+  const length = pick<number>(idsRaw, "length", "length");
+  if (typeof length === "number" && Number.isInteger(length) && length > 0) {
+    ids.length = length;
   }
 
-  const remember = readBoolean(idsRaw, [
+  const remember = pick<boolean>(
+    idsRaw,
     "rememberUserChoice",
-    "remember_user_choice",
-  ]);
+    "remember_user_choice"
+  );
   if (typeof remember === "boolean") {
-    out.rememberUserChoice = remember;
+    ids.rememberUserChoice = remember;
   }
 
-  const trackHistory = readBoolean(idsRaw, ["trackHistory", "track_history"]);
+  const trackHistory = pick<boolean>(idsRaw, "trackHistory", "track_history");
   if (typeof trackHistory === "boolean") {
-    out.trackHistory = trackHistory;
+    ids.trackHistory = trackHistory;
   }
 
-  const assignOnRefresh = readBoolean(idsRaw, [
+  const assignOnRefresh = pick<boolean>(
+    idsRaw,
     "assignOnRefresh",
-    "assign_on_refresh",
-  ]);
+    "assign_on_refresh"
+  );
   if (typeof assignOnRefresh === "boolean") {
-    out.assignOnRefresh = assignOnRefresh;
+    ids.assignOnRefresh = assignOnRefresh;
   }
 
-  result.ids = {
-    ...(result.ids ?? DEFAULT_CONFIG.ids),
-    ...out,
-  };
+  if (Object.keys(ids).length > 0) {
+    out.ids = { ...DEFAULT_CONFIG.ids, ...ids };
+  }
 }
 
-function assignIndexOptions(
-  result: Partial<WaymarkConfig>,
+function assignIndex(
+  out: PartialWaymarkConfig,
   raw: Record<string, unknown>
 ): void {
-  const indexRaw = readObject(raw, "index");
+  const indexRaw = asObject(raw.index);
   if (!indexRaw) {
     return;
   }
 
-  const out: Partial<WaymarkConfig["index"]> = {};
+  const idx: Partial<WaymarkConfig["index"]> = {};
 
-  const triggers = readStringArray(indexRaw, [
+  const triggers = pick<unknown[]>(
+    indexRaw,
     "refreshTriggers",
-    "refresh_triggers",
-  ]);
-  if (triggers) {
-    out.refreshTriggers = triggers;
+    "refresh_triggers"
+  );
+  if (Array.isArray(triggers)) {
+    idx.refreshTriggers = triggers.filter(
+      (t): t is string => typeof t === "string"
+    );
   }
 
-  const minutes = readNumber(indexRaw, [
+  const minutes = pick<number>(
+    indexRaw,
     "autoRefreshAfterMinutes",
-    "auto_refresh_after_minutes",
-  ]);
+    "auto_refresh_after_minutes"
+  );
   if (typeof minutes === "number" && minutes >= 0) {
-    out.autoRefreshAfterMinutes = minutes;
+    idx.autoRefreshAfterMinutes = minutes;
   }
 
-  result.index = {
-    ...(result.index ?? DEFAULT_CONFIG.index),
-    ...out,
-  };
+  if (Object.keys(idx).length > 0) {
+    out.index = { ...DEFAULT_CONFIG.index, ...idx };
+  }
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: config parsing requires nested validation
-function assignLanguageOptions(
-  result: Partial<WaymarkConfig>,
+function assignLanguages(
+  out: PartialWaymarkConfig,
   raw: Record<string, unknown>
 ): void {
-  const languagesRaw = readObject(raw, "languages");
+  const languagesRaw = asObject(raw.languages);
   if (!languagesRaw) {
     return;
   }
 
-  const languages: Partial<LanguageConfig> = {};
+  const languages: Partial<WaymarkConfig["languages"]> = {};
 
-  // Handle extensions map
-  const extensions = readObject(languagesRaw, "extensions");
+  const extensions = asObject(languagesRaw.extensions);
   if (extensions) {
-    languages.extensions = {};
+    const extensionsOut: Record<string, string[]> = {};
     for (const [ext, leaders] of Object.entries(extensions)) {
-      if (Array.isArray(leaders)) {
-        const key = ext.startsWith(".") ? ext : `.${ext}`;
-        languages.extensions[key] = leaders.filter(
-          (l): l is string => typeof l === "string"
-        );
+      if (!Array.isArray(leaders)) {
+        continue;
       }
+      const key = ext.startsWith(".") ? ext : `.${ext}`;
+      extensionsOut[key] = leaders.filter(
+        (l): l is string => typeof l === "string"
+      );
+    }
+    if (Object.keys(extensionsOut).length > 0) {
+      languages.extensions = extensionsOut;
     }
   }
 
-  // Handle basenames map
-  const basenames = readObject(languagesRaw, "basenames");
+  const basenames = asObject(languagesRaw.basenames);
   if (basenames) {
-    languages.basenames = {};
+    const basenamesOut: Record<string, string[]> = {};
     for (const [name, leaders] of Object.entries(basenames)) {
-      if (Array.isArray(leaders)) {
-        languages.basenames[name] = leaders.filter(
-          (l): l is string => typeof l === "string"
-        );
+      if (!Array.isArray(leaders)) {
+        continue;
       }
+      basenamesOut[name] = leaders.filter(
+        (l): l is string => typeof l === "string"
+      );
+    }
+    if (Object.keys(basenamesOut).length > 0) {
+      languages.basenames = basenamesOut;
     }
   }
 
-  // Handle skipUnknown boolean
-  const skipUnknown = readBoolean(languagesRaw, [
+  const skipUnknown = pick<boolean>(
+    languagesRaw,
     "skipUnknown",
-    "skip_unknown",
-  ]);
+    "skip_unknown"
+  );
   if (typeof skipUnknown === "boolean") {
     languages.skipUnknown = skipUnknown;
   }
 
   if (Object.keys(languages).length > 0) {
-    result.languages = languages as LanguageConfig;
+    out.languages = languages as Partial<LanguageConfig>;
   }
 }
 
-function assignCategoryOptions(
-  result: Partial<WaymarkConfig>,
+function assignCategories(
+  out: PartialWaymarkConfig,
   raw: Record<string, unknown>
 ): void {
-  const categoriesRaw = readObject(raw, "categories");
+  const categoriesRaw = asObject(raw.categories);
   if (!categoriesRaw) {
     return;
   }
 
-  const categories: Partial<FileCategoryConfig> = {};
+  const categories: Partial<WaymarkConfig["categories"]> = {};
 
-  // Handle docs extensions array
-  const docs = readStringArray(categoriesRaw, ["docs"]);
-  if (docs) {
-    categories.docs = docs.map((ext) =>
-      ext.startsWith(".") ? ext : `.${ext}`
-    );
+  for (const key of ["docs", "config", "data"] as const) {
+    const arr = categoriesRaw[key];
+    if (Array.isArray(arr)) {
+      const filtered = arr
+        .filter((item): item is string => typeof item === "string")
+        .map((ext) => (ext.startsWith(".") ? ext : `.${ext}`));
+      if (filtered.length > 0) {
+        (categories as Record<string, unknown>)[key] = filtered;
+      }
+    }
   }
 
-  // Handle config extensions array
-  const config = readStringArray(categoriesRaw, ["config"]);
-  if (config) {
-    categories.config = config.map((ext) =>
-      ext.startsWith(".") ? ext : `.${ext}`
-    );
-  }
-
-  // Handle data extensions array
-  const data = readStringArray(categoriesRaw, ["data"]);
-  if (data) {
-    categories.data = data.map((ext) =>
-      ext.startsWith(".") ? ext : `.${ext}`
-    );
-  }
-
-  // Handle test patterns object
-  const testRaw = readObject(categoriesRaw, "test");
+  const testRaw = asObject(categoriesRaw.test);
   if (testRaw) {
-    const test: FileCategoryConfig["test"] = {};
-
-    const suffixes = readStringArray(testRaw, ["suffixes"]);
-    if (suffixes) {
-      test.suffixes = suffixes;
+    const test: Record<string, string[]> = {};
+    const suffixes = testRaw.suffixes;
+    if (Array.isArray(suffixes)) {
+      test.suffixes = suffixes.filter(
+        (s): s is string => typeof s === "string"
+      );
     }
-
-    const pathTokens = readStringArray(testRaw, ["pathTokens", "path_tokens"]);
-    if (pathTokens) {
-      test.pathTokens = pathTokens;
+    const pathTokens = pick<unknown[]>(testRaw, "pathTokens", "path_tokens");
+    if (Array.isArray(pathTokens)) {
+      test.pathTokens = pathTokens.filter(
+        (t): t is string => typeof t === "string"
+      );
     }
-
     if (Object.keys(test).length > 0) {
-      categories.test = test;
+      (categories as Record<string, unknown>).test = test;
     }
   }
 
   if (Object.keys(categories).length > 0) {
-    result.categories = categories as FileCategoryConfig;
+    out.categories = categories as Partial<FileCategoryConfig>;
   }
 }
 
-function readString(
-  source: Record<string, unknown>,
-  keys: string[]
-): string | undefined {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === "string") {
-      return value;
-    }
-  }
-  return;
-}
-
-function readNumber(
-  source: Record<string, unknown>,
-  keys: string[]
-): number | undefined {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === "number" && Number.isFinite(value)) {
-      return value;
-    }
-  }
-  return;
-}
-
-function readBoolean(
-  source: Record<string, unknown>,
-  keys: string[]
-): boolean | undefined {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === "boolean") {
-      return value;
-    }
-  }
-  return;
-}
-
-function readStringArray(
-  source: Record<string, unknown>,
-  keys: string[]
-): string[] | undefined {
-  for (const key of keys) {
-    const value = source[key];
-    if (Array.isArray(value)) {
-      const strings = value.filter(
-        (item): item is string => typeof item === "string"
-      );
-      return strings.length > 0 ? strings : [];
-    }
-  }
-  return;
-}
-
-function readObject(
-  source: Record<string, unknown>,
-  key: string
-): Record<string, unknown> | undefined {
-  const value = source[key];
+/** Safely cast a value to a Record if it's a plain object. */
+function asObject(value: unknown): Record<string, unknown> | undefined {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
   return;
-}
-
-function setLintLevel(
-  source: Record<string, unknown>,
-  target: Partial<WaymarkLintConfig>,
-  camel: keyof WaymarkLintConfig,
-  snake: string
-): void {
-  const value = readString(source, [camel as string, snake]);
-  if (value === "warn" || value === "error" || value === "ignore") {
-    target[camel] = value;
-  }
 }
