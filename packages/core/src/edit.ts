@@ -648,7 +648,7 @@ async function updateIdIndex(args: {
   }
 
   const contextWindow = buildContextWindow(lines, record.startLine - 1);
-  await idManager.updateLocation(id, {
+  const updateResult = await idManager.updateLocation(id, {
     file,
     line: record.startLine,
     type: record.type,
@@ -658,4 +658,7 @@ async function updateIdIndex(args: {
     ...(existing.source ? { source: existing.source } : {}),
     ...(existing.sourceType ? { sourceType: existing.sourceType } : {}),
   });
+  if (updateResult.isErr()) {
+    throw updateResult.error;
+  }
 }

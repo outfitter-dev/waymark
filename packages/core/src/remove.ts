@@ -506,7 +506,13 @@ async function commitIdRemovals(
       removeOptions.removedBy = options.removedBy;
     }
     for (const id of removal.ids) {
-      await options.idManager.remove(id, removeOptions);
+      const removeResult = await options.idManager.remove(id, removeOptions);
+      if (removeResult.isErr()) {
+        options.logger?.warn("Failed to remove waymark ID from index", {
+          error: removeResult.error.message,
+          id,
+        });
+      }
     }
   }
 }

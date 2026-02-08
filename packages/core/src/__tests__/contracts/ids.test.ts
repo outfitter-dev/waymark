@@ -57,8 +57,16 @@ describe("ID contracts", () => {
         new JsonIdIndex({ workspaceRoot: workspaceB })
       );
 
-      const idA = await managerA.reserveId(metadata);
-      const idB = await managerB.reserveId(metadata);
+      const resultA = await managerA.reserveId(metadata);
+      const resultB = await managerB.reserveId(metadata);
+
+      expect(resultA.isOk()).toBe(true);
+      expect(resultB.isOk()).toBe(true);
+      if (!(resultA.isOk() && resultB.isOk())) {
+        throw new Error("Expected successful reservation");
+      }
+      const idA = resultA.value;
+      const idB = resultB.value;
 
       expect(idA).toBeDefined();
       expect(idB).toBeDefined();
@@ -84,8 +92,13 @@ describe("ID contracts", () => {
         new JsonIdIndex({ workspaceRoot: workspace })
       );
 
-      const id = await manager.reserveId(metadata);
+      const result = await manager.reserveId(metadata);
 
+      expect(result.isOk()).toBe(true);
+      if (!result.isOk()) {
+        throw new Error("Expected successful reservation");
+      }
+      const id = result.value;
       expect(id).toBeDefined();
       if (!id) {
         throw new Error("Expected generated ID");

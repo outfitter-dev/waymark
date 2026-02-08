@@ -1,10 +1,10 @@
 // tldr ::: @outfitter/logging-based logger configuration for CLI with level control
 
 import {
-  type LogLevel,
-  type LoggerInstance,
   createConsoleSink,
   createLogger as createOutfitterLogger,
+  type LoggerInstance,
+  type LogLevel,
 } from "@outfitter/logging";
 
 export type { LogLevel } from "@outfitter/logging";

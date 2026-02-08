@@ -3,6 +3,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { InternalError, NotFoundError, Result } from "./errors.ts";
 
 /** Source categories for IDs tracked in the index. */
 export type WaymarkIdSourceType = "cli" | "mcp" | "api" | "manual";
@@ -81,16 +82,28 @@ export class JsonIdIndex {
   /**
    * Load index and history from disk once per instance.
    * @returns Promise that resolves when the index is initialized.
+   * @throws Re-throws InternalError if index or history files are corrupted.
    */
   async init(): Promise<void> {
     if (this.loaded) {
       return;
     }
     await this.ensureDirectory();
-    this.data = await this.readIndex();
-    if (this.trackHistory) {
-      this.history = await this.readHistory();
+
+    const indexResult = await this.readIndex();
+    if (indexResult.isErr()) {
+      throw indexResult.error;
     }
+    this.data = indexResult.value;
+
+    if (this.trackHistory) {
+      const historyResult = await this.readHistory();
+      if (historyResult.isErr()) {
+        throw historyResult.error;
+      }
+      this.history = historyResult.value;
+    }
+
     this.loaded = true;
   }
 
@@ -129,19 +142,26 @@ export class JsonIdIndex {
    * Update an existing entry via an updater function.
    * @param id - Waymark ID to update.
    * @param updater - Function to transform the existing entry.
-   * @returns Promise that resolves when saved.
+   * @returns Result indicating success or a not-found error.
    */
   async update(
     id: string,
     updater: (entry: IdIndexEntry) => IdIndexEntry
-  ): Promise<void> {
+  ): Promise<Result<void, NotFoundError>> {
     await this.init();
     const current = this.data.ids[id];
     if (!current) {
-      throw new Error(`Unknown waymark id: ${id}`);
+      return Result.err(
+        new NotFoundError({
+          message: `Unknown waymark id: ${id}`,
+          resourceType: "waymark-id",
+          resourceId: id,
+        })
+      );
     }
     this.data.ids[id] = updater(current);
     await this.save();
+    return Result.ok();
   }
 
   /**
@@ -261,38 +281,44 @@ export class JsonIdIndex {
     }
   }
 
-  private async readIndex(): Promise<IdIndexData> {
+  private async readIndex(): Promise<Result<IdIndexData, InternalError>> {
     if (!existsSync(this.indexPath)) {
-      return structuredClone(DEFAULT_INDEX);
+      return Result.ok(structuredClone(DEFAULT_INDEX));
     }
     const raw = await readFile(this.indexPath, "utf8");
     try {
       const parsed = JSON.parse(raw) as IdIndexData;
-      return {
+      return Result.ok({
         ...structuredClone(DEFAULT_INDEX),
         ...parsed,
         ids: parsed.ids ?? {},
         files: parsed.files ?? {},
         metadata: parsed.metadata ?? {},
-      };
+      });
     } catch (error) {
-      throw new Error(
-        `Failed to parse ${this.indexPath}: ${error instanceof Error ? error.message : String(error)}`
+      return Result.err(
+        new InternalError({
+          message: `Failed to parse ${this.indexPath}: ${error instanceof Error ? error.message : String(error)}`,
+          context: { path: this.indexPath },
+        })
       );
     }
   }
 
-  private async readHistory(): Promise<HistoryEntry[]> {
+  private async readHistory(): Promise<Result<HistoryEntry[], InternalError>> {
     if (!existsSync(this.historyPath)) {
-      return [];
+      return Result.ok([]);
     }
     const raw = await readFile(this.historyPath, "utf8");
     try {
       const parsed = JSON.parse(raw) as HistoryEntry[];
-      return Array.isArray(parsed) ? parsed : [];
+      return Result.ok(Array.isArray(parsed) ? parsed : []);
     } catch (error) {
-      throw new Error(
-        `Failed to parse ${this.historyPath}: ${error instanceof Error ? error.message : String(error)}`
+      return Result.err(
+        new InternalError({
+          message: `Failed to parse ${this.historyPath}: ${error instanceof Error ? error.message : String(error)}`,
+          context: { path: this.historyPath },
+        })
       );
     }
   }

@@ -335,8 +335,11 @@ async function applyInsertion(
     context.lines.length
   );
   const indentWidth = detectIndentWidth(context.lines, referenceIndex);
-  const reservedId = await reserveIdIfNeeded(spec, context);
-  const resolvedId = reservedId ?? spec.id;
+  const reserveResult = await reserveIdIfNeeded(spec, context);
+  if (reserveResult instanceof Error) {
+    return errorResult(context.file, spec, reserveResult.message);
+  }
+  const resolvedId = reserveResult ?? spec.id;
   const formatted = formatWaymark(
     spec,
     context.commentLeader,
@@ -352,7 +355,7 @@ async function applyInsertion(
   const insertedLine = insertPos + 1;
   const contextWindow = buildContextWindow(context.lines, insertedLine - 1);
   await commitReservedIdIfNeeded({
-    reservedId,
+    reservedId: reserveResult,
     spec,
     formattedHeader: formatted.header,
     insertedLine,
@@ -394,7 +397,7 @@ function calculateReferenceIndex(line: number, lineCount: number): number {
 async function reserveIdIfNeeded(
   spec: InsertionSpec,
   context: FileProcessingContext
-): Promise<string | undefined> {
+): Promise<string | Error | undefined> {
   if (!(context.options.write && context.options.idManager)) {
     return;
   }
@@ -412,10 +415,17 @@ async function reserveIdIfNeeded(
     metadata.source = spec.properties.owner;
   }
 
-  const reservedId = await context.options.idManager.reserveId(
-    metadata,
-    spec.id
-  );
+  const result = await context.options.idManager.reserveId(metadata, spec.id);
+  if (result.isErr()) {
+    context.options.logger?.warn("Failed to reserve waymark ID", {
+      error: result.error.message,
+      file: context.file,
+      line: spec.line,
+    });
+    return result.error;
+  }
+
+  const reservedId = result.value;
   if (reservedId) {
     context.options.logger?.debug("Reserved waymark ID", {
       id: reservedId,
@@ -460,7 +470,17 @@ async function commitReservedIdIfNeeded(args: {
     metadata.source = spec.properties.owner;
   }
 
-  await context.options.idManager.commitReservedId(reservedId, metadata);
+  const commitResult = await context.options.idManager.commitReservedId(
+    reservedId,
+    metadata
+  );
+  if (commitResult.isErr()) {
+    context.options.logger?.warn("Failed to commit waymark ID", {
+      error: commitResult.error.message,
+      id: reservedId,
+      file: context.file,
+    });
+  }
 }
 
 async function writeUpdatedFile(context: FileProcessingContext): Promise<void> {
