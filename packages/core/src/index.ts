@@ -23,6 +23,24 @@ export {
 } from "./config";
 export type { EditOptions, EditResult, EditSpec } from "./edit";
 export { EditSpecSchema, editWaymark } from "./edit";
+export type {
+  AnyKitError,
+  ErrorCategory,
+  OutfitterError,
+  WaymarkError,
+  WaymarkResult,
+} from "./errors";
+export {
+  CancelledError,
+  ConflictError,
+  getExitCode,
+  getWaymarkExitCode,
+  InternalError,
+  NotFoundError,
+  Result,
+  ValidationError,
+  WAYMARK_EXIT_CODES,
+} from "./errors";
 export type { FormatEdit, FormatOptions, FormatResult } from "./format";
 export { formatText } from "./format";
 export type { GraphEdge, WaymarkGraph } from "./graph";

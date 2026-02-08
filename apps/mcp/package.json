@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",
+    "@outfitter/contracts": "0.1.0",
+    "@outfitter/logging": "0.1.0",
     "@waymarks/core": "workspace:*",
     "zod": "^3.23.8"
   },
