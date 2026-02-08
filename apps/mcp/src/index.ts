@@ -10,6 +10,7 @@ import {
 import { createMcpServer } from "@outfitter/mcp";
 import { registerResources } from "./resources";
 import { registerTools } from "./tools";
+import type { ToolContent } from "./types";
 import { logger } from "./utils/logger";
 
 const VERSION = process.env.npm_package_version ?? "1.0.0-beta.1";
@@ -46,11 +47,7 @@ async function main(): Promise<void> {
       };
     }
 
-    // Handler returns ToolContent shape — pass through directly
-    const value = result.value as {
-      content: Array<{ type: string; text: string }>;
-    };
-    return value;
+    return result.value as ToolContent;
   });
 
   // Register tools on the outfitter server, passing resource change notification

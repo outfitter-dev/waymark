@@ -64,5 +64,5 @@ export const TODOS_RESOURCE_URI = "waymark://todos";
 
 /** MCP tool response shape compatible with the SDK's CallToolResult. */
 export type ToolContent = {
-  content: Array<{ type: string; mimeType: string; text: string }>;
+  content: Array<{ type: string; text: string; mimeType?: string }>;
 };
