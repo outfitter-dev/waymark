@@ -9,11 +9,16 @@ import { handleAddWaymark } from "./tools/add";
 import type { SignalFlags } from "./types";
 import { truncateSource } from "./utils/config";
 
-class TestServer {
-  changes = 0;
-  sendResourceListChanged(): void {
-    this.changes += 1;
-  }
+function createNotifyTracker() {
+  let changes = 0;
+  return {
+    notify: () => {
+      changes += 1;
+    },
+    get changes() {
+      return changes;
+    },
+  };
 }
 
 const TLDR_EXISTS_REGEX = /already contains a tldr waymark/u;
@@ -44,15 +49,15 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     const response = await handleAddWaymark({
-      server,
+      notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "tldr",
       content: "Summarizes example module export",
     });
 
-    expect(server.changes).toBe(1);
+    expect(tracker.changes).toBe(1);
     const payload = JSON.parse(String(response.content?.[0]?.text ?? "")) as {
       type: string;
       startLine: number;
@@ -86,9 +91,9 @@ describe("handleAddWaymark", () => {
     );
 
     const signals: SignalFlags = { flagged: true };
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     const response = await handleAddWaymark({
-      server,
+      notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "about",
       content: "documents the feature body",
@@ -123,10 +128,10 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     await expect(
       handleAddWaymark({
-        server,
+        notifyResourceChanged: tracker.notify,
         filePath: file,
         type: "tldr",
         content: "another summary",
@@ -135,7 +140,7 @@ describe("handleAddWaymark", () => {
 
     const updated = await readFile(file, "utf8");
     expect(updated).toContain("existing summary");
-    expect(server.changes).toBe(0);
+    expect(tracker.changes).toBe(0);
 
     await rm(dir, { recursive: true, force: true });
   });
@@ -149,9 +154,9 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     const response = await handleAddWaymark({
-      server,
+      notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "idea",
       content: "capture ideas for follow-up",
@@ -181,9 +186,9 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     await handleAddWaymark({
-      server,
+      notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "todo",
       content: "add retry",
@@ -207,9 +212,9 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     await handleAddWaymark({
-      server,
+      notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "todo",
       content: "add retry",
@@ -233,10 +238,10 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     await expect(
       handleAddWaymark({
-        server,
+        notifyResourceChanged: tracker.notify,
         filePath: file,
         type: "todo",
         content: "add retry [[existing-id]]",
@@ -257,9 +262,9 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     await handleAddWaymark({
-      server,
+      notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "todo",
       content: "add retry",
@@ -283,10 +288,10 @@ describe("handleAddWaymark", () => {
       "utf8"
     );
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     await expect(
       handleAddWaymark({
-        server,
+        notifyResourceChanged: tracker.notify,
         filePath: file,
         type: "todo",
         content: "add retry",
@@ -303,10 +308,10 @@ describe("handleAddWaymark", () => {
     const file = join(dir, "wm-id.ts");
     await writeFile(file, ["export const sample = true;"].join("\n"), "utf8");
 
-    const server = new TestServer();
+    const tracker = createNotifyTracker();
     await expect(
       handleAddWaymark({
-        server,
+        notifyResourceChanged: tracker.notify,
         filePath: file,
         type: "todo",
         content: "add retry",

@@ -3,12 +3,10 @@
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ConfigScope, WaymarkRecord } from "@waymarks/core";
 import { formatText, parse } from "@waymarks/core";
 import { MARKERS } from "@waymarks/grammar";
-import type { CommentStyle, SignalFlags } from "../types";
+import type { CommentStyle, SignalFlags, ToolContent } from "../types";
 import { addWaymarkInputSchema } from "../types";
 import { loadConfig } from "../utils/config";
 import { normalizePathForOutput } from "../utils/filesystem";
@@ -89,8 +87,8 @@ type InsertWaymarkResult = {
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential MCP input handling with necessary branching
 export async function handleAdd(
   input: unknown,
-  server: Pick<McpServer, "sendResourceListChanged">
-): Promise<CallToolResult> {
+  notifyResourceChanged: () => void
+): Promise<ToolContent> {
   const params = addWaymarkInputSchema.parse(input);
   const { filePath, type, content, line, signals, id, configPath, scope } =
     params;
@@ -155,7 +153,7 @@ export async function handleAdd(
     insertedLine: insertion.lineNumber,
   });
 
-  server.sendResourceListChanged();
+  notifyResourceChanged();
 
   return toJsonResponse({
     filePath: normalizedPath,
@@ -336,7 +334,7 @@ function findInsertedRecord(params: {
   return best;
 }
 
-function toJsonResponse(value: unknown): CallToolResult {
+function toJsonResponse(value: unknown): ToolContent {
   return {
     content: [
       {
@@ -398,13 +396,6 @@ function applyIdToContent(content: string, id?: string): string {
   return trimmed.length > 0 ? `${trimmed} ${id}` : id;
 }
 
-export const addToolDefinition = {
-  title: "Add a waymark",
-  description:
-    "Creates a new waymark (e.g., tldr/this/todo) at the requested location and normalizes the file.",
-  inputSchema: addWaymarkInputSchema.shape,
-} as const;
-
 /**
  * Wrapper to invoke the add tool handler in tests.
  * @param params - The add waymark parameters including file path, type, content, and server context.
@@ -419,7 +410,7 @@ export function handleAddWaymark(params: {
   signals?: SignalFlags | undefined;
   configPath?: string | undefined;
   scope?: ConfigScope | undefined;
-  server: Pick<McpServer, "sendResourceListChanged">;
-}): Promise<CallToolResult> {
-  return handleAdd(params, params.server);
+  notifyResourceChanged: () => void;
+}): Promise<ToolContent> {
+  return handleAdd(params, params.notifyResourceChanged);
 }
