@@ -86,6 +86,7 @@ type InsertWaymarkResult = {
  * @param server - MCP server interface for notifications.
  * @returns MCP tool result with insertion payload.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential MCP input handling with necessary branching
 export async function handleAdd(
   input: unknown,
   server: Pick<McpServer, "sendResourceListChanged">
@@ -102,10 +103,16 @@ export async function handleAdd(
   }
 
   const normalizedPath = normalizePathForOutput(absolutePath);
-  const config = await loadConfig({
+  const configResult = await loadConfig({
     scope: scope ?? "default",
     ...(configPath ? { configPath } : {}),
   });
+  if (configResult.isErr()) {
+    throw new Error(
+      `Failed to load config: ${configResult.error instanceof Error ? configResult.error.message : String(configResult.error)}`
+    );
+  }
+  const config = configResult.value;
 
   const originalSource = await readFile(absolutePath, "utf8");
   const newline = originalSource.includes("\r\n") ? "\r\n" : "\n";

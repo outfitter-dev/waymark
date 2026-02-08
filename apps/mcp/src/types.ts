@@ -1,6 +1,5 @@
 // tldr ::: shared types and schemas for MCP server
 
-import type { ConfigScope } from "@waymarks/core";
 import { z } from "zod";
 
 export const configOptionsSchema = z.object({
@@ -74,13 +73,6 @@ export type SignalFlags = {
 export type CommentStyle = {
   leader: string;
   closing?: string;
-};
-
-export type ExpandedConfig = {
-  cwd: string;
-  env: NodeJS.ProcessEnv;
-  scope: ConfigScope;
-  explicitPath?: string;
 };
 
 export const TODOS_RESOURCE_URI = "waymark://todos";

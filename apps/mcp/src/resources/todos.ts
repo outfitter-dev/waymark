@@ -47,10 +47,16 @@ async function collectRecords(
     return { records: [], truncated: false };
   }
 
-  const config = await loadConfig({
+  const configResult = await loadConfig({
     scope: (options.scope as "default" | "project" | "user") ?? "default",
     ...(options.configPath ? { configPath: options.configPath } : {}),
   });
+  if (configResult.isErr()) {
+    throw new Error(
+      `Failed to load config: ${configResult.error instanceof Error ? configResult.error.message : String(configResult.error)}`
+    );
+  }
+  const config = configResult.value;
 
   filePaths = applySkipPaths(filePaths, config.skipPaths ?? []);
 

@@ -16,10 +16,11 @@ export async function safeReadFile(
     const { readFile } = await import("node:fs/promises");
     return await readFile(filePath, encoding);
   } catch (error) {
-    logger.debug(
-      { error, filePath, context: logContext },
-      `Failed to read file: ${filePath}`
-    );
+    logger.debug(`Failed to read file: ${filePath}`, {
+      error,
+      filePath,
+      context: logContext,
+    });
     return null;
   }
 }
