@@ -4,7 +4,9 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import inquirer from "inquirer";
+import { promptSelect } from "@outfitter/cli/prompt";
+import { CliError } from "../errors.ts";
+import { ExitCode } from "../exit-codes.ts";
 import { logger } from "../utils/logger.ts";
 import { assertPromptAllowed } from "../utils/prompts.ts";
 
@@ -28,6 +30,7 @@ const CONFIG_SCOPES: ConfigScope[] = ["project", "user"];
  * @param options - CLI options for format, preset, and scope.
  * @returns Promise that resolves when initialization completes.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential prompt branching for interactive init
 export async function runInitCommand(
   options: InitCommandOptions = {}
 ): Promise<void> {
@@ -48,37 +51,37 @@ export async function runInitCommand(
     force = options.force ?? false;
   } else {
     assertPromptAllowed("configuration selection");
-    const answers = await inquirer.prompt<{
-      format: ConfigFormat;
-      preset: ConfigPreset;
-      scope: ConfigScope;
-    }>([
-      {
-        type: "list",
-        name: "format",
-        message: "Choose config format:",
-        choices: CONFIG_FORMATS,
-        default: "yaml",
-      },
-      {
-        type: "list",
-        name: "preset",
-        message: "Choose config preset:",
-        choices: CONFIG_PRESETS,
-        default: "full",
-      },
-      {
-        type: "list",
-        name: "scope",
-        message: "Choose config scope:",
-        choices: CONFIG_SCOPES,
-        default: "project",
-      },
-    ]);
 
-    format = answers.format;
-    preset = answers.preset;
-    scope = answers.scope;
+    const formatResult = await promptSelect<ConfigFormat>({
+      message: "Choose config format:",
+      options: CONFIG_FORMATS.map((f) => ({ value: f, label: f })),
+      initialValue: "yaml" as ConfigFormat,
+    });
+    if (formatResult.isErr()) {
+      throw new CliError("Init cancelled", ExitCode.usageError);
+    }
+    format = formatResult.value;
+
+    const presetResult = await promptSelect<ConfigPreset>({
+      message: "Choose config preset:",
+      options: CONFIG_PRESETS.map((p) => ({ value: p, label: p })),
+      initialValue: "full" as ConfigPreset,
+    });
+    if (presetResult.isErr()) {
+      throw new CliError("Init cancelled", ExitCode.usageError);
+    }
+    preset = presetResult.value;
+
+    const scopeResult = await promptSelect<ConfigScope>({
+      message: "Choose config scope:",
+      options: CONFIG_SCOPES.map((s) => ({ value: s, label: s })),
+      initialValue: "project" as ConfigScope,
+    });
+    if (scopeResult.isErr()) {
+      throw new CliError("Init cancelled", ExitCode.usageError);
+    }
+    scope = scopeResult.value;
+
     force = false;
   }
 

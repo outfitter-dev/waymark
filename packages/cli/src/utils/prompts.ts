@@ -1,7 +1,7 @@
-// tldr ::: interactive prompts using inquirer for CLI confirmations and selection
+// tldr ::: interactive prompts using @outfitter/cli for CLI confirmations and selection
 
+import { promptConfirm, promptSelect } from "@outfitter/cli/prompt";
 import type { WaymarkRecord } from "@waymarks/grammar";
-import inquirer from "inquirer";
 import { CliError } from "../errors.ts";
 import { ExitCode } from "../exit-codes.ts";
 import { canPrompt } from "./terminal.ts";
@@ -72,15 +72,14 @@ export type ConfirmOptions = {
  */
 export async function confirm(options: ConfirmOptions): Promise<boolean> {
   assertPromptAllowed("confirmation");
-  const { confirmed } = await inquirer.prompt<{ confirmed: boolean }>([
-    {
-      type: "confirm",
-      name: "confirmed",
-      message: options.message,
-      default: options.default ?? true,
-    },
-  ]);
-  return confirmed;
+  const result = await promptConfirm({
+    message: options.message,
+    initialValue: options.default ?? true,
+  });
+  if (result.isErr()) {
+    throw new CliError("Operation cancelled", ExitCode.usageError);
+  }
+  return result.value;
 }
 
 export type WriteConfirmationOptions = {
@@ -109,13 +108,6 @@ export async function confirmWrite(
 
 export type SelectWaymarkOptions = {
   records: WaymarkRecord[];
-  pageSize?: number;
-};
-
-type WaymarkChoice = {
-  name: string;
-  value: WaymarkRecord;
-  short: string;
 };
 
 /**
@@ -127,7 +119,7 @@ export async function selectWaymark(
   options: SelectWaymarkOptions
 ): Promise<WaymarkRecord | undefined> {
   assertPromptAllowed("selection");
-  const { records, pageSize = 15 } = options;
+  const { records } = options;
 
   if (records.length === 0) {
     return;
@@ -137,7 +129,7 @@ export async function selectWaymark(
     return records[0];
   }
 
-  const choices: WaymarkChoice[] = records.map((record) => {
+  const selectOptions = records.map((record) => {
     let prefix = " ";
     if (record.signals.flagged) {
       prefix = "~";
@@ -149,22 +141,20 @@ export async function selectWaymark(
     const ellipsis = record.contentText.length > 60 ? "..." : "";
 
     return {
-      name: `${prefix}${record.type} ::: ${preview}${ellipsis} (${record.file}:${record.startLine})`,
       value: record,
-      short: `${record.file}:${record.startLine}`,
+      label: `${prefix}${record.type} ::: ${preview}${ellipsis} (${record.file}:${record.startLine})`,
+      hint: `${record.file}:${record.startLine}`,
     };
   });
 
-  const promptResult = await inquirer.prompt<{ selected?: WaymarkRecord }>([
-    {
-      type: "list",
-      name: "selected",
-      message: "Select a waymark:",
-      choices,
-      pageSize,
-      loop: false,
-    },
-  ]);
+  const result = await promptSelect<WaymarkRecord>({
+    message: "Select a waymark:",
+    options: selectOptions,
+  });
 
-  return promptResult.selected;
+  if (result.isErr()) {
+    throw new CliError("Selection cancelled", ExitCode.usageError);
+  }
+
+  return result.value;
 }
