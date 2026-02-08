@@ -1,10 +1,11 @@
 // tldr ::: cross-file content integrity validation for waymarks
 
+import { ANSI } from "@outfitter/cli/colors";
 import { InternalError, Result } from "@outfitter/contracts";
 import { parse, type WaymarkRecord } from "@waymarks/core";
-import chalk from "chalk";
 import type { CommandContext } from "../types.ts";
 import { expandInputPaths } from "../utils/fs.ts";
+import { wrap } from "../utils/theme.ts";
 
 // about ::: threshold for TLDR position warning (lines from top)
 const TLDR_TOP_LINES_MAX = 20;
@@ -381,7 +382,9 @@ async function runCheckCommandInner(
 
 // about ::: formats severity label with color
 function formatSeverityLabel(severity: CheckSeverity): string {
-  return severity === "error" ? chalk.red("error") : chalk.yellow("warn");
+  return severity === "error"
+    ? wrap("error", ANSI.red)
+    : wrap("warn", ANSI.yellow);
 }
 
 // about ::: formats a single issue for CLI output
@@ -390,7 +393,7 @@ function formatIssue(issue: CheckIssue): string {
   const severity = formatSeverityLabel(issue.severity);
   let output = `${location} ${severity} ${issue.rule}: ${issue.message}`;
   if (issue.suggestion) {
-    output += `\n  ${chalk.dim(`-> ${issue.suggestion}`)}`;
+    output += `\n  ${wrap(`-> ${issue.suggestion}`, ANSI.dim)}`;
   }
   return output;
 }
@@ -402,7 +405,7 @@ function formatIssue(issue: CheckIssue): string {
  */
 export function formatCheckReport(report: CheckReport): string {
   if (report.issues.length === 0) {
-    return chalk.green("check: all integrity checks passed");
+    return wrap("check: all integrity checks passed", ANSI.green);
   }
 
   const lines: string[] = [];
@@ -422,12 +425,15 @@ export function formatCheckReport(report: CheckReport): string {
 
   if (report.summary.errors > 0 && report.summary.warnings > 0) {
     lines.push(
-      chalk.bold(`check: ${chalk.red(errorText)}, ${chalk.yellow(warningText)}`)
+      wrap(
+        `check: ${wrap(errorText, ANSI.red)}, ${wrap(warningText, ANSI.yellow)}`,
+        ANSI.bold
+      )
     );
   } else if (report.summary.errors > 0) {
-    lines.push(chalk.bold(`check: ${chalk.red(errorText)}`));
+    lines.push(wrap(`check: ${wrap(errorText, ANSI.red)}`, ANSI.bold));
   } else {
-    lines.push(chalk.bold(`check: ${chalk.yellow(warningText)}`));
+    lines.push(wrap(`check: ${wrap(warningText, ANSI.yellow)}`, ANSI.bold));
   }
 
   return lines.join("\n");

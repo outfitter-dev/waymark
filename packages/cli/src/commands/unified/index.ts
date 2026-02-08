@@ -2,10 +2,10 @@
 
 import { type AnyKitError, InternalError, Result } from "@outfitter/contracts";
 import type { WaymarkRecord } from "@waymarks/grammar";
-import chalk from "chalk";
 import type { CommandContext } from "../../types";
 import { formatRecords } from "../../utils/display";
 import { renderRecords } from "../../utils/output";
+import { setColorEnabled } from "../../utils/theme";
 import { graphRecords } from "../graph";
 import { type ScanRuntimeOptions, scanRecords } from "../scan";
 import { applyFilters } from "./filters";
@@ -15,8 +15,6 @@ export type UnifiedCommandResult = {
   output: string;
   records?: WaymarkRecord[];
 };
-
-const DEFAULT_CHALK_LEVEL = chalk.level;
 
 /**
  * Unified command handler that routes to scan/find/graph behavior.
@@ -47,11 +45,9 @@ async function runUnifiedCommandInner(
       ? {}
       : { cache: context.globalOptions.cache };
 
-  // Disable chalk colors if --no-color flag is set
+  // Disable colors if --no-color flag is set; otherwise preserve autodetected state
   if (noColor) {
-    chalk.level = 0;
-  } else {
-    chalk.level = DEFAULT_CHALK_LEVEL;
+    setColorEnabled(false);
   }
 
   // Graph mode: extract relation edges

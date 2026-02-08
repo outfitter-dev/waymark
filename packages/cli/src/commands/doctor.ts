@@ -4,10 +4,11 @@ import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { ANSI } from "@outfitter/cli/colors";
 import { InternalError, Result } from "@outfitter/contracts";
-import chalk from "chalk";
 import type { CommandContext } from "../types";
 import { logger } from "../utils/logger";
+import { wrap } from "../utils/theme";
 
 // biome-ignore lint/style/noMagicNumbers: bytes per megabyte conversion
 const BYTES_PER_MB = 1024 * 1024;
@@ -409,7 +410,7 @@ export function formatDoctorReport(report: DoctorReport): string {
   const lines: string[] = [];
 
   // Header
-  lines.push(chalk.bold("\nChecking waymark installation...\n"));
+  lines.push(wrap("\nChecking waymark installation...\n", ANSI.bold));
 
   // Group checks by category
   const categories = new Map<string, CheckResult[]>();
@@ -423,13 +424,17 @@ export function formatDoctorReport(report: DoctorReport): string {
   // Render each category
   for (const [category, checks] of categories) {
     lines.push(
-      chalk.bold(
-        chalk.blue(`${category.charAt(0).toUpperCase() + category.slice(1)}:`)
+      wrap(
+        `${category.charAt(0).toUpperCase() + category.slice(1)}:`,
+        ANSI.bold,
+        ANSI.blue
       )
     );
 
     for (const check of checks) {
-      const icon = check.passed ? chalk.green("✓") : chalk.red("✗");
+      const icon = check.passed
+        ? wrap("\u2713", ANSI.green)
+        : wrap("\u2717", ANSI.red);
       lines.push(`${icon} ${check.name}`);
 
       // Show issues
@@ -446,7 +451,7 @@ export function formatDoctorReport(report: DoctorReport): string {
         lines.push(`  ${severity}: ${issue.message}${location}`);
 
         if (issue.suggestion) {
-          lines.push(chalk.dim(`    → ${issue.suggestion}`));
+          lines.push(wrap(`    \u2192 ${issue.suggestion}`, ANSI.dim));
         }
       }
     }
@@ -458,18 +463,19 @@ export function formatDoctorReport(report: DoctorReport): string {
   const { summary } = report;
   if (summary.total > 0) {
     lines.push(
-      chalk.bold(
-        `\nIssues found: ${chalk.red(`${summary.errors} errors`)}, ${chalk.yellow(`${summary.warnings} warnings`)}`
+      wrap(
+        `\nIssues found: ${wrap(`${summary.errors} errors`, ANSI.red)}, ${wrap(`${summary.warnings} warnings`, ANSI.yellow)}`,
+        ANSI.bold
       )
     );
 
     if (!report.healthy) {
       lines.push(
-        chalk.dim("Run `wm doctor --fix` to attempt automatic repairs\n")
+        wrap("Run `wm doctor --fix` to attempt automatic repairs\n", ANSI.dim)
       );
     }
   } else {
-    lines.push(chalk.green(chalk.bold("✓ All checks passed!\n")));
+    lines.push(wrap("\u2713 All checks passed!\n", ANSI.green, ANSI.bold));
   }
 
   return lines.join("\n");
@@ -478,12 +484,12 @@ export function formatDoctorReport(report: DoctorReport): string {
 function formatSeverityLabel(severity: DiagnosticIssue["severity"]): string {
   switch (severity) {
     case "error":
-      return chalk.red("ERROR");
+      return wrap("ERROR", ANSI.red);
     case "warning":
-      return chalk.yellow("WARN");
+      return wrap("WARN", ANSI.yellow);
     case "info":
-      return chalk.blue("INFO");
+      return wrap("INFO", ANSI.blue);
     default:
-      return chalk.blue("INFO");
+      return wrap("INFO", ANSI.blue);
   }
 }

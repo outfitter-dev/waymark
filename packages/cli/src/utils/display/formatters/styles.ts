@@ -1,12 +1,13 @@
-// tldr ::: chalk-based styling utilities for waymark CLI output
+// tldr ::: @outfitter/cli theme-based styling utilities for waymark CLI output
 
+import { ANSI } from "@outfitter/cli/colors";
 import {
   getTypeCategory,
   MENTION_REGEX,
   PROPERTY_REGEX,
   TAG_REGEX,
 } from "@waymarks/grammar";
-import chalk from "chalk";
+import { isColorEnabled, wrap } from "../../theme";
 import { sanitizeInlineText } from "../sanitize";
 
 // Regex for extracting leading whitespace from property matches
@@ -104,43 +105,53 @@ function unmaskCodeBlocks(text: string, blocks: string[]): string {
   return result;
 }
 
+// ANSI inverse escape code
+const ANSI_INVERSE = "\x1b[7m";
+
 /**
- * Get color for a waymark type based on its category.
+ * Get the raw ANSI color code for a waymark type based on its category.
  * @param type - Waymark type string.
- * @returns Chalk color function.
+ * @returns Raw ANSI escape code string.
  */
-export function getTypeColor(type: string): typeof chalk {
+function getTypeColorCode(type: string): string {
   const category = getTypeCategory(type);
 
   switch (category) {
     case "work":
-      return chalk.yellow;
+      return ANSI.yellow;
     case "info":
       if (type === "tldr") {
-        return chalk.greenBright;
+        return ANSI.brightGreen;
       }
       if (type === "this") {
-        return chalk.green;
+        return ANSI.green;
       }
-      return chalk.blue;
+      return ANSI.blue;
     case "caution":
       if (type === "alert") {
-        return chalk.red;
+        return ANSI.red;
       }
-      return chalk.magenta;
+      return ANSI.magenta;
     case "workflow":
       if (type === "blocked") {
-        return chalk.redBright;
+        return ANSI.brightRed;
       }
-      if (type === "needs") {
-        return chalk.yellow;
-      }
-      return chalk.yellow;
+      return ANSI.yellow;
     case "inquiry":
-      return chalk.yellow;
+      return ANSI.yellow;
     default:
-      return chalk.white;
+      return ANSI.white;
   }
+}
+
+/**
+ * Get color for a waymark type based on its category.
+ * @param type - Waymark type string.
+ * @returns Function that wraps text with the appropriate color.
+ */
+export function getTypeColor(type: string): (text: string) => string {
+  const code = getTypeColorCode(type);
+  return (t: string) => wrap(t, code);
 }
 
 /**
@@ -153,14 +164,17 @@ export function styleType(
   type: string,
   signals: { flagged: boolean; starred: boolean }
 ): string {
-  const color = getTypeColor(type);
   const signalStr = (signals.flagged ? "~" : "") + (signals.starred ? "*" : "");
 
   if (signalStr) {
-    // Use inverse to swap fg/bg - works with all type colors without conflicts
-    return chalk.inverse(chalk.bold(color(signalStr + type)));
+    if (!isColorEnabled()) {
+      return signalStr + type;
+    }
+    const colorCode = getTypeColorCode(type);
+    return `${ANSI_INVERSE}${ANSI.bold}${colorCode}${signalStr}${type}${ANSI.reset}`;
   }
 
+  const color = getTypeColor(type);
   return color(type);
 }
 
@@ -170,7 +184,7 @@ export function styleType(
  * @returns Styled sigil string.
  */
 export function styleSigil(text: string): string {
-  return chalk.dim(text);
+  return wrap(text, ANSI.dim);
 }
 
 /**
@@ -183,7 +197,7 @@ export function styleMention(text: string): string {
   if (text.includes("/") || text.includes(":")) {
     return text; // Not a mention, probably @scope or similar
   }
-  return chalk.bold.yellow(text);
+  return wrap(text, ANSI.bold, ANSI.yellow);
 }
 
 /**
@@ -192,7 +206,7 @@ export function styleMention(text: string): string {
  * @returns Styled tag string.
  */
 export function styleTag(text: string): string {
-  return chalk.bold.cyan(text);
+  return wrap(text, ANSI.bold, ANSI.cyan);
 }
 
 /**
@@ -202,7 +216,7 @@ export function styleTag(text: string): string {
  */
 export function styleScope(text: string): string {
   if (text.includes("/")) {
-    return chalk.bold.cyan(text);
+    return wrap(text, ANSI.bold, ANSI.cyan);
   }
   return text;
 }
@@ -213,7 +227,7 @@ export function styleScope(text: string): string {
  * @returns Styled property string.
  */
 export function styleProperty(text: string): string {
-  return chalk.dim(text);
+  return wrap(text, ANSI.dim);
 }
 
 /**
@@ -223,7 +237,7 @@ export function styleProperty(text: string): string {
  * @returns Styled line number string.
  */
 export function styleLineNumber(num: number | string): string {
-  return chalk.dim(`${num}`);
+  return wrap(`${num}`, ANSI.dim);
 }
 
 /**
@@ -232,7 +246,7 @@ export function styleLineNumber(num: number | string): string {
  * @returns Styled file path.
  */
 export function styleFilePath(path: string): string {
-  return chalk.bold(path);
+  return wrap(path, ANSI.bold);
 }
 
 /**
@@ -262,7 +276,7 @@ export function styleContent(content: string): string {
 
       // For quoted values, just underline (they could contain anything)
       if (quotedValue !== undefined) {
-        return leadingSpace + chalk.underline(trimmed);
+        return leadingSpace + wrap(trimmed, ANSI.underline);
       }
 
       const value = unquotedValue ?? "";
@@ -282,12 +296,12 @@ export function styleContent(content: string): string {
 
       if (isMentionOnly) {
         // For mention properties: yellow (not bold) key, bold yellow mentions, underline entire
-        const styledKey = chalk.yellow(`${key}:`);
+        const styledKey = wrap(`${key}:`, ANSI.yellow);
         const styledValue = value
           .split(",")
           .map((v: string) => styleMention(v.trim()))
           .join(",");
-        return leadingSpace + chalk.underline(styledKey + styledValue);
+        return leadingSpace + wrap(styledKey + styledValue, ANSI.underline);
       }
 
       // Check if value contains only tags (comma-separated)
@@ -300,16 +314,16 @@ export function styleContent(content: string): string {
 
       if (isTagOnly) {
         // For tag properties: cyan (not bold) key, bold cyan tags, underline entire
-        const styledKey = chalk.cyan(`${key}:`);
+        const styledKey = wrap(`${key}:`, ANSI.cyan);
         const styledValue = value
           .split(",")
           .map((v: string) => styleTag(v.trim()))
           .join(",");
-        return leadingSpace + chalk.underline(styledKey + styledValue);
+        return leadingSpace + wrap(styledKey + styledValue, ANSI.underline);
       }
 
       // Mixed values or other - just underline without extending colors
-      return leadingSpace + chalk.underline(trimmed);
+      return leadingSpace + wrap(trimmed, ANSI.underline);
     }
   );
 
