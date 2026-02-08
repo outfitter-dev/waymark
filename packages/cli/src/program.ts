@@ -200,7 +200,9 @@ async function handleFormatCommand(
 
   // If no paths provided, default to current directory
   const pathsToFormat = paths.length > 0 ? paths : ["."];
-  const expandedPaths = await expandFormatPaths(pathsToFormat, context.config);
+  const expandedPaths = await runCommand(() =>
+    expandFormatPaths(pathsToFormat, context.config)
+  );
 
   if (expandedPaths.length === 0) {
     writeStdout("format: no waymarks found");
@@ -209,9 +211,8 @@ async function handleFormatCommand(
 
   for (const filePath of expandedPaths) {
     // First, format without writing to see what changes would be made
-    const { formattedText, edits } = await formatFile(
-      { filePath, write: false },
-      context
+    const { formattedText, edits } = await runCommand(() =>
+      formatFile({ filePath, write: false }, context)
     );
 
     if (edits.length === 0) {
@@ -221,7 +222,7 @@ async function handleFormatCommand(
 
     // If --yes flag is set, write changes without confirmation
     if (options.yes) {
-      await formatFile({ filePath, write: true }, context);
+      await runCommand(() => formatFile({ filePath, write: true }, context));
       writeStdout(`${filePath}: formatted (${edits.length} edits)`);
     } else {
       writeStdout(formattedText);
@@ -308,14 +309,14 @@ async function handleAddCommand(
     throw createUsageError(message);
   }
 
-  const result = await runAddCommand(parsed, context);
+  const result = await runCommand(() => runAddCommand(parsed, context));
 
   if (result.output.length > 0) {
     writeStdout(result.output);
   }
 
-  if (result.exitCode !== 0) {
-    throw new CliError("Add command failed", ExitCode.failure);
+  if (result.summary.failed > 0) {
+    process.exitCode = ExitCode.failure;
   }
 }
 
@@ -334,11 +335,16 @@ async function handleRemoveCommand(
     const message = error instanceof Error ? error.message : String(error);
     throw createUsageError(message);
   }
-  const preview = await runRemoveCommand(parsedArgs, context, {
-    writeOverride: false,
-  });
+  const preview = await runCommand(() =>
+    runRemoveCommand(parsedArgs, context, { writeOverride: false })
+  );
 
   if (parsedArgs.options.write) {
+    if (preview.summary.failed > 0) {
+      outputRemovalPreview(preview);
+      process.exitCode = ExitCode.failure;
+      return;
+    }
     await executeRemovalWriteFlow(preview, parsedArgs, context);
     return;
   }
@@ -347,32 +353,21 @@ async function handleRemoveCommand(
 }
 
 async function executeRemovalWriteFlow(
-  preview: Awaited<ReturnType<typeof runRemoveCommand>>,
+  preview: import("./commands/remove.ts").RemoveCommandResult,
   parsedArgs: ParsedRemoveArgs,
   context: CommandContext
 ): Promise<void> {
-  if (preview.exitCode !== 0) {
-    if (preview.output.length > 0) {
-      writeStdout(preview.output);
-    }
-    throw new CliError("Remove preview failed", ExitCode.failure);
-  }
-
   const structuredOutput = preview.options.json || preview.options.jsonl;
   if (!structuredOutput && preview.output.length > 0) {
     writeStdout(preview.output);
   }
 
-  const actual = await runRemoveCommand(parsedArgs, context, {
-    writeOverride: true,
-  });
+  const actual = await runCommand(() =>
+    runRemoveCommand(parsedArgs, context, { writeOverride: true })
+  );
 
   if (actual.output.length > 0) {
     writeStdout(actual.output);
-  }
-
-  if (actual.exitCode !== 0) {
-    throw new CliError("Remove command failed", ExitCode.failure);
   }
 }
 
@@ -528,28 +523,22 @@ async function handleModifyCommand(
     interactiveOverride
   );
 
-  const result = await runModifyCommand(context, resolvedTarget, options, {
-    stdin: process.stdin,
-  });
+  const result = await runCommand(() =>
+    runModifyCommand(context, resolvedTarget, options, {
+      stdin: process.stdin,
+    })
+  );
 
   if (result.output.length > 0) {
     writeStdout(result.output);
   }
-
-  if (result.exitCode !== 0) {
-    throw new CliError("Edit command failed", ExitCode.failure);
-  }
 }
 
 function outputRemovalPreview(
-  preview: Awaited<ReturnType<typeof runRemoveCommand>>
+  preview: import("./commands/remove.ts").RemoveCommandResult
 ): void {
   if (preview.output.length > 0) {
     writeStdout(preview.output);
-  }
-
-  if (preview.exitCode !== 0) {
-    throw new CliError("Remove preview failed", ExitCode.failure);
   }
 }
 
@@ -575,22 +564,14 @@ async function handleUpdateAction(
     updateOptions.command = options.command;
   }
 
-  const result = await runUpdateCommand(updateOptions);
+  const result = await runCommand(() => runUpdateCommand(updateOptions));
 
   if (result.message) {
-    if (result.exitCode === 0) {
-      writeStdout(result.message);
-    } else {
-      writeStderr(result.message);
-    }
+    writeStdout(result.message);
   }
 
-  if (!result.skipped && result.exitCode === 0) {
+  if (!result.skipped) {
     writeStdout("wm update completed.");
-  }
-
-  if (result.exitCode !== 0) {
-    throw new CliError(result.message ?? "wm update failed", ExitCode.failure);
   }
 }
 
@@ -600,7 +581,7 @@ async function handleInitCommand(options: {
   scope?: string;
   force?: boolean;
 }): Promise<void> {
-  await runInitCommand(options);
+  await runCommand(() => runInitCommand(options));
 }
 
 async function handleConfigCommand(

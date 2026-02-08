@@ -4,6 +4,7 @@ import { describe, expect, spyOn, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Result } from "@outfitter/contracts";
 import { resolveConfig } from "@waymarks/core";
 import type { Command } from "commander";
 import { findRecords } from "./commands/find";
@@ -82,13 +83,15 @@ async function withTempFile(
 describe("CLI handlers", () => {
   test("format command normalizes types", async () => {
     const { file, cleanup } = await withTempFile("// TODO ::: needs cleanup\n");
-    const { formattedText, edits } = await formatFile(
-      {
-        filePath: file,
-        write: false,
-      },
-      defaultContext
-    );
+    const { formattedText, edits } = (
+      await formatFile(
+        {
+          filePath: file,
+          write: false,
+        },
+        defaultContext
+      )
+    ).unwrap();
     expect(formattedText).toBe("// todo ::: needs cleanup\n");
     expect(edits).toHaveLength(1);
     await cleanup();
@@ -98,7 +101,9 @@ describe("CLI handlers", () => {
     const { file, cleanup } = await withTempFile(
       "// waymark-ignore-file\n// todo ::: ignore this\n"
     );
-    const paths = await expandFormatPaths([file], defaultContext.config);
+    const paths = (
+      await expandFormatPaths([file], defaultContext.config)
+    ).unwrap();
     expect(paths).toEqual([]);
     await cleanup();
   });
@@ -1079,12 +1084,13 @@ describe("Commander integration", () => {
       specs: [],
       options: { write: false, json: true, jsonl: false },
     });
-    const runSpy = spyOn(addModule, "runAddCommand").mockResolvedValue({
-      results: [],
-      summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
-      output: "",
-      exitCode: 0,
-    });
+    const runSpy = spyOn(addModule, "runAddCommand").mockResolvedValue(
+      Result.ok({
+        results: [],
+        summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
+        output: "",
+      })
+    );
     const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
       defaultContext
     );
@@ -1134,11 +1140,12 @@ describe("Commander integration", () => {
       indexRefreshed: false,
       noChange: false,
     };
-    const runSpy = spyOn(modifyModule, "runModifyCommand").mockResolvedValue({
-      output: "",
-      payload: mockPayload,
-      exitCode: 0,
-    });
+    const runSpy = spyOn(modifyModule, "runModifyCommand").mockResolvedValue(
+      Result.ok({
+        output: "",
+        payload: mockPayload,
+      })
+    );
     const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
       defaultContext
     );
@@ -1170,17 +1177,18 @@ describe("Commander integration", () => {
         jsonl: false,
       },
     });
-    const runSpy = spyOn(removeModule, "runRemoveCommand").mockResolvedValue({
-      results: [],
-      summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
-      output: "",
-      exitCode: 0,
-      options: {
-        write: false,
-        json: true,
-        jsonl: false,
-      },
-    });
+    const runSpy = spyOn(removeModule, "runRemoveCommand").mockResolvedValue(
+      Result.ok({
+        results: [],
+        summary: { total: 0, successful: 0, failed: 0, filesModified: 0 },
+        output: "",
+        options: {
+          write: false,
+          json: true,
+          jsonl: false,
+        },
+      })
+    );
     const contextSpy = spyOn(contextModule, "createContext").mockResolvedValue(
       defaultContext
     );

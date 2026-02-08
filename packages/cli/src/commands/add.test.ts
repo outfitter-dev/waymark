@@ -98,8 +98,7 @@ describe("runAddCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runAddCommand(parsed, context);
-    expect(result.exitCode).toBe(0);
+    const result = (await runAddCommand(parsed, context)).unwrap();
     expect(result.summary.successful).toBe(1);
 
     const fileContents = await readFile(sourcePath, "utf8");
@@ -137,9 +136,11 @@ describe("runAddCommand", () => {
       globalOptions: {},
     };
 
-    await expect(runAddCommand(parsed, context)).rejects.toThrow(
-      JSON_VALIDATION_ERROR_REGEX
-    );
+    const result = await runAddCommand(parsed, context);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toMatch(JSON_VALIDATION_ERROR_REGEX);
+    }
 
     // Clean up
     await rm(testWorkspace, { recursive: true, force: true });
@@ -168,9 +169,11 @@ describe("runAddCommand", () => {
       globalOptions: {},
     };
 
-    await expect(runAddCommand(parsed, context)).rejects.toThrow(
-      JSON_VALIDATION_ERROR_REGEX
-    );
+    const result = await runAddCommand(parsed, context);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toMatch(JSON_VALIDATION_ERROR_REGEX);
+    }
 
     // Clean up
     await rm(testWorkspace, { recursive: true, force: true });
@@ -214,8 +217,7 @@ describe("runAddCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runAddCommand(parsed, context);
-    expect(result.exitCode).toBe(0);
+    const result = (await runAddCommand(parsed, context)).unwrap();
     expect(result.summary.successful).toBe(1);
 
     const fileContents = await readFile(sourcePath, "utf8");
@@ -250,8 +252,7 @@ describe("runAddCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runAddCommand(parsed, context);
-    expect(result.exitCode).toBe(0);
+    const result = (await runAddCommand(parsed, context)).unwrap();
     expect(result.summary.successful).toBe(2);
     expect(result.summary.filesModified).toBe(1);
 
@@ -287,8 +288,7 @@ describe("runAddCommand", () => {
       globalOptions: {},
     };
 
-    const result = await runAddCommand(parsed, context);
-    expect(result.exitCode).toBe(0);
+    const result = (await runAddCommand(parsed, context)).unwrap();
     expect(result.summary.successful).toBe(2);
     expect(result.summary.filesModified).toBe(1);
 
@@ -328,8 +328,7 @@ describe("runAddCommand", () => {
         globalOptions: {},
       };
 
-      const result = await runAddCommand(parsed, context);
-      expect(result.exitCode).toBe(0);
+      const result = (await runAddCommand(parsed, context)).unwrap();
       expect(result.summary.successful).toBe(2);
       expect(result.summary.filesModified).toBe(1);
       expect(readStdinSpy).toHaveBeenCalledTimes(1);

@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { sep } from "node:path";
 
+import { InternalError, Result } from "@outfitter/contracts";
 import { logger } from "../utils/logger.ts";
 import { confirm } from "../utils/prompts.ts";
 
@@ -25,7 +26,6 @@ export type UpdateCommandOptions = {
 export type UpdateCommandResult = {
   command: string;
   method: InstallMethod;
-  exitCode: number;
   skipped?: boolean;
   message?: string;
 };
@@ -150,13 +150,11 @@ function validateUpdateCommandOverride(
 function buildSkippedResult(
   detection: InstallDetection,
   commandString: string,
-  message: string,
-  exitCode: number
+  message: string
 ): UpdateCommandResult {
   return {
     command: commandString,
     method: detection.method,
-    exitCode,
     skipped: true,
     message,
   };
@@ -196,34 +194,40 @@ async function confirmUpdateCommand(
   return buildSkippedResult(
     detection,
     commandString,
-    "Update cancelled by user",
-    0
+    "Update cancelled by user"
   );
 }
 
 /**
  * Execute the `wm update` command with the provided options.
  * @param options - Update command options.
- * @returns Result metadata including exit code.
+ * @returns Result metadata wrapped in a Result.
  */
-export async function runUpdateCommand(
+export function runUpdateCommand(
   options: UpdateCommandOptions = {}
+): Promise<Result<UpdateCommandResult, InternalError>> {
+  return Result.tryPromise({
+    try: () => runUpdateCommandInner(options),
+    catch: (cause) =>
+      new InternalError({
+        message: `Update failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }),
+  });
+}
+
+async function runUpdateCommandInner(
+  options: UpdateCommandOptions
 ): Promise<UpdateCommandResult> {
   const detection = detectInstallMethod();
   const resolution = resolveUpdateCommand(options.command);
   if (resolution.error) {
-    return buildSkippedResult(
-      detection,
-      resolution.commandString,
-      resolution.error,
-      1
-    );
+    return buildSkippedResult(detection, "", resolution.error);
   }
 
   const { command, commandString } = resolution;
   const overrideError = validateUpdateCommandOverride(command, options.command);
   if (overrideError) {
-    return buildSkippedResult(detection, commandString, overrideError, 1);
+    return buildSkippedResult(detection, commandString, overrideError);
   }
 
   if (options.command && command !== "npm") {
@@ -234,14 +238,13 @@ export async function runUpdateCommand(
     return buildSkippedResult(
       detection,
       commandString,
-      `Dry run: ${commandString}`,
-      0
+      `Dry run: ${commandString}`
     );
   }
 
   const installGuardMessage = getInstallGuardMessage(detection, options.force);
   if (installGuardMessage) {
-    return buildSkippedResult(detection, commandString, installGuardMessage, 1);
+    return buildSkippedResult(detection, commandString, installGuardMessage);
   }
 
   const confirmationResult = await confirmUpdateCommand(
@@ -261,23 +264,13 @@ export async function runUpdateCommand(
     location: detection.binaryPath,
   });
 
-  try {
-    const exitCode = await runChild(command, NPM_UPDATE_ARGS);
-    return {
-      command: commandString,
-      method: detection.method,
-      exitCode,
-    };
-  } catch (error) {
-    logger.error("wm update failed to launch npm command", { error });
-    return {
-      command: commandString,
-      method: detection.method,
-      exitCode: 1,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to execute npm install",
-    };
+  const childExitCode = await runChild(command, NPM_UPDATE_ARGS);
+  if (childExitCode !== 0) {
+    throw new Error(`npm install exited with code ${childExitCode}`);
   }
+
+  return {
+    command: commandString,
+    method: detection.method,
+  };
 }

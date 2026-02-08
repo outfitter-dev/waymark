@@ -149,12 +149,14 @@ describe("runModifyCommand integration", () => {
     const filePath = join(workspace, "auth.ts");
     await writeFile(filePath, "// todo ::: implement OAuth\n", "utf8");
 
-    const result = await runModifyCommand(
-      context,
-      `${filePath}:1`,
-      { type: "fix", write: true },
-      { stdin: Readable.from([]) }
-    );
+    const result = (
+      await runModifyCommand(
+        context,
+        `${filePath}:1`,
+        { type: "fix", write: true },
+        { stdin: Readable.from([]) }
+      )
+    ).unwrap();
 
     expect(result.payload.applied).toBe(true);
     const text = await readFile(filePath, "utf8");
@@ -169,12 +171,14 @@ describe("runModifyCommand integration", () => {
       "utf8"
     );
 
-    const result = await runModifyCommand(
-      context,
-      `${filePath}:1`,
-      { content: "validate JWT", write: true },
-      { stdin: Readable.from([]) }
-    );
+    const result = (
+      await runModifyCommand(
+        context,
+        `${filePath}:1`,
+        { content: "validate JWT", write: true },
+        { stdin: Readable.from([]) }
+      )
+    ).unwrap();
 
     expect(result.payload.after.content).toBe("validate JWT [[a3k9m2p]]");
     const text = await readFile(filePath, "utf8");
@@ -189,12 +193,14 @@ describe("runModifyCommand integration", () => {
       "utf8"
     );
 
-    const result = await runModifyCommand(
-      context,
-      `${filePath}:1`,
-      { starred: true, write: true },
-      { stdin: Readable.from([]) }
-    );
+    const result = (
+      await runModifyCommand(
+        context,
+        `${filePath}:1`,
+        { starred: true, write: true },
+        { stdin: Readable.from([]) }
+      )
+    ).unwrap();
 
     expect(result.payload.after.raw).toBe("// *todo ::: implement OAuth");
     const text = await readFile(filePath, "utf8");
@@ -207,12 +213,14 @@ describe("runModifyCommand integration", () => {
     await writeFile(filePath, "// todo ::: implement OAuth\n", "utf8");
 
     const stdin = Readable.from(["validate JWT"]);
-    const result = await runModifyCommand(
-      context,
-      `${filePath}:1`,
-      { content: "-", write: true },
-      { stdin }
-    );
+    const result = (
+      await runModifyCommand(
+        context,
+        `${filePath}:1`,
+        { content: "-", write: true },
+        { stdin }
+      )
+    ).unwrap();
 
     expect(result.payload.after.content).toBe("validate JWT");
     const text = await readFile(filePath, "utf8");
@@ -243,12 +251,14 @@ describe("runModifyCommand integration", () => {
       updatedAt: Date.now(),
     });
 
-    await runModifyCommand(
-      context,
-      `${filePath}:1`,
-      { starred: true, write: true },
-      { stdin: Readable.from([]) }
-    );
+    (
+      await runModifyCommand(
+        context,
+        `${filePath}:1`,
+        { starred: true, write: true },
+        { stdin: Readable.from([]) }
+      )
+    ).unwrap();
 
     const refreshedIndex = new JsonIdIndex({ workspaceRoot: workspace });
     const updated = await refreshedIndex.get("[[test123]]");
@@ -282,12 +292,14 @@ describe("runModifyCommand integration", () => {
       updatedAt: Date.now(),
     });
 
-    await runModifyCommand(
-      context,
-      undefined,
-      { id: "[[abc123]]", noSignal: true, write: true },
-      { stdin: Readable.from([]) }
-    );
+    (
+      await runModifyCommand(
+        context,
+        undefined,
+        { id: "[[abc123]]", noSignal: true, write: true },
+        { stdin: Readable.from([]) }
+      )
+    ).unwrap();
 
     const text = await readFile(filePath, "utf8");
     expect(text).toBe("// todo ::: implement OAuth [[abc123]]\n");
