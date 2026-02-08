@@ -142,14 +142,20 @@ export async function scanRecords(
       const fileStats = cacheEnabled
         ? await stat(filePath).catch(() => null)
         : null;
-      if (
-        cache &&
-        fileStats &&
-        !cache.isFileStale(filePath, fileStats.mtimeMs, fileStats.size)
-      ) {
-        records.push(...cache.findByFile(filePath));
-        cachedFiles += 1;
-        continue;
+      if (cache && fileStats) {
+        const staleResult = cache.isFileStale(
+          filePath,
+          fileStats.mtimeMs,
+          fileStats.size
+        );
+        if (staleResult.isOk() && !staleResult.value) {
+          const cachedRecords = cache.findByFile(filePath);
+          if (cachedRecords.isOk()) {
+            records.push(...cachedRecords.value);
+            cachedFiles += 1;
+            continue;
+          }
+        }
       }
 
       const source = await readFile(filePath, "utf8").catch(() => null);
@@ -169,6 +175,7 @@ export async function scanRecords(
       parsedFiles += 1;
 
       if (cache && fileStats) {
+        // Best-effort cache update; ignore errors
         cache.replaceFileWaymarks({
           filePath,
           mtime: fileStats.mtimeMs,
@@ -201,10 +208,17 @@ function createCache(options: ScanRuntimeOptions): WaymarkCache | undefined {
   if (!options.cache) {
     return;
   }
-  if (options.cachePath) {
-    return new WaymarkCache({ dbPath: options.cachePath });
+  const result = options.cachePath
+    ? WaymarkCache.open({ dbPath: options.cachePath })
+    : WaymarkCache.open();
+  if (result.isErr()) {
+    logger.warn(
+      { error: result.error.message },
+      "Failed to open cache, proceeding without caching"
+    );
+    return;
   }
-  return new WaymarkCache();
+  return result.value;
 }
 
 /**

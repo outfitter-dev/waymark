@@ -2,54 +2,86 @@
 
 import type { Database } from "bun:sqlite";
 import type { WaymarkRecord } from "@waymarks/grammar";
+import { InternalError, Result } from "../errors.ts";
 import { updateFileInfo } from "./files.ts";
 
 /**
  * Insert waymark records into the cache.
  * @param db - SQLite database handle.
  * @param records - Records to insert.
+ * @returns Result indicating success or an InternalError.
  */
-export function insertWaymarks(db: Database, records: WaymarkRecord[]): void {
+export function insertWaymarks(
+  db: Database,
+  records: WaymarkRecord[]
+): Result<void, InternalError> {
   if (records.length === 0) {
-    return;
+    return Result.ok();
   }
 
-  const transaction = db.transaction((items: WaymarkRecord[]) => {
-    insertWaymarksUnsafe(db, items);
-  });
+  return Result.try({
+    try: () => {
+      const transaction = db.transaction((items: WaymarkRecord[]) => {
+        insertWaymarksUnsafe(db, items);
+      });
 
-  transaction(records);
+      transaction(records);
+    },
+    catch: (cause) =>
+      new InternalError({
+        message: `Failed to insert waymarks: ${cause instanceof Error ? cause.message : String(cause)}`,
+        context: {
+          recordCount: records.length,
+          cause: cause instanceof Error ? cause.message : String(cause),
+        },
+      }),
+  });
 }
 
 /**
  * Insert waymark records grouped by file in a single transaction.
  * @param db - SQLite database handle.
  * @param recordsByFile - Map of file paths to records.
+ * @returns Result indicating success or an InternalError.
  */
 export function insertWaymarksBatch(
   db: Database,
   recordsByFile: Map<string, WaymarkRecord[]>
-): void {
+): Result<void, InternalError> {
   const allRecords: WaymarkRecord[] = [];
   for (const records of recordsByFile.values()) {
     allRecords.push(...records);
   }
 
   if (allRecords.length === 0) {
-    return;
+    return Result.ok();
   }
 
-  const transaction = db.transaction(() => {
-    insertWaymarksUnsafe(db, allRecords);
-  });
+  return Result.try({
+    try: () => {
+      const transaction = db.transaction(() => {
+        insertWaymarksUnsafe(db, allRecords);
+      });
 
-  transaction();
+      transaction();
+    },
+    catch: (cause) =>
+      new InternalError({
+        message: `Failed to batch insert waymarks: ${cause instanceof Error ? cause.message : String(cause)}`,
+        context: {
+          fileCount: recordsByFile.size,
+          recordCount: allRecords.length,
+          cause: cause instanceof Error ? cause.message : String(cause),
+        },
+      }),
+  });
 }
 
 /**
  * Replace cached records for a single file.
  * @param db - SQLite database handle.
  * @param args - File metadata and records to store.
+ * @returns Result indicating success or an InternalError.
  */
 export function replaceFileWaymarks(
   db: Database,
@@ -60,34 +92,66 @@ export function replaceFileWaymarks(
     hash?: string | null;
     records: WaymarkRecord[];
   }
-): void {
+): Result<void, InternalError> {
   const { filePath, mtime, size, hash, records } = args;
-  const transaction = db.transaction(() => {
-    deleteFileInternal(db, filePath);
-    const info =
-      hash === undefined
-        ? { filePath, mtime, size }
-        : { filePath, mtime, size, hash };
-    updateFileInfo(db, info);
-    if (records.length > 0) {
-      insertWaymarksUnsafe(db, records);
-    }
-  });
 
-  transaction();
+  return Result.try({
+    try: () => {
+      const transaction = db.transaction(() => {
+        deleteFileInternal(db, filePath);
+        const info =
+          hash === undefined
+            ? { filePath, mtime, size }
+            : { filePath, mtime, size, hash };
+        const fileInfoResult = updateFileInfo(db, info);
+        if (fileInfoResult.isErr()) {
+          throw fileInfoResult.error;
+        }
+        if (records.length > 0) {
+          insertWaymarksUnsafe(db, records);
+        }
+      });
+
+      transaction();
+    },
+    catch: (cause) =>
+      new InternalError({
+        message: `Failed to replace file waymarks: ${cause instanceof Error ? cause.message : String(cause)}`,
+        context: {
+          filePath,
+          cause: cause instanceof Error ? cause.message : String(cause),
+        },
+      }),
+  });
 }
 
 /**
  * Delete cached records and file metadata for a given file.
  * @param db - SQLite database handle.
  * @param filePath - File path to delete.
+ * @returns Result indicating success or an InternalError.
  */
-export function deleteFile(db: Database, filePath: string): void {
-  const transaction = db.transaction(() => {
-    deleteFileInternal(db, filePath);
-  });
+export function deleteFile(
+  db: Database,
+  filePath: string
+): Result<void, InternalError> {
+  return Result.try({
+    try: () => {
+      const transaction = db.transaction(() => {
+        deleteFileInternal(db, filePath);
+      });
 
-  transaction();
+      transaction();
+    },
+    catch: (cause) =>
+      new InternalError({
+        message: `Failed to delete file from cache: ${cause instanceof Error ? cause.message : String(cause)}`,
+        context: {
+          filePath,
+          cause: cause instanceof Error ? cause.message : String(cause),
+        },
+      }),
+  });
 }
 
 function insertWaymarksUnsafe(db: Database, records: WaymarkRecord[]): void {
