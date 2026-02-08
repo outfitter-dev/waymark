@@ -25,7 +25,7 @@ async function main(): Promise<void> {
   // Create SDK server with both tools and resources capabilities
   const sdkServer = new Server(
     { name: mcpServer.name, version: mcpServer.version },
-    { capabilities: { tools: {}, resources: {} } }
+    { capabilities: { tools: {}, resources: { listChanged: true } } }
   );
 
   // Wire tool list and invocation through the outfitter server
