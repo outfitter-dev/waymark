@@ -199,7 +199,7 @@ export async function scanRecords(
   if (options.metrics) {
     Object.assign(options.metrics, metrics);
   }
-  logger.debug({ cache: cacheEnabled, ...metrics }, "scan completed");
+  logger.debug("scan completed", { cache: cacheEnabled, ...metrics });
 
   return records;
 }
@@ -212,10 +212,9 @@ function createCache(options: ScanRuntimeOptions): WaymarkCache | undefined {
     ? WaymarkCache.open({ dbPath: options.cachePath })
     : WaymarkCache.open();
   if (result.isErr()) {
-    logger.warn(
-      { error: result.error.message },
-      "Failed to open cache, proceeding without caching"
-    );
+    logger.warn("Failed to open cache, proceeding without caching", {
+      error: result.error.message,
+    });
     return;
   }
   return result.value;
