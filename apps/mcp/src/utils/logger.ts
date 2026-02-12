@@ -4,10 +4,11 @@ import {
   createConsoleSink,
   createLogger as createOutfitterLogger,
   type LoggerInstance,
+  resolveLogLevel,
 } from "@outfitter/logging";
 
 export const logger: LoggerInstance = createOutfitterLogger({
   name: "waymark-mcp",
-  level: "warn",
+  level: resolveLogLevel("warn"),
   sinks: [createConsoleSink({ colors: false })],
 });
