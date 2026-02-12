@@ -21,6 +21,12 @@ export function registerTools(
       name: "waymark",
       description: waymarkToolDescription,
       inputSchema: waymarkToolInputSchema,
+      annotations: {
+        readOnlyHint: false, // "add" action mutates files
+        destructiveHint: false, // "add" is additive, not destructive
+        idempotentHint: false, // "add" creates new waymarks each call
+        openWorldHint: false, // operates on local filesystem only
+      },
       handler: async (input, _ctx) => {
         const result = await handleWaymarkTool(input, notifyResourceChanged);
         return Result.ok(result) as Result<ToolContent, never>;
