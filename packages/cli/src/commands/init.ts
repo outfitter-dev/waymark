@@ -37,9 +37,9 @@ export function runInitCommand(
   return Result.tryPromise({
     try: () => runInitCommandInner(options),
     catch: (cause) =>
-      new InternalError({
-        message: `Init failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Init failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

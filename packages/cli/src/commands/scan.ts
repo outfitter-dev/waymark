@@ -123,9 +123,9 @@ export function scanRecords(
   return Result.tryPromise({
     try: () => scanRecordsInner(filePaths, config, options),
     catch: (cause) =>
-      new InternalError({
-        message: `Scan failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Scan failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

@@ -362,9 +362,9 @@ export function runAddCommand(
   return Result.tryPromise({
     try: () => runAddCommandInner(parsed, context),
     catch: (cause) =>
-      new InternalError({
-        message: `Add failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Add failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

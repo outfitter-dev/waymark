@@ -74,9 +74,9 @@ export class WaymarkIdManager {
 
       if (this.reserved.has(normalized)) {
         return Result.err(
-          new ConflictError({
-            message: `Waymark ID already reserved in current batch: ${normalized}`,
-          })
+          ConflictError.create(
+            `Waymark ID already reserved in current batch: ${normalized}`
+          )
         );
       }
       this.reserved.add(normalized);
@@ -117,13 +117,7 @@ export class WaymarkIdManager {
     const normalized = normalizedResult.value;
 
     if (!this.reserved.has(normalized)) {
-      return Result.err(
-        new NotFoundError({
-          message: `Waymark ID ${normalized} was not reserved`,
-          resourceType: "waymark-id",
-          resourceId: normalized,
-        })
-      );
+      return Result.err(NotFoundError.create("waymark-id", normalized));
     }
     await this.index.set(this.buildEntry(normalized, metadata));
     this.reserved.delete(normalized);
@@ -222,10 +216,7 @@ export class WaymarkIdManager {
       // Reject empty brackets or whitespace-only content
       if (!content || content.trim().length === 0) {
         return Result.err(
-          new ValidationError({
-            message: `Invalid waymark ID format: ${id}`,
-            field: "id",
-          })
+          ValidationError.create("id", `invalid format: ${id}`)
         );
       }
       return Result.ok(id);
@@ -250,9 +241,10 @@ export class WaymarkIdManager {
       }
     }
     return Result.err(
-      new ConflictError({
-        message: `Waymark ID already in use: ${id}`,
-        context: { id, existingFile: exists.file, existingLine: exists.line },
+      ConflictError.create(`Waymark ID already in use: ${id}`, {
+        id,
+        existingFile: exists.file,
+        existingLine: exists.line,
       })
     );
   }
@@ -274,14 +266,14 @@ export class WaymarkIdManager {
     }
 
     return Result.err(
-      new InternalError({
-        message: "Unable to generate unique waymark ID after multiple attempts",
-        context: {
+      InternalError.create(
+        "Unable to generate unique waymark ID after multiple attempts",
+        {
           file: metadata.file,
           line: metadata.line,
           attempts: MAX_ID_GENERATION_ATTEMPTS,
-        },
-      })
+        }
+      )
     );
   }
 

@@ -29,9 +29,9 @@ export function runUnifiedCommand(
   return Result.tryPromise({
     try: () => runUnifiedCommandInner(options, context),
     catch: (cause) =>
-      new InternalError({
-        message: `Unified command failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Unified command failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

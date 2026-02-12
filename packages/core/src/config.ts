@@ -140,13 +140,7 @@ export async function loadConfigFromDisk(
 
   if (resolvedExplicit) {
     if (!existsSync(resolvedExplicit)) {
-      return Result.err(
-        new NotFoundError({
-          message: `Config file not found: ${resolvedExplicit}`,
-          resourceType: "config",
-          resourceId: resolvedExplicit,
-        })
-      );
+      return Result.err(NotFoundError.create("config", resolvedExplicit));
     }
     return readAndResolve(resolvedExplicit);
   }
@@ -179,10 +173,10 @@ export async function loadConfigFromDisk(
       return Result.err(error);
     }
     return Result.err(
-      new ValidationError({
-        message: `Config loading failed: ${error instanceof Error ? error.message : String(error)}`,
-        field: "config",
-      })
+      ValidationError.create(
+        "config",
+        `loading failed: ${error instanceof Error ? error.message : String(error)}`
+      )
     );
   }
 }
@@ -222,20 +216,20 @@ async function readConfigOverrides(
     const parsed = parseConfigFile(raw, filePath);
     if (parsed.isErr()) {
       return Result.err(
-        new ValidationError({
-          message: `Unable to parse config at ${filePath}: ${parsed.error.message}`,
-          field: filePath,
-        })
+        ValidationError.create(
+          filePath,
+          `parse failed: ${parsed.error.message}`
+        )
       );
     }
     return Result.ok(normalizeConfigShape(parsed.value));
   }
 
   return Result.err(
-    new ValidationError({
-      message: `Unsupported config format: ${ext}. Use .toml, .yaml, or .yml`,
-      field: filePath,
-    })
+    ValidationError.create(
+      filePath,
+      `unsupported format: ${ext}. Use .toml, .yaml, or .yml`
+    )
   );
 }
 

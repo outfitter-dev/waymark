@@ -2,10 +2,13 @@
 
 // biome-ignore lint/performance/noBarrelFile: Intentional re-export of contracts for convenience
 export {
+  AmbiguousError,
   type AnyKitError,
+  AssertionError,
   CancelledError,
   ConflictError,
   type ErrorCategory,
+  expect,
   getExitCode,
   InternalError,
   NotFoundError,
@@ -43,7 +46,8 @@ export type WaymarkError =
   | import("@outfitter/contracts").NotFoundError
   | import("@outfitter/contracts").ConflictError
   | import("@outfitter/contracts").InternalError
-  | import("@outfitter/contracts").CancelledError;
+  | import("@outfitter/contracts").CancelledError
+  | import("@outfitter/contracts").AmbiguousError;
 
 /** Convenience alias for a Result with a Waymark domain error. */
 export type WaymarkResult<T> = import("@outfitter/contracts").Result<

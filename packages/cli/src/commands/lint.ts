@@ -422,9 +422,9 @@ export function lintFiles(
   return Result.tryPromise({
     try: () => lintFilesInner(filePaths, allowTypes, config),
     catch: (cause) =>
-      new InternalError({
-        message: `Lint failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Lint failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 
