@@ -21,9 +21,9 @@
   },
   "dependencies": {
     "@bomb.sh/tab": "0.0.6",
-    "@outfitter/cli": "0.1.0",
-    "@outfitter/contracts": "0.1.0",
-    "@outfitter/logging": "0.1.0",
+    "@outfitter/cli": "0.3.0",
+    "@outfitter/contracts": "0.2.0",
+    "@outfitter/logging": "0.3.0",
     "@waymarks/core": "workspace:*",
     "commander": "14.0.1",
     "ignore": "7.0.5",

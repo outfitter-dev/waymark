@@ -28,9 +28,10 @@
         "waymark-mcp": "dist/index.js",
       },
       "dependencies": {
-        "@outfitter/contracts": "0.1.0",
-        "@outfitter/logging": "0.1.0",
-        "@outfitter/mcp": "0.1.0",
+        "@modelcontextprotocol/sdk": "^1.12.1",
+        "@outfitter/contracts": "0.2.0",
+        "@outfitter/logging": "0.3.0",
+        "@outfitter/mcp": "0.3.0",
         "@waymarks/core": "workspace:*",
         "zod": "^4.3.5",
       },
@@ -47,9 +48,9 @@
       },
       "dependencies": {
         "@bomb.sh/tab": "0.0.6",
-        "@outfitter/cli": "0.1.0",
-        "@outfitter/contracts": "0.1.0",
-        "@outfitter/logging": "0.1.0",
+        "@outfitter/cli": "0.3.0",
+        "@outfitter/contracts": "0.2.0",
+        "@outfitter/logging": "0.3.0",
         "@waymarks/core": "workspace:*",
         "commander": "14.0.1",
         "ignore": "7.0.5",
@@ -66,8 +67,8 @@
       "name": "@waymarks/core",
       "version": "1.0.0-beta.1",
       "dependencies": {
-        "@outfitter/config": "0.1.0",
-        "@outfitter/contracts": "0.1.0",
+        "@outfitter/config": "0.3.0",
+        "@outfitter/contracts": "0.2.0",
         "@waymarks/grammar": "workspace:*",
         "safe-regex": "2.1.1",
         "type-fest": "^5.0.1",
@@ -178,17 +179,17 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@outfitter/cli": ["@outfitter/cli@0.1.0", "", { "dependencies": { "@clack/prompts": "^0.11.0", "@outfitter/config": "0.1.0", "@outfitter/contracts": "0.1.0", "@outfitter/types": "0.1.0", "better-result": "^2.5.1", "commander": "^14.0.2" }, "peerDependencies": { "zod": "^4.3.5" } }, "sha512-xDEaViaFpadbR5dp/xbFyUPxTI+u56cw6QfP4Mht9PjR4ui2LmaI/0tKQFngIdxFXrK/Zn/ywjndJWtqe4xS7A=="],
+    "@outfitter/cli": ["@outfitter/cli@0.3.0", "", { "dependencies": { "@clack/prompts": "^0.11.0", "@outfitter/config": "0.3.0", "@outfitter/contracts": "0.2.0", "@outfitter/types": "0.2.0", "better-result": "^2.5.1", "commander": "^14.0.2" }, "peerDependencies": { "zod": "^4.3.5" } }, "sha512-2CugnHcPU2/1lrAIYWFGmEcANtUYwXfvFSzmlzIkMeX2eLUPjHkeA5tMGyfPyE1E0BfL8yx7Ys1qf9SABeTkNQ=="],
 
-    "@outfitter/config": ["@outfitter/config@0.1.0", "", { "dependencies": { "@outfitter/contracts": "0.1.0", "@outfitter/types": "0.1.0", "zod": "^4.3.5" } }, "sha512-S+sH0YGrKyezMO+qNTHfoWz4m3bpEas4nhr7Uh+VsW6AVWZFSSbSjoXY65YOSPg3UcxVNnzX6za1Ba2nR/BVUQ=="],
+    "@outfitter/config": ["@outfitter/config@0.3.0", "", { "dependencies": { "@outfitter/contracts": "0.2.0", "@outfitter/types": "0.2.0", "zod": "^4.3.5" } }, "sha512-QFAL54g9fFUxCa7PoFipGuF8ST0Dc1sDeitgK4Az+CRRjBiq9dKJqSlK62VkjCd4P07OlvIk4ea92nqaFalB7A=="],
 
-    "@outfitter/contracts": ["@outfitter/contracts@0.1.0", "", { "dependencies": { "better-result": "^2.5.0", "zod": "^4.3.5" } }, "sha512-JtSOTZhE3f9xfFdO8mtt0EGLEk0j8WuCLyUSDIeBCv9hB58OgCsaamRQUDicHYGNsb7oLSLCPSiFwVELaPRvlA=="],
+    "@outfitter/contracts": ["@outfitter/contracts@0.2.0", "", { "dependencies": { "better-result": "^2.5.0", "zod": "^4.3.5" } }, "sha512-MkLumv7rWsP3cW3aWuMwtygUIH4x8EUGd4AHI4PD2fgrddn5uuvfYN7qgJ9ftMuRM8hh4Osyj3cotuUXgCtmnw=="],
 
-    "@outfitter/logging": ["@outfitter/logging@0.1.0", "", { "dependencies": { "@logtape/logtape": "^2.0.0", "@outfitter/contracts": "0.1.0" } }, "sha512-mTm/SKDwERvE7Y8EGUxd4UwI+eaEPs0jd7TJAYFo1Ph2D+orp9QMXyywINIr87e4gAewLm08jPcwlYv5V7trWw=="],
+    "@outfitter/logging": ["@outfitter/logging@0.3.0", "", { "dependencies": { "@logtape/logtape": "^2.0.0", "@outfitter/config": "0.3.0", "@outfitter/contracts": "0.2.0" } }, "sha512-MB/81PRkDSH/+DUJ9tcNX19xUP/Or4HJrhmNSCac2jkmelxQXAa1bE7vrupy5mbOpfnJHUj2FIlrl5RWX3yqMg=="],
 
-    "@outfitter/mcp": ["@outfitter/mcp@0.1.0", "", { "dependencies": { "@modelcontextprotocol/sdk": "^1.12.1", "@outfitter/contracts": "0.1.0", "@outfitter/logging": "0.1.0", "zod": "^4.3.5" } }, "sha512-LQKwSwYiUCcz41ontwXj40GvS4JbXaHnK9oFMPMCJs7LsXn1joR6oHByvDSb/s3PjhWuBvCeuTCuRZSxlXVaNA=="],
+    "@outfitter/mcp": ["@outfitter/mcp@0.3.0", "", { "dependencies": { "@modelcontextprotocol/sdk": "^1.12.1", "@outfitter/config": "0.3.0", "@outfitter/contracts": "0.2.0", "@outfitter/logging": "0.3.0", "zod": "^4.3.5" } }, "sha512-H0ary6/IKpBDHh7mrmca/R/LhALzfBJRKr39c6tQIitwcrOMpOE76xkToxDDs09Nz7OT9m/I0yY9ElrxuGOJVQ=="],
 
-    "@outfitter/types": ["@outfitter/types@0.1.0", "", { "dependencies": { "@outfitter/contracts": "0.1.0", "better-result": "^2.5.0" } }, "sha512-Dk8YQA9LQDJIumxfJB5+YeT83NT4dYb4iAp8a/EFBp2vOBiEiCHtX4Hd/+fjzAk/e2r5DCWdfPmtsZswj5o+NA=="],
+    "@outfitter/types": ["@outfitter/types@0.2.0", "", { "dependencies": { "@outfitter/contracts": "0.2.0", "better-result": "^2.5.0" } }, "sha512-lZJf8Tclh+vSxzw6GsotkivDZ/hm+1MiDlro4mRh8nRbCFG7soeW2XdrOe7ebltwJh/mdfBUrxU9jst24qFz5g=="],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.52.2", "", { "os": "android", "cpu": "arm" }, "sha512-o3pcKzJgSGt4d74lSZ+OCnHwkKBeAbFDmbEm5gg70eA8VkyCuC/zV9TwBnmw6VjDlRdF4Pshfb+WE9E6XY1PoQ=="],
 

@@ -17,8 +17,8 @@
     "lint": "bunx ultracite check"
   },
   "dependencies": {
-    "@outfitter/config": "0.1.0",
-    "@outfitter/contracts": "0.1.0",
+    "@outfitter/config": "0.3.0",
+    "@outfitter/contracts": "0.2.0",
     "@waymarks/grammar": "workspace:*",
     "safe-regex": "2.1.1",
     "type-fest": "^5.0.1",
