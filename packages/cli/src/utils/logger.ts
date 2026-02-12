@@ -5,6 +5,7 @@ import {
   createLogger as createOutfitterLogger,
   type LoggerInstance,
   type LogLevel,
+  resolveLogLevel,
 } from "@outfitter/logging";
 
 export type { LogLevel } from "@outfitter/logging";
@@ -28,14 +29,13 @@ export type Logger = LoggerInstance & {
 /**
  * Create a configured logger instance using @outfitter/logging.
  *
- * For CLI tools, we default to 'warn' level to keep output clean.
- * Use --verbose flag to set level to 'info' or --debug for 'debug'.
+ * Uses `resolveLogLevel()` for level resolution:
+ * `OUTFITTER_LOG_LEVEL` > explicit > env profile > "warn" default.
  * @param options - Logger configuration options.
  * @returns Configured logger instance with level getter/setter.
  */
 export function createLogger(options: LoggerOptions = {}): Logger {
-  const envLevel = process.env.LOG_LEVEL as LogLevel | undefined;
-  const level: LogLevel = options.level ?? envLevel ?? "warn";
+  const level: LogLevel = resolveLogLevel(options.level ?? "warn");
   const pretty = options.pretty ?? process.env.NODE_ENV !== "production";
 
   const inner = createOutfitterLogger({
