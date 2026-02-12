@@ -20,10 +20,10 @@
     "lint": "bunx ultracite check"
   },
   "dependencies": {
-    "@outfitter/contracts": "0.1.0",
-    "@outfitter/logging": "0.1.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "@outfitter/mcp": "0.1.0",
+    "@outfitter/contracts": "0.2.0",
+    "@outfitter/logging": "0.3.0",
+    "@outfitter/mcp": "0.3.0",
     "@waymarks/core": "workspace:*",
     "zod": "^4.3.5"
   },
