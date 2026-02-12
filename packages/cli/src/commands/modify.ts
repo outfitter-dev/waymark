@@ -120,9 +120,9 @@ export function runModifyCommand(
   return Result.tryPromise({
     try: () => runModifyCommandInner(context, targetArg, options, io),
     catch: (cause) =>
-      new InternalError({
-        message: `Modify failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Modify failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

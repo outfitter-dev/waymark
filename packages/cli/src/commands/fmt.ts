@@ -30,9 +30,9 @@ export function formatFile(
   return Result.tryPromise({
     try: () => formatFileInner(options, context),
     catch: (cause) =>
-      new InternalError({
-        message: `Format failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Format failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 
@@ -109,9 +109,9 @@ export function expandFormatPaths(
       return await filterFilesWithWaymarks(expanded);
     },
     catch: (cause) =>
-      new InternalError({
-        message: `Path expansion failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Path expansion failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

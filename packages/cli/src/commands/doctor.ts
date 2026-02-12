@@ -67,9 +67,9 @@ export function runDoctorCommand(
   return Result.tryPromise({
     try: () => runDoctorCommandInner(context, options),
     catch: (cause) =>
-      new InternalError({
-        message: `Doctor diagnostics failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Doctor diagnostics failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

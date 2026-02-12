@@ -209,9 +209,9 @@ export function runUpdateCommand(
   return Result.tryPromise({
     try: () => runUpdateCommandInner(options),
     catch: (cause) =>
-      new InternalError({
-        message: `Update failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Update failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

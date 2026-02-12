@@ -336,9 +336,9 @@ export function runCheckCommand(
   return Result.tryPromise({
     try: () => runCheckCommandInner(context, options),
     catch: (cause) =>
-      new InternalError({
-        message: `Check failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Check failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 

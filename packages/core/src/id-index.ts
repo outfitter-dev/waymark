@@ -151,13 +151,7 @@ export class JsonIdIndex {
     await this.init();
     const current = this.data.ids[id];
     if (!current) {
-      return Result.err(
-        new NotFoundError({
-          message: `Unknown waymark id: ${id}`,
-          resourceType: "waymark-id",
-          resourceId: id,
-        })
-      );
+      return Result.err(NotFoundError.create("waymark-id", id));
     }
     this.data.ids[id] = updater(current);
     await this.save();
@@ -297,10 +291,10 @@ export class JsonIdIndex {
       });
     } catch (error) {
       return Result.err(
-        new InternalError({
-          message: `Failed to parse ${this.indexPath}: ${error instanceof Error ? error.message : String(error)}`,
-          context: { path: this.indexPath },
-        })
+        InternalError.create(
+          `Failed to parse ${this.indexPath}: ${error instanceof Error ? error.message : String(error)}`,
+          { path: this.indexPath }
+        )
       );
     }
   }
@@ -315,10 +309,10 @@ export class JsonIdIndex {
       return Result.ok(Array.isArray(parsed) ? parsed : []);
     } catch (error) {
       return Result.err(
-        new InternalError({
-          message: `Failed to parse ${this.historyPath}: ${error instanceof Error ? error.message : String(error)}`,
-          context: { path: this.historyPath },
-        })
+        InternalError.create(
+          `Failed to parse ${this.historyPath}: ${error instanceof Error ? error.message : String(error)}`,
+          { path: this.historyPath }
+        )
       );
     }
   }

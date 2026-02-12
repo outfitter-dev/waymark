@@ -280,9 +280,9 @@ export function runRemoveCommand(
   return Result.tryPromise({
     try: () => runRemoveCommandInner(parsed, context, execution),
     catch: (cause) =>
-      new InternalError({
-        message: `Remove failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+      InternalError.create(
+        `Remove failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      ),
   });
 }
 
