@@ -8,7 +8,14 @@ import type { DocstringInfo } from "./types";
 
 export type { DocstringFormat, DocstringInfo, DocstringKind } from "./types";
 
-const JS_LANGUAGES = new Set(["javascript", "typescript", "js", "ts"]);
+const JS_LANGUAGES = new Set([
+  "javascript",
+  "typescript",
+  "js",
+  "ts",
+  "jsx",
+  "tsx",
+]);
 const PYTHON_LANGUAGES = new Set(["python", "py"]);
 const RUBY_LANGUAGES = new Set(["ruby", "rb"]);
 const RUST_LANGUAGES = new Set(["rust", "rs"]);

@@ -46,6 +46,30 @@ describe("detectDocstring", () => {
     expect(extractSummary(docstring)).toBe("Adds numbers.");
   });
 
+  test("detects JSDoc in TSX files", () => {
+    const content =
+      "/**\n * React component for user profile.\n */\nexport function UserProfile() {\n  return <div />;\n}\n";
+    const info = detectDocstring(content, "tsx");
+
+    expect(info).not.toBeNull();
+    const docstring = requireDocstring(info);
+    expect(info?.format).toBe("jsdoc");
+    expect(extractSummary(docstring)).toBe("React component for user profile.");
+  });
+
+  test("detects JSDoc in JSX files", () => {
+    const content =
+      "/**\n * Button component with click handler.\n */\nfunction Button({ onClick }) {\n  return <button onClick={onClick} />;\n}\n";
+    const info = detectDocstring(content, "jsx");
+
+    expect(info).not.toBeNull();
+    const docstring = requireDocstring(info);
+    expect(info?.format).toBe("jsdoc");
+    expect(extractSummary(docstring)).toBe(
+      "Button component with click handler."
+    );
+  });
+
   test("respects JSDoc file tags for file-level docs", () => {
     const content =
       "#!/usr/bin/env node\n/**\n * CLI entry.\n * @fileoverview\n */\nexport function run() {}\n";
