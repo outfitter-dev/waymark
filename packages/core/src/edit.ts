@@ -6,6 +6,13 @@ import { readFile, writeFile } from "node:fs/promises";
 import { parse, SIGIL, type WaymarkRecord } from "@waymarks/grammar";
 import { z } from "zod";
 
+import {
+  InternalError,
+  NotFoundError,
+  Result,
+  ValidationError,
+  type WaymarkResult,
+} from "./errors.ts";
 import { formatText } from "./format.ts";
 import {
   fingerprintContent,
@@ -100,17 +107,40 @@ type ResolvedTarget = {
   id?: string;
 };
 
+/** Validated context for applying an edit to a waymark. */
+type EditContext = {
+  spec: EditSpec;
+  target: ResolvedTarget;
+  snapshot: FileSnapshot;
+  record: WaymarkRecord;
+  originalContent: string;
+  existingId: string | undefined;
+  nextType: string;
+};
+
 /**
  * Edit a waymark in place, optionally writing changes to disk.
  * @param options - Edit request options and optional ID manager/logger.
  * @param config - Optional configuration overrides for formatting.
- * @returns Result describing the applied edit.
+ * @returns Result containing the applied edit or a domain error.
  */
 export async function editWaymark(
   options: EditOptions,
   config?: WaymarkConfig
-): Promise<EditResult> {
-  const spec = EditSpecSchema.parse({
+): Promise<WaymarkResult<EditResult>> {
+  const contextResult = await resolveEditContext(options);
+  if (contextResult.isErr()) {
+    return contextResult;
+  }
+  const ctx = contextResult.value;
+
+  return applyEdit(ctx, options, config);
+}
+
+async function resolveEditContext(
+  options: EditOptions
+): Promise<WaymarkResult<EditContext>> {
+  const parsed = EditSpecSchema.safeParse({
     file: options.file,
     line: options.line,
     id: options.id,
@@ -121,8 +151,21 @@ export async function editWaymark(
     clearSignals: options.clearSignals,
     write: options.write,
   });
+  if (!parsed.success) {
+    return Result.err(
+      ValidationError.fromMessage(
+        parsed.error.issues[0]?.message ?? "Invalid edit specification"
+      )
+    );
+  }
+  const spec = parsed.data;
 
-  const target = await resolveTarget(spec, options.idManager);
+  const targetResult = await resolveTarget(spec, options.idManager);
+  if (targetResult.isErr()) {
+    return targetResult;
+  }
+  const target = targetResult.value;
+
   options.logger?.debug("Editing waymark", {
     file: target.file,
     line: target.line,
@@ -131,27 +174,56 @@ export async function editWaymark(
 
   const snapshot = await loadFileSnapshot(target.file);
   if (!snapshot) {
-    throw new Error(`File not found: ${target.file}`);
+    return Result.err(
+      NotFoundError.create("file", target.file, {
+        reason: "File not found",
+      })
+    );
   }
 
-  const { record, originalContent, existingId } = resolveRecordContext(
-    snapshot,
-    target
-  );
-  assertIdMatches({
-    ...(target.id === undefined ? {} : { targetId: target.id }),
-    ...(existingId === undefined ? {} : { existingId }),
+  const recordResult = resolveRecordContext(snapshot, target);
+  if (recordResult.isErr()) {
+    return recordResult;
+  }
+  const { record, originalContent, existingId } = recordResult.value;
+
+  const idMatchResult = assertIdMatches({
+    targetId: target.id,
+    existingId,
     file: target.file,
     line: record.startLine,
   });
+  if (idMatchResult.isErr()) {
+    return idMatchResult;
+  }
 
-  const nextType = resolveType(record.type, spec.type);
+  const typeResult = resolveType(record.type, spec.type);
+  if (typeResult.isErr()) {
+    return typeResult;
+  }
+
+  return Result.ok({
+    spec,
+    target,
+    snapshot,
+    record,
+    originalContent,
+    existingId,
+    nextType: typeResult.value,
+  });
+}
+
+async function applyEdit(
+  ctx: EditContext,
+  options: EditOptions,
+  config?: WaymarkConfig
+): Promise<WaymarkResult<EditResult>> {
+  const { spec, target, snapshot, record, originalContent, existingId } = ctx;
+
   const signalOverrides = {
-    ...(spec.flagged === undefined ? {} : { flagged: spec.flagged }),
-    ...(spec.starred === undefined ? {} : { starred: spec.starred }),
-    ...(spec.clearSignals === undefined
-      ? {}
-      : { clearSignals: spec.clearSignals }),
+    flagged: spec.flagged,
+    starred: spec.starred,
+    clearSignals: spec.clearSignals,
   };
   const nextSignals = resolveSignals(record.signals, signalOverrides);
 
@@ -160,7 +232,7 @@ export async function editWaymark(
     spec,
     existingId,
     originalContent,
-    type: nextType,
+    type: ctx.nextType,
     signals: nextSignals,
   });
 
@@ -169,48 +241,59 @@ export async function editWaymark(
     record,
     draftLines,
     file: target.file,
-    ...(config === undefined ? {} : { config }),
-    ...(spec.write === undefined ? {} : { write: spec.write }),
+    config,
+    write: spec.write,
   });
 
-  const afterRecord = resolveUpdatedRecord({
+  const afterResult = resolveUpdatedRecord({
     updatedText,
     file: target.file,
     record,
     existingId,
-    ...(target.id === undefined ? {} : { targetId: target.id }),
+    targetId: target.id,
   });
+  if (afterResult.isErr()) {
+    return afterResult;
+  }
+  const afterRecord = afterResult.value;
 
   if (written && options.idManager && (existingId || target.id)) {
     const normalizedId = normalizeId(existingId ?? target.id ?? "");
-    await updateIdIndex({
+    const indexResult = await updateIdIndex({
       idManager: options.idManager,
       id: normalizedId,
       record: afterRecord,
       lines: updatedLines,
       file: target.file,
     });
+    if (indexResult.isErr()) {
+      return indexResult;
+    }
   }
 
-  return {
+  return Result.ok({
     file: target.file,
     before: record,
     after: afterRecord,
     written,
-  };
+  });
 }
 
 function resolveRecordContext(
   snapshot: FileSnapshot,
   target: ResolvedTarget
-): {
+): WaymarkResult<{
   record: WaymarkRecord;
   originalContent: string;
   existingId: string | undefined;
-} {
+}> {
   const record = resolveRecord(snapshot.records, target);
   if (!record) {
-    throw new Error(`No waymark found at ${target.file}:${target.line}`);
+    return Result.err(
+      NotFoundError.create("waymark", `${target.file}:${target.line}`, {
+        reason: "No waymark found at target location",
+      })
+    );
   }
 
   const originalLines = record.raw.split(LINE_SPLIT_REGEX);
@@ -221,29 +304,39 @@ function resolveRecordContext(
   );
   const existingId = extractExistingId(record.contentText);
 
-  return { record, originalContent, existingId };
+  return Result.ok({ record, originalContent, existingId });
 }
 
 function assertIdMatches(args: {
-  targetId?: string;
-  existingId?: string;
+  targetId: string | undefined;
+  existingId: string | undefined;
   file: string;
   line: number;
-}): void {
+}): WaymarkResult<void> {
   const { targetId, existingId, file, line } = args;
   if (!targetId) {
-    return;
+    return Result.ok(undefined);
   }
   const normalizedTargetId = normalizeId(targetId);
   if (!existingId) {
-    throw new Error(
-      `Waymark id ${normalizedTargetId} not found in ${file}:${line}`
+    return Result.err(
+      NotFoundError.create("waymark", normalizedTargetId, {
+        file,
+        line,
+        reason: "Waymark id not found at target location",
+      })
     );
   }
   const normalizedExisting = normalizeId(existingId);
   if (normalizedExisting !== normalizedTargetId) {
-    throw new Error(`Waymark id mismatch at ${file}:${line}`);
+    return Result.err(
+      ValidationError.fromMessage(`Waymark id mismatch at ${file}:${line}`, {
+        expected: normalizedTargetId,
+        actual: normalizedExisting,
+      })
+    );
   }
+  return Result.ok(undefined);
 }
 
 function buildDraftLines(args: {
@@ -279,9 +372,9 @@ async function applyDraftEdits(args: {
   snapshot: FileSnapshot;
   record: WaymarkRecord;
   draftLines: string[];
-  config?: WaymarkConfig;
+  config: WaymarkConfig | undefined;
   file: string;
-  write?: boolean;
+  write: boolean | undefined;
 }): Promise<{
   updatedText: string;
   updatedLines: string[];
@@ -321,8 +414,8 @@ function resolveUpdatedRecord(args: {
   file: string;
   record: WaymarkRecord;
   existingId: string | undefined;
-  targetId?: string;
-}): WaymarkRecord {
+  targetId: string | undefined;
+}): WaymarkResult<WaymarkRecord> {
   const updatedRecords = parse(args.updatedText, { file: args.file });
   const resolvedId = args.existingId ?? args.targetId;
   const afterRecord = resolveRecord(updatedRecords, {
@@ -331,34 +424,46 @@ function resolveUpdatedRecord(args: {
     ...(resolvedId === undefined ? {} : { id: resolvedId }),
   });
   if (!afterRecord) {
-    throw new Error(
-      `Failed to resolve updated waymark at ${args.file}:${args.record.startLine}`
+    return Result.err(
+      InternalError.create(
+        `Failed to resolve updated waymark at ${args.file}:${args.record.startLine}`
+      )
     );
   }
-  return afterRecord;
+  return Result.ok(afterRecord);
 }
 
 async function resolveTarget(
   spec: EditSpec,
   idManager?: WaymarkIdManager
-): Promise<ResolvedTarget> {
+): Promise<WaymarkResult<ResolvedTarget>> {
   if (spec.id) {
     if (!idManager) {
-      throw new Error("ID-based edits require an ID manager");
+      return Result.err(
+        ValidationError.fromMessage("ID-based edits require an ID manager")
+      );
     }
     const normalized = normalizeId(spec.id);
     const entry = await idManager.get(normalized);
     if (!entry) {
-      throw new Error(`Unknown waymark id: ${normalized}`);
+      return Result.err(
+        NotFoundError.create("waymark", normalized, {
+          reason: "Unknown waymark id",
+        })
+      );
     }
-    return { file: entry.file, line: entry.line, id: normalized };
+    return Result.ok({ file: entry.file, line: entry.line, id: normalized });
   }
 
   if (!spec.file || typeof spec.line !== "number") {
-    throw new Error("File and line are required for line-based edits");
+    return Result.err(
+      ValidationError.fromMessage(
+        "File and line are required for line-based edits"
+      )
+    );
   }
 
-  return { file: spec.file, line: spec.line };
+  return Result.ok({ file: spec.file, line: spec.line });
 }
 
 async function loadFileSnapshot(file: string): Promise<FileSnapshot | null> {
@@ -407,15 +512,20 @@ function findRecordById(
   return records.find((record) => record.raw.includes(normalized));
 }
 
-function resolveType(current: string, override?: string): string {
+function resolveType(
+  current: string,
+  override?: string
+): WaymarkResult<string> {
   if (override === undefined) {
-    return current;
+    return Result.ok(current);
   }
   const trimmed = override.trim();
   if (!trimmed) {
-    throw new Error("Waymark type cannot be empty");
+    return Result.err(
+      ValidationError.create("type", "Waymark type cannot be empty")
+    );
   }
-  return trimmed;
+  return Result.ok(trimmed);
 }
 
 // `current` mirrors the flagged signal unless we are explicitly clearing signals,
@@ -423,9 +533,9 @@ function resolveType(current: string, override?: string): string {
 function resolveSignals(
   current: WaymarkRecord["signals"],
   overrides: {
-    flagged?: boolean;
-    starred?: boolean;
-    clearSignals?: boolean;
+    flagged: boolean | undefined;
+    starred: boolean | undefined;
+    clearSignals: boolean | undefined;
   }
 ): WaymarkRecord["signals"] {
   if (overrides.clearSignals) {
@@ -640,11 +750,15 @@ async function updateIdIndex(args: {
   record: WaymarkRecord;
   lines: string[];
   file: string;
-}): Promise<void> {
+}): Promise<WaymarkResult<void>> {
   const { idManager, id, record, lines, file } = args;
   const existing = await idManager.get(id);
   if (!existing) {
-    throw new Error(`Unknown waymark id: ${id}`);
+    return Result.err(
+      NotFoundError.create("waymark", id, {
+        reason: "Unknown waymark id during index update",
+      })
+    );
   }
 
   const contextWindow = buildContextWindow(lines, record.startLine - 1);
@@ -659,6 +773,11 @@ async function updateIdIndex(args: {
     ...(existing.sourceType ? { sourceType: existing.sourceType } : {}),
   });
   if (updateResult.isErr()) {
-    throw updateResult.error;
+    return Result.err(
+      InternalError.create(updateResult.error.message, {
+        cause: updateResult.error,
+      })
+    );
   }
+  return Result.ok(undefined);
 }
