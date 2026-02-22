@@ -1,5 +1,7 @@
 // tldr ::: single MCP tool handler for waymark actions
 
+import type { OutfitterError } from "@outfitter/contracts";
+import { Result } from "@outfitter/contracts";
 import type { ToolContent, WaymarkToolInput } from "../types";
 import { handleAdd } from "./add";
 import { handleGraph } from "./graph";
@@ -11,12 +13,12 @@ import { handleScan } from "./scan";
  * Input is pre-validated by the framework's discriminatedUnion schema.
  * @param input - Validated tool input payload.
  * @param notifyResourceChanged - Callback to signal resource list changed.
- * @returns MCP tool result promise.
+ * @returns Result containing MCP tool result, or an OutfitterError.
  */
 export function handleWaymarkTool(
   input: WaymarkToolInput,
   notifyResourceChanged: () => void
-): Promise<ToolContent> {
+): Promise<Result<ToolContent, OutfitterError>> {
   switch (input.action) {
     case "scan":
       return handleScan(input);
@@ -25,7 +27,7 @@ export function handleWaymarkTool(
     case "add":
       return handleAdd(input, notifyResourceChanged);
     case "help":
-      return Promise.resolve(handleHelp(input));
+      return Promise.resolve(Result.ok(handleHelp(input)));
     default:
       // Exhaustive: input.action is validated by the framework's discriminatedUnion schema
       return input satisfies never;

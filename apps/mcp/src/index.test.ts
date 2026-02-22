@@ -21,16 +21,16 @@ function createNotifyTracker() {
   };
 }
 
-const TLDR_EXISTS_REGEX = /already contains a tldr waymark/u;
-const WM_ID_REGEX = /wm:/u;
-const EMPTY_ID_REGEX = /cannot be empty/u;
-const DIFFERENT_ID_REGEX = /different waymark id/u;
 const ABOUT_INSERT_LINE = 3;
 const SAMPLE_SOURCE = ["line 1", "line 2", "line 3", "line 4", "line 5"].join(
   "\n"
 );
 const TRUNCATION_LIMIT = 3;
 const EXPECTED_TRUNCATED_LINES = 4;
+const TLDR_EXISTS_REGEX = /already contains a tldr waymark/u;
+const DIFFERENT_ID_REGEX = /different waymark id/u;
+const EMPTY_ID_REGEX = /cannot be empty/u;
+const WM_ID_REGEX = /wm:/u;
 
 describe("handleAddWaymark", () => {
   test("inserts TLDR at top of file", async () => {
@@ -50,15 +50,17 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    const response = await handleAddWaymark({
+    const result = await handleAddWaymark({
       notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "tldr",
       content: "Summarizes example module export",
     });
 
+    expect(result.isOk()).toBe(true);
+    const response = result.isOk() ? result.value : null;
     expect(tracker.changes).toBe(1);
-    const payload = JSON.parse(String(response.content?.[0]?.text ?? "")) as {
+    const payload = JSON.parse(String(response?.content?.[0]?.text ?? "")) as {
       type: string;
       startLine: number;
       content: string;
@@ -92,7 +94,7 @@ describe("handleAddWaymark", () => {
 
     const signals: SignalFlags = { flagged: true };
     const tracker = createNotifyTracker();
-    const response = await handleAddWaymark({
+    const result = await handleAddWaymark({
       notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "about",
@@ -101,7 +103,9 @@ describe("handleAddWaymark", () => {
       signals,
     });
 
-    const payload = JSON.parse(String(response.content?.[0]?.text ?? "")) as {
+    expect(result.isOk()).toBe(true);
+    const response = result.isOk() ? result.value : null;
+    const payload = JSON.parse(String(response?.content?.[0]?.text ?? "")) as {
       type: string;
       startLine: number;
       content: string;
@@ -119,7 +123,7 @@ describe("handleAddWaymark", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("throws when TLDR already exists", async () => {
+  test("returns error when TLDR already exists", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-duplicate-"));
     const file = join(dir, "duplicate.ts");
     await writeFile(
@@ -129,14 +133,16 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    await expect(
-      handleAddWaymark({
-        notifyResourceChanged: tracker.notify,
-        filePath: file,
-        type: "tldr",
-        content: "another summary",
-      })
-    ).rejects.toThrow(TLDR_EXISTS_REGEX);
+    const result = await handleAddWaymark({
+      notifyResourceChanged: tracker.notify,
+      filePath: file,
+      type: "tldr",
+      content: "another summary",
+    });
+
+    expect(result.isErr()).toBe(true);
+    const errorMessage = result.isErr() ? result.error.message : "";
+    expect(errorMessage).toMatch(TLDR_EXISTS_REGEX);
 
     const updated = await readFile(file, "utf8");
     expect(updated).toContain("existing summary");
@@ -155,7 +161,7 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    const response = await handleAddWaymark({
+    const result = await handleAddWaymark({
       notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "idea",
@@ -163,7 +169,9 @@ describe("handleAddWaymark", () => {
       line: 1,
     });
 
-    const payload = JSON.parse(String(response.content?.[0]?.text ?? "")) as {
+    expect(result.isOk()).toBe(true);
+    const response = result.isOk() ? result.value : null;
+    const payload = JSON.parse(String(response?.content?.[0]?.text ?? "")) as {
       type: string;
       startLine: number;
     };
@@ -187,7 +195,7 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    await handleAddWaymark({
+    const result = await handleAddWaymark({
       notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "todo",
@@ -196,6 +204,7 @@ describe("handleAddWaymark", () => {
       id: "Auth-Refresh",
     });
 
+    expect(result.isOk()).toBe(true);
     const updated = await readFile(file, "utf8");
     const [firstLine] = updated.split("\n");
     expect(firstLine).toBe("// todo ::: add retry [[auth-refresh]]");
@@ -213,7 +222,7 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    await handleAddWaymark({
+    const result = await handleAddWaymark({
       notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "todo",
@@ -222,6 +231,7 @@ describe("handleAddWaymark", () => {
       id: "[[Auth-Refresh]]",
     });
 
+    expect(result.isOk()).toBe(true);
     const updated = await readFile(file, "utf8");
     const [firstLine] = updated.split("\n");
     expect(firstLine).toBe("// todo ::: add retry [[auth-refresh]]");
@@ -229,7 +239,7 @@ describe("handleAddWaymark", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("throws when content already contains a different id", async () => {
+  test("returns error when content already contains a different id", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-conflict-"));
     const file = join(dir, "feature.ts");
     await writeFile(
@@ -239,16 +249,18 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    await expect(
-      handleAddWaymark({
-        notifyResourceChanged: tracker.notify,
-        filePath: file,
-        type: "todo",
-        content: "add retry [[existing-id]]",
-        line: 1,
-        id: "other-id",
-      })
-    ).rejects.toThrow(DIFFERENT_ID_REGEX);
+    const result = await handleAddWaymark({
+      notifyResourceChanged: tracker.notify,
+      filePath: file,
+      type: "todo",
+      content: "add retry [[existing-id]]",
+      line: 1,
+      id: "other-id",
+    });
+
+    expect(result.isErr()).toBe(true);
+    const errorMessage = result.isErr() ? result.error.message : "";
+    expect(errorMessage).toMatch(DIFFERENT_ID_REGEX);
 
     await rm(dir, { recursive: true, force: true });
   });
@@ -263,7 +275,7 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    await handleAddWaymark({
+    const result = await handleAddWaymark({
       notifyResourceChanged: tracker.notify,
       filePath: file,
       type: "todo",
@@ -272,6 +284,7 @@ describe("handleAddWaymark", () => {
       id: "  AUTH  ",
     });
 
+    expect(result.isOk()).toBe(true);
     const updated = await readFile(file, "utf8");
     const [firstLine] = updated.split("\n");
     expect(firstLine).toBe("// todo ::: add retry [[auth]]");
@@ -279,7 +292,7 @@ describe("handleAddWaymark", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("rejects empty ids", async () => {
+  test("returns error for empty ids", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-id-empty-"));
     const file = join(dir, "feature.ts");
     await writeFile(
@@ -289,35 +302,39 @@ describe("handleAddWaymark", () => {
     );
 
     const tracker = createNotifyTracker();
-    await expect(
-      handleAddWaymark({
-        notifyResourceChanged: tracker.notify,
-        filePath: file,
-        type: "todo",
-        content: "add retry",
-        line: 1,
-        id: "   ",
-      })
-    ).rejects.toThrow(EMPTY_ID_REGEX);
+    const result = await handleAddWaymark({
+      notifyResourceChanged: tracker.notify,
+      filePath: file,
+      type: "todo",
+      content: "add retry",
+      line: 1,
+      id: "   ",
+    });
+
+    expect(result.isErr()).toBe(true);
+    const errorMessage = result.isErr() ? result.error.message : "";
+    expect(errorMessage).toMatch(EMPTY_ID_REGEX);
 
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("rejects wm ids", async () => {
+  test("returns error for wm ids", async () => {
     const dir = await mkdtemp(join(tmpdir(), "waymark-mcp-wm-"));
     const file = join(dir, "wm-id.ts");
     await writeFile(file, ["export const sample = true;"].join("\n"), "utf8");
 
     const tracker = createNotifyTracker();
-    await expect(
-      handleAddWaymark({
-        notifyResourceChanged: tracker.notify,
-        filePath: file,
-        type: "todo",
-        content: "add retry",
-        id: "wm:abc123",
-      })
-    ).rejects.toThrow(WM_ID_REGEX);
+    const result = await handleAddWaymark({
+      notifyResourceChanged: tracker.notify,
+      filePath: file,
+      type: "todo",
+      content: "add retry",
+      id: "wm:abc123",
+    });
+
+    expect(result.isErr()).toBe(true);
+    const errorMessage = result.isErr() ? result.error.message : "";
+    expect(errorMessage).toMatch(WM_ID_REGEX);
 
     await rm(dir, { recursive: true, force: true });
   });

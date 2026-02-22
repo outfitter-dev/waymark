@@ -3,6 +3,7 @@
 import { existsSync, realpathSync } from "node:fs";
 import { lstat, readdir, realpath, stat } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
+import { Result, ValidationError } from "@outfitter/contracts";
 import { Glob } from "bun";
 
 const SKIP_DIRECTORY_NAMES = new Set([
@@ -34,15 +35,16 @@ function getWorkspaceBounds(): WorkspaceBounds {
 /**
  * Expands user-supplied paths into a normalized list of files while enforcing
  * that every resolved path (including symlink targets) remains inside the
- * current workspace. Inputs that escape the workspace throw an error.
+ * current workspace. Inputs that escape the workspace produce a ValidationError.
  *
  * @param inputs - Relative or absolute paths provided to the MCP server
- * @returns A de-duplicated array of files under the workspace root
- * @throws Error when an input resolves outside the workspace
+ * @returns Result containing a de-duplicated array of files under the workspace root
  */
-export async function expandInputPaths(inputs: string[]): Promise<string[]> {
+export async function expandInputPaths(
+  inputs: string[]
+): Promise<Result<string[], ValidationError>> {
   if (inputs.length === 0) {
-    return [];
+    return Result.ok([]);
   }
 
   const bounds = getWorkspaceBounds();
@@ -52,17 +54,27 @@ export async function expandInputPaths(inputs: string[]): Promise<string[]> {
   for (const input of inputs) {
     const resolved = resolve(bounds.root, input);
     if (escapesWorkspace(resolved, bounds)) {
-      throw new Error(
-        `Input "${input}" resolves outside workspace: ${resolved}`
+      return Result.err(
+        ValidationError.fromMessage(
+          `Input "${input}" resolves outside workspace: ${resolved}`
+        )
       );
     }
 
     if (!existsSync(resolved)) {
       continue;
     }
-    await collectFilesRecursive(resolved, files, bounds, visited);
+    const collectResult = await collectFilesRecursive(
+      resolved,
+      files,
+      bounds,
+      visited
+    );
+    if (collectResult.isErr()) {
+      return Result.err(collectResult.error);
+    }
   }
-  return Array.from(files);
+  return Result.ok(Array.from(files));
 }
 
 /**
@@ -73,52 +85,75 @@ export async function expandInputPaths(inputs: string[]): Promise<string[]> {
  * @param files - Mutable set that accumulates normalized file paths
  * @param bounds - Workspace boundary information
  * @param visited - Set of resolved paths already processed to avoid cycles
+ * @returns Result representing success or a ValidationError for workspace escapes
  */
 export async function collectFilesRecursive(
   path: string,
   files: Set<string>,
   bounds: WorkspaceBounds,
   visited: Set<string>
-): Promise<void> {
-  const resolution = await resolveWithinWorkspace(path, bounds);
+): Promise<Result<void, ValidationError>> {
+  const resolutionResult = await resolveWithinWorkspace(path, bounds);
+  if (resolutionResult.isErr()) {
+    return Result.err(resolutionResult.error);
+  }
+
+  const resolution = resolutionResult.value;
   if (!resolution) {
-    return;
+    return Result.ok(undefined);
   }
 
   const { targetPath, stats } = resolution;
 
   if (visited.has(targetPath)) {
-    return;
+    return Result.ok(undefined);
   }
   visited.add(targetPath);
 
   if (stats.isFile()) {
     files.add(normalizePathForOutput(targetPath));
-    return;
+    return Result.ok(undefined);
   }
 
   if (!stats.isDirectory() || shouldSkipDirectory(targetPath)) {
-    return;
+    return Result.ok(undefined);
   }
 
   const entries = await readdir(targetPath, { withFileTypes: true });
-  await Promise.all(
-    entries.map(async (entry) => {
+  const results = await Promise.all(
+    entries.map(async (entry): Promise<Result<void, ValidationError>> => {
       const child = join(targetPath, entry.name);
       if (entry.isDirectory() || entry.isSymbolicLink()) {
         if (SKIP_DIRECTORY_NAMES.has(entry.name)) {
-          return;
+          return Result.ok(undefined);
         }
-        await collectFilesRecursive(child, files, bounds, visited);
-      } else if (entry.isFile()) {
-        const fileResolution = await resolveWithinWorkspace(child, bounds);
+        return collectFilesRecursive(child, files, bounds, visited);
+      }
+      if (entry.isFile()) {
+        const fileResolutionResult = await resolveWithinWorkspace(
+          child,
+          bounds
+        );
+        if (fileResolutionResult.isErr()) {
+          return Result.err(fileResolutionResult.error);
+        }
+        const fileResolution = fileResolutionResult.value;
         if (!fileResolution) {
-          return;
+          return Result.ok(undefined);
         }
         files.add(normalizePathForOutput(fileResolution.targetPath));
+        return Result.ok(undefined);
       }
+      return Result.ok(undefined);
     })
   );
+
+  for (const r of results) {
+    if (r.isErr()) {
+      return Result.err(r.error);
+    }
+  }
+  return Result.ok(undefined);
 }
 
 type PathResolution = {
@@ -132,13 +167,12 @@ type PathResolution = {
  *
  * @param path - The path to resolve
  * @param bounds - Workspace traversal limits
- * @returns The resolved target path with filesystem stats
- * @throws Error when the path resolves outside the workspace
+ * @returns Result containing the resolved target path with filesystem stats, or null if not found
  */
 async function resolveWithinWorkspace(
   path: string,
   bounds: WorkspaceBounds
-): Promise<PathResolution | null> {
+): Promise<Result<PathResolution | null, ValidationError>> {
   const lstatInfo = await lstat(path).catch((error) => {
     if (isEnoent(error)) {
       return null;
@@ -147,16 +181,20 @@ async function resolveWithinWorkspace(
   });
 
   if (!lstatInfo) {
-    return null;
+    return Result.ok(null);
   }
 
   // Check the nominal path first so absolute inputs outside the workspace fail.
   if (escapesWorkspace(path, bounds)) {
-    throw new Error(`Input "${path}" resolves outside workspace: ${path}`);
+    return Result.err(
+      ValidationError.fromMessage(
+        `Input "${path}" resolves outside workspace: ${path}`
+      )
+    );
   }
 
   if (!lstatInfo.isSymbolicLink()) {
-    return { targetPath: path, stats: lstatInfo };
+    return Result.ok({ targetPath: path, stats: lstatInfo });
   }
 
   const realPath = await realpath(path).catch((error) => {
@@ -167,11 +205,15 @@ async function resolveWithinWorkspace(
   });
 
   if (!realPath) {
-    return { targetPath: path, stats: lstatInfo };
+    return Result.ok({ targetPath: path, stats: lstatInfo });
   }
 
   if (escapesWorkspace(realPath, bounds)) {
-    throw new Error(`Input "${path}" resolves outside workspace: ${realPath}`);
+    return Result.err(
+      ValidationError.fromMessage(
+        `Input "${path}" resolves outside workspace: ${realPath}`
+      )
+    );
   }
 
   const targetStats = await stat(realPath).catch((error) => {
@@ -181,7 +223,7 @@ async function resolveWithinWorkspace(
     throw error;
   });
 
-  return { targetPath: realPath, stats: targetStats };
+  return Result.ok({ targetPath: realPath, stats: targetStats });
 }
 
 /**

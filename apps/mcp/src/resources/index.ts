@@ -23,12 +23,16 @@ export function registerResources(server: Server): void {
     ],
   }));
 
-  // biome-ignore lint/suspicious/useAwait: handler must return Promise per SDK contract
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const { uri } = request.params;
     if (uri === todosResourceDefinition.uri) {
-      return handleTodosResource();
+      const result = await handleTodosResource();
+      if (result.isErr()) {
+        throw new Error(result.error.message);
+      }
+      return result.value;
     }
+    // SDK boundary: unknown resource URIs are reported as protocol errors
     throw new Error(`Unknown resource: ${uri}`);
   });
 }
