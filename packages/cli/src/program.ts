@@ -1,6 +1,7 @@
 // tldr ::: waymark CLI program builder and command routing
 
 import tab from "@bomb.sh/tab/commander";
+import { createCLI } from "@outfitter/cli/command";
 import type { WaymarkConfig } from "@waymarks/core";
 import { Command, CommanderError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
@@ -111,7 +112,10 @@ function resolveGlobalOptions(program: Command): GlobalOptions {
   };
 }
 
-function resolveCommanderExitCode(error: CommanderError): ExitCode {
+function resolveCommanderExitCode(error: {
+  exitCode: number;
+  code: string;
+}): ExitCode {
   if (error.exitCode === 0) {
     return ExitCode.success;
   }
@@ -121,11 +125,48 @@ function resolveCommanderExitCode(error: CommanderError): ExitCode {
   return (error.exitCode ?? ExitCode.failure) as ExitCode;
 }
 
+// about ::: duck-type check for CommanderError since createCLI() may bundle its own Commander copy
+function isCommanderLikeError(
+  error: unknown
+): error is { exitCode: number; code: string } {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "exitCode" in error &&
+    typeof (error as { exitCode: unknown }).exitCode === "number" &&
+    "code" in error &&
+    typeof (error as { code: unknown }).code === "string" &&
+    (error as { code: string }).code.startsWith("commander.")
+  );
+}
+
+// note ::: Commander already writes help/version to stdout before throwing;
+// suppress duplicate output in runMain() and runCli() error handlers
+function isCommanderOutputError(error: unknown): boolean {
+  if (error instanceof CommanderError) {
+    return (
+      error.code === "commander.helpDisplayed" ||
+      error.code === "commander.version"
+    );
+  }
+  if (isCommanderLikeError(error)) {
+    return (
+      error.code === "commander.helpDisplayed" ||
+      error.code === "commander.version"
+    );
+  }
+  return false;
+}
+
 function resolveExitCode(error: unknown): ExitCode {
   if (error instanceof CliError) {
     return error.exitCode;
   }
   if (error instanceof CommanderError) {
+    return resolveCommanderExitCode(error);
+  }
+  // Handle CommanderError from a different Commander copy (e.g., via createCLI bundle)
+  if (isCommanderLikeError(error)) {
     return resolveCommanderExitCode(error);
   }
   // Check for @outfitter/contracts tagged errors with a category property
@@ -168,7 +209,7 @@ function resolveCommandOptions<T extends object>(command: Command): T {
 }
 
 function handleCommandError(program: Command, error: unknown): never {
-  if (error instanceof CommanderError) {
+  if (error instanceof CommanderError || isCommanderLikeError(error)) {
     throw error;
   }
   const message = resolveErrorMessage(error);
@@ -1145,9 +1186,11 @@ function buildCustomHelpFormatter() {
 }
 
 /**
-
-- Build a Commander program with all CLI commands registered.
-- @returns Configured Commander program instance.
+ * Build a CLI instance with all commands registered.
+ * Uses createCLI() from @outfitter/cli for program bootstrap, error handling,
+ * and --json env-var bridging. Returns both the CLI wrapper and the underlying
+ * Commander program for backward compatibility.
+ * @returns CLI instance and the underlying Commander program.
  */
 export async function createProgram(): Promise<Command> {
   // Read version from package.json
@@ -1160,13 +1203,38 @@ export async function createProgram(): Promise<Command> {
     shouldNotifyInNpmScript: true,
   });
 
-  const program = new Command();
-  program.exitOverride((error) => {
-    const exitCode = resolveCommanderExitCode(error);
-    process.exit(exitCode);
+  // about ::: createCLI provides: name, version, --json flag with OUTFITTER_JSON bridge,
+  // exitOverride, and structured error/exit handling via onError/onExit callbacks
+  const cli = createCLI({
+    name: "wm",
+    version,
+    description:
+      "Waymark CLI - scan, filter, format, and manage waymarks\n\n" +
+      "Quick Start:\n" +
+      "  wm [paths...]             Scan and filter waymarks (default: current directory)\n" +
+      "  wm find --graph           Show dependency graph\n" +
+      "  wm fmt <file> --write     Format waymarks in file\n" +
+      "  wm rm <file:line> --write Remove waymark from file\n" +
+      "  wm init                   Initialize waymark configuration",
+    onError: (error) => {
+      const message = resolveErrorMessage(error);
+      writeStderr(message);
+    },
+    onExit: (code) => {
+      process.exit(code);
+    },
   });
 
-  const jsonOption = new Option("--json", "Output as JSON array");
+  const program = cli.program;
+
+  // note ::: createCLI() already adds --json; configure conflicts and add --jsonl, --text
+  const existingJsonOption = program.options.find(
+    (opt) => opt.long === "--json"
+  );
+  if (existingJsonOption) {
+    existingJsonOption.conflicts("jsonl");
+    existingJsonOption.conflicts("text");
+  }
   const jsonlOption = new Option(
     "--jsonl",
     "Output as JSON Lines (newline-delimited)"
@@ -1175,25 +1243,25 @@ export async function createProgram(): Promise<Command> {
     "--text",
     "Output as human-readable formatted text"
   );
-  jsonOption.conflicts("jsonl");
-  jsonOption.conflicts("text");
   jsonlOption.conflicts("json");
   jsonlOption.conflicts("text");
   textOption.conflicts("json");
   textOption.conflicts("jsonl");
 
+  // note ::: createCLI() already calls .version() with default -V flag;
+  // patch the short flag to -v (lowercase) to match waymark convention
+  const existingVersionOption = program.options.find(
+    (opt) => opt.long === "--version"
+  );
+  if (existingVersionOption) {
+    // biome-ignore lint/suspicious/noExplicitAny: patching Commander option internals to change -V to -v
+    (existingVersionOption as any).short = "-v";
+    // biome-ignore lint/suspicious/noExplicitAny: patching Commander option internals for display
+    (existingVersionOption as any).flags = "-v, --version";
+    existingVersionOption.description = "output the current version";
+  }
+
   program
-    .name("wm")
-    .description(
-      "Waymark CLI - scan, filter, format, and manage waymarks\n\n" +
-        "Quick Start:\n" +
-        "  wm [paths...]             Scan and filter waymarks (default: current directory)\n" +
-        "  wm find --graph           Show dependency graph\n" +
-        "  wm fmt <file> --write     Format waymarks in file\n" +
-        "  wm rm <file:line> --write Remove waymark from file\n" +
-        "  wm init                   Initialize waymark configuration"
-    )
-    .version(version, "--version, -v", "output the current version")
     .helpOption("--help, -h", "display help for command")
     .addHelpCommand(false) // Disable default help command, we'll add custom one
     .configureHelp({
@@ -1211,7 +1279,6 @@ export async function createProgram(): Promise<Command> {
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
-    .addOption(jsonOption)
     .addOption(jsonlOption)
     .addOption(textOption)
     .option("--no-color", "disable ANSI colors")
@@ -1281,18 +1348,21 @@ Note: For agent-facing documentation, use "wm skill".
 }
 
 /**
-
-- Run the CLI using process.argv when invoked as a script. Exits the process with appropriate exit code.
-- @returns No return value; process exits after execution.
+ * Run the CLI using process.argv when invoked as a script.
+ * Exits the process with appropriate exit code.
+ * @returns No return value; process exits after execution.
  */
 export function runMain(): void {
   registerSignalHandlers();
   createProgram()
     .then((program) => program.parseAsync(process.argv))
     .catch((error) => {
-      const message = resolveErrorMessage(error);
       const exitCode = resolveExitCode(error);
-      writeStderr(message);
+      // note ::: Commander already printed help/version to stdout; don't echo again
+      if (!isCommanderOutputError(error)) {
+        const message = resolveErrorMessage(error);
+        writeStderr(message);
+      }
       process.exit(exitCode);
     });
 }
