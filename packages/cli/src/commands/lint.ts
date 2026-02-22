@@ -1,7 +1,12 @@
 // tldr ::: lint command helpers for waymark CLI
 
 import { readFile } from "node:fs/promises";
-import { InternalError, Result } from "@outfitter/contracts";
+import {
+  type AnyKitError,
+  InternalError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import {
   isValidType,
   parse,
@@ -402,7 +407,7 @@ export function parseLintArgs(argv: string[]): LintCommandOptions {
   const json = argv.includes("--json");
   const filePaths = argv.filter((arg) => !arg.startsWith("-"));
   if (filePaths.length === 0) {
-    throw new Error("lint requires at least one file path");
+    throw ValidationError.fromMessage("lint requires at least one file path");
   }
   return { filePaths, json };
 }
@@ -418,13 +423,17 @@ export function lintFiles(
   filePaths: string[],
   allowTypes: string[],
   config: WaymarkConfig
-): Promise<Result<LintReport, InternalError>> {
+): Promise<Result<LintReport, AnyKitError>> {
   return Result.tryPromise({
     try: () => lintFilesInner(filePaths, allowTypes, config),
-    catch: (cause) =>
-      new InternalError({
-        message: `Lint failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Lint failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 

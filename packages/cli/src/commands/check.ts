@@ -1,7 +1,7 @@
 // tldr ::: cross-file content integrity validation for waymarks
 
 import { ANSI } from "@outfitter/cli/colors";
-import { InternalError, Result } from "@outfitter/contracts";
+import { type AnyKitError, InternalError, Result } from "@outfitter/contracts";
 import { parse, type WaymarkRecord } from "@waymarks/core";
 import type { CommandContext } from "../types.ts";
 import { expandInputPaths } from "../utils/fs.ts";
@@ -332,13 +332,17 @@ async function parseFiles(
 export function runCheckCommand(
   context: CommandContext,
   options: CheckCommandOptions
-): Promise<Result<CheckReport, InternalError>> {
+): Promise<Result<CheckReport, AnyKitError>> {
   return Result.tryPromise({
     try: () => runCheckCommandInner(context, options),
-    catch: (cause) =>
-      new InternalError({
-        message: `Check failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Check failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 

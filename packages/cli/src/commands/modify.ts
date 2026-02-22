@@ -149,11 +149,9 @@ async function runModifyCommandInner(
   const snapshot = await loadWaymarkSnapshot(target);
   const originalFirstLine = snapshot.lines[snapshot.lineIndex];
   if (!originalFirstLine) {
-    throw NotFoundError.create(
-      "line",
-      String(snapshot.lineIndex + 1),
-      { file: target.file }
-    );
+    throw NotFoundError.create("line", String(snapshot.lineIndex + 1), {
+      file: target.file,
+    });
   }
   const originalContent = extractFirstLineContent(originalFirstLine);
   const existingId = extractTrailingId(originalContent);
@@ -285,10 +283,7 @@ async function loadWaymarkSnapshot(target: ModifyTarget): Promise<Snapshot> {
   const records = parse(fileContent, { file: target.file });
   const record = records.find((entry) => entry.startLine === target.line);
   if (!record) {
-    throw NotFoundError.create(
-      "waymark",
-      `${target.file}:${target.line}`
-    );
+    throw NotFoundError.create("waymark", `${target.file}:${target.line}`);
   }
   const lineIndex = record.startLine - 1;
   return {
@@ -475,9 +470,7 @@ async function resolveTarget(
   idOption?: string
 ): Promise<ModifyTarget> {
   if (targetArg && idOption) {
-    throw ValidationError.fromMessage(
-      "Cannot specify both file:line and --id"
-    );
+    throw ValidationError.fromMessage("Cannot specify both file:line and --id");
   }
   if (!(targetArg || idOption)) {
     throw ValidationError.fromMessage(

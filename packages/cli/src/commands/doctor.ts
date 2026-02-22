@@ -5,7 +5,7 @@ import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { ANSI } from "@outfitter/cli/colors";
-import { InternalError, Result } from "@outfitter/contracts";
+import { type AnyKitError, InternalError, Result } from "@outfitter/contracts";
 import type { CommandContext } from "../types";
 import { logger } from "../utils/logger";
 import { wrap } from "../utils/theme";
@@ -63,13 +63,17 @@ export type DoctorCommandOptions = {
 export function runDoctorCommand(
   context: CommandContext,
   options: DoctorCommandOptions
-): Promise<Result<DoctorReport, InternalError>> {
+): Promise<Result<DoctorReport, AnyKitError>> {
   return Result.tryPromise({
     try: () => runDoctorCommandInner(context, options),
-    catch: (cause) =>
-      new InternalError({
-        message: `Doctor diagnostics failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Doctor diagnostics failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 

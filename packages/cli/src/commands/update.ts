@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { sep } from "node:path";
 
-import { InternalError, Result } from "@outfitter/contracts";
+import { type AnyKitError, InternalError, Result } from "@outfitter/contracts";
 import { logger } from "../utils/logger.ts";
 import { confirm } from "../utils/prompts.ts";
 
@@ -205,13 +205,17 @@ async function confirmUpdateCommand(
  */
 export function runUpdateCommand(
   options: UpdateCommandOptions = {}
-): Promise<Result<UpdateCommandResult, InternalError>> {
+): Promise<Result<UpdateCommandResult, AnyKitError>> {
   return Result.tryPromise({
     try: () => runUpdateCommandInner(options),
-    catch: (cause) =>
-      new InternalError({
-        message: `Update failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Update failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -266,7 +270,7 @@ async function runUpdateCommandInner(
 
   const childExitCode = await runChild(command, NPM_UPDATE_ARGS);
   if (childExitCode !== 0) {
-    throw new Error(`npm install exited with code ${childExitCode}`);
+    throw InternalError.create(`npm install exited with code ${childExitCode}`);
   }
 
   return {

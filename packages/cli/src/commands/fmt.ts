@@ -2,7 +2,12 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 
-import { InternalError, Result } from "@outfitter/contracts";
+import {
+  type AnyKitError,
+  InternalError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import type { FormatResult, WaymarkConfig } from "@waymarks/core";
 import { formatText } from "@waymarks/core";
 
@@ -26,13 +31,17 @@ const IGNORE_FILE_MARKER_PATTERN =
 export function formatFile(
   options: { filePath: string; write: boolean },
   context: CommandContext
-): Promise<Result<FormatResult, InternalError>> {
+): Promise<Result<FormatResult, AnyKitError>> {
   return Result.tryPromise({
     try: () => formatFileInner(options, context),
-    catch: (cause) =>
-      new InternalError({
-        message: `Format failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Format failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -102,16 +111,20 @@ async function filterFilesWithWaymarks(paths: string[]): Promise<string[]> {
 export function expandFormatPaths(
   inputs: string[],
   config: WaymarkConfig
-): Promise<Result<string[], InternalError>> {
+): Promise<Result<string[], AnyKitError>> {
   return Result.tryPromise({
     try: async () => {
       const expanded = await expandInputPaths(inputs, config);
       return await filterFilesWithWaymarks(expanded);
     },
-    catch: (cause) =>
-      new InternalError({
-        message: `Path expansion failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Path expansion failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -122,7 +135,7 @@ export function expandFormatPaths(
  */
 export function parseFormatArgs(argv: string[]): FormatCommandOptions {
   if (argv.length === 0) {
-    throw new Error("fmt requires at least one file path");
+    throw ValidationError.fromMessage("fmt requires at least one file path");
   }
 
   const yes = argv.includes("--yes") || argv.includes("-y");
@@ -130,7 +143,7 @@ export function parseFormatArgs(argv: string[]): FormatCommandOptions {
   const filePaths = remaining.filter((path) => path.length > 0);
 
   if (filePaths.length === 0) {
-    throw new Error("fmt requires at least one file path");
+    throw ValidationError.fromMessage("fmt requires at least one file path");
   }
 
   return {

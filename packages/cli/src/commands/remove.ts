@@ -2,7 +2,12 @@
 
 import { readFile } from "node:fs/promises";
 
-import { InternalError, Result } from "@outfitter/contracts";
+import {
+  type AnyKitError,
+  InternalError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import {
   type RemovalResult,
   type RemovalSpec,
@@ -179,7 +184,7 @@ function finalizeRemoveState(state: RemoveParseState): ParsedRemoveArgs {
 
   if (state.from) {
     if (state.positional.length > 0 || state.ids.length > 0) {
-      throw new Error(
+      throw ValidationError.fromMessage(
         "Cannot combine --from with positional arguments or --id"
       );
     }
@@ -201,7 +206,7 @@ function finalizeRemoveState(state: RemoveParseState): ParsedRemoveArgs {
   }
 
   if (specs.length === 0) {
-    throw new Error("No removal targets provided");
+    throw ValidationError.fromMessage("No removal targets provided");
   }
 
   return { specs, options };
@@ -276,13 +281,17 @@ export function runRemoveCommand(
   parsed: ParsedRemoveArgs,
   context: CommandContext,
   execution: { writeOverride?: boolean } = {}
-): Promise<Result<RemoveCommandResult, InternalError>> {
+): Promise<Result<RemoveCommandResult, AnyKitError>> {
   return Result.tryPromise({
     try: () => runRemoveCommandInner(parsed, context, execution),
-    catch: (cause) =>
-      new InternalError({
-        message: `Remove failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Remove failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -449,7 +458,7 @@ function parseRemovalPayload(parsed: unknown): LoadedRemovePayload {
     return { specs: [RemovalSpecSchema.parse(parsed)] };
   }
 
-  throw new Error(
+  throw ValidationError.fromMessage(
     "Invalid JSON: expected RemovalSpec, RemovalSpec[], or { removals: RemovalSpec[] }"
   );
 }
@@ -464,7 +473,7 @@ async function loadSpecsFromSource(path: string): Promise<LoadedRemovePayload> {
   } catch (error) {
     if (error instanceof ZodError) {
       logZodValidationErrors(error);
-      throw new Error("JSON validation failed");
+      throw ValidationError.fromMessage("JSON validation failed");
     }
     throw error;
   }
