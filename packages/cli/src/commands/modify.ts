@@ -1,7 +1,6 @@
 // tldr ::: edit command implementation for wm CLI
 
 import { readFile, writeFile } from "node:fs/promises";
-import { promptConfirm, promptSelect, promptText } from "@outfitter/cli/prompt";
 import { InternalError, Result } from "@outfitter/contracts";
 import {
   fingerprintContent,
@@ -12,8 +11,12 @@ import {
   type WaymarkConfig,
   type WaymarkRecord,
 } from "@waymarks/core";
-
 import type { CommandContext } from "../types.ts";
+import {
+  promptConfirm,
+  promptSelect,
+  promptText,
+} from "../utils/clack-prompts.ts";
 import { parseFileLineTarget } from "../utils/file-line.ts";
 import { logger } from "../utils/logger.ts";
 import { assertPromptAllowed } from "../utils/prompts.ts";

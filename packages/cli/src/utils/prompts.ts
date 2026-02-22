@@ -1,9 +1,9 @@
 // tldr ::: interactive prompts using @outfitter/cli for CLI confirmations and selection
 
-import { promptConfirm, promptSelect } from "@outfitter/cli/prompt";
 import type { WaymarkRecord } from "@waymarks/grammar";
 import { CliError } from "../errors.ts";
 import { ExitCode } from "../exit-codes.ts";
+import { promptConfirm, promptSelect } from "./clack-prompts.ts";
 import { canPrompt } from "./terminal.ts";
 
 type PromptBlockReason = "no-input" | "no-tty" | undefined;
