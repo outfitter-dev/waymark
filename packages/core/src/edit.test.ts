@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 
 import {
   DEFAULT_CONFIG,
+  type EditOptions,
   editWaymark,
   fingerprintContent,
   fingerprintContext,
@@ -46,7 +47,11 @@ describe("editWaymark", () => {
       DEFAULT_CONFIG
     );
 
-    expect(result.after.type).toBe("fix");
+    expect(result.isOk()).toBe(true);
+    if (!result.isOk()) {
+      return;
+    }
+    expect(result.value.after.type).toBe("fix");
     const contents = await readFile(filePath, "utf8");
     expect(contents).toContain("// fix ::: handle auth");
   });
@@ -70,7 +75,11 @@ describe("editWaymark", () => {
       DEFAULT_CONFIG
     );
 
-    expect(result.after.raw).toContain("[[test123]]");
+    expect(result.isOk()).toBe(true);
+    if (!result.isOk()) {
+      return;
+    }
+    expect(result.value.after.raw).toContain("[[test123]]");
     const contents = await readFile(filePath, "utf8");
     expect(contents).toContain("add retry budget [[test123]]");
   });
@@ -98,7 +107,11 @@ describe("editWaymark", () => {
       DEFAULT_CONFIG
     );
 
-    expect(result.after.raw).toContain("[[test999]]");
+    expect(result.isOk()).toBe(true);
+    if (!result.isOk()) {
+      return;
+    }
+    expect(result.value.after.raw).toContain("[[test999]]");
     const contents = await readFile(filePath, "utf8");
     expect(contents).toContain("add retry budget [[test999]]");
   });
@@ -108,18 +121,20 @@ describe("editWaymark", () => {
     await ensureDir(dirname(filePath));
     await writeFile(filePath, "// todo ::: audit\n", "utf8");
 
-    await editWaymark(
+    const flagResult = await editWaymark(
       { file: filePath, line: 1, flagged: true, starred: true, write: true },
       DEFAULT_CONFIG
     );
+    expect(flagResult.isOk()).toBe(true);
 
     let contents = await readFile(filePath, "utf8");
     expect(contents).toContain("// ~*todo ::: audit");
 
-    await editWaymark(
+    const clearResult = await editWaymark(
       { file: filePath, line: 1, clearSignals: true, write: true },
       DEFAULT_CONFIG
     );
+    expect(clearResult.isOk()).toBe(true);
 
     contents = await readFile(filePath, "utf8");
     expect(contents).toContain("// todo ::: audit");
@@ -146,7 +161,7 @@ describe("editWaymark", () => {
       updatedAt: Date.now(),
     });
 
-    await editWaymark(
+    const result = await editWaymark(
       {
         id: "[[abc123]]",
         content: "implement OAuth + PKCE",
@@ -155,6 +170,7 @@ describe("editWaymark", () => {
       },
       DEFAULT_CONFIG
     );
+    expect(result.isOk()).toBe(true);
 
     const refreshed = await index.get("[[abc123]]");
     expect(refreshed?.content).toBe("implement OAuth + PKCE [[abc123]]");
@@ -173,8 +189,37 @@ describe("editWaymark", () => {
       DEFAULT_CONFIG
     );
 
-    expect(result.written).toBe(false);
+    expect(result.isOk()).toBe(true);
+    if (!result.isOk()) {
+      return;
+    }
+    expect(result.value.written).toBe(false);
     const contents = await readFile(filePath, "utf8");
     expect(contents).toContain("// todo ::: preview");
+  });
+
+  it("returns error for missing file", async () => {
+    const filePath = join(workspace, "nonexistent/file.ts");
+
+    const result = await editWaymark(
+      { file: filePath, line: 1, type: "fix" },
+      DEFAULT_CONFIG
+    );
+
+    expect(result.isErr()).toBe(true);
+    if (!result.isErr()) {
+      return;
+    }
+    expect(result.error._tag).toBe("NotFoundError");
+  });
+
+  it("returns error for invalid edit spec", async () => {
+    const result = await editWaymark({} as EditOptions, DEFAULT_CONFIG);
+
+    expect(result.isErr()).toBe(true);
+    if (!result.isErr()) {
+      return;
+    }
+    expect(result.error._tag).toBe("ValidationError");
   });
 });
