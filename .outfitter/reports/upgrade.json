@@ -1,0 +1,69 @@
+{
+  "$schema": "https://outfitter.dev/reports/upgrade/v1",
+  "status": "cancelled",
+  "checkedAt": "2026-02-22T01:20:08.370Z",
+  "startedAt": "2026-02-22T01:20:07.798Z",
+  "finishedAt": "2026-02-22T01:20:08.370Z",
+  "cwd": "/Users/mg/Developer/outfitter/waymark",
+  "workspaceRoot": "/Users/mg/Developer/outfitter/waymark",
+  "flags": {
+    "dryRun": false,
+    "yes": false,
+    "interactive": true,
+    "all": false,
+    "noCodemods": false,
+    "outputMode": "human"
+  },
+  "applied": false,
+  "summary": {
+    "total": 5,
+    "available": 5,
+    "breaking": 4,
+    "applied": 0
+  },
+  "packages": [
+    {
+      "name": "@outfitter/cli",
+      "current": "0.3.0",
+      "latest": "0.5.2",
+      "updateAvailable": true,
+      "breaking": true
+    },
+    {
+      "name": "@outfitter/config",
+      "current": "0.3.0",
+      "latest": "0.3.3",
+      "updateAvailable": true,
+      "breaking": false
+    },
+    {
+      "name": "@outfitter/contracts",
+      "current": "0.2.0",
+      "latest": "0.4.1",
+      "updateAvailable": true,
+      "breaking": true
+    },
+    {
+      "name": "@outfitter/logging",
+      "current": "0.3.0",
+      "latest": "0.4.1",
+      "updateAvailable": true,
+      "breaking": true
+    },
+    {
+      "name": "@outfitter/mcp",
+      "current": "0.3.0",
+      "latest": "0.4.2",
+      "updateAvailable": true,
+      "breaking": true
+    }
+  ],
+  "excluded": {
+    "breaking": [
+      "@outfitter/cli",
+      "@outfitter/contracts",
+      "@outfitter/logging",
+      "@outfitter/mcp"
+    ]
+  }
+}

@@ -4,10 +4,10 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import { promptSelect } from "@outfitter/cli/prompt";
 import { InternalError, Result } from "@outfitter/contracts";
 import { CliError } from "../errors.ts";
 import { ExitCode } from "../exit-codes.ts";
+import { promptSelect } from "../utils/clack-prompts.ts";
 import { logger } from "../utils/logger.ts";
 import { assertPromptAllowed } from "../utils/prompts.ts";
 
