@@ -1,8 +1,7 @@
 // tldr ::: config command helpers for printing resolved settings [[cli/config-print]]
 
-import type { WaymarkConfig } from "@waymarks/core";
-
 import { ValidationError } from "@outfitter/contracts";
+import type { WaymarkConfig } from "@waymarks/core";
 import type { CommandContext } from "../types.ts";
 
 export type ConfigCommandOptions = {

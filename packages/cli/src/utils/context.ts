@@ -1,8 +1,8 @@
 // tldr ::: context creation helpers for waymark CLI commands
 
+import { InternalError } from "@outfitter/contracts";
 import type { WaymarkConfig } from "@waymarks/core";
 import { loadConfigFromDisk } from "@waymarks/core";
-import { InternalError } from "@outfitter/contracts";
 import type { CommandContext, GlobalOptions } from "../types.ts";
 import { resolveWorkspaceRoot } from "./workspace.ts";
 

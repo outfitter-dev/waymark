@@ -9,43 +9,43 @@ Quick Start:
   wm init                   Initialize waymark configuration
 
 Global Options:
-  --version, -v                 output the current version
-  --no-input                    fail if interactive input required
-  --scope <scope>, -s           config scope (default|project|user) (choices: "default", "project", "user", default: "default")
-  --config <path>               load additional config file (JSON/YAML/TOML)
+-v, --version                            output the current version
+--no-input                               Disable interactive prompts (alias)
+--scope <scope>, -s                      config scope (default|project|user) (choices: "default", "project", "user", default: "default")
+--config <path>                          load additional config file (JSON/YAML/TOML)
 
 
 Logging:
-  --verbose                     enable verbose logging (info level)
-  --debug                       enable debug logging
-  --quiet, -q                   only show errors
+--verbose                                enable verbose logging (info level)
+--debug                                  enable debug logging
+--quiet, -q                              only show errors
 
 
 Output Formats:
-  --json                        Output as JSON array
-  --jsonl                       Output as JSON Lines (newline-delimited)
-  --text                        Output as human-readable formatted text
+--json                                   Output as JSON (default: false)
+--jsonl                                  Output as JSON Lines (newline-delimited)
+--text                                   Output as human-readable formatted text
 
 
 Color:
-  --no-color                    disable ANSI colors
+--color [mode]                           Color output mode (auto, always, never) (default: "auto")
+--no-color                               Disable color output
 
 
 Commands:
-  find                          scan and filter waymarks in files or directories
-  add                           add waymarks into files
-  edit                          edit existing waymarks
-  rm                            remove waymarks from files
-  fmt                           format and normalize waymark syntax in files
-  lint                          validate waymark structure and enforce quality rules
-  init                          initialize waymark configuration
-  config                        print resolved configuration
-  skill                         show agent-facing skill documentation
-  doctor                        run health checks and diagnostics
-  completions|complete          Generate shell completion scripts
-  update                        check for and install CLI updates (npm global installs)
-  help                          display help for command
+find                                     scan and filter waymarks in files or directories
+add                                      add waymarks into files
+edit                                     edit existing waymarks
+rm                                       remove waymarks from files
+check                                    validate cross-file content integrity
+init                                     initialize waymark configuration
+config                                   print resolved configuration
+skill                                    show agent-facing skill documentation
+doctor                                   check tool and environment health
+completions|complete                     Generate shell completion scripts
+update                                   check for and install CLI updates (npm global installs)
+help                                     display help for command
 
 
 Topics:
-  Run 'wm help <topic>' for syntax guides (syntax, tldr, todo, signals, tags)
+Run 'wm help <topic>' for syntax guides (syntax, tldr, todo, signals, tags)

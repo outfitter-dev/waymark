@@ -2,6 +2,14 @@
 
 import tab from "@bomb.sh/tab/commander";
 import { createCLI } from "@outfitter/cli/command";
+import { colorPreset, interactionPreset } from "@outfitter/cli/flags";
+import {
+  type AnyKitError,
+  type ErrorCategory,
+  getExitCode,
+  InternalError,
+  ValidationError,
+} from "@outfitter/contracts";
 import type { WaymarkConfig } from "@waymarks/core";
 import { type Command, CommanderError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
@@ -56,13 +64,6 @@ import {
   runUpdateCommand,
   type UpdateCommandOptions,
 } from "./commands/update.ts";
-import {
-  type AnyKitError,
-  type ErrorCategory,
-  InternalError,
-  ValidationError,
-  getExitCode,
-} from "@outfitter/contracts";
 import type {
   CommandContext,
   GlobalOptions,
@@ -97,6 +98,16 @@ function shouldEnableSpinner(options: {
     return false;
   }
   return Boolean(process.stderr.isTTY);
+}
+
+// about ::: resolves --color/--no-color preset output to a noColor boolean for spinner/terminal helpers
+function resolveNoColorFromOpts(opts: Record<string, unknown>): boolean {
+  const colorValue = opts.color;
+  // colorPreset resolves color to "auto"|"always"|"never"; Commander negation sets it to false
+  if (colorValue === false || colorValue === "never") {
+    return true;
+  }
+  return false;
 }
 
 function resolveGlobalOptions(program: Command): GlobalOptions {
@@ -178,9 +189,7 @@ function resolveExitCode(error: unknown): number {
     "category" in error &&
     typeof (error as { category: unknown }).category === "string"
   ) {
-    return getExitCode(
-      (error as { category: ErrorCategory }).category,
-    );
+    return getExitCode((error as { category: ErrorCategory }).category);
   }
   if (
     error &&
@@ -253,7 +262,7 @@ function registerSignalHandlers(): void {
  * Bridges Result-returning core functions to the throw-based CLI error flow.
  */
 async function runCommand<T>(
-  fn: () => Promise<import("@outfitter/contracts").Result<T, AnyKitError>>,
+  fn: () => Promise<import("@outfitter/contracts").Result<T, AnyKitError>>
 ): Promise<T> {
   const result = await fn();
   if (result.isErr()) {
@@ -319,7 +328,7 @@ async function handleLintCommand(
       structuredOutput: Boolean(options.json),
     }),
     text: "Linting waymarks...",
-    noColor: Boolean(programOpts.noColor),
+    noColor: resolveNoColorFromOpts(programOpts),
   });
 
   spinner.start();
@@ -560,7 +569,9 @@ async function handleModifyCommand(
   rawOptions: ModifyCliOptions
 ): Promise<void> {
   if (rawOptions.json && rawOptions.jsonl) {
-    throw ValidationError.fromMessage("--json and --jsonl cannot be used together");
+    throw ValidationError.fromMessage(
+      "--json and --jsonl cannot be used together"
+    );
   }
 
   const interactiveOverride = determineInteractiveOverride(
@@ -727,7 +738,6 @@ const BOOLEAN_OPTION_FLAGS = [
   { key: "tree", flag: "--tree" },
   { key: "flat", flag: "--flat" },
   { key: "compact", flag: "--compact" },
-  { key: "noColor", flag: "--no-color" },
 ] as const;
 
 const STRING_OPTION_FLAGS = [
@@ -755,6 +765,20 @@ function collectOptionValues(value: unknown): string[] {
   return [String(value)];
 }
 
+// note ::: negatable flags that map to --no-<flag> when their condition is met
+function appendNegatableArgs(
+  args: string[],
+  options: Record<string, unknown>
+): void {
+  if (options.wrap === false) {
+    args.push("--no-wrap");
+  }
+  // color preset: --no-color when color is "never" or false (Commander negation)
+  if (options.color === "never" || options.color === false) {
+    args.push("--no-color");
+  }
+}
+
 function buildArgsFromOptions(
   paths: string[],
   options: Record<string, unknown>
@@ -774,10 +798,7 @@ function buildArgsFromOptions(
     }
   }
 
-  // Handle negatable flags explicitly
-  if (options.wrap === false) {
-    args.push("--no-wrap");
-  }
+  appendNegatableArgs(args, options);
 
   for (const { key, flag } of STRING_OPTION_FLAGS) {
     const value = options[key];
@@ -844,7 +865,7 @@ async function handleDoctorCommand(
       structuredOutput: Boolean(options.json || programOpts.json),
     }),
     text: "Running diagnostics...",
-    noColor: Boolean(programOpts.noColor),
+    noColor: resolveNoColorFromOpts(programOpts),
   });
 
   spinner.start();
@@ -883,7 +904,7 @@ async function handleCheckCommand(
       structuredOutput: Boolean(options.json || programOpts.json),
     }),
     text: "Checking content integrity...",
-    noColor: Boolean(programOpts.noColor),
+    noColor: resolveNoColorFromOpts(programOpts),
   });
 
   spinner.start();
@@ -1091,7 +1112,7 @@ const ROOT_OPTION_SECTIONS: OptionSection[] = [
   },
   {
     title: "Color",
-    longs: ["--no-color"],
+    longs: ["--color", "--no-color"],
   },
 ];
 
@@ -1301,13 +1322,11 @@ export async function createProgram(): Promise<Command> {
     .option("--config <path>", "load additional config file (JSON/YAML/TOML)")
     .option("--cache", "use scan cache for faster repeated runs")
     .option("--include-ignored", "include waymarks inside wm:ignore fences")
-    .option("--no-input", "fail if interactive input required")
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
     .addOption(jsonlOption)
     .addOption(textOption)
-    .option("--no-color", "disable ANSI colors")
     .addHelpText(
       "afterAll",
       `
@@ -1326,7 +1345,8 @@ Note: For agent-facing documentation, use "wm skill".
     .hook("preAction", (thisCommand) => {
       // Configure logger based on flags
       const opts = thisCommand.opts();
-      setPromptPolicy({ noInput: Boolean(opts.noInput) });
+      const resolvedInteraction = interactionPreset().resolve(opts);
+      setPromptPolicy({ noInput: !resolvedInteraction.interactive });
       if (opts.debug) {
         logger.level = "debug";
       } else if (opts.verbose) {
@@ -1335,6 +1355,26 @@ Note: For agent-facing documentation, use "wm skill".
         logger.level = "error";
       }
     });
+
+  // note ::: apply flag presets to program — interactionPreset adds --non-interactive/--no-input/-y/--yes,
+  // colorPreset adds --color [mode]/--no-color; register after other options to preserve option order
+  const interactionOpts = interactionPreset().options;
+  const colorOpts = colorPreset().options;
+
+  // hide options that are aliases or internal — we surface only the canonical flags in help sections
+  const hiddenInteractionFlags = new Set(["--non-interactive", "-y, --yes"]);
+
+  for (const opt of [...interactionOpts, ...colorOpts]) {
+    if (opt.required === true) {
+      program.requiredOption(opt.flags, opt.description, opt.defaultValue);
+    } else {
+      program.option(opt.flags, opt.description, opt.defaultValue);
+    }
+    if (hiddenInteractionFlags.has(opt.flags)) {
+      const added = program.options.find((o) => o.flags === opt.flags);
+      added?.hideHelp();
+    }
+  }
 
   registerCommands(program, {
     handleCommandError,
