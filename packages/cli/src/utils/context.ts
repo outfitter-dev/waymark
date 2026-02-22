@@ -2,7 +2,7 @@
 
 import type { WaymarkConfig } from "@waymarks/core";
 import { loadConfigFromDisk } from "@waymarks/core";
-import { createConfigError } from "../errors.ts";
+import { InternalError } from "@outfitter/contracts";
 import type { CommandContext, GlobalOptions } from "../types.ts";
 import { resolveWorkspaceRoot } from "./workspace.ts";
 
@@ -25,7 +25,7 @@ export async function createContext(
   const result = await loadConfigFromDisk(loadOptions);
 
   if (result.isErr()) {
-    throw createConfigError(result.error.message);
+    throw InternalError.create(result.error.message);
   }
 
   let config: WaymarkConfig = result.value;

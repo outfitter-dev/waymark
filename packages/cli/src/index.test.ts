@@ -19,7 +19,7 @@ import {
 } from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
-import { ExitCode } from "./exit-codes";
+import { getExitCode } from "@outfitter/contracts";
 import { runCli } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";
@@ -1302,7 +1302,7 @@ describe("Commander integration", () => {
 
   test("unknown option returns a usage error exit code", async () => {
     const result = await runCliCaptured(["find", "--definitely-not-a-flag"]);
-    expect(result.exitCode).toBe(ExitCode.usageError);
+    expect(result.exitCode).toBe(getExitCode("validation"));
   });
 
   test("no-input fails when format requires confirmation", async () => {
@@ -1315,7 +1315,7 @@ describe("Commander integration", () => {
         "--write",
         "--no-input",
       ]);
-      expect(result.exitCode).toBe(ExitCode.usageError);
+      expect(result.exitCode).toBe(getExitCode("validation"));
     } finally {
       await cleanup();
     }

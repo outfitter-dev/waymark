@@ -4,9 +4,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import { InternalError, Result } from "@outfitter/contracts";
-import { CliError } from "../errors.ts";
-import { ExitCode } from "../exit-codes.ts";
+import { CancelledError, InternalError, Result } from "@outfitter/contracts";
 import { promptSelect } from "../utils/clack-prompts.ts";
 import { logger } from "../utils/logger.ts";
 import { assertPromptAllowed } from "../utils/prompts.ts";
@@ -71,7 +69,7 @@ async function runInitCommandInner(
       initialValue: "yaml" as ConfigFormat,
     });
     if (formatResult.isErr()) {
-      throw new CliError("Init cancelled", ExitCode.usageError);
+      throw CancelledError.create("Init cancelled");
     }
     format = formatResult.value;
 
@@ -81,7 +79,7 @@ async function runInitCommandInner(
       initialValue: "full" as ConfigPreset,
     });
     if (presetResult.isErr()) {
-      throw new CliError("Init cancelled", ExitCode.usageError);
+      throw CancelledError.create("Init cancelled");
     }
     preset = presetResult.value;
 
@@ -91,7 +89,7 @@ async function runInitCommandInner(
       initialValue: "project" as ConfigScope,
     });
     if (scopeResult.isErr()) {
-      throw new CliError("Init cancelled", ExitCode.usageError);
+      throw CancelledError.create("Init cancelled");
     }
     scope = scopeResult.value;
 

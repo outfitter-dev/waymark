@@ -2,8 +2,7 @@
 
 import type { WaymarkConfig } from "@waymarks/core";
 
-import { createUsageError } from "../errors.ts";
-import { ExitCode } from "../exit-codes.ts";
+import { ValidationError } from "@outfitter/contracts";
 import type { CommandContext } from "../types.ts";
 
 export type ConfigCommandOptions = {
@@ -37,7 +36,7 @@ export function runConfigCommand(
   options: ConfigCommandOptions = {}
 ): ConfigCommandResult {
   if (!options.print) {
-    throw createUsageError("Config command requires --print.");
+    throw ValidationError.fromMessage("Config command requires --print.");
   }
 
   const output = serializeConfig(context.config, {
@@ -46,6 +45,6 @@ export function runConfigCommand(
 
   return {
     output,
-    exitCode: ExitCode.success,
+    exitCode: 0,
   };
 }
