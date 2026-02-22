@@ -4,7 +4,13 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import { CancelledError, InternalError, Result } from "@outfitter/contracts";
+import {
+  type AnyKitError,
+  CancelledError,
+  InternalError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import { promptSelect } from "../utils/clack-prompts.ts";
 import { logger } from "../utils/logger.ts";
 import { assertPromptAllowed } from "../utils/prompts.ts";
@@ -31,13 +37,17 @@ const CONFIG_SCOPES: ConfigScope[] = ["project", "user"];
  */
 export function runInitCommand(
   options: InitCommandOptions = {}
-): Promise<Result<void, InternalError>> {
+): Promise<Result<void, AnyKitError>> {
   return Result.tryPromise({
     try: () => runInitCommandInner(options),
-    catch: (cause) =>
-      new InternalError({
-        message: `Init failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Init failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -101,7 +111,7 @@ async function runInitCommandInner(
 
   // Check if config already exists
   if (existsSync(configPath) && !force) {
-    throw new Error(
+    throw ValidationError.fromMessage(
       `Config already exists at ${configPath}\nUse --force to overwrite`
     );
   }
@@ -136,8 +146,9 @@ async function runInitCommandInner(
 
 function validateFormat(format: string): ConfigFormat {
   if (!CONFIG_FORMATS.includes(format as ConfigFormat)) {
-    throw new Error(
-      `Invalid format "${format}". Use one of: ${CONFIG_FORMATS.join(", ")}`
+    throw ValidationError.create(
+      "format",
+      `"${format}" is invalid. Use one of: ${CONFIG_FORMATS.join(", ")}`
     );
   }
   return format as ConfigFormat;
@@ -145,8 +156,9 @@ function validateFormat(format: string): ConfigFormat {
 
 function validatePreset(preset: string): ConfigPreset {
   if (!CONFIG_PRESETS.includes(preset as ConfigPreset)) {
-    throw new Error(
-      `Invalid preset "${preset}". Use one of: ${CONFIG_PRESETS.join(", ")}`
+    throw ValidationError.create(
+      "preset",
+      `"${preset}" is invalid. Use one of: ${CONFIG_PRESETS.join(", ")}`
     );
   }
   return preset as ConfigPreset;
@@ -154,8 +166,9 @@ function validatePreset(preset: string): ConfigPreset {
 
 function validateScope(scope: string): ConfigScope {
   if (!CONFIG_SCOPES.includes(scope as ConfigScope)) {
-    throw new Error(
-      `Invalid scope "${scope}". Use one of: ${CONFIG_SCOPES.join(", ")}`
+    throw ValidationError.create(
+      "scope",
+      `"${scope}" is invalid. Use one of: ${CONFIG_SCOPES.join(", ")}`
     );
   }
   return scope as ConfigScope;

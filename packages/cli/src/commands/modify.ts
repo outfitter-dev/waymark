@@ -1,7 +1,13 @@
 // tldr ::: edit command implementation for wm CLI
 
 import { readFile, writeFile } from "node:fs/promises";
-import { InternalError, Result } from "@outfitter/contracts";
+import {
+  type AnyKitError,
+  InternalError,
+  NotFoundError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import {
   fingerprintContent,
   fingerprintContext,
@@ -119,13 +125,17 @@ export function runModifyCommand(
   targetArg: string | undefined,
   options: ModifyOptions,
   io: ModifyIo = DEFAULT_IO
-): Promise<Result<ModifyCommandResult, InternalError>> {
+): Promise<Result<ModifyCommandResult, AnyKitError>> {
   return Result.tryPromise({
     try: () => runModifyCommandInner(context, targetArg, options, io),
-    catch: (cause) =>
-      new InternalError({
-        message: `Modify failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Modify failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -139,7 +149,9 @@ async function runModifyCommandInner(
   const snapshot = await loadWaymarkSnapshot(target);
   const originalFirstLine = snapshot.lines[snapshot.lineIndex];
   if (!originalFirstLine) {
-    throw new Error(`Line ${snapshot.lineIndex + 1} not found in file`);
+    throw NotFoundError.create("line", String(snapshot.lineIndex + 1), {
+      file: target.file,
+    });
   }
   const originalContent = extractFirstLineContent(originalFirstLine);
   const existingId = extractTrailingId(originalContent);
@@ -271,7 +283,7 @@ async function loadWaymarkSnapshot(target: ModifyTarget): Promise<Snapshot> {
   const records = parse(fileContent, { file: target.file });
   const record = records.find((entry) => entry.startLine === target.line);
   if (!record) {
-    throw new Error(`No waymark found at ${target.file}:${target.line}`);
+    throw NotFoundError.create("waymark", `${target.file}:${target.line}`);
   }
   const lineIndex = record.startLine - 1;
   return {
@@ -346,7 +358,7 @@ function determineType(current: string, requested?: string): string {
   }
   const trimmed = requested.trim();
   if (!trimmed) {
-    throw new Error("Waymark type cannot be empty");
+    throw ValidationError.create("type", "cannot be empty");
   }
   return trimmed;
 }
@@ -458,10 +470,12 @@ async function resolveTarget(
   idOption?: string
 ): Promise<ModifyTarget> {
   if (targetArg && idOption) {
-    throw new Error("Cannot specify both file:line and --id");
+    throw ValidationError.fromMessage("Cannot specify both file:line and --id");
   }
   if (!(targetArg || idOption)) {
-    throw new Error("Must provide a target (file:line) or --id");
+    throw ValidationError.fromMessage(
+      "Must provide a target (file:line) or --id"
+    );
   }
 
   if (idOption) {
@@ -469,7 +483,9 @@ async function resolveTarget(
   }
 
   if (!targetArg) {
-    throw new Error("Target argument is required when --id is not provided");
+    throw ValidationError.fromMessage(
+      "Target argument is required when --id is not provided"
+    );
   }
 
   return parseFileLineTarget(targetArg, {
@@ -486,7 +502,7 @@ async function resolveTargetFromId(
   const index = new JsonIdIndex({ workspaceRoot });
   const entry = await index.get(normalized);
   if (!entry) {
-    throw new Error(`Waymark ID ${normalized} not found in index`);
+    throw NotFoundError.create("waymark ID", normalized);
   }
   return {
     file: entry.file,
@@ -678,7 +694,7 @@ function ensureModificationsSpecified(options: ModifyOptions): void {
   const hasContent = options.content !== undefined;
 
   if (!(hasType || hasSignals || hasContent)) {
-    throw new Error(
+    throw ValidationError.fromMessage(
       "No modifications specified. Use --type, --flagged, --starred, --clear-signals, --content, or run without arguments for interactive prompts."
     );
   }

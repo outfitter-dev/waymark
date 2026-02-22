@@ -2,7 +2,12 @@
 
 import { readFile } from "node:fs/promises";
 
-import { InternalError, Result } from "@outfitter/contracts";
+import {
+  type AnyKitError,
+  InternalError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import {
   type InsertionResult,
   type InsertionSpec,
@@ -128,16 +133,22 @@ function assertAddOptionConflicts(
   contentArg?: string
 ): void {
   if (options.position && (options.before || options.after)) {
-    throw new Error("Use --position or --before/--after (not both).");
+    throw ValidationError.fromMessage(
+      "Use --position or --before/--after (not both)."
+    );
   }
   if (options.before && options.after) {
-    throw new Error("Cannot combine --before and --after.");
+    throw ValidationError.fromMessage("Cannot combine --before and --after.");
   }
   if (options.type && typeArg) {
-    throw new Error("Cannot combine --type with positional <type>.");
+    throw ValidationError.fromMessage(
+      "Cannot combine --type with positional <type>."
+    );
   }
   if (options.content && contentArg) {
-    throw new Error("Cannot combine --content with positional <content>.");
+    throw ValidationError.fromMessage(
+      "Cannot combine --content with positional <content>."
+    );
   }
 }
 
@@ -192,7 +203,7 @@ function assertValidPosition(
   value: string
 ): asserts value is "before" | "after" {
   if (value !== "before" && value !== "after") {
-    throw new Error("--position must be 'before' or 'after'");
+    throw ValidationError.create("position", "must be 'before' or 'after'");
   }
 }
 
@@ -230,7 +241,7 @@ function applyOrderAndId(
   if (options.order !== undefined && options.order !== null) {
     const parsedOrder = Number.parseInt(String(options.order), 10);
     if (!Number.isFinite(parsedOrder)) {
-      throw new Error("--order expects an integer");
+      throw ValidationError.create("order", "expects an integer");
     }
     state.order = parsedOrder;
   }
@@ -263,7 +274,7 @@ function validateFromMode(state: InsertParseState): void {
     state.id !== undefined;
 
   if (hasInlineData) {
-    throw new Error(
+    throw ValidationError.fromMessage(
       "Positional and inline flags cannot be combined with --from"
     );
   }
@@ -275,13 +286,18 @@ function ensureRequiredFields(state: InsertParseState): {
   content: string;
 } {
   if (!state.fileLine) {
-    throw new Error("add requires a FILE:LINE positional argument");
+    throw ValidationError.fromMessage(
+      "add requires a FILE:LINE positional argument"
+    );
   }
   if (!state.type) {
-    throw new Error("--type is required when not using --from");
+    throw ValidationError.create("type", "is required when not using --from");
   }
   if (!state.content) {
-    throw new Error("--content is required when not using --from");
+    throw ValidationError.create(
+      "content",
+      "is required when not using --from"
+    );
   }
   return {
     fileLine: state.fileLine,
@@ -358,13 +374,17 @@ export type AddCommandResult = {
 export function runAddCommand(
   parsed: ParsedAddArgs,
   context: CommandContext
-): Promise<Result<AddCommandResult, InternalError>> {
+): Promise<Result<AddCommandResult, AnyKitError>> {
   return Result.tryPromise({
     try: () => runAddCommandInner(parsed, context),
-    catch: (cause) =>
-      new InternalError({
-        message: `Add failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Add failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -377,7 +397,7 @@ async function runAddCommandInner(
     : parsed.specs;
 
   if (specs.length === 0) {
-    throw new Error("No insertions provided");
+    throw ValidationError.fromMessage("No insertions provided");
   }
 
   const idManager = parsed.options.write
@@ -423,7 +443,7 @@ async function loadSpecsFromSource(path: string): Promise<InsertionSpec[]> {
         const issuePath = issue.path.length > 0 ? issue.path.join(".") : "root";
         logger.error(`  - ${issuePath}: ${issue.message}`);
       }
-      throw new Error("JSON validation failed");
+      throw ValidationError.fromMessage("JSON validation failed");
     }
     throw error;
   }
@@ -442,7 +462,7 @@ function normalizeInsertionSpecs(parsed: unknown): unknown {
     return [parsed];
   }
 
-  throw new Error(
+  throw ValidationError.fromMessage(
     "Invalid JSON: expected InsertionSpec, InsertionSpec[], or { insertions: InsertionSpec[] }"
   );
 }

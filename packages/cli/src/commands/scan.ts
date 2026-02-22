@@ -2,7 +2,12 @@
 
 import { readFile, stat } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
-import { InternalError, Result } from "@outfitter/contracts";
+import {
+  type AnyKitError,
+  InternalError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import {
   canHaveWaymarks,
   parse,
@@ -119,13 +124,17 @@ export function scanRecords(
   filePaths: string[],
   config: WaymarkConfig,
   options: ScanRuntimeOptions = {}
-): Promise<Result<WaymarkRecord[], InternalError>> {
+): Promise<Result<WaymarkRecord[], AnyKitError>> {
   return Result.tryPromise({
     try: () => scanRecordsInner(filePaths, config, options),
-    catch: (cause) =>
-      new InternalError({
-        message: `Scan failed: ${cause instanceof Error ? cause.message : String(cause)}`,
-      }),
+    catch: (cause) => {
+      if (cause instanceof Error && "category" in cause) {
+        return cause as AnyKitError;
+      }
+      return InternalError.create(
+        `Scan failed: ${cause instanceof Error ? cause.message : String(cause)}`
+      );
+    },
   });
 }
 
@@ -241,7 +250,7 @@ function createCache(options: ScanRuntimeOptions): WaymarkCache | undefined {
  */
 export function parseScanArgs(argv: string[]): ParsedScanArgs {
   if (argv.length === 0) {
-    throw new Error("scan requires a file path");
+    throw ValidationError.fromMessage("scan requires a file path");
   }
 
   let format: ScanOutputFormat = "text";
@@ -259,10 +268,10 @@ export function parseScanArgs(argv: string[]): ParsedScanArgs {
     if (arg.startsWith("--")) {
       const nextFormat = formatFlags[arg];
       if (!nextFormat) {
-        throw new Error(`Unknown flag for scan: ${arg}`);
+        throw ValidationError.fromMessage(`Unknown flag for scan: ${arg}`);
       }
       if (formatSet) {
-        throw new Error("scan accepts only one format flag");
+        throw ValidationError.fromMessage("scan accepts only one format flag");
       }
       format = nextFormat;
       formatSet = true;
@@ -272,7 +281,7 @@ export function parseScanArgs(argv: string[]): ParsedScanArgs {
   }
 
   if (positional.length === 0) {
-    throw new Error("scan requires a file path");
+    throw ValidationError.fromMessage("scan requires a file path");
   }
 
   return { filePaths: positional, format };
