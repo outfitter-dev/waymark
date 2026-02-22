@@ -1,9 +1,9 @@
-wm find [options] [paths...]
+Usage: wm find [options] [paths...]
+
 scan and filter waymarks in files or directories
 
 Arguments:
   paths                                   files or directories to scan
-
 
 Options:
   --type <types...>, -t                   filter by waymark type(s)
@@ -27,4 +27,4 @@ Options:
   --page <n>                              page number (with --limit)
   --interactive                           interactively select a waymark
   --pretty                                output as pretty-printed JSON
-  --help, -h                              display help for command
+  -h, --help                              display help for command

@@ -1,7 +1,7 @@
 // tldr ::: commander command registration for waymark CLI
 
-import { Command, InvalidArgumentError } from "commander";
 import { ValidationError } from "@outfitter/contracts";
+import { Command, InvalidArgumentError } from "commander";
 import type { ModifyCliOptions } from "../types.ts";
 import { parsePropertyEntry } from "../utils/properties.ts";
 import type { CheckCommandOptions } from "./check.ts";
@@ -135,7 +135,9 @@ export function registerCommands(
         if (helpTopicNames.length > 0) {
           writeStdout(`Available topics: ${helpTopicNames.join(", ")}`);
         }
-        throw ValidationError.fromMessage(`Unknown command or topic: ${commandName}`);
+        throw ValidationError.fromMessage(
+          `Unknown command or topic: ${commandName}`
+        );
       } catch (error) {
         handleCommandError(program, error);
       }

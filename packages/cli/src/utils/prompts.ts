@@ -1,7 +1,7 @@
 // tldr ::: interactive prompts using @outfitter/cli for CLI confirmations and selection
 
-import type { WaymarkRecord } from "@waymarks/grammar";
 import { CancelledError, ValidationError } from "@outfitter/contracts";
+import type { WaymarkRecord } from "@waymarks/grammar";
 import { promptConfirm, promptSelect } from "./clack-prompts.ts";
 import { canPrompt } from "./terminal.ts";
 
@@ -53,9 +53,7 @@ export function assertPromptAllowed(action: string): void {
       ? "because --no-input was specified"
       : "because the terminal is not interactive";
 
-  throw ValidationError.fromMessage(
-    `Cannot prompt for ${action} ${details}.`,
-  );
+  throw ValidationError.fromMessage(`Cannot prompt for ${action} ${details}.`);
 }
 
 export type ConfirmOptions = {

@@ -4,7 +4,7 @@ import { describe, expect, spyOn, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Result } from "@outfitter/contracts";
+import { getExitCode, Result } from "@outfitter/contracts";
 import { resolveConfig } from "@waymarks/core";
 import type { Command } from "commander";
 import { findRecords } from "./commands/find";
@@ -19,7 +19,6 @@ import {
 } from "./commands/unified/index";
 import { parseUnifiedArgs } from "./commands/unified/parser";
 import type { UnifiedCommandOptions } from "./commands/unified/types";
-import { getExitCode } from "@outfitter/contracts";
 import { runCli } from "./index";
 import type { CommandContext } from "./types";
 import { renderRecords } from "./utils/output";

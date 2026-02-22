@@ -1,7 +1,8 @@
-wm config [options]
+Usage: wm config [options]
+
 print resolved configuration
 
 Options:
   --print     print merged configuration (default: false)
   --json      output compact JSON (default: false)
-  --help, -h  display help for command
+  -h, --help  display help for command
