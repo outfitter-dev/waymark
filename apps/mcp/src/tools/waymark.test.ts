@@ -11,21 +11,25 @@ const noopNotify = () => {
 
 describe("handleWaymarkTool", () => {
   test("returns help text", async () => {
-    const response = await handleWaymarkTool(
+    const result = await handleWaymarkTool(
       { action: "help" } as WaymarkToolInput,
       noopNotify
     );
-    const text = String(response.content?.[0]?.text ?? "");
+    expect(result.isOk()).toBe(true);
+    const response = result.isOk() ? result.value : null;
+    const text = String(response?.content?.[0]?.text ?? "");
     expect(text).toContain("Waymark MCP Tool");
     expect(text).toContain("scan");
   });
 
   test("returns topic-specific help", async () => {
-    const response = await handleWaymarkTool(
+    const result = await handleWaymarkTool(
       { action: "help", topic: "scan" } as WaymarkToolInput,
       noopNotify
     );
-    const text = String(response.content?.[0]?.text ?? "");
+    expect(result.isOk()).toBe(true);
+    const response = result.isOk() ? result.value : null;
+    const text = String(response?.content?.[0]?.text ?? "");
     expect(text).toContain("Action: scan");
   });
 });

@@ -43,10 +43,12 @@ describe("handleTodosResource", () => {
         ].join("\n")
       );
 
-      const response = await withWorkspace(workspace, () =>
+      const result = await withWorkspace(workspace, () =>
         handleTodosResource()
       );
-      const text = String(response.contents?.[0]?.text ?? "");
+      expect(result.isOk()).toBe(true);
+      const response = result.isOk() ? result.value : null;
+      const text = String(response?.contents?.[0]?.text ?? "");
       const payload = JSON.parse(text) as {
         todos: Array<{ content: string }>;
         truncated: boolean;
@@ -71,10 +73,12 @@ describe("handleTodosResource", () => {
       );
       await writeFixture(join(workspace, "src", "many.ts"), lines.join("\n"));
 
-      const response = await withWorkspace(workspace, () =>
+      const result = await withWorkspace(workspace, () =>
         handleTodosResource()
       );
-      const text = String(response.contents?.[0]?.text ?? "");
+      expect(result.isOk()).toBe(true);
+      const response = result.isOk() ? result.value : null;
+      const text = String(response?.contents?.[0]?.text ?? "");
       const payload = JSON.parse(text) as {
         todos: Array<{ content: string }>;
         truncated: boolean;

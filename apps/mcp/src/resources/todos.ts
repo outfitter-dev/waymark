@@ -1,6 +1,8 @@
 // tldr ::: todos resource handler for waymark MCP server
 
 import { readFile } from "node:fs/promises";
+import type { OutfitterError } from "@outfitter/contracts";
+import { InternalError, Result } from "@outfitter/contracts";
 import { parse, type WaymarkRecord } from "@waymarks/core";
 import { MARKERS } from "@waymarks/grammar";
 import { TODOS_RESOURCE_URI } from "../types";
@@ -14,12 +16,22 @@ import {
 export const MAX_TODOS_CONCURRENCY = 8;
 export const MAX_TODOS_RESULTS = 2000;
 
+type TodosResourceContents = {
+  contents: Array<{ uri: string; mimeType: string; text: string }>;
+};
+
 /**
  * Handle the todos resource request.
- * @returns MCP resource response with todo records.
+ * @returns Result containing MCP resource response with todo records, or an OutfitterError.
  */
-export async function handleTodosResource() {
-  const { records, truncated } = await collectRecords(["."], {});
+export async function handleTodosResource(): Promise<
+  Result<TodosResourceContents, OutfitterError>
+> {
+  const collectResult = await collectRecords(["."], {});
+  if (collectResult.isErr()) {
+    return Result.err(collectResult.error);
+  }
+  const { records, truncated } = collectResult.value;
   const todos = records.map((record) => ({
     file: record.file,
     line: record.startLine,
@@ -27,7 +39,7 @@ export async function handleTodosResource() {
     raw: record.raw,
   }));
 
-  return {
+  return Result.ok({
     contents: [
       {
         uri: TODOS_RESOURCE_URI,
@@ -35,16 +47,22 @@ export async function handleTodosResource() {
         text: JSON.stringify({ todos, truncated }, null, 2),
       },
     ],
-  };
+  });
 }
 
 async function collectRecords(
   inputs: string[],
   options: { configPath?: string; scope?: string }
-): Promise<{ records: WaymarkRecord[]; truncated: boolean }> {
-  let filePaths = await expandInputPaths(inputs);
+): Promise<
+  Result<{ records: WaymarkRecord[]; truncated: boolean }, OutfitterError>
+> {
+  const expandResult = await expandInputPaths(inputs);
+  if (expandResult.isErr()) {
+    return Result.err(expandResult.error);
+  }
+  let filePaths = expandResult.value;
   if (filePaths.length === 0) {
-    return { records: [], truncated: false };
+    return Result.ok({ records: [], truncated: false });
   }
 
   const configResult = await loadConfig({
@@ -52,8 +70,10 @@ async function collectRecords(
     ...(options.configPath ? { configPath: options.configPath } : {}),
   });
   if (configResult.isErr()) {
-    throw new Error(
-      `Failed to load config: ${configResult.error instanceof Error ? configResult.error.message : String(configResult.error)}`
+    return Result.err(
+      InternalError.create(
+        `Failed to load config: ${configResult.error instanceof Error ? configResult.error.message : String(configResult.error)}`
+      )
     );
   }
   const config = configResult.value;
@@ -92,7 +112,7 @@ async function collectRecords(
     records.push(...todos);
   });
 
-  return { records, truncated };
+  return Result.ok({ records, truncated });
 }
 
 export const todosResourceDefinition = {

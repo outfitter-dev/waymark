@@ -3,6 +3,13 @@
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import type { OutfitterError } from "@outfitter/contracts";
+import {
+  InternalError,
+  NotFoundError,
+  Result,
+  ValidationError,
+} from "@outfitter/contracts";
 import type { ConfigScope, WaymarkRecord } from "@waymarks/core";
 import { formatText, parse } from "@waymarks/core";
 import { MARKERS } from "@waymarks/grammar";
@@ -81,23 +88,37 @@ type InsertWaymarkResult = {
 /**
  * Handle the add action for the MCP tool.
  * @param input - Raw tool input payload.
- * @param server - MCP server interface for notifications.
- * @returns MCP tool result with insertion payload.
+ * @param notifyResourceChanged - Callback invoked after a successful write.
+ * @returns Result containing MCP tool result with insertion payload, or an OutfitterError.
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential MCP input handling with necessary branching
 export async function handleAdd(
   input: unknown,
   notifyResourceChanged: () => void
-): Promise<ToolContent> {
-  const params = addWaymarkInputSchema.parse(input);
+): Promise<Result<ToolContent, OutfitterError>> {
+  const parseResult = addWaymarkInputSchema.safeParse(input);
+  if (!parseResult.success) {
+    return Result.err(ValidationError.fromMessage(parseResult.error.message));
+  }
+  const params = parseResult.data;
   const { filePath, type, content, line, signals, id, configPath, scope } =
     params;
-  const normalizedId = id ? normalizeWaymarkId(id) : undefined;
-  const normalizedContent = applyIdToContent(content, normalizedId);
+  const normalizedIdResult = id
+    ? normalizeWaymarkId(id)
+    : Result.ok<string | undefined>(undefined);
+  if (normalizedIdResult.isErr()) {
+    return Result.err(normalizedIdResult.error);
+  }
+  const normalizedId = normalizedIdResult.value;
+  const normalizedContentResult = applyIdToContent(content, normalizedId);
+  if (normalizedContentResult.isErr()) {
+    return Result.err(normalizedContentResult.error);
+  }
+  const normalizedContent = normalizedContentResult.value;
 
   const absolutePath = resolve(process.cwd(), filePath);
   if (!existsSync(absolutePath)) {
-    throw new Error(`File not found: ${filePath}`);
+    return Result.err(NotFoundError.create("file", filePath));
   }
 
   const normalizedPath = normalizePathForOutput(absolutePath);
@@ -106,8 +127,10 @@ export async function handleAdd(
     ...(configPath ? { configPath } : {}),
   });
   if (configResult.isErr()) {
-    throw new Error(
-      `Failed to load config: ${configResult.error instanceof Error ? configResult.error.message : String(configResult.error)}`
+    return Result.err(
+      InternalError.create(
+        `Failed to load config: ${configResult.error instanceof Error ? configResult.error.message : String(configResult.error)}`
+      )
     );
   }
   const config = configResult.value;
@@ -121,11 +144,15 @@ export async function handleAdd(
     markerLower === MARKERS.tldr &&
     existingRecords.some((record) => record.type.toLowerCase() === MARKERS.tldr)
   ) {
-    throw new Error(`File ${filePath} already contains a tldr waymark.`);
+    return Result.err(
+      ValidationError.fromMessage(
+        `File ${filePath} already contains a tldr waymark.`
+      )
+    );
   }
 
   const commentStyle = resolveCommentStyle(absolutePath, existingRecords);
-  const insertion = _addWaymark({
+  const insertionResult = _addWaymark({
     source: originalSource,
     type,
     content: normalizedContent,
@@ -135,6 +162,10 @@ export async function handleAdd(
     ...(signals ? { signals } : {}),
     markerLower,
   });
+  if (insertionResult.isErr()) {
+    return Result.err(insertionResult.error);
+  }
+  const insertion = insertionResult.value;
 
   const formatted = formatText(insertion.text, {
     file: normalizedPath,
@@ -155,17 +186,21 @@ export async function handleAdd(
 
   notifyResourceChanged();
 
-  return toJsonResponse({
-    filePath: normalizedPath,
-    type: insertedRecord?.type ?? type,
-    startLine: insertedRecord?.startLine ?? insertion.lineNumber,
-    endLine: insertedRecord?.endLine ?? insertion.lineNumber,
-    content: insertedRecord?.contentText ?? normalizedContent,
-    signals: insertedRecord?.signals,
-  });
+  return Result.ok(
+    toJsonResponse({
+      filePath: normalizedPath,
+      type: insertedRecord?.type ?? type,
+      startLine: insertedRecord?.startLine ?? insertion.lineNumber,
+      endLine: insertedRecord?.endLine ?? insertion.lineNumber,
+      content: insertedRecord?.contentText ?? normalizedContent,
+      signals: insertedRecord?.signals,
+    })
+  );
 }
 
-function _addWaymark(params: InsertWaymarkParams): InsertWaymarkResult {
+function _addWaymark(
+  params: InsertWaymarkParams
+): Result<InsertWaymarkResult, ValidationError> {
   const {
     source,
     type,
@@ -188,7 +223,11 @@ function _addWaymark(params: InsertWaymarkParams): InsertWaymarkResult {
     const zeroBased = Math.max(0, line - 1);
     insertIndex = Math.min(zeroBased, lines.length);
   } else if (markerLower === MARKERS.about) {
-    throw new Error("line is required when inserting an `about` waymark");
+    return Result.err(
+      ValidationError.fromMessage(
+        "line is required when inserting an `about` waymark"
+      )
+    );
   }
 
   const indentString =
@@ -213,10 +252,10 @@ function _addWaymark(params: InsertWaymarkParams): InsertWaymarkResult {
     updatedText += newline;
   }
 
-  return {
+  return Result.ok({
     text: updatedText,
     lineNumber: insertIndex + 1,
-  };
+  });
 }
 
 function renderWaymarkLine(params: {
@@ -346,60 +385,77 @@ function toJsonResponse(value: unknown): ToolContent {
   };
 }
 
-function normalizeWaymarkId(id: string): string {
+function normalizeWaymarkId(id: string): Result<string, ValidationError> {
   const trimmed = id.trim();
   if (trimmed.length === 0) {
-    throw new Error("Waymark id cannot be empty.");
+    return Result.err(
+      ValidationError.fromMessage("Waymark id cannot be empty.")
+    );
   }
   const lower = trimmed.toLowerCase();
   if (lower.startsWith(WM_ID_PREFIX)) {
-    throw new Error(
-      "wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+    return Result.err(
+      ValidationError.fromMessage(
+        "wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+      )
     );
   }
   if (trimmed.startsWith("[[") && trimmed.endsWith("]]")) {
     const inner = trimmed.slice(2, -2).trim();
     if (inner.length === 0) {
-      throw new Error(`Invalid waymark id format: ${id}`);
+      return Result.err(
+        ValidationError.fromMessage(`Invalid waymark id format: ${id}`)
+      );
     }
     const normalizedInner = inner.toLowerCase();
     if (normalizedInner.startsWith(WM_ID_PREFIX)) {
-      throw new Error(
-        "wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+      return Result.err(
+        ValidationError.fromMessage(
+          "wm: ids are not supported. Use [[hash]] or [[hash|alias]]."
+        )
       );
     }
-    return `[[${normalizedInner}]]`;
+    return Result.ok(`[[${normalizedInner}]]`);
   }
-  return `[[${lower}]]`;
+  return Result.ok(`[[${lower}]]`);
 }
 
-function applyIdToContent(content: string, id?: string): string {
+function applyIdToContent(
+  content: string,
+  id?: string
+): Result<string, ValidationError> {
   const trimmed = content.trim();
   if (!id) {
-    return trimmed;
+    return Result.ok(trimmed);
   }
 
   const match = trimmed.match(ID_TRAIL_REGEX);
   const existingId = match?.[1];
   if (existingId) {
-    const normalizedExisting = normalizeWaymarkId(existingId);
+    const normalizedExistingResult = normalizeWaymarkId(existingId);
+    if (normalizedExistingResult.isErr()) {
+      return Result.err(normalizedExistingResult.error);
+    }
+    const normalizedExisting = normalizedExistingResult.value;
     if (normalizedExisting !== id) {
-      throw new Error(
-        `Content already contains a different waymark id: ${existingId}`
+      return Result.err(
+        ValidationError.fromMessage(
+          `Content already contains a different waymark id: ${existingId}`
+        )
       );
     }
     const base = trimmed.replace(ID_TRAIL_REGEX, "").trimEnd();
-    return base.length > 0
-      ? `${base} ${normalizedExisting}`
-      : normalizedExisting;
+    return Result.ok(
+      base.length > 0 ? `${base} ${normalizedExisting}` : normalizedExisting
+    );
   }
-  return trimmed.length > 0 ? `${trimmed} ${id}` : id;
+  return Result.ok(trimmed.length > 0 ? `${trimmed} ${id}` : id);
 }
 
 /**
  * Wrapper to invoke the add tool handler in tests.
  * @param params - The add waymark parameters including file path, type, content, and server context.
- * @returns A promise resolving to the call tool result.
+ * @returns A promise resolving to Result containing the tool content or an OutfitterError.
  */
 export function handleAddWaymark(params: {
   filePath: string;
@@ -411,6 +467,6 @@ export function handleAddWaymark(params: {
   configPath?: string | undefined;
   scope?: ConfigScope | undefined;
   notifyResourceChanged: () => void;
-}): Promise<ToolContent> {
+}): Promise<Result<ToolContent, OutfitterError>> {
   return handleAdd(params, params.notifyResourceChanged);
 }

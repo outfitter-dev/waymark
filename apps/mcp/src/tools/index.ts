@@ -1,9 +1,7 @@
 // tldr ::: tool registry for waymark MCP server
 
-import { Result } from "@outfitter/contracts";
 import type { McpServer } from "@outfitter/mcp";
 import { defineTool } from "@outfitter/mcp";
-import type { ToolContent } from "../types";
 import { waymarkToolInputSchema } from "../types";
 import { handleWaymarkTool, waymarkToolDescription } from "./waymark";
 
@@ -21,10 +19,7 @@ export function registerTools(
       name: "waymark",
       description: waymarkToolDescription,
       inputSchema: waymarkToolInputSchema,
-      handler: async (input, _ctx) => {
-        const result = await handleWaymarkTool(input, notifyResourceChanged);
-        return Result.ok(result) as Result<ToolContent, never>;
-      },
+      handler: (input, _ctx) => handleWaymarkTool(input, notifyResourceChanged),
     })
   );
 }
