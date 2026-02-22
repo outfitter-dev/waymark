@@ -8,6 +8,7 @@ import type { CheckCommandOptions } from "./check.ts";
 import type { ConfigCommandOptions } from "./config.ts";
 import type { DoctorCommandOptions } from "./doctor.ts";
 import { getTopicHelp, helpTopicNames } from "./help/index.ts";
+import type { SeedCommandOptions } from "./seed.ts";
 import type { SkillCommandOptions } from "./skill.ts";
 
 const POSITION_ERROR = "--position must be 'before' or 'after'";
@@ -69,13 +70,19 @@ type CommandHandlers = {
     paths: string[],
     options: Record<string, unknown>
   ) => Promise<void>;
+  handleSeedCommand: (
+    program: Command,
+    paths: string[],
+    options: SeedCommandOptions
+  ) => Promise<void>;
   writeStdout: (message: string) => void;
 };
 
 /**
- * Register CLI commands and handlers on the commander program.
- * @param program - Commander program instance.
- * @param handlers - Handler callbacks for each command.
+
+- Register CLI commands and handlers on the commander program.
+- @param program - Commander program instance.
+- @param handlers - Handler callbacks for each command.
  */
 export function registerCommands(
   program: Command,
@@ -98,6 +105,7 @@ export function registerCommands(
     handleDoctorCommand,
     handleCheckCommand,
     handleUnifiedCommand,
+    handleSeedCommand,
     writeStdout,
   } = handlers;
 
@@ -150,14 +158,16 @@ Examples:
   $ wm fmt src/ --yes                  # Format all files in directory
 
 Notes:
-  - Files beginning with a \`waymark-ignore-file\` comment are skipped
+
+- Files beginning with a \`waymark-ignore-file\` comment are skipped
 
 Formatting Rules:
-  - Exactly one space before and after ::: sigil
-  - Marker case normalized (default: lowercase)
-  - Multi-line continuations aligned to parent :::
-  - Property ordering: relations after free text
-  - Signal order: ~ before * when combined
+
+- Exactly one space before and after ::: sigil
+- Marker case normalized (default: lowercase)
+- Multi-line continuations aligned to parent :::
+- Property ordering: relations after free text
+- Signal order: ~ before * when combined
 
 Before Formatting:
   //todo:::implement auth
@@ -255,7 +265,8 @@ Examples:
 
 Signals:
   ~  Flagged (in-progress work, clear before merging)
-  *  Starred (high priority, important)
+
+- Starred (high priority, important)
 
 Types:
   Work:       todo, fix, wip, done, review, test, check
@@ -316,11 +327,12 @@ Examples:
   $ wm edit --no-interactive                          # Skip prompts if default interactive would trigger
 
 Notes:
-  - Provide either FILE:LINE or --id (not both)
-  - Preview is default; add --write to apply
-  - --content '-' reads replacement text from stdin (like wm add)
-  - Running without arguments launches interactive mode automatically
-  - Use --no-interactive to print the preview without prompts
+
+- Provide either FILE:LINE or --id (not both)
+- Preview is default; add --write to apply
+- --content '-' reads replacement text from stdin (like wm add)
+- Running without arguments launches interactive mode automatically
+- Use --no-interactive to print the preview without prompts
       `
     )
     .action(async function (
@@ -381,6 +393,7 @@ Notes:
       "after",
       `
 Removal Methods:
+
   1. By Location:     wm rm src/auth.ts:42
   2. By ID:           wm rm --id [[a3k9m2p]]
   3. By Filter:       wm rm --type todo --mention @agent --file src/
@@ -406,10 +419,11 @@ Filter Flags:
   --starred             Match starred waymarks (important/valuable)
 
 Safety Features:
-  - Default mode is preview (shows what would be removed)
-  - --write flag required for actual removal
-  - Multi-line waymarks removed atomically
-  - Removed waymarks tracked in .waymark/history.json (with optional --reason)
+
+- Default mode is preview (shows what would be removed)
+- --write flag required for actual removal
+- Multi-line waymarks removed atomically
+- Removed waymarks tracked in .waymark/history.json (with optional --reason)
 
 See 'wm skill show rm' for agent-facing documentation.
     `
@@ -487,7 +501,7 @@ See 'wm skill show lint' for agent-facing documentation.
 
   program.addCommand(lintCommand, { hidden: true });
 
-  // Init command
+  // Init command with seed subcommand
   const initCommand = new Command("init")
     .option("--format <format>, -f", "config format (yaml|yml)", "yaml")
     .option("--preset <preset>, -p", "config preset (full|minimal)", "full")
@@ -502,6 +516,44 @@ See 'wm skill show lint' for agent-facing documentation.
       }
     });
 
+  // Seed subcommand - discover TLDR candidates from docstrings and codetags
+  const seedSubcommand = new Command("seed")
+    .argument("[paths...]", "files or directories to scan")
+    .option("--docstrings", "find candidates from docstrings (default)")
+    .option("--codetags", "find candidates from codetags (TODO/FIXME/etc)")
+    .option("--all", "find candidates from both docstrings and codetags")
+    .option("--json", "output as JSON")
+    .option("--jsonl", "output as JSON Lines")
+    .description(
+      "discover TLDR candidates from existing docstrings and codetags"
+    )
+    .addHelpText(
+      "after",
+      `
+Examples:
+  $ wm init seed src/                   # Find docstring candidates
+  $ wm init seed src/ --codetags        # Find codetag candidates
+  $ wm init seed src/ --all             # Find all candidates
+  $ wm init seed src/ --json            # JSON output for agents
+
+Output:
+  Lists files that have docstrings or codetags but no TLDR waymark.
+  Agents can use this output to prioritize and write TLDRs via 'wm add'.
+
+Note:
+  This command does not write files. Use 'wm add' to insert TLDRs.
+  The candidate content is a starting point - agents should apply judgment.
+    `
+    )
+    .action(async (paths: string[], options: SeedCommandOptions) => {
+      try {
+        await handleSeedCommand(program, paths, options);
+      } catch (error) {
+        handleCommandError(program, error);
+      }
+    });
+
+  initCommand.addCommand(seedSubcommand);
   program.addCommand(initCommand);
 
   const configCommand = new Command("config")
@@ -619,8 +671,9 @@ Health Checks:
     - Ignore patterns working correctly
 
 Auto-Fix Support (--fix):
-  - Rebuild corrupted cache/index files
-  - Clear stale cache entries
+
+- Rebuild corrupted cache/index files
+- Clear stale cache entries
 
 Exit Codes:
   0  No errors (warnings only if not --strict)
