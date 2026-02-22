@@ -144,10 +144,12 @@ available programmatically via `@waymarks/core` (see `WaymarkCache`), and
 | Code | Meaning |
 | --- | --- |
 | 0 | Success |
-| 1 | Waymark error (lint failures, parse errors) |
-| 2 | Usage error (invalid arguments) |
-| 3 | Configuration error |
-| 4 | I/O error (file not found, permission denied) |
+| 1 | Validation error (invalid flags, arguments, or waymark syntax) |
+| 2 | Not found (file, waymark, or resource missing) |
+| 3 | Conflict (concurrent modification) |
+| 4 | Permission error |
+| 8 | Internal error (unexpected failure) |
+| 130 | Cancelled (user interrupted) |
 
 #### Shell Completions
 

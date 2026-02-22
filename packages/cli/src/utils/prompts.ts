@@ -1,8 +1,7 @@
 // tldr ::: interactive prompts using @outfitter/cli for CLI confirmations and selection
 
 import type { WaymarkRecord } from "@waymarks/grammar";
-import { CliError } from "../errors.ts";
-import { ExitCode } from "../exit-codes.ts";
+import { CancelledError, ValidationError } from "@outfitter/contracts";
 import { promptConfirm, promptSelect } from "./clack-prompts.ts";
 import { canPrompt } from "./terminal.ts";
 
@@ -54,9 +53,8 @@ export function assertPromptAllowed(action: string): void {
       ? "because --no-input was specified"
       : "because the terminal is not interactive";
 
-  throw new CliError(
+  throw ValidationError.fromMessage(
     `Cannot prompt for ${action} ${details}.`,
-    ExitCode.usageError
   );
 }
 
@@ -77,7 +75,7 @@ export async function confirm(options: ConfirmOptions): Promise<boolean> {
     initialValue: options.default ?? true,
   });
   if (result.isErr()) {
-    throw new CliError("Operation cancelled", ExitCode.usageError);
+    throw CancelledError.create("Operation cancelled");
   }
   return result.value;
 }
@@ -153,7 +151,7 @@ export async function selectWaymark(
   });
 
   if (result.isErr()) {
-    throw new CliError("Selection cancelled", ExitCode.usageError);
+    throw CancelledError.create("Selection cancelled");
   }
 
   return result.value;

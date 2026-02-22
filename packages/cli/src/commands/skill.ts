@@ -1,8 +1,7 @@
 // tldr ::: implement the wm skill command outputs [[cli/skill-command]]
 
 import { resolve } from "node:path";
-import { createUsageError } from "../errors.ts";
-import { ExitCode } from "../exit-codes.ts";
+import { ValidationError } from "@outfitter/contracts";
 import {
   listSkillSections,
   loadSkillData,
@@ -55,7 +54,7 @@ export async function runSkillCommand(
     const skillData = await loadSkillData(skillDir);
     return {
       output: formatJsonOutput(skillData),
-      exitCode: ExitCode.success,
+      exitCode: 0,
     };
   }
 
@@ -63,7 +62,7 @@ export async function runSkillCommand(
 
   return {
     output: core.content,
-    exitCode: ExitCode.success,
+    exitCode: 0,
   };
 }
 
@@ -140,7 +139,7 @@ export async function runSkillShowCommand(
   const resolved = resolveSkillSection(manifest, section);
 
   if (!resolved) {
-    throw createUsageError(`Unknown skill section: ${section}`);
+    throw ValidationError.fromMessage(`Unknown skill section: ${section}`);
   }
 
   const content = await loadSkillSection(
@@ -153,13 +152,13 @@ export async function runSkillShowCommand(
   if (options.json) {
     return {
       output: formatJsonOutput(content),
-      exitCode: ExitCode.success,
+      exitCode: 0,
     };
   }
 
   return {
     output: content.content,
-    exitCode: ExitCode.success,
+    exitCode: 0,
   };
 }
 
@@ -207,7 +206,7 @@ export async function runSkillListCommand(
 
   return {
     output: lines.join("\n"),
-    exitCode: ExitCode.success,
+    exitCode: 0,
   };
 }
 
@@ -222,6 +221,6 @@ export function runSkillPathCommand(
   const skillDir = resolveSkillDirectory(overrides);
   return {
     output: skillDir,
-    exitCode: ExitCode.success,
+    exitCode: 0,
   };
 }

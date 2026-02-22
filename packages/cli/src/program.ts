@@ -1,8 +1,9 @@
 // tldr ::: waymark CLI program builder and command routing
 
 import tab from "@bomb.sh/tab/commander";
+import { createCLI } from "@outfitter/cli/command";
 import type { WaymarkConfig } from "@waymarks/core";
-import { Command, CommanderError, Option } from "commander";
+import { type Command, CommanderError, Option } from "commander";
 import simpleUpdateNotifier from "simple-update-notifier";
 import {
   type AddCommandInput,
@@ -55,14 +56,18 @@ import {
   runUpdateCommand,
   type UpdateCommandOptions,
 } from "./commands/update.ts";
-import { CliError, createUsageError } from "./errors.ts";
-import { ExitCode } from "./exit-codes.ts";
+import {
+  type AnyKitError,
+  type ErrorCategory,
+  InternalError,
+  ValidationError,
+  getExitCode,
+} from "@outfitter/contracts";
 import type {
   CommandContext,
   GlobalOptions,
   ModifyCliOptions,
 } from "./types.ts";
-import { mapErrorToExitCode, runCommand } from "./utils/command-runner.ts";
 import { createContext } from "./utils/context.ts";
 import { logger } from "./utils/logger.ts";
 import { normalizeScope } from "./utils/options.ts";
@@ -111,21 +116,59 @@ function resolveGlobalOptions(program: Command): GlobalOptions {
   };
 }
 
-function resolveCommanderExitCode(error: CommanderError): ExitCode {
+function resolveCommanderExitCode(error: {
+  exitCode: number;
+  code: string;
+}): number {
   if (error.exitCode === 0) {
-    return ExitCode.success;
+    return 0;
   }
   if (error.code.startsWith("commander.")) {
-    return ExitCode.usageError;
+    return getExitCode("validation");
   }
-  return (error.exitCode ?? ExitCode.failure) as ExitCode;
+  return error.exitCode ?? 1;
 }
 
-function resolveExitCode(error: unknown): ExitCode {
-  if (error instanceof CliError) {
-    return error.exitCode;
-  }
+// about ::: duck-type check for CommanderError since createCLI() may bundle its own Commander copy
+function isCommanderLikeError(
+  error: unknown
+): error is { exitCode: number; code: string } {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "exitCode" in error &&
+    typeof (error as { exitCode: unknown }).exitCode === "number" &&
+    "code" in error &&
+    typeof (error as { code: unknown }).code === "string" &&
+    (error as { code: string }).code.startsWith("commander.")
+  );
+}
+
+// note ::: Commander already writes help/version to stdout before throwing;
+// suppress duplicate output in runMain() and runCli() error handlers
+function isCommanderOutputError(error: unknown): boolean {
   if (error instanceof CommanderError) {
+    return (
+      error.code === "commander.helpDisplayed" ||
+      error.code === "commander.version"
+    );
+  }
+  if (isCommanderLikeError(error)) {
+    return (
+      error.code === "commander.helpDisplayed" ||
+      error.code === "commander.version"
+    );
+  }
+  return false;
+}
+
+// about ::: maps thrown errors to CLI exit codes using @outfitter/contracts categories
+function resolveExitCode(error: unknown): number {
+  if (error instanceof CommanderError) {
+    return resolveCommanderExitCode(error);
+  }
+  // Handle CommanderError from a different Commander copy (e.g., via createCLI bundle)
+  if (isCommanderLikeError(error)) {
     return resolveCommanderExitCode(error);
   }
   // Check for @outfitter/contracts tagged errors with a category property
@@ -135,9 +178,8 @@ function resolveExitCode(error: unknown): ExitCode {
     "category" in error &&
     typeof (error as { category: unknown }).category === "string"
   ) {
-    return mapErrorToExitCode(
-      (error as { category: import("@outfitter/contracts").ErrorCategory })
-        .category
+    return getExitCode(
+      (error as { category: ErrorCategory }).category,
     );
   }
   if (
@@ -146,9 +188,16 @@ function resolveExitCode(error: unknown): ExitCode {
     "code" in error &&
     typeof (error as NodeJS.ErrnoException).code === "string"
   ) {
-    return ExitCode.ioError;
+    const errnoCode = (error as NodeJS.ErrnoException).code;
+    if (errnoCode === "ENOENT") {
+      return getExitCode("not_found");
+    }
+    if (errnoCode === "EACCES" || errnoCode === "EPERM") {
+      return getExitCode("permission");
+    }
+    return getExitCode("internal");
   }
-  return ExitCode.failure;
+  return 1;
 }
 
 function resolveErrorMessage(error: unknown): string {
@@ -168,13 +217,17 @@ function resolveCommandOptions<T extends object>(command: Command): T {
 }
 
 function handleCommandError(program: Command, error: unknown): never {
-  if (error instanceof CommanderError) {
+  if (error instanceof CommanderError || isCommanderLikeError(error)) {
     throw error;
   }
   const message = resolveErrorMessage(error);
   const exitCode = resolveExitCode(error);
-  const code =
-    exitCode === ExitCode.usageError ? "WAYMARK_USAGE" : "WAYMARK_ERROR";
+  const isValidation =
+    error &&
+    typeof error === "object" &&
+    "category" in error &&
+    (error as { category: string }).category === "validation";
+  const code = isValidation ? "WAYMARK_USAGE" : "WAYMARK_ERROR";
   return program.error(message, { exitCode, code });
 }
 
@@ -193,6 +246,20 @@ function registerSignalHandlers(): void {
   process.once("SIGTERM", () => {
     process.exit(SIGTERM_EXIT_CODE);
   });
+}
+
+/**
+ * Unwrap a Result, throwing the contracts error on failure.
+ * Bridges Result-returning core functions to the throw-based CLI error flow.
+ */
+async function runCommand<T>(
+  fn: () => Promise<import("@outfitter/contracts").Result<T, AnyKitError>>,
+): Promise<T> {
+  const result = await fn();
+  if (result.isErr()) {
+    throw result.error;
+  }
+  return result.value;
 }
 
 // Command handlers extracted for complexity management
@@ -283,7 +350,7 @@ async function handleLintCommand(
   ).length;
 
   if (errorCount > 0) {
-    throw new CliError("Lint errors detected", ExitCode.failure);
+    throw InternalError.create("Lint errors detected");
   }
 }
 
@@ -311,7 +378,7 @@ async function handleAddCommand(
     parsed = buildAddArgs(addInput);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw createUsageError(message);
+    throw ValidationError.fromMessage(message);
   }
 
   const result = await runCommand(() => runAddCommand(parsed, context));
@@ -321,7 +388,7 @@ async function handleAddCommand(
   }
 
   if (result.summary.failed > 0) {
-    process.exitCode = ExitCode.failure;
+    process.exitCode = 1;
   }
 }
 
@@ -338,7 +405,7 @@ async function handleRemoveCommand(
     parsedArgs = buildRemoveArgs({ targets, options });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw createUsageError(message);
+    throw ValidationError.fromMessage(message);
   }
   const preview = await runCommand(() =>
     runRemoveCommand(parsedArgs, context, { writeOverride: false })
@@ -347,7 +414,7 @@ async function handleRemoveCommand(
   if (parsedArgs.options.write) {
     if (preview.summary.failed > 0) {
       outputRemovalPreview(preview);
-      process.exitCode = ExitCode.failure;
+      process.exitCode = 1;
       return;
     }
     await executeRemovalWriteFlow(preview, parsedArgs, context);
@@ -386,16 +453,16 @@ async function resolveInteractiveTarget(
 ): Promise<{ target: string; id?: string | undefined }> {
   const scanResult = await scanRecords([workspaceRoot], config, scanOptions);
   if (scanResult.isErr()) {
-    throw new CliError(scanResult.error.message, ExitCode.failure);
+    throw InternalError.create(scanResult.error.message);
   }
   const records = scanResult.value;
   if (records.length === 0) {
-    throw new CliError("No waymarks found to edit.", ExitCode.failure);
+    throw InternalError.create("No waymarks found to edit.");
   }
 
   const selected = await selectWaymark({ records });
   if (!selected) {
-    throw new CliError("No waymark selected.", ExitCode.failure);
+    throw InternalError.create("No waymark selected.");
   }
 
   const target = `${selected.file}:${selected.startLine}`;
@@ -493,7 +560,7 @@ async function handleModifyCommand(
   rawOptions: ModifyCliOptions
 ): Promise<void> {
   if (rawOptions.json && rawOptions.jsonl) {
-    throw createUsageError("--json and --jsonl cannot be used together");
+    throw ValidationError.fromMessage("--json and --jsonl cannot be used together");
   }
 
   const interactiveOverride = determineInteractiveOverride(
@@ -601,7 +668,7 @@ async function handleConfigCommand(
   }
 
   if (result.exitCode !== 0) {
-    throw new CliError("Config command failed", ExitCode.failure);
+    throw InternalError.create("Config command failed");
   }
 }
 
@@ -613,7 +680,7 @@ function handleSkillResult(
     writeStdout(result.output);
   }
   if (result.exitCode !== 0) {
-    throw new CliError(failureMessage, ExitCode.failure);
+    throw InternalError.create(failureMessage);
   }
 }
 
@@ -798,7 +865,7 @@ async function handleDoctorCommand(
 
   // Exit with appropriate code
   if (!report.healthy) {
-    throw new CliError("Doctor found issues", ExitCode.failure);
+    throw InternalError.create("Doctor found issues");
   }
 }
 
@@ -837,7 +904,7 @@ async function handleCheckCommand(
 
   // Exit with appropriate code
   if (!report.passed) {
-    throw new CliError("Check found issues", ExitCode.failure);
+    throw InternalError.create("Check found issues");
   }
 }
 
@@ -864,7 +931,7 @@ async function handleSeedCommand(
   }
 
   if (result.exitCode !== 0) {
-    throw new CliError("Seed command failed", ExitCode.failure);
+    throw InternalError.create("Seed command failed");
   }
 }
 
@@ -875,7 +942,7 @@ function parseUnifiedOptions(
     return parseUnifiedArgs(args);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw createUsageError(message);
+    throw ValidationError.fromMessage(message);
   }
 }
 
@@ -1145,9 +1212,11 @@ function buildCustomHelpFormatter() {
 }
 
 /**
-
-- Build a Commander program with all CLI commands registered.
-- @returns Configured Commander program instance.
+ * Build a CLI instance with all commands registered.
+ * Uses createCLI() from @outfitter/cli for program bootstrap, error handling,
+ * and --json env-var bridging. Returns both the CLI wrapper and the underlying
+ * Commander program for backward compatibility.
+ * @returns CLI instance and the underlying Commander program.
  */
 export async function createProgram(): Promise<Command> {
   // Read version from package.json
@@ -1160,13 +1229,38 @@ export async function createProgram(): Promise<Command> {
     shouldNotifyInNpmScript: true,
   });
 
-  const program = new Command();
-  program.exitOverride((error) => {
-    const exitCode = resolveCommanderExitCode(error);
-    process.exit(exitCode);
+  // about ::: createCLI provides: name, version, --json flag with OUTFITTER_JSON bridge,
+  // exitOverride, and structured error/exit handling via onError/onExit callbacks
+  const cli = createCLI({
+    name: "wm",
+    version,
+    description:
+      "Waymark CLI - scan, filter, format, and manage waymarks\n\n" +
+      "Quick Start:\n" +
+      "  wm [paths...]             Scan and filter waymarks (default: current directory)\n" +
+      "  wm find --graph           Show dependency graph\n" +
+      "  wm fmt <file> --write     Format waymarks in file\n" +
+      "  wm rm <file:line> --write Remove waymark from file\n" +
+      "  wm init                   Initialize waymark configuration",
+    onError: (error) => {
+      const message = resolveErrorMessage(error);
+      writeStderr(message);
+    },
+    onExit: (code) => {
+      process.exit(code);
+    },
   });
 
-  const jsonOption = new Option("--json", "Output as JSON array");
+  const program = cli.program;
+
+  // note ::: createCLI() already adds --json; configure conflicts and add --jsonl, --text
+  const existingJsonOption = program.options.find(
+    (opt) => opt.long === "--json"
+  );
+  if (existingJsonOption) {
+    existingJsonOption.conflicts("jsonl");
+    existingJsonOption.conflicts("text");
+  }
   const jsonlOption = new Option(
     "--jsonl",
     "Output as JSON Lines (newline-delimited)"
@@ -1175,25 +1269,25 @@ export async function createProgram(): Promise<Command> {
     "--text",
     "Output as human-readable formatted text"
   );
-  jsonOption.conflicts("jsonl");
-  jsonOption.conflicts("text");
   jsonlOption.conflicts("json");
   jsonlOption.conflicts("text");
   textOption.conflicts("json");
   textOption.conflicts("jsonl");
 
+  // note ::: createCLI() already calls .version() with default -V flag;
+  // patch the short flag to -v (lowercase) to match waymark convention
+  const existingVersionOption = program.options.find(
+    (opt) => opt.long === "--version"
+  );
+  if (existingVersionOption) {
+    // biome-ignore lint/suspicious/noExplicitAny: patching Commander option internals to change -V to -v
+    (existingVersionOption as any).short = "-v";
+    // biome-ignore lint/suspicious/noExplicitAny: patching Commander option internals for display
+    (existingVersionOption as any).flags = "-v, --version";
+    existingVersionOption.description = "output the current version";
+  }
+
   program
-    .name("wm")
-    .description(
-      "Waymark CLI - scan, filter, format, and manage waymarks\n\n" +
-        "Quick Start:\n" +
-        "  wm [paths...]             Scan and filter waymarks (default: current directory)\n" +
-        "  wm find --graph           Show dependency graph\n" +
-        "  wm fmt <file> --write     Format waymarks in file\n" +
-        "  wm rm <file:line> --write Remove waymark from file\n" +
-        "  wm init                   Initialize waymark configuration"
-    )
-    .version(version, "--version, -v", "output the current version")
     .helpOption("--help, -h", "display help for command")
     .addHelpCommand(false) // Disable default help command, we'll add custom one
     .configureHelp({
@@ -1211,7 +1305,6 @@ export async function createProgram(): Promise<Command> {
     .option("--verbose", "enable verbose logging (info level)")
     .option("--debug", "enable debug logging")
     .option("--quiet, -q", "only show errors")
-    .addOption(jsonOption)
     .addOption(jsonlOption)
     .addOption(textOption)
     .option("--no-color", "disable ANSI colors")
@@ -1220,10 +1313,12 @@ export async function createProgram(): Promise<Command> {
       `
 Exit Codes:
   0  Success
-  1  Waymark error
-  2  Usage error (invalid flags or arguments)
-  3  Configuration error
-  4  I/O error (file not found, permission denied)
+  1  Validation error (invalid flags, arguments, or waymark syntax)
+  2  Not found (file, waymark, or resource missing)
+  3  Conflict (concurrent modification or merge conflict)
+  4  Permission error
+  8  Internal error (unexpected failure)
+  130  Cancelled (user interrupted)
 
 Note: For agent-facing documentation, use "wm skill".
 `
@@ -1281,18 +1376,21 @@ Note: For agent-facing documentation, use "wm skill".
 }
 
 /**
-
-- Run the CLI using process.argv when invoked as a script. Exits the process with appropriate exit code.
-- @returns No return value; process exits after execution.
+ * Run the CLI using process.argv when invoked as a script.
+ * Exits the process with appropriate exit code.
+ * @returns No return value; process exits after execution.
  */
 export function runMain(): void {
   registerSignalHandlers();
   createProgram()
     .then((program) => program.parseAsync(process.argv))
     .catch((error) => {
-      const message = resolveErrorMessage(error);
       const exitCode = resolveExitCode(error);
-      writeStderr(message);
+      // note ::: Commander already printed help/version to stdout; don't echo again
+      if (!isCommanderOutputError(error)) {
+        const message = resolveErrorMessage(error);
+        writeStderr(message);
+      }
       process.exit(exitCode);
     });
 }
@@ -1337,7 +1435,7 @@ export async function runCli(argv: string[]): Promise<{
   process.stdout.write = capture(stdoutChunks) as typeof process.stdout.write;
   process.stderr.write = capture(stderrChunks) as typeof process.stderr.write;
 
-  let exitCode: ExitCode = ExitCode.success;
+  let exitCode = 0;
   try {
     const program = await createProgram();
     program.exitOverride((error) => {
