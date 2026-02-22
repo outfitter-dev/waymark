@@ -1,48 +1,66 @@
 // tldr ::: rendering helpers for CLI record output
 
+// note ::: output() from @outfitter/cli detects format from OUTFITTER_JSON/OUTFITTER_JSONL env vars,
+// not from --json/--jsonl CLI flags. Waymark drives format selection via CLI flags parsed into
+// outputFormat state, so output() auto-detection does not apply here. Keep renderRecords() instead.
+
 import type { WaymarkRecord } from "@waymarks/core";
 
 export type ScanOutputFormat = "text" | "json" | "jsonl";
 
 /**
- * Clean record for JSON output by removing empty arrays and objects
+ * A cleaned record suitable for JSON output.
+ * Empty arrays and objects are omitted; the `current` signal is removed.
  */
-function cleanRecord(record: WaymarkRecord): Partial<WaymarkRecord> {
-  const cleaned: Partial<WaymarkRecord> = { ...record };
+type CleanedRecord = Omit<
+  WaymarkRecord,
+  "signals" | "relations" | "canonicals" | "mentions" | "tags" | "properties"
+> & {
+  signals?: Omit<WaymarkRecord["signals"], "current">;
+  relations?: WaymarkRecord["relations"];
+  canonicals?: string[];
+  mentions?: string[];
+  tags?: string[];
+  properties?: Record<string, string>;
+};
 
-  if (cleaned.signals) {
-    const { current: _current, ...signals } = cleaned.signals;
-    // note ::: omit `current` signal from JSON output
-    cleaned.signals = signals;
+/**
+ * Clean a record for JSON output by removing empty arrays/objects and the
+ * `current` signal (which is a runtime-only navigation hint, not data).
+ */
+function cleanRecord(record: WaymarkRecord): CleanedRecord {
+  const {
+    signals,
+    relations,
+    canonicals,
+    mentions,
+    tags,
+    properties,
+    ...rest
+  } = record;
+
+  const cleaned: CleanedRecord = { ...rest };
+
+  // Omit `current` signal — it's a runtime navigation hint, not serialized data
+  const { current: _current, ...signalsWithoutCurrent } = signals;
+  if (signalsWithoutCurrent.flagged || signalsWithoutCurrent.starred) {
+    cleaned.signals = signalsWithoutCurrent;
   }
 
-  // Remove empty arrays
-  if (Array.isArray(cleaned.relations) && cleaned.relations.length === 0) {
-    cleaned.relations = undefined as unknown as WaymarkRecord["relations"];
+  if (relations.length > 0) {
+    cleaned.relations = relations;
   }
-  if (Array.isArray(cleaned.canonicals) && cleaned.canonicals.length === 0) {
-    cleaned.canonicals = undefined as unknown as WaymarkRecord["canonicals"];
+  if (canonicals.length > 0) {
+    cleaned.canonicals = canonicals;
   }
-  if (Array.isArray(cleaned.mentions) && cleaned.mentions.length === 0) {
-    cleaned.mentions = undefined as unknown as WaymarkRecord["mentions"];
+  if (mentions.length > 0) {
+    cleaned.mentions = mentions;
   }
-  if (Array.isArray(cleaned.tags) && cleaned.tags.length === 0) {
-    cleaned.tags = undefined as unknown as WaymarkRecord["tags"];
+  if (tags.length > 0) {
+    cleaned.tags = tags;
   }
-
-  // Remove empty properties object
-  if (cleaned.properties && Object.keys(cleaned.properties).length === 0) {
-    cleaned.properties = undefined as unknown as WaymarkRecord["properties"];
-  }
-
-  // Remove signals if all are false
-  if (
-    cleaned.signals &&
-    !cleaned.signals.flagged &&
-    !cleaned.signals.starred &&
-    !cleaned.signals.current
-  ) {
-    cleaned.signals = undefined as unknown as WaymarkRecord["signals"];
+  if (Object.keys(properties).length > 0) {
+    cleaned.properties = properties;
   }
 
   return cleaned;
@@ -62,7 +80,7 @@ export function renderRecords(
     return "";
   }
 
-  // Clean records for JSON output
+  // Clean records for JSON output (strips empty arrays, removes `current` signal)
   const cleanedRecords = records.map(cleanRecord);
 
   switch (format) {
@@ -71,13 +89,9 @@ export function renderRecords(
     case "jsonl":
       return cleanedRecords.map((record) => JSON.stringify(record)).join("\n");
     case "text":
+      // Pretty-printed JSON — used by the --pretty / --text flag in scan mode
       return JSON.stringify(cleanedRecords, null, 2);
     default:
-      return records
-        .map(
-          (record) =>
-            `${record.file}:${record.startLine} ${record.type} ::: ${record.contentText}`
-        )
-        .join("\n");
+      return JSON.stringify(cleanedRecords, null, 2);
   }
 }
